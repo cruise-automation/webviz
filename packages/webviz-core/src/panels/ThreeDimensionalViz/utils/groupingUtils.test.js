@@ -11,6 +11,8 @@ import type { Color, Point, LineStripMarker, LineListMarker } from "webviz-core/
 import { COLORS, MARKER_MSG_TYPES } from "webviz-core/src/util/globalConstants";
 import { emptyPose } from "webviz-core/src/util/Pose";
 
+const DUMMY_POINT_COLOR = { r: 0, g: 0, b: 0, a: 0 };
+
 function lineStrip({
   points,
   closed,
@@ -143,6 +145,63 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
         type: MARKER_MSG_TYPES.LINE_STRIP,
         primitive: "line strip",
       },
+    ]);
+  });
+
+  it("handles markers with mixed open and closed loops", () => {
+    const markers = [
+      lineStrip({
+        points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }],
+        closed: false,
+        color: COLORS.RED,
+      }),
+      lineStrip({
+        points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }],
+        closed: true,
+        color: COLORS.RED,
+      }),
+    ];
+    expect(groupLinesIntoInstancedLineLists(markers)).toEqual([
+      expect.objectContaining({
+        colors: [
+          COLORS.RED,
+          COLORS.RED,
+          DUMMY_POINT_COLOR,
+          DUMMY_POINT_COLOR,
+          DUMMY_POINT_COLOR,
+          COLORS.RED,
+          COLORS.RED,
+          COLORS.RED,
+        ],
+        metadataByIndex: [
+          expect.objectContaining({ points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }] }),
+          expect.objectContaining({ points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }] }),
+          {},
+          {},
+          {},
+          expect.objectContaining({ points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }] }),
+          expect.objectContaining({ points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }] }),
+        ],
+        points: [
+          { x: 0, y: 0, z: 0 },
+          { x: 1, y: 0, z: 0 },
+          { x: 1, y: 0, z: 0 }, // self point for transition
+          { x: NaN, y: NaN, z: NaN }, // NaN point for transition
+          { x: 0, y: 0, z: 0 }, // self point for transition
+          { x: 0, y: 0, z: 0 },
+          { x: 1, y: 0, z: 0 },
+          { x: 0, y: 0, z: 0 }, // close point
+        ],
+        poses: [
+          { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
+          { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
+        ],
+      }),
     ]);
   });
 

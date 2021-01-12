@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Command,
   withPose,
@@ -45,39 +45,43 @@ const COLOR_MODE_RAINBOW = 3;
 // all buffers again.
 // Memoized buffers are automatically deleted by WebGL whenever its context
 // changes. There's no need to manually delete them.
-const pointCloud = (regl: Regl) => {
+const makePointCloudCommand = () => {
   // The same vertex buffer can be used for both positions and colors (see comments in color attribute below).
   // For that reason, we need to keep two independent caches.
+  // We need to instantiate them outside of the actual command in order to provide independent
+  // caches for each render pass. This prevents reseting caches when calling <PointClouds />
+  // multiple times for the same frame, like when implementing highlighting.
   const positionBufferCache = new VertexBufferCache();
   const colorBufferCache = new VertexBufferCache();
 
-  const getCachedBuffer = (cache: VertexBufferCache, vertexBuffer: VertexBuffer): MemoizedVertexBuffer => {
-    const { buffer, offset, stride } = vertexBuffer;
-    let memoized = cache.get(vertexBuffer);
-    if (
-      !memoized ||
-      memoized.vertexBuffer.buffer !== buffer ||
-      memoized.offset !== FLOAT_SIZE * offset ||
-      memoized.stride !== FLOAT_SIZE * stride
-    ) {
-      // If this is a new vertex buffer or if its content has changed somehow
-      // (rendering to hitmap or different settings), create a new memoized
-      // GPU buffer with the correct offset and stride and add it to the cache.
-      memoized = {
-        vertexBuffer,
-        buffer: regl.buffer(buffer),
-        offset: FLOAT_SIZE * offset,
-        stride: FLOAT_SIZE * stride,
-        divisor: 0,
-      };
-      cache.set(vertexBuffer, memoized);
-    }
-    return memoized;
-  };
+  return (regl: Regl) => {
+    const getCachedBuffer = (cache: VertexBufferCache, vertexBuffer: VertexBuffer): MemoizedVertexBuffer => {
+      const { buffer, offset, stride } = vertexBuffer;
+      let memoized = cache.get(vertexBuffer);
+      if (
+        !memoized ||
+        memoized.vertexBuffer.buffer !== buffer ||
+        memoized.offset !== FLOAT_SIZE * offset ||
+        memoized.stride !== FLOAT_SIZE * stride
+      ) {
+        // If this is a new vertex buffer or if its content has changed somehow
+        // (rendering to hitmap or different settings), create a new memoized
+        // GPU buffer with the correct offset and stride and add it to the cache.
+        memoized = {
+          vertexBuffer,
+          buffer: regl.buffer(buffer),
+          offset: FLOAT_SIZE * offset,
+          stride: FLOAT_SIZE * stride,
+          divisor: 0,
+        };
+        cache.set(vertexBuffer, memoized);
+      }
+      return memoized;
+    };
 
-  const pointCloudCommand = withPose({
-    primitive: "points",
-    vert: `
+    const pointCloudCommand = withPose({
+      primitive: "points",
+      vert: `
       precision mediump float;
 
       // this comes from the camera
@@ -161,7 +165,7 @@ const pointCloud = (regl: Regl) => {
         }
       }
     `,
-    frag: `
+      frag: `
       precision mediump float;
       varying vec3 fragColor;
       uniform bool isCircle;
@@ -180,120 +184,121 @@ const pointCloud = (regl: Regl) => {
         gl_FragColor = vec4(fragColor / 255.0, 1.0);
       }
     `,
-    attributes: {
-      position: (context, props) => {
-        return getCachedBuffer(positionBufferCache, props.positionBuffer);
+      attributes: {
+        position: (context, props) => {
+          return getCachedBuffer(positionBufferCache, props.positionBuffer);
+        },
+        color: (context, props) => {
+          const { hitmapColors, settings, blend } = props;
+          const { colorMode } = settings;
+          if (hitmapColors) {
+            // If colors are provided, we use those instead what is indicated by colorMode
+            // This is a common scenario when rendering to the hitmap, for example.
+            // Unfortunately, we cannot memoize hitmap colors since new objects can be added
+            // to the scene hierarchy at any time.
+            return hitmapColors;
+          }
+
+          if (blend?.color) {
+            // If a constant color is provided for blending, ignore point colors. Send positions
+            // instead (see comments below).
+            return getCachedBuffer(positionBufferCache, props.positionBuffer);
+          }
+
+          // If we're using "flat" color mode, we pass the actual color in a uniform (see uniforms below)
+          // But we still need to provide some color buffer, even if it's not going to be used.
+          // Instead of creating a dummy buffer, we just send the one we have for position.
+          // TODO (Hernan): I tried using the constant option provided by Regl, but it leads to
+          // visual artifacts. I need to check if this is a bug in Regl.
+          const colorBuffer = !colorMode || colorMode.mode === "flat" ? props.positionBuffer : props.colorBuffer;
+          return getCachedBuffer(colorBufferCache, colorBuffer);
+        },
       },
-      color: (context, props) => {
-        const { hitmapColors, settings, blend } = props;
-        const { colorMode } = settings;
-        if (hitmapColors) {
-          // If colors are provided, we use those instead what is indicated by colorMode
-          // This is a common scenario when rendering to the hitmap, for example.
-          // Unfortunately, we cannot memoize hitmap colors since new objects can be added
-          // to the scene hierarchy at any time.
-          return hitmapColors;
+
+      uniforms: {
+        pointSize: (context, props) => {
+          return props.settings?.pointSize || 2;
+        },
+        isCircle: (context, props) => {
+          return props.settings?.pointShape ? props.settings?.pointShape === "circle" : true;
+        },
+        colorMode: (context, props) => {
+          const { settings, is_bigendian, hitmapColors, blend } = props;
+          if (hitmapColors) {
+            // We're providing a colors array in RGB format
+            return COLOR_MODE_RGB;
+          }
+
+          if (blend?.color) {
+            // Force to `flat` mode if constant color is required for blending.
+            return COLOR_MODE_FLAT;
+          }
+
+          const { colorMode } = settings;
+          if (colorMode.mode === "flat") {
+            return COLOR_MODE_FLAT;
+          } else if (colorMode.mode === "gradient") {
+            return COLOR_MODE_GRADIENT;
+          } else if (colorMode.mode === "rainbow") {
+            return COLOR_MODE_RAINBOW;
+          }
+          return is_bigendian ? COLOR_MODE_RGB : COLOR_MODE_BGR;
+        },
+        flatColor: (context, props) => {
+          if (props.blend && props.blend.color) {
+            // Use constant color for blending.
+            return toRgba(vec4ToRGBA(props.blend.color));
+          }
+          return toRgba(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
+        },
+        minGradientColor: (context, props) => {
+          return toRgba(props.settings.colorMode.minColor || DEFAULT_MIN_COLOR);
+        },
+        maxGradientColor: (context, props) => {
+          return toRgba(props.settings.colorMode.maxColor || DEFAULT_MAX_COLOR);
+        },
+        minColorFieldValue: (context, props) => {
+          return props.minColorValue;
+        },
+        maxColorFieldValue: (context, props) => {
+          return props.maxColorValue;
+        },
+      },
+
+      count: (context, props) => {
+        return props.pointCount;
+      },
+    });
+
+    const command = regl(pointCloudCommand);
+
+    return (props: any) => {
+      // Call 'onPreRender' for both caches before rendering a frame.
+      positionBufferCache.onPreRender();
+      colorBufferCache.onPreRender();
+
+      if (props.length > 0) {
+        const { depth, blend } = props[0];
+        if (depth || blend) {
+          // If there are custom rendering states, we create a new command
+          // with those values to render the markers. NOTE: This assumes that all
+          // markers will be rendered with the same overrides, which might not
+          // be the case in the future.
+          regl({
+            ...pointCloudCommand,
+            depth,
+            blend,
+          })(props);
+        } else {
+          command(props);
         }
-
-        if (blend?.color) {
-          // If a constant color is provided for blending, ignore point colors. Send positions
-          // instead (see comments below).
-          return props.positionBuffer;
-        }
-
-        // If we're using "flat" color mode, we pass the actual color in a uniform (see uniforms below)
-        // But we still need to provide some color buffer, even if it's not going to be used.
-        // Instead of creating a dummy buffer, we just send the one we have for position.
-        // TODO (Hernan): I tried using the constant option provided by Regl, but it leads to
-        // visual artifacts. I need to check if this is a bug in Regl.
-        const colorBuffer = !colorMode || colorMode.mode === "flat" ? props.positionBuffer : props.colorBuffer;
-        return getCachedBuffer(colorBufferCache, colorBuffer);
-      },
-    },
-
-    uniforms: {
-      pointSize: (context, props) => {
-        return props.settings?.pointSize || 2;
-      },
-      isCircle: (context, props) => {
-        return props.settings?.pointShape ? props.settings?.pointShape === "circle" : true;
-      },
-      colorMode: (context, props) => {
-        const { settings, is_bigendian, hitmapColors, blend } = props;
-        if (hitmapColors) {
-          // We're providing a colors array in RGB format
-          return COLOR_MODE_RGB;
-        }
-
-        if (blend?.color) {
-          // Force to `flat` mode if constant color is required for blending.
-          return COLOR_MODE_FLAT;
-        }
-
-        const { colorMode } = settings;
-        if (colorMode.mode === "flat") {
-          return COLOR_MODE_FLAT;
-        } else if (colorMode.mode === "gradient") {
-          return COLOR_MODE_GRADIENT;
-        } else if (colorMode.mode === "rainbow") {
-          return COLOR_MODE_RAINBOW;
-        }
-        return is_bigendian ? COLOR_MODE_RGB : COLOR_MODE_BGR;
-      },
-      flatColor: (context, props) => {
-        if (props.blend && props.blend.color) {
-          // Use constant color for blending.
-          return toRgba(vec4ToRGBA(props.blend.color));
-        }
-        return toRgba(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
-      },
-      minGradientColor: (context, props) => {
-        return toRgba(props.settings.colorMode.minColor || DEFAULT_MIN_COLOR);
-      },
-      maxGradientColor: (context, props) => {
-        return toRgba(props.settings.colorMode.maxColor || DEFAULT_MAX_COLOR);
-      },
-      minColorFieldValue: (context, props) => {
-        return props.minColorValue;
-      },
-      maxColorFieldValue: (context, props) => {
-        return props.maxColorValue;
-      },
-    },
-
-    count: (context, props) => {
-      return props.pointCount;
-    },
-  });
-
-  const command = regl(pointCloudCommand);
-
-  return (props: any) => {
-    // Call 'onPreRender' for both caches before rendering a frame.
-    positionBufferCache.onPreRender();
-    colorBufferCache.onPreRender();
-
-    if (props.length > 0) {
-      const { depth, blend } = props[0];
-      if (depth || blend) {
-        // If there are custom rendering states, we create a new command
-        // with those values to render the markers. NOTE: This assumes that all
-        // markers will be rendered with the same overrides, which might not
-        // be the case in the future.
-        regl({
-          ...pointCloudCommand,
-          depth,
-          blend,
-        })(props);
-      } else {
-        command(props);
       }
-    }
 
-    // Call 'onPostRender' for both caches after rendering a frame
-    // This will delete any unused GPU buffer and prevent memory leaks.
-    positionBufferCache.onPostRender();
-    colorBufferCache.onPostRender();
+      // Call 'onPostRender' for both caches after rendering a frame
+      // This will delete any unused GPU buffer and prevent memory leaks.
+      positionBufferCache.onPostRender();
+      colorBufferCache.onPostRender();
+    };
   };
 };
 
@@ -341,13 +346,14 @@ function instancedGetChildrenForHitmap<
 type Props = { ...CommonCommandProps, children: PointCloud[], clearCachedMarkers?: boolean };
 
 export default function PointClouds({ children, clearCachedMarkers, ...rest }: Props) {
+  const [command] = useState(() => makePointCloudCommand());
   const markerCache = useRef(new Map<Uint8Array, MemoizedMarker>());
   markerCache.current = updateMarkerCache(markerCache.current, children);
   const decodedMarkers = !clearCachedMarkers
     ? [...markerCache.current.values()].map((decoded) => decoded.marker)
     : children.map((m) => decodeMarker(m));
   return (
-    <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={pointCloud}>
+    <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={command}>
       {decodedMarkers}
     </Command>
   );

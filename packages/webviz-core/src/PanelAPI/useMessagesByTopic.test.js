@@ -12,12 +12,22 @@ import * as React from "react";
 import * as PanelAPI from ".";
 import { concatAndTruncate } from "./useMessagesByTopic";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import type { MessageFormat } from "webviz-core/src/players/types";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 describe("useMessagesByTopic", () => {
   // Create a helper component that exposes the results of the hook for mocking.
   function createTest() {
-    function Test({ topics, historySize }) {
-      Test.result(PanelAPI.useMessagesByTopic({ topics, historySize }));
+    function Test({
+      topics,
+      historySize,
+      format = "parsedMessages",
+    }: {
+      topics: string[],
+      historySize: number,
+      format?: MessageFormat,
+    }) {
+      Test.result(PanelAPI.useMessagesByTopic({ topics, historySize, format }));
       return null;
     }
     Test.result = jest.fn();
@@ -39,7 +49,7 @@ describe("useMessagesByTopic", () => {
     root.unmount();
   });
 
-  it("add messages to their respective arrays", async () => {
+  it("add messages to their respective arrays", () => {
     const Test = createTest();
 
     const message1 = {
@@ -69,7 +79,7 @@ describe("useMessagesByTopic", () => {
     root.unmount();
   });
 
-  it("remembers messages when changing props (both topics and historySize)", async () => {
+  it("remembers messages when changing props (both topics and historySize)", () => {
     const Test = createTest();
 
     const message1 = {
@@ -95,6 +105,25 @@ describe("useMessagesByTopic", () => {
 
     // Make sure that the identities are also the same, not just deep-equal.
     expect(Test.result.mock.calls[1][0]["/foo"][0]).toBe(message2);
+
+    root.unmount();
+  });
+
+  it("respects the 'format' parameter and returns bobjects", () => {
+    const Test = createTest();
+    const message = {
+      topic: "/foo",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: wrapJsObject({}, "time", { sec: 1234, nsec: 5678 }),
+    };
+
+    const root = mount(
+      <MockMessagePipelineProvider bobjects={[message]}>
+        <Test topics={["/foo"]} historySize={1} format="bobjects" />
+      </MockMessagePipelineProvider>
+    );
+
+    expect(Test.result.mock.calls).toEqual([[{ "/foo": [message] }]]);
 
     root.unmount();
   });

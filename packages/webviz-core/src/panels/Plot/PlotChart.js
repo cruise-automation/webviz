@@ -8,27 +8,29 @@
 
 import flatten from "lodash/flatten";
 import React, { memo } from "react";
-import Dimensions from "react-container-dimensions";
 import { createSelector } from "reselect";
 import { Time } from "rosbag";
 import uuid from "uuid";
 
 import type { PlotXAxisVal } from "./index";
 import styles from "./PlotChart.module.scss";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import TimeBasedChart, {
   type ChartDefaultView,
   type TimeBasedChartTooltipData,
   type TooltipItem,
 } from "webviz-core/src/components/TimeBasedChart";
 import filterMap from "webviz-core/src/filterMap";
-import derivative from "webviz-core/src/panels/Plot/derivative";
 import {
   type PlotPath,
   type BasePlotPath,
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
+import { derivative, applyToDataOrTooltips, mathFunctions } from "webviz-core/src/panels/Plot/transformPlotRange";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { format } from "webviz-core/src/util/formatTime";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
-import { format, formatTimeRaw, isTime, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { isTime, subtractTimes, toSec, formatTimeRaw } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
   x: number,
@@ -73,7 +75,9 @@ function getXForPoint(
       if (!xItem) {
         return NaN;
       }
-      const value = xItem.queriedData[innerIdx]?.value;
+      // It is possible that values are still bobjects at this point. Parse if needed.
+      const maybeBobject = xItem.queriedData[innerIdx]?.value;
+      const value = maybeBobject && isBobject(maybeBobject) ? deepParse(maybeBobject) : maybeBobject;
       return isTime(value) ? toSec((value: any)) : Number(value);
     }
   }
@@ -102,7 +106,9 @@ function getPointsAndTooltipsForMessagePathItem(
     return { points, tooltips, hasMismatchedData: false };
   }
   const elapsedTime = toSec(subtractTimes(timestamp, startTime));
-  for (const [innerIdx, { value, path: queriedPath, constantName }] of yItem.queriedData.entries()) {
+  for (const [innerIdx, { value: maybeBobject, path: queriedPath, constantName }] of yItem.queriedData.entries()) {
+    // It is possible that values are still bobjects at this point. Parse if needed.
+    const value = isBobject(maybeBobject) ? deepParse(maybeBobject) : maybeBobject;
     if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
       const valueNum = Number(value);
       if (!isNaN(valueNum)) {
@@ -175,8 +181,12 @@ function getDatasetAndTooltipsFromMessagePlotPath(
         xAxisRanges,
         datasetKey
       );
-      rangePoints.push(...itemPoints);
-      rangeTooltips.push(...itemTooltips);
+      for (const point of itemPoints) {
+        rangePoints.push(point);
+      }
+      for (const tooltip of itemTooltips) {
+        rangeTooltips.push(tooltip);
+      }
       hasMismatchedData = hasMismatchedData || itemHasMistmatchedData;
       // If we have added more than one point for this message, make it a scatter plot.
       if (item.queriedData.length > 1 && xAxisVal !== "index") {
@@ -187,7 +197,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     rangesOfPoints.push(rangePoints);
   }
 
-  if (path.value.includes(".@derivative")) {
+  if (path.value.endsWith(".@derivative")) {
     if (showLine) {
       const newRangesOfTooltips = [];
       const newRangesOfPoints = [];
@@ -204,6 +214,13 @@ function getDatasetAndTooltipsFromMessagePlotPath(
       // (nothing is better than incorrect data).
       rangesOfPoints = [];
       rangesOfTooltips = [];
+    }
+  }
+  for (const funcName of Object.keys(mathFunctions)) {
+    if (path.value.endsWith(`.@${funcName}`)) {
+      rangesOfPoints = rangesOfPoints.map((points) => applyToDataOrTooltips(points, mathFunctions[funcName]));
+      rangesOfTooltips = rangesOfTooltips.map((tooltips) => applyToDataOrTooltips(tooltips, mathFunctions[funcName]));
+      break;
     }
   }
 

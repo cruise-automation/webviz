@@ -171,7 +171,7 @@ export class NotificationList extends React.PureComponent<NotificationListProps>
 }
 
 const ModalBody = styled.div`
-  padding: 16px;
+  padding: 32px;
   max-width: 600px;
   min-width: 300px;
   max-height: 600px;
@@ -188,8 +188,9 @@ export function showNotificationModal(notification: NotificationMessage): void {
 
   const modal = renderToBody(
     <Modal onRequestClose={() => modal.remove()}>
+      <Title style={{ color: getColorForSeverity(notification.severity) }}>{notification.message}</Title>
+      <hr />
       <ModalBody>
-        <Title style={{ color: getColorForSeverity(notification.severity) }}>{notification.message}</Title>
         {typeof details === "string" ? (
           <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{details}</pre>
         ) : (
@@ -294,7 +295,7 @@ export default class NotificationDisplay extends React.PureComponent<Props, Stat
               <Fader visible={showMostRecent} style={{ paddingLeft: 5, cursor: "pointer" }}>
                 {notifications[0].message}
               </Fader>
-              {unreadCount > 1 && `(${unreadCount})`}
+              <div style={{ fontSize: 12 }}>{unreadCount > 1 && `\u00A0(1 of ${unreadCount})`}</div>
             </div>
             <NotificationList notifications={notifications} onClick={showNotificationModal} />
           </ChildToggle>

@@ -113,6 +113,7 @@ type Props = {|
   filterText: string,
   tooltips?: Node[],
   visibleTopicsCount: number,
+  diffModeEnabled: boolean,
 |};
 
 export default function TreeNodeRow({
@@ -131,6 +132,7 @@ export default function TreeNodeRow({
   visibleByColumn,
   visibleTopicsCount,
   width,
+  diffModeEnabled,
 }: Props) {
   const topicName = node.type === "topic" ? node.topicName : "";
   const datatype = node.type === "topic" ? node.datatype : undefined;
@@ -172,26 +174,20 @@ export default function TreeNodeRow({
   maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const updateHoveredMarkerMatchers = useCallback(
-    (columnIndex, visible) => {
-      if (visible) {
-        const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
-        setHoveredMarkerMatchers([{ topic }]);
-      }
-    },
-    [setHoveredMarkerMatchers, topicName]
-  );
+  const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
+    if (visible) {
+      const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+      setHoveredMarkerMatchers([{ topic }]);
+    }
+  }, [setHoveredMarkerMatchers, topicName]);
 
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-  const mouseEventHandlersByColumnIdx = useMemo(
-    () => {
-      return new Array(2).fill().map((_, columnIndex) => ({
-        onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
-        onMouseLeave,
-      }));
-    },
-    [onMouseLeave, updateHoveredMarkerMatchers]
-  );
+  const mouseEventHandlersByColumnIdx = useMemo(() => {
+    return new Array(2).fill().map((_, columnIndex) => ({
+      onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
+      onMouseLeave,
+    }));
+  }, [onMouseLeave, updateHoveredMarkerMatchers]);
   const {
     toggleCheckAllAncestors,
     toggleNodeChecked,
@@ -284,6 +280,8 @@ export default function TreeNodeRow({
                   }
                   visibleInScene={!!visibleByColumn[columnIdx]}
                   {...mouseEventHandlersByColumnIdx[columnIdx]}
+                  diffModeEnabled={diffModeEnabled}
+                  columnIndex={columnIdx}
                 />
               );
             })}
@@ -291,8 +289,8 @@ export default function TreeNodeRow({
         )}
         <TreeNodeMenu
           datatype={showTopicSettings ? datatype : undefined}
-          disableBaseColumn={!availableByColumn[0]}
-          disableFeatureColumn={!availableByColumn[1]}
+          disableBaseColumn={diffModeEnabled || !availableByColumn[0]}
+          disableFeatureColumn={diffModeEnabled || !availableByColumn[1]}
           hasFeatureColumn={hasFeatureColumn && availableByColumn[1]}
           nodeKey={key}
           providerAvailable={providerAvailable}

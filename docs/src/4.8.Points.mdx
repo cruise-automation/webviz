@@ -6,9 +6,14 @@ import { Points } from './jsx/allLiveEditors'
 
 ## Props
 
-| Name       | Type      | Default | Description                      |
-| ---------- | --------- | ------- | -------------------------------- |
-| `children` | `Point[]` | `[]`    | array of Point markers to render |
+| Name                | Type      | Default        | Description                           |
+| ------------------- | --------- | -------------- | ------------------------------------- |
+| `children`          | `Point[]` | `[]`           | array of Point markers to render      |
+| `useWorldSpaceSize` | `boolean` | `undefined`    | use world space units for point sizes |
+
+### Using World Space sizes
+
+By default, points are rendered in `view space`, meaninig that their size (in pixels) is constant and not affected by the point's position in the world. In contrast, when the `useWorldSpaceSize` flag is set to `true`, points will be rendered in `world space`, meaning that their size (indicated in world units, i.e. meters) will be calculated based on their distance to the camera.
 
 ### Point
 

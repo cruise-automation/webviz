@@ -14,14 +14,8 @@ import CopyText from "webviz-core/src/components/CopyText";
 import Icon from "webviz-core/src/components/Icon";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
-import {
-  formatDate,
-  formatTime,
-  formatTimeRaw,
-  parseTimeStr,
-  parseRosTimeStr,
-  clampTime,
-} from "webviz-core/src/util/time";
+import { formatDate, formatTime, parseTimeStr } from "webviz-core/src/util/formatTime";
+import { parseRosTimeStr, clampTime, formatTimeRaw } from "webviz-core/src/util/time";
 
 const SRoot = styled.div`
   display: flex;

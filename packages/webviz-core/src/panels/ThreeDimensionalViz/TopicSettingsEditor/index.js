@@ -24,7 +24,7 @@ import type { Topic } from "webviz-core/src/players/types";
 import {
   POINT_CLOUD_DATATYPE,
   POSE_STAMPED_DATATYPE,
-  LASER_SCAN_DATATYPE,
+  SENSOR_MSGS_LASER_SCAN_DATATYPE,
   WEBVIZ_MARKER_DATATYPE,
 } from "webviz-core/src/util/globalConstants";
 
@@ -122,7 +122,7 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
   const editors = {
     [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
-    [LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
+    [SENSOR_MSGS_LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
     [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
     "visualization_msgs/Marker": MarkerSettingsEditor,
     "visualization_msgs/MarkerArray": MarkerSettingsEditor,
@@ -154,12 +154,9 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
   settings,
   onSettingsChange,
 }: Props) {
-  const onFieldChange = useCallback(
-    (fieldName: string, value: any) => {
-      onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
-    },
-    [onSettingsChange]
-  );
+  const onFieldChange = useCallback((fieldName: string, value: any) => {
+    onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
+  }, [onSettingsChange]);
 
   const Editor = topicSettingsEditorForDatatype(topic.datatype);
   if (!Editor) {

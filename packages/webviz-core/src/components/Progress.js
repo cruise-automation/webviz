@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {
   percent: number,
@@ -23,7 +23,7 @@ const Progress = (props: Props) => {
   const viewBoxWidth = vertical ? 1 : 100;
   const viewBoxHeight = vertical ? 100 : 1;
   const style = {};
-  style.border = `solid ${colors.toolbar}`;
+  style.border = `solid ${colors.DARK3}`;
   style.borderWidth = "0 1px";
   const max = 100 - (percent || 0);
 

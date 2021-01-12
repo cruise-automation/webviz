@@ -54,7 +54,7 @@ function getTriangles(count: number = 10) {
   return { colors, points };
 }
 
-function getLinePoints(count: number = 10) {
+export function getLinePoints(count: number = 10) {
   const points = [];
   for (let i = 0; i < count; i++) {
     if (i % 3 === 0) {
@@ -151,7 +151,7 @@ export const markerProps = {
   },
   POINTS: {
     type: MARKER_MSG_TYPES.POINTS,
-    points: buildMatrix(20, 20, 20),
+    points: buildMatrix(5, 5, 5, 4),
   },
   TEXT_VIEW_FACING: {
     type: MARKER_MSG_TYPES.TEXT_VIEW_FACING,

@@ -10,7 +10,6 @@ import hoistNonReactStatics from "hoist-non-react-statics";
 import { omit, debounce } from "lodash";
 import React, { type Node, useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import { useSelector } from "react-redux";
 import { type CameraState } from "regl-worldview";
 
 import { FrameCompatibilityDEPRECATED } from "./FrameCompatibility";
@@ -44,6 +43,7 @@ export type ThreeDimensionalVizConfig = {
   followOrientation?: boolean,
   modifiedNamespaceTopics?: string[],
   pinTopics: boolean,
+  diffModeEnabled: boolean,
   topicDisplayMode?: TopicDisplayMode,
   flattenMarkers?: boolean,
   selectedPolygonEditFormat?: "json" | "yaml",
@@ -80,7 +80,6 @@ const BaseRenderer = (props: Props, ref) => {
     transforms,
     config: { autoSyncCameraState, followOrientation, followTf },
   } = props;
-  const extensions = useSelector((state) => state.extensions);
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
 
   const currentTime = useMessagePipeline(
@@ -103,17 +102,14 @@ const BaseRenderer = (props: Props, ref) => {
     transforms,
   });
 
-  const onSetSubscriptions = useCallback(
-    (subscriptions: string[]) => {
-      setSubscriptions([
-        ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
-        TRANSFORM_TOPIC,
-        TRANSFORM_STATIC_TOPIC,
-        ...subscriptions,
-      ]);
-    },
-    [setSubscriptions]
-  );
+  const onSetSubscriptions = useCallback((subscriptions: string[]) => {
+    setSubscriptions([
+      ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
+      TRANSFORM_TOPIC,
+      TRANSFORM_STATIC_TOPIC,
+      ...subscriptions,
+    ]);
+  }, [setSubscriptions]);
 
   // use callbackInputsRef to make sure the input changes don't trigger `onFollowChange` or `onAlignXYAxis` to change
   const callbackInputsRef = useRef({
@@ -130,26 +126,23 @@ const BaseRenderer = (props: Props, ref) => {
     configFollowOrientation: config.followOrientation,
     configFollowTf: config.followTf,
   };
-  const onFollowChange = useCallback(
-    (newFollowTf?: string | false, newFollowOrientation?: boolean) => {
-      const {
-        configCameraState: prevCameraState,
-        configFollowOrientation: prevFollowOrientation,
-        configFollowTf: prevFollowTf,
-        targetPose: prevTargetPose,
-      } = callbackInputsRef.current;
-      const newCameraState = getNewCameraStateOnFollowChange({
-        prevCameraState,
-        prevTargetPose,
-        prevFollowTf,
-        prevFollowOrientation,
-        newFollowTf,
-        newFollowOrientation,
-      });
-      saveConfig({ followTf: newFollowTf, followOrientation: newFollowOrientation, cameraState: newCameraState });
-    },
-    [saveConfig]
-  );
+  const onFollowChange = useCallback((newFollowTf?: string | false, newFollowOrientation?: boolean) => {
+    const {
+      configCameraState: prevCameraState,
+      configFollowOrientation: prevFollowOrientation,
+      configFollowTf: prevFollowTf,
+      targetPose: prevTargetPose,
+    } = callbackInputsRef.current;
+    const newCameraState = getNewCameraStateOnFollowChange({
+      prevCameraState,
+      prevTargetPose,
+      prevFollowTf,
+      prevFollowOrientation,
+      newFollowTf,
+      newFollowOrientation,
+    });
+    saveConfig({ followTf: newFollowTf, followOrientation: newFollowOrientation, cameraState: newCameraState });
+  }, [saveConfig]);
 
   const onAlignXYAxis = useCallback(
     () =>
@@ -170,20 +163,17 @@ const BaseRenderer = (props: Props, ref) => {
     saveCameraState,
   ]);
 
-  const onCameraStateChange = useCallback(
-    (newCameraState) => {
-      const newCurrentCameraState = omit(newCameraState, ["target", "targetOrientation"]);
-      setConfigCameraState(newCurrentCameraState);
+  const onCameraStateChange = useCallback((newCameraState) => {
+    const newCurrentCameraState = omit(newCameraState, ["target", "targetOrientation"]);
+    setConfigCameraState(newCurrentCameraState);
 
-      // If autoSyncCameraState is enabled, we can't wait for the debounce and need to call updatePanelConfig right away
-      if (autoSyncCameraState) {
-        updatePanelConfig("3D Panel", (oldConfig) => ({ ...oldConfig, cameraState: newCurrentCameraState }));
-      } else {
-        saveCameraStateDebounced(newCurrentCameraState);
-      }
-    },
-    [autoSyncCameraState, saveCameraStateDebounced, updatePanelConfig]
-  );
+    // If autoSyncCameraState is enabled, we can't wait for the debounce and need to call updatePanelConfig right away
+    if (autoSyncCameraState) {
+      updatePanelConfig("3D Panel", (oldConfig) => ({ ...oldConfig, cameraState: newCurrentCameraState }));
+    } else {
+      saveCameraStateDebounced(newCurrentCameraState);
+    }
+  }, [autoSyncCameraState, saveCameraStateDebounced, updatePanelConfig]);
 
   // useImperativeHandle so consumer component (e.g.Follow stories) can call onFollowChange directly.
   React.useImperativeHandle(ref, (): any => ({ onFollowChange }));
@@ -194,7 +184,6 @@ const BaseRenderer = (props: Props, ref) => {
       config={config}
       cleared={cleared}
       currentTime={currentTime}
-      extensions={extensions}
       followOrientation={!!followOrientation}
       followTf={followTf}
       frame={frame}

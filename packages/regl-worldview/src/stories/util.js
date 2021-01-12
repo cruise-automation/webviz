@@ -35,3 +35,56 @@ export const cube = (range: number, id: number = 1) => {
   };
   return marker;
 };
+
+export const withCustomRenderStates = (markers1: any, markers2: any) => {
+  const magenta = markers1.map((marker) => ({
+    ...marker,
+    colors: [],
+    color: { r: 1, g: 0, b: 1, a: 1 },
+    depth: {
+      enable: true,
+      mask: true,
+    },
+    blend: {
+      enable: true,
+      func: {
+        src: "constant color",
+        dst: "src alpha",
+      },
+      color: [1, 0, 1, 1],
+    },
+  }));
+  const gray = markers2.map((marker) => ({
+    ...marker,
+    colors: [],
+    color: { r: 0.5, g: 0.5, b: 0.5, a: 1 },
+    depth: {
+      enable: false,
+    },
+    blend: {
+      enable: true,
+      func: {
+        src: "constant color",
+        dst: "zero",
+      },
+      color: [0.5, 0.5, 0.5, 1.0],
+    },
+  }));
+  const cyan = markers2.map((marker) => ({
+    ...marker,
+    colors: [],
+    color: { r: 0, g: 1, b: 1, a: 1 },
+    depth: {
+      enable: true,
+    },
+    blend: {
+      enable: true,
+      func: {
+        src: "constant color",
+        dst: "one",
+      },
+      color: [0, 1, 1, 1],
+    },
+  }));
+  return [...magenta, ...gray, ...cyan];
+};

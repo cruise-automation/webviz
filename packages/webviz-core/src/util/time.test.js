@@ -62,43 +62,6 @@ describe("percentOf", () => {
   });
 });
 
-describe("time.formatDuration", () => {
-  it("uses milliseconds and pads values with zeros", () => {
-    expect(time.formatDuration({ sec: 0, nsec: 0 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 999 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 1000 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 499999 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 500000 })).toEqual("0:00:00.001");
-    expect(time.formatDuration({ sec: 0, nsec: 999e3 })).toEqual("0:00:00.001");
-    expect(time.formatDuration({ sec: 0, nsec: 999e6 })).toEqual("0:00:00.999");
-    expect(time.formatDuration({ sec: 1, nsec: 999e6 })).toEqual("0:00:01.999");
-    expect(time.formatDuration({ sec: 1, nsec: 999999e3 })).toEqual("0:00:02.000");
-    expect(time.formatDuration({ sec: 1, nsec: 999999999 })).toEqual("0:00:02.000");
-    expect(time.formatDuration({ sec: 3 * 60 * 60 + 2 * 60 + 1, nsec: 999e6 })).toEqual("3:02:01.999");
-    expect(time.formatDuration({ sec: 3 * 60 * 60 + 59 * 60 + 59, nsec: 99e6 })).toEqual("3:59:59.099");
-    expect(time.formatDuration({ sec: -1, nsec: 0 })).toEqual("-0:00:01.000");
-    expect(time.formatDuration({ sec: 0, nsec: -1000000 })).toEqual("-0:00:00.001");
-  });
-});
-
-describe("time.formatDate", () => {
-  it("formats date based on provided timezone", () => {
-    expect(time.formatDate({ sec: 1, nsec: 0 }, "Asia/Bangkok")).toBe("1970-01-01");
-    expect(time.formatDate({ sec: 1, nsec: 1 }, "Australia/Currie")).toBe("1970-01-01");
-    expect(time.formatDate({ sec: 1000000, nsec: 0 }, "Pacific/Midway")).toBe("1970-01-12");
-    expect(time.formatDate({ sec: 1100000, nsec: 1000000000 }, "America/Los_Angeles")).toBe("1970-01-13");
-  });
-});
-
-describe("time.formatTime", () => {
-  it("formats time based on provided timezone", () => {
-    expect(time.formatTime({ sec: 1, nsec: 0 }, "America/Phoenix")).toBe("5:00:01.000 PM MST");
-    expect(time.formatTime({ sec: 1, nsec: 1 }, "America/Detroit")).toBe("7:00:01.000 PM EST");
-    expect(time.formatTime({ sec: 1, nsec: 999999999 }, "America/Phoenix")).toBe("5:00:01.999 PM MST");
-    expect(time.formatTime({ sec: 1, nsec: 1000000000 }, "America/Los_Angeles")).toBe("4:00:02.000 PM PST");
-  });
-});
-
 describe("time.formatTimeRaw", () => {
   it("formats whole values correction", () => {
     expect(time.formatTimeRaw({ sec: 1, nsec: 0 })).toEqual("1.000000000");
@@ -244,6 +207,18 @@ describe("time.clampTime", () => {
   });
 });
 
+describe("time.isTimeInRangeInclusive", () => {
+  const start = { sec: 0, nsec: 100 };
+  const end = { sec: 100, nsec: 100 };
+  it("returns whether time is between start and end, inclusive", () => {
+    expect(time.isTimeInRangeInclusive(start, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive(end, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive({ sec: 50, nsec: 50 }, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive({ sec: 0, nsec: 99 }, start, end)).toEqual(false);
+    expect(time.isTimeInRangeInclusive({ sec: 100, nsec: 101 }, start, end)).toEqual(false);
+  });
+});
+
 describe("time.parseRosTimeStr", () => {
   it("returns null if the input string is formatted incorrectly", () => {
     expect(time.parseRosTimeStr("")).toEqual(null);
@@ -264,28 +239,6 @@ describe("time.parseRosTimeStr", () => {
     expect(time.parseRosTimeStr("1.0123456789")).toEqual({ sec: 1, nsec: 0.012345679e9 });
     // Too much precision, round seconds up.
     expect(time.parseRosTimeStr("1.999999999999")).toEqual({ sec: 2, nsec: 0 });
-  });
-});
-
-describe("time.parseTimeStr", () => {
-  // create the time string input from current time zone so the test results are always consistent
-  // sample output: 2018-07-23 2:45:20.317 PM PDT
-  function getCombinedTimeStr(timestamp) {
-    return `${time.formatDate(timestamp)} ${time.formatTime(timestamp)}`;
-  }
-
-  it("returns null if the input string is formatted incorrectly", () => {
-    expect(time.parseTimeStr("")).toEqual(null);
-    expect(time.parseTimeStr("018-07")).toEqual(null);
-    expect(time.parseTimeStr("0")).toEqual(null);
-  });
-
-  it("returns the correct time", () => {
-    const timeStr = getCombinedTimeStr({ sec: 1532382320, nsec: 317124567 });
-    expect(time.parseTimeStr(timeStr)).toEqual({
-      nsec: 317000000, // losing some accuracy when converting back
-      sec: 1532382320,
-    });
   });
 });
 
@@ -325,5 +278,103 @@ describe("time.compareBinaryTimes", () => {
       { sec: 1, nsec: 0 },
       { sec: 1, nsec: 1 },
     ]);
+  });
+});
+
+describe("time.interpolateTimes", () => {
+  it("works for zero-duration spans", () => {
+    const t = { sec: 0, nsec: 0 };
+    expect(time.interpolateTimes(t, t, 0)).toEqual(t);
+    expect(time.interpolateTimes(t, t, -1)).toEqual(t);
+    expect(time.interpolateTimes(t, t, 1)).toEqual(t);
+  });
+
+  it("works for non-zero spans", () => {
+    const start = { sec: 0, nsec: 0 };
+    const end = { sec: 5, nsec: 0 };
+    expect(time.interpolateTimes(start, end, 0)).toEqual(start);
+    expect(time.interpolateTimes(start, end, 1)).toEqual(end);
+    expect(time.interpolateTimes(start, end, 0.5)).toEqual({ sec: 2, nsec: 5e8 });
+    expect(time.interpolateTimes(start, end, 2)).toEqual({ sec: 10, nsec: 0 });
+  });
+});
+
+describe("time.getSeekTimeFromSpec", () => {
+  it("returns absolute seek times", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "absolute", time: { sec: 12, nsec: 0 } },
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 12, nsec: 0 });
+  });
+
+  it("adds relative offsets", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "relative", startOffset: { sec: 1, nsec: 0 } },
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 11, nsec: 0 });
+  });
+
+  it("supports negative relative offsets", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "relative", startOffset: { sec: -1, nsec: 5e8 } }, // minus half a second
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 14, nsec: 5e8 });
+  });
+
+  it("calculates fractional times", () => {
+    expect(
+      time.getSeekTimeFromSpec({ type: "fraction", fraction: 0.6 }, { sec: 10, nsec: 0 }, { sec: 15, nsec: 0 })
+    ).toEqual({ sec: 13, nsec: 0 });
+  });
+
+  it("clamps seek times to the playback range", () => {
+    const start = { sec: 10, nsec: 0 };
+    const end = { sec: 15, nsec: 0 };
+    expect(time.getSeekTimeFromSpec({ type: "absolute", time: { sec: 6, nsec: 0 } }, start, end)).toEqual(start);
+    expect(time.getSeekTimeFromSpec({ type: "absolute", time: { sec: 16, nsec: 0 } }, start, end)).toEqual(end);
+
+    expect(time.getSeekTimeFromSpec({ type: "relative", startOffset: { sec: -6, nsec: 0 } }, start, end)).toEqual(
+      start
+    );
+    expect(time.getSeekTimeFromSpec({ type: "relative", startOffset: { sec: 6, nsec: 0 } }, start, end)).toEqual(end);
+
+    expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: -1 }, start, end)).toEqual(start);
+    expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: 2 }, start, end)).toEqual(end);
+  });
+});
+
+describe("time.getRosTimeFromString", () => {
+  it("takes a stringified number and returns time object", () => {
+    expect(time.getRosTimeFromString("")).toEqual(undefined);
+    expect(time.getRosTimeFromString("abc")).toEqual(undefined);
+    expect(time.getRosTimeFromString("123456.000000000")).toEqual({ sec: 123456, nsec: 0 });
+    expect(time.getRosTimeFromString("123456.100000000")).toEqual({ sec: 123456, nsec: 100000000 });
+    expect(time.getRosTimeFromString("123456.123456789")).toEqual({ sec: 123456, nsec: 123456789 });
+  });
+});
+
+describe("time.getValidatedTimeAndMethodFromString", () => {
+  const commonArgs = { date: "2020-01-01", timezone: "America/Los_Angeles" };
+  it("takes a string and gets a validated ROS or TOD time", () => {
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "abc" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "123abc" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1598635994.000000000" })).toEqual({
+      time: { nsec: 0, sec: 1598635994 },
+      method: "ROS",
+    });
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1:30:10.000 PM PST" })).toEqual({
+      time: { nsec: 0, sec: 1577914210 },
+      method: "TOD",
+    });
   });
 });

@@ -101,19 +101,16 @@ function InteractionContextMenuItem({
   );
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const onMouseEnter = useCallback(
-    () => {
-      if (topic) {
-        const { id, ns } = object;
-        const checks = [{ markerKeyPath: ["id"], value: id }];
-        if (ns) {
-          checks.push({ markerKeyPath: ["ns"], value: ns });
-        }
-        return setHoveredMarkerMatchers([{ topic, checks }]);
+  const onMouseEnter = useCallback(() => {
+    if (topic) {
+      const { id, ns } = object;
+      const checks = [{ markerKeyPath: ["id"], value: id }];
+      if (ns) {
+        checks.push({ markerKeyPath: ["ns"], value: ns });
       }
-    },
-    [object, setHoveredMarkerMatchers, topic]
-  );
+      return setHoveredMarkerMatchers([{ topic, checks }]);
+    }
+  }, [object, setHoveredMarkerMatchers, topic]);
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
   useEffect(() => onMouseLeave, [onMouseLeave]);
 

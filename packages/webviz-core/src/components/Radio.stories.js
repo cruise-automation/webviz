@@ -10,6 +10,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import Radio, { type RadioOption } from "webviz-core/src/components/Radio";
+import { objectValues } from "webviz-core/src/util";
 
 const OPTIONS = {
   first: {
@@ -36,14 +37,11 @@ function Box({
   onMount?: (HTMLDivElement) => void,
 }) {
   const ref = React.useRef();
-  React.useLayoutEffect(
-    () => {
-      if (ref.current && onMount) {
-        onMount(ref.current);
-      }
-    },
-    [onMount]
-  );
+  React.useLayoutEffect(() => {
+    if (ref.current && onMount) {
+      onMount(ref.current);
+    }
+  }, [onMount]);
   return (
     <div style={{ margin: 24, width: 432 }} ref={ref}>
       <p>{title}</p>
@@ -52,8 +50,7 @@ function Box({
   );
 }
 
-// $FlowFixMe
-const optionArr: RadioOption[] = Object.values(OPTIONS);
+const optionArr: RadioOption[] = objectValues(OPTIONS);
 
 function ControlledExample() {
   const [selectedId, setSelectedId] = React.useState(OPTIONS.first.id);

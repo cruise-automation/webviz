@@ -42,8 +42,9 @@ function getPlayerState(): PlayerState {
       lastSeekTime: 0,
       topics: [{ name: "/empty_topic", datatype: "VoidType" }],
       datatypes: { VoidType: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     },
   };
   return player;

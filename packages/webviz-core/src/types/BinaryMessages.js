@@ -44,6 +44,12 @@ export type BinaryPose = $ReadOnly<{|
   orientation(): Orientation,
 |}>;
 
+export type BinaryPose2D = $ReadOnly<{|
+  x(): number,
+  y(): number,
+  theta(): number,
+|}>;
+
 export type BinaryPoseStamped = $ReadOnly<BinaryStampedMessage & {| pose(): BinaryPose |}>;
 
 export type BinaryPolygon = $ReadOnly<{| points(): ArrayView<BinaryPoint> |}>;
@@ -75,7 +81,7 @@ export type BinaryMarker = $ReadOnly<{|
   mesh_use_embedded_materials(): boolean,
 |}>;
 
-export type InstancedLineListMarker = $ReadOnly<{|
+export type BinaryInstancedMarker = $ReadOnly<{|
   header(): BinaryHeader,
   ns(): string,
   id(): number,
@@ -91,7 +97,7 @@ export type InstancedLineListMarker = $ReadOnly<{|
   // Fields not provided from marker: frame_locked, text, mesh_resource, mesh_use_embedded_materials
   // Fields not present in marker:
   poses(): ArrayView<BinaryPose>,
-  metadataByIndex(): ArrayView<any>,
+  metadataByIndex(): $ReadOnlyArray<any>,
   closed(): boolean,
 |}>;
 

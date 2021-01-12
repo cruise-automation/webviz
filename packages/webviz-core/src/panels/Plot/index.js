@@ -13,7 +13,6 @@ import { hot } from "react-hot-loader/root";
 import { type Time, TimeUtil } from "rosbag";
 
 import helpContent from "./index.help.md";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
@@ -23,7 +22,6 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
 import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
-import { blockMessageCache } from "webviz-core/src/PanelAPI/useBlocksByTopic";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
@@ -101,23 +99,20 @@ const getPlotDataByPath = (itemsByPath: MessageHistoryItemsByPath): PlotDataByPa
 };
 
 const getMessagePathItemsForBlock = memoizeWeak(
-  (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): PlotDataByPath => {
-    const parsedBlock = {};
-    Object.keys(binaryBlock).forEach((topic) => {
-      parsedBlock[topic] = blockMessageCache.parseMessages(binaryBlock[topic], messageReadersByTopic);
-    });
-    return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock)));
+  (decodeMessagePathsForMessagesByTopic, block): PlotDataByPath => {
+    return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(block)));
   }
 );
 
-function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks) {
+const ZERO_TIME = { sec: 0, nsec: 0 };
+
+function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks) {
   const ret = {};
   const lastBlockIndexForPath = {};
   blocks.forEach((block, i) => {
     const messagePathItemsForBlock: PlotDataByPath = getMessagePathItemsForBlock(
       decodeMessagePathsForMessagesByTopic,
-      block,
-      messageReadersByTopic
+      block
     );
     Object.keys(messagePathItemsForBlock).forEach((path) => {
       const existingItems: TooltipItem[][] = ret[path] || [];
@@ -127,7 +122,9 @@ function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReader
         // If we are continuing directly from the previous block index (i - 1) then add to the
         // existing range, otherwise start a new range
         const currentRange = existingItems[existingItems.length - 1];
-        currentRange.push(...pathItems);
+        for (const item of pathItems) {
+          currentRange.push(item);
+        }
       } else {
         // Start a new contiguous range. Make a copy so we can extend it.
         existingItems.push(pathItems.slice());
@@ -189,6 +186,7 @@ function Plot(props: Props) {
     //  1. A fallback for preloading when blocks are not available (nodes, websocket.)
     //  2. Playback-synced plotting of index/custom data.
     preloadingFallback: !showSingleCurrentMessage,
+    format: "bobjects",
   });
 
   const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
@@ -198,19 +196,26 @@ function Plot(props: Props) {
     messagesByTopic,
   ]);
 
-  const { messageReadersByTopic, blocks } = useBlocksByTopic(subscribeTopics);
-  const blockItemsByPath = showSingleCurrentMessage
-    ? {}
-    : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks);
+  const { blocks } = useBlocksByTopic(subscribeTopics);
+  const blockItemsByPath = useMemo(
+    () => (showSingleCurrentMessage ? {} : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks)),
+    [showSingleCurrentMessage, decodeMessagePathsForMessagesByTopic, blocks]
+  );
   const { startTime } = useDataSourceInfo();
+
+  // If every streaming key is in the blocks, just use the blocks object for a stable identity.
+  const mergedItems = Object.keys(streamedItemsByPath).every((path) => blockItemsByPath[path] != null)
+    ? blockItemsByPath
+    : { ...streamedItemsByPath, ...blockItemsByPath };
+
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
-  const { datasets, tooltips, pathsWithMismatchedDataLengths } = getDatasetsAndTooltips(
-    yAxisPaths,
-    { ...streamedItemsByPath, ...blockItemsByPath },
-    startTime || { sec: 0, nsec: 0 },
-    xAxisVal,
-    xAxisPath
+  const { datasets, tooltips, pathsWithMismatchedDataLengths } = useMemo(
+    // TODO(steel): This memoization isn't quite ideal: getDatasetsAndTooltips is a bit expensive
+    // with lots of preloaded data, and when we preload a new block we re-generate the datasets for
+    // the whole timeline. We should try to use block memoization here.
+    () => getDatasetsAndTooltips(yAxisPaths, mergedItems, startTime || ZERO_TIME, xAxisVal, xAxisPath),
+    [yAxisPaths, mergedItems, startTime, xAxisVal, xAxisPath]
   );
 
   const { currentTime, endTime, seekPlayback: seek } = useMessagePipeline(
@@ -223,13 +228,11 @@ function Plot(props: Props) {
       []
     )
   );
-  const preloading = useExperimentalFeature("preloading");
-
   // Min/max x-values and playback position indicator are only used for preloaded plots. In non-
   // preloaded plots min x-value is always the last seek time, and the max x-value is the current
   // playback time.
   const timeToXValueForPreloading = (t: ?Time): ?number => {
-    if (preloading && xAxisVal === "timestamp" && t && startTime) {
+    if (xAxisVal === "timestamp" && t && startTime) {
       return toSec(subtractTimes(t, startTime));
     }
   };
@@ -246,17 +249,14 @@ function Plot(props: Props) {
     }
   }
 
-  const onClick = useCallback(
-    (_, __, { X_AXIS_ID: seekSeconds }) => {
-      if (!preloading || !startTime || seekSeconds == null || !seek) {
-        return;
-      }
-      // The player validates and clamps the time.
-      const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
-      seek(seekTime);
-    },
-    [preloading, seek, startTime]
-  );
+  const onClick = useCallback((_, __, { X_AXIS_ID: seekSeconds }) => {
+    if (!startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
+      return;
+    }
+    // The player validates and clamps the time.
+    const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
+    seek(seekTime);
+  }, [seek, startTime, xAxisVal]);
 
   return (
     <Flex col clip center style={{ position: "relative" }}>

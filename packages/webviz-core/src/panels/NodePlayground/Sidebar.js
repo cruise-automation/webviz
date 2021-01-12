@@ -176,27 +176,24 @@ const Sidebar = ({
   const utilsSelected = explorer === "utils";
   const templatesSelected = explorer === "templates";
 
-  const gotoUtils = React.useCallback(
-    (filePath) => {
-      import(/* webpackChunkName: "monaco-api" */ "monaco-editor/esm/vs/editor/editor.api").then((monacoApi) => {
-        const monacoFilePath = monacoApi.Uri.parse(`file://${filePath}`);
-        const requestedModel = monacoApi.editor.getModel(monacoFilePath);
-        if (!requestedModel) {
-          return;
-        }
-        setScriptOverride(
-          {
-            filePath: requestedModel.uri.path,
-            code: requestedModel.getValue(),
-            readOnly: true,
-            selection: undefined,
-          },
-          2
-        );
-      });
-    },
-    [setScriptOverride]
-  );
+  const gotoUtils = React.useCallback((filePath) => {
+    import(/* webpackChunkName: "monaco-api" */ "monaco-editor/esm/vs/editor/editor.api").then((monacoApi) => {
+      const monacoFilePath = monacoApi.Uri.parse(`file://${filePath}`);
+      const requestedModel = monacoApi.editor.getModel(monacoFilePath);
+      if (!requestedModel) {
+        return;
+      }
+      setScriptOverride(
+        {
+          filePath: requestedModel.uri.path,
+          code: requestedModel.getValue(),
+          readOnly: true,
+          selection: undefined,
+        },
+        2
+      );
+    });
+  }, [setScriptOverride]);
 
   const explorers = React.useMemo(
     () => ({

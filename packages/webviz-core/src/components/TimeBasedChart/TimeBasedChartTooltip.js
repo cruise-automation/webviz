@@ -11,7 +11,8 @@ import * as React from "react";
 import type { TimeBasedChartTooltipData } from "./index";
 import styles from "./TimeBasedChartTooltip.module.scss";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { formatTime, formatTimeRaw, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { formatTime } from "webviz-core/src/util/formatTime";
+import { subtractTimes, toSec, formatTimeRaw } from "webviz-core/src/util/time";
 
 type Props = {|
   children: React.Element<any>,
@@ -32,6 +33,12 @@ export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
           <span className={styles.title}>Path:&nbsp;</span>
           {tooltip.path}
         </div>
+        {tooltip.source != null && (
+          <div>
+            <span className={styles.title}>Source:&nbsp;</span>
+            {tooltip.source}
+          </div>
+        )}
         {receiveTime && headerStamp && (
           <table>
             <tbody>

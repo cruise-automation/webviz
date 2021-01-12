@@ -7,7 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useRef, useLayoutEffect } from "react";
-import Dimensions from "react-container-dimensions";
+
+import Dimensions from "webviz-core/src/components/Dimensions";
 
 type Draw = (context: CanvasRenderingContext2D, width: number, height: number) => void;
 
@@ -24,7 +25,6 @@ type AutoSizingCanvasProps = {
 };
 
 // Nested within `AutoSizingCanvas` so that componentDidUpdate fires on width/height changes.
-// Adding a hook into the 'react-container-dimensions' project on resize changes might be a good improvement!
 function Canvas({
   draw,
   width,
@@ -42,17 +42,7 @@ function Canvas({
     draw(ctx, width, height);
   });
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={width * ratio}
-      height={height * ratio}
-      style={{
-        width,
-        height,
-      }}
-    />
-  );
+  return <canvas ref={canvasRef} width={width * ratio} height={height * ratio} style={{ width, height }} />;
 }
 
 const AutoSizingCanvas = ({ draw, overrideDevicePixelRatioForTest }: AutoSizingCanvasProps) => (

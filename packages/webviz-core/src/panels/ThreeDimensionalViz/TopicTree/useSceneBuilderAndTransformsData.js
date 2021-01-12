@@ -45,20 +45,17 @@ export default function useSceneBuilderAndTransformsData({
   }
   const availableTfs = availableTfsRef.current;
 
-  const availableNamespacesByTopic = useMemo(
-    () => {
-      const result = { ...staticallyAvailableNamespacesByTopic };
-      for (const { name, topic } of sceneBuilder.allNamespaces) {
-        result[topic] = result[topic] || [];
-        result[topic].push(name);
-      }
-      if (availableTfs.length) {
-        result[TRANSFORM_TOPIC] = availableTfs;
-      }
-      return result;
-    },
-    [availableTfs, sceneBuilder.allNamespaces, staticallyAvailableNamespacesByTopic]
-  );
+  const availableNamespacesByTopic = useMemo(() => {
+    const result = { ...staticallyAvailableNamespacesByTopic };
+    for (const { name, topic } of sceneBuilder.allNamespaces) {
+      result[topic] = result[topic] || [];
+      result[topic].push(name);
+    }
+    if (availableTfs.length) {
+      result[TRANSFORM_TOPIC] = availableTfs;
+    }
+    return result;
+  }, [availableTfs, sceneBuilder.allNamespaces, staticallyAvailableNamespacesByTopic]);
 
   const sceneErrorsByKey = useMemo(
     () => mapKeys(sceneBuilder.errorsByTopic, (value, topicName) => generateNodeKey({ topicName })),

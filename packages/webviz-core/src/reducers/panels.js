@@ -20,12 +20,10 @@ import {
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import type { StartDragPayload, EndDragPayload } from "webviz-core/src/actions/panels";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
-import type { State } from "webviz-core/src/reducers";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import type { State, PersistedState } from "webviz-core/src/reducers";
 import type {
   PanelConfig,
   ConfigsPayload,
@@ -39,8 +37,14 @@ import type {
   UserNodes,
   PlaybackConfig,
 } from "webviz-core/src/types/panels";
-import { TAB_PANEL_TYPE, LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import {
+  TAB_PANEL_TYPE,
+  LAYOUT_QUERY_KEY,
+  LAYOUT_URL_QUERY_KEY,
+  PATCH_QUERY_KEY,
+} from "webviz-core/src/util/globalConstants";
+import {
+  setDefaultFields,
   updateTabPanelLayout,
   replaceAndRemovePanels,
   getPanelIdForType,
@@ -56,7 +60,8 @@ import {
   moveTabBetweenTabPanels,
   createAddUpdates,
   removePanelFromTabPanel,
-  getLayoutPatch,
+  stringifyParams,
+  updateDocumentTitle,
 } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -66,19 +71,10 @@ export const GLOBAL_STATE_STORAGE_KEY = "webvizGlobalState";
 export const defaultPlaybackConfig: PlaybackConfig = {
   speed: 0.2,
   messageOrder: "receiveTime",
+  timeDisplayMethod: "ROS",
 };
 
-// TODO(Audrey): remove the storage migration logic and fallback to empty in late 2019
-const OLD_KEYS = {
-  layout: "panels.layout",
-  savedProps: "panels.savedProps",
-  globalData: "panels.globalData",
-  globalVariables: "panels.globalVariables",
-  userNodes: "panels.userNodes",
-  linkedGlobalVariables: "panels.linkedGlobalVariables",
-};
-
-export type PanelsState = {
+export type PanelsState = {|
   layout: ?MosaicNode,
   // We store config for each panel in a hash keyed by the panel id.
   // This should at some point be renamed to `config` or `configById` or so,
@@ -92,62 +88,115 @@ export type PanelsState = {
   playbackConfig: PlaybackConfig,
   restrictedTopics?: string[],
   version?: number,
+|};
+
+export const setPersistedStateInLocalStorage = (persistedState: PersistedState) => {
+  storage.setItem(GLOBAL_STATE_STORAGE_KEY, persistedState);
 };
 
-export const setStoredLayout = (layout: PanelsState) => {
-  storage.set(GLOBAL_STATE_STORAGE_KEY, layout);
-};
-
-export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
-  const newPanelsState = { ...globalState };
-  const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
-  // extra checks to make sure all the common fields are present
-  Object.keys(defaultGlobalStates).forEach((fieldName) => {
-    const newFieldValue = globalState[fieldName];
-    if (isEmpty(newFieldValue)) {
-      newPanelsState[fieldName] = defaultGlobalStates[fieldName];
-    }
-  });
-
-  setStoredLayout(newPanelsState);
-  return newPanelsState;
-}
-
-function getOldStorageAndRemoveKey() {
-  // retrieve state from the old storages and delete those afterwards
-  const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
-  const newPanelsState = cloneDeep(defaultGlobalStates);
-  Object.keys(OLD_KEYS).forEach((fieldName) => {
-    const storageKey = OLD_KEYS[fieldName];
-    const oldStorage = storage.get(storageKey);
-    if (oldStorage) {
-      newPanelsState[fieldName] = oldStorage;
-      storage.remove(storageKey);
-    }
-  });
-
-  return newPanelsState;
-}
-
-// initialPanelsState will be initialized once when the store initializes this reducer. It is
+// initialPersistedState will be initialized once when the store initializes this reducer. It is
 // initialized lazily so we can manipulate localStorage in test setup and when we create new stores
-// new stores they will use the new values in localStorage. Reinitializing it for every action is
+// new stores they will use the new values in localStorage. Re-initializing it for every action is
 // too expensive.
-let initialPanelsState;
-function getInitialPanelsState(): PanelsState {
-  if (initialPanelsState == null) {
-    let newPanelsState = storage.get(GLOBAL_STATE_STORAGE_KEY);
-    if (newPanelsState) {
-      // use the new global state storage directly if it's present
-      setStorageStateAndFallbackToDefault(newPanelsState);
-      // don't use the old storage but simply remove the keys in case both new key and old keys are present
-      getOldStorageAndRemoveKey();
-    } else {
-      newPanelsState = getOldStorageAndRemoveKey();
+let initialPersistedState;
+export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history: any): PersistedState {
+  if (initialPersistedState == null) {
+    const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
+    const oldPersistedState: any = storage.getItem(GLOBAL_STATE_STORAGE_KEY);
+
+    const newPersistedState = cloneDeep(defaultPersistedState);
+
+    const { search: currentSearch, pathname } = history.location;
+    const currentSearchParams = new URLSearchParams(currentSearch);
+    const oldFetchedLayoutState = oldPersistedState?.fetchedLayout;
+    const oldPersistedSearch = oldPersistedState?.search;
+    const fetchedLayoutDataFromLocalStorage = oldFetchedLayoutState?.data;
+
+    let isInitializedFromLocalStorage = false;
+
+    if (oldFetchedLayoutState) {
+      newPersistedState.fetchedLayout = oldFetchedLayoutState;
     }
-    initialPanelsState = getGlobalHooks().migratePanels(newPanelsState);
+    let fetchedLayoutName;
+
+    // 1. Get layout from localStorage and update URL if there are no layout params and the fetchedLayout is not from layout-url param.
+    if (
+      fetchedLayoutDataFromLocalStorage &&
+      !oldFetchedLayoutState.isFromLayoutUrlParam &&
+      !currentSearchParams.get(LAYOUT_QUERY_KEY) &&
+      !currentSearchParams.get(LAYOUT_URL_QUERY_KEY)
+    ) {
+      if (oldPersistedSearch) {
+        // Get the `layout` and `patch` params by reading `persistedState.search` from localStorage and update the URL.
+        const localStorageParams = new URLSearchParams(oldPersistedSearch);
+        const layoutParamVal = localStorageParams.get(LAYOUT_QUERY_KEY);
+        const patchParamVal = localStorageParams.get(PATCH_QUERY_KEY);
+        if (layoutParamVal) {
+          currentSearchParams.set(LAYOUT_QUERY_KEY, layoutParamVal);
+        }
+        if (patchParamVal) {
+          currentSearchParams.set(PATCH_QUERY_KEY, patchParamVal);
+        }
+      } else {
+        // Read layout name and version from fetchedLayout.
+        const { name, releasedVersion, fileSuffix } = fetchedLayoutDataFromLocalStorage;
+        fetchedLayoutName = name;
+        let layoutParam = name;
+        if (fileSuffix) {
+          layoutParam = `${name}@${fileSuffix}`;
+        } else if (releasedVersion) {
+          layoutParam = `${name}@${releasedVersion}`;
+        }
+        currentSearchParams.set(LAYOUT_QUERY_KEY, layoutParam);
+      }
+
+      isInitializedFromLocalStorage = true;
+      const newSearch = stringifyParams(currentSearchParams);
+      history.push({ pathname, search: newSearch });
+      // Store the current search in localStorage. It'll get updated later when user makes layout edits.
+      newPersistedState.search = newSearch;
+    }
+    updateDocumentTitle({ layoutName: fetchedLayoutName, search: newPersistedState.search || currentSearch });
+
+    // 2. Set fetchedLayout state if it's available in localStorage.
+    if (fetchedLayoutDataFromLocalStorage) {
+      // Set `isInitializedFromLocalStorage` flag to skip initial layout fetch.
+      newPersistedState.fetchedLayout = {
+        ...oldFetchedLayoutState,
+        data: {
+          ...fetchedLayoutDataFromLocalStorage,
+          content: getGlobalHooks().migratePanels(fetchedLayoutDataFromLocalStorage.content),
+        },
+        isInitializedFromLocalStorage,
+      };
+      newPersistedState.search = oldPersistedState.search;
+    }
+
+    // 3. Handle panel state.
+    if (oldPersistedState?.panels) {
+      newPersistedState.panels = oldPersistedState.panels;
+    } else if (oldPersistedState?.layout) {
+      // The localStorage is on old format with {layout, savedProps...}
+      newPersistedState.panels = oldPersistedState;
+    }
+    newPersistedState.panels = setDefaultFields(defaultPersistedState.panels, newPersistedState.panels);
+
+    // Migrate panels and store in localStorage.
+    const migratedPanels = getGlobalHooks().migratePanels(newPersistedState.panels);
+    initialPersistedState = {
+      ...newPersistedState,
+      panels: { ...defaultPersistedState.panels, ...migratedPanels },
+    };
+
+    setPersistedStateInLocalStorage(initialPersistedState);
   }
-  return initialPanelsState;
+
+  return initialPersistedState;
+}
+
+// Export for testing.
+export function resetInitialPersistedState() {
+  initialPersistedState = undefined;
 }
 
 function changePanelLayout(
@@ -233,7 +282,7 @@ const closePanel = (panelsState: PanelsState, { tabId, root, path }): PanelsStat
 const splitPanel = (state, { id, tabId, direction, config, root, path }): PanelsState => {
   const type = getPanelTypeFromId(id);
   const newId = getPanelIdForType(type);
-  let newPanelsState = { ...state.panels };
+  let newPanelsState = { ...state.persistedState.panels };
   const { savedProps } = newPanelsState;
   if (tabId) {
     const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
@@ -267,7 +316,7 @@ const splitPanel = (state, { id, tabId, direction, config, root, path }): Panels
 
 const swapPanel = (state, { tabId, originalId, type, config, relatedConfigs, root, path }): PanelsState => {
   const newId = getPanelIdForType(type);
-  let newPanelsState = { ...state.panels };
+  let newPanelsState = { ...state.persistedState.panels };
   // For a panel inside a Tab panel, update the Tab panel's tab layouts via savedProps
   if (tabId && originalId) {
     const tabSavedProps = newPanelsState.savedProps[tabId];
@@ -297,14 +346,17 @@ const createTabPanelWithSingleTab = (
   { idToReplace, layout, idsToRemove }: CreateTabPanelPayload
 ): State => {
   const newId = getPanelIdForType(TAB_PANEL_TYPE);
-  const { savedProps } = state.panels;
+  const { savedProps } = state.persistedState.panels;
   // Build the layout for the new tab
   const layoutWithInlinedTabs = inlineTabPanelLayouts(layout, savedProps, idsToRemove);
   const panelIdsNotInNewTab = getAllPanelIds(layout, savedProps).filter((leaf) => !idsToRemove.includes(leaf));
   const tabLayout = replaceAndRemovePanels({ idsToRemove: panelIdsNotInNewTab }, layoutWithInlinedTabs);
 
   const newLayout = replaceAndRemovePanels({ originalId: idToReplace, newId, idsToRemove }, layout);
-  let newPanelsState = changePanelLayout(state.panels, { layout: newLayout || "", trimSavedProps: false });
+  let newPanelsState = changePanelLayout(state.persistedState.panels, {
+    layout: newLayout || "",
+    trimSavedProps: false,
+  });
 
   const tabPanelConfig = {
     id: newId,
@@ -312,17 +364,24 @@ const createTabPanelWithSingleTab = (
   };
   const nestedPanelConfigs = getConfigsForNestedPanelsInsideTab(idToReplace, newId, idsToRemove, savedProps);
   newPanelsState = savePanelConfigs(newPanelsState, { configs: [tabPanelConfig, ...nestedPanelConfigs] });
-  return { ...state, panels: newPanelsState, mosaic: { ...state.mosaic, selectedPanelIds: [newId] } };
+  return {
+    ...state,
+    mosaic: { ...state.mosaic, selectedPanelIds: [newId] },
+    persistedState: { ...state.persistedState, panels: newPanelsState },
+  };
 };
 
 export const createTabPanelWithMultipleTabs = (
   state: State,
   { idToReplace, layout, idsToRemove }: CreateTabPanelPayload
 ): State => {
-  const { savedProps } = state.panels;
+  const { savedProps } = state.persistedState.panels;
   const newId = getPanelIdForType(TAB_PANEL_TYPE);
   const newLayout = replaceAndRemovePanels({ originalId: idToReplace, newId, idsToRemove }, layout);
-  let newPanelsState = changePanelLayout({ ...state.panels }, { layout: newLayout || "", trimSavedProps: false });
+  let newPanelsState = changePanelLayout(
+    { ...state.persistedState.panels },
+    { layout: newLayout || "", trimSavedProps: false }
+  );
 
   const tabs = idsToRemove.map((panelId) => ({ title: getPanelTypeFromId(panelId), layout: panelId }));
   const tabPanelConfig = { id: newId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs } };
@@ -331,8 +390,8 @@ export const createTabPanelWithMultipleTabs = (
 
   return {
     ...state,
-    panels: newPanelsState,
     mosaic: { ...state.mosaic, selectedPanelIds: [newId] },
+    persistedState: { ...state.persistedState, panels: newPanelsState },
   };
 };
 
@@ -341,19 +400,17 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
   try {
     migratedPayload = getGlobalHooks().migratePanels(payload);
   } catch (err) {
-    console.error("Error importing layout", payload, err);
     return state;
   }
 
   const newPanelsState = {
+    ...migratedPayload,
     layout: migratedPayload.layout || {},
     savedProps: migratedPayload.savedProps || {},
     globalVariables: migratedPayload.globalVariables || {},
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
-    ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
-    fetchedLayout: migratedPayload.fetchedLayout || { isLoading: false },
   };
 
   return newPanelsState;
@@ -697,21 +754,23 @@ const endDrag = (panelsState: PanelsState, dragPayload: EndDragPayload): PanelsS
   return changePanelLayout(panelsState, { layout: newLayout, trimSavedProps: false });
 };
 
-export default function panelsReducer(state: State, action: ActionTypes): State {
-  let newState = { ...state, panels: { ...getInitialPanelsState(), ...state.panels } };
-  const oldState = { ...newState };
+const panelsReducer = function(state: State, action: ActionTypes): State {
+  // Make a copy of the persistedState before mutation.
+  let newState = { ...state, persistedState: { ...state.persistedState, panels: { ...state.persistedState.panels } } };
+
+  // Any action that changes panels state should potentially trigger a URL update in updateUrlMiddlewareDebounced.
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
-      newState.panels = changePanelLayout(newState.panels, action.payload);
+      newState.persistedState.panels = changePanelLayout(newState.persistedState.panels, action.payload);
       break;
 
     case "SAVE_PANEL_CONFIGS":
-      newState.panels = savePanelConfigs(newState.panels, action.payload);
+      newState.persistedState.panels = savePanelConfigs(newState.persistedState.panels, action.payload);
       break;
 
     case "SAVE_FULL_PANEL_CONFIG":
-      newState.panels = saveFullPanelConfig(newState.panels, action.payload);
+      newState.persistedState.panels = saveFullPanelConfig(newState.persistedState.panels, action.payload);
       break;
 
     case "CREATE_TAB_PANEL":
@@ -721,122 +780,103 @@ export default function panelsReducer(state: State, action: ActionTypes): State 
       break;
 
     case "IMPORT_PANEL_LAYOUT":
-      newState.panels = importPanelLayout(newState.panels, action.payload);
+      newState.persistedState.panels = importPanelLayout(newState.persistedState.panels, action.payload);
       break;
 
     case "OVERWRITE_GLOBAL_DATA":
-      newState.panels.globalVariables = action.payload;
+      newState.persistedState.panels.globalVariables = action.payload;
       break;
 
     case "SET_GLOBAL_DATA": {
-      const globalVariables = { ...newState.panels.globalVariables, ...action.payload };
+      const globalVariables = { ...newState.persistedState.panels.globalVariables, ...action.payload };
       Object.keys(globalVariables).forEach((key) => {
         if (globalVariables[key] === undefined) {
           delete globalVariables[key];
         }
       });
-      newState.panels.globalVariables = globalVariables;
+      newState.persistedState.panels.globalVariables = globalVariables;
       break;
     }
 
     case "SET_USER_NODES": {
-      const userNodes = { ...newState.panels.userNodes, ...action.payload };
+      const userNodes = { ...newState.persistedState.panels.userNodes, ...action.payload };
       Object.keys(action.payload).forEach((key) => {
         if (userNodes[key] === undefined) {
           delete userNodes[key];
         }
       });
-      newState.panels.userNodes = userNodes;
+      newState.persistedState.panels.userNodes = userNodes;
       break;
     }
 
     case "SET_LINKED_GLOBAL_VARIABLES":
-      newState.panels.linkedGlobalVariables = action.payload;
+      newState.persistedState.panels.linkedGlobalVariables = action.payload;
       break;
 
     case "SET_PLAYBACK_CONFIG":
-      newState.panels.playbackConfig = { ...newState.panels.playbackConfig, ...action.payload };
+      newState.persistedState.panels.playbackConfig = {
+        ...newState.persistedState.panels.playbackConfig,
+        ...action.payload,
+      };
       break;
 
     case "CLOSE_PANEL":
-      newState.panels = closePanel(newState.panels, action.payload);
+      newState.persistedState.panels = closePanel(newState.persistedState.panels, action.payload);
       break;
 
     case "SPLIT_PANEL":
-      newState.panels = splitPanel(state, action.payload);
+      newState.persistedState.panels = splitPanel(state, action.payload);
       break;
 
     case "SWAP_PANEL":
-      newState.panels = swapPanel(state, action.payload);
+      newState.persistedState.panels = swapPanel(state, action.payload);
       break;
 
     case "MOVE_TAB":
-      newState.panels = moveTab(newState.panels, action.payload);
+      newState.persistedState.panels = moveTab(newState.persistedState.panels, action.payload);
       break;
 
     case "ADD_PANEL":
-      newState.panels = addPanel(newState.panels, action.payload);
+      newState.persistedState.panels = addPanel(newState.persistedState.panels, action.payload);
       break;
 
     case "DROP_PANEL":
-      newState.panels = dropPanel(newState.panels, action.payload);
+      newState.persistedState.panels = dropPanel(newState.persistedState.panels, action.payload);
       break;
 
     case "START_DRAG":
-      newState.panels = startDrag(newState.panels, action.payload);
+      newState.persistedState.panels = startDrag(newState.persistedState.panels, action.payload);
       break;
 
     case "END_DRAG":
-      newState.panels = endDrag(newState.panels, action.payload);
+      newState.persistedState.panels = endDrag(newState.persistedState.panels, action.payload);
       break;
 
     case "SET_FETCHED_LAYOUT":
-      newState.fetchedLayout = action.payload;
+      newState.persistedState.fetchedLayout = action.payload;
+      break;
+    case "SET_FETCH_LAYOUT_FAILED":
+      // Keep the previous fetched layout data, but set isLoading to false.
+      newState.persistedState.fetchedLayout.isLoading = false;
+      newState.persistedState.fetchedLayout.error = action.payload;
       break;
 
-    case "LOAD_FETCHED_LAYOUT":
+    case "LOAD_LAYOUT":
       // Dispatched when loading the page with a layout query param, or when manually selecting a different layout.
       // Do not update URL based on ensuing migration changes.
       // $FlowFixMe - TODO: Refactor ImportPanelLayoutPayload to be superset of PanelsState
-      newState.panels = importPanelLayout(newState.panels, action.payload);
+      newState.persistedState.panels = importPanelLayout(newState.persistedState.panels, action.payload);
+      break;
+
+    case "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT":
+      newState.persistedState.fetchedLayout.layoutUrlReplacedByDefault = undefined;
       break;
 
     default:
       break;
   }
 
-  // Don't track layout changes in URL when fetching / loading a layout, or clearing a fetched layout;
-  // CLEAR_HOVER_VALUE does not change layout, and triggers frequently enough to affect performance.
-  if (!["SET_FETCHED_LAYOUT", "LOAD_FETCHED_LAYOUT", "CLEAR_HOVER_VALUE"].includes(action.type)) {
-    const inScreenshot = inScreenshotTests();
-    const params = new URLSearchParams(window.location.search);
-    const enableShareableUrl = getExperimentalFeature("shareableUrl");
-    // TODO(Audrey): remove the screenshot env checking after release.
-    const shouldProcessPatch = enableShareableUrl || inScreenshot;
-    if (shouldProcessPatch) {
-      getGlobalHooks().maybeUpdateURLToTrackLayout(oldState, newState);
-    } else {
-      // TODO(Esther) - Remove when Shareable Layout work is made public
-      const hasLayoutParam = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY);
-      if (hasLayoutParam) {
-        // Calculate diff between old vs. new panels state - if it exists, remove layout param.
-        const layoutPatch = getLayoutPatch(oldState.panels, newState.panels);
-        if (layoutPatch) {
-          params.delete(LAYOUT_QUERY_KEY);
-          params.delete(LAYOUT_URL_QUERY_KEY);
-          const queryString = params.toString();
-          newState.router.location = {
-            pathname: location.pathname,
-            search: queryString ? `?${queryString}` : queryString,
-          };
-        }
-      }
-    }
-  }
-
-  if (action.payload && action.payload.skipSettingLocalStorage) {
-    return newState;
-  }
-  setStoredLayout(newState.panels);
   return newState;
-}
+};
+
+export default panelsReducer;

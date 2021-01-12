@@ -13,9 +13,10 @@ import { MessagePipelineConsumer } from "../components/MessagePipeline";
 import Internals from "./Internals";
 import MessageHistoryDEPRECATED from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import { downloadTextFile } from "webviz-core/src/util";
+import { downloadTextFile, objectValues } from "webviz-core/src/util";
 
 const mockDownloadTextFile: any = downloadTextFile;
+(objectValues: any).mockImplementation(Object.values); // broken by module mock
 jest.mock("webviz-core/src/util");
 
 describe("<Internals>", () => {

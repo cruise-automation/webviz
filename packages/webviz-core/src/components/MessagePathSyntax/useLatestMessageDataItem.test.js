@@ -10,7 +10,8 @@ import * as React from "react";
 
 import { useLatestMessageDataItem } from "./useLatestMessageDataItem";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
-import type { Message } from "webviz-core/src/players/types";
+import type { Message, MessageFormat } from "webviz-core/src/players/types";
+import { deepParse } from "webviz-core/src/util/binaryObjects";
 
 const topics = [{ name: "/topic", datatype: "datatype" }];
 const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] } };
@@ -34,9 +35,9 @@ const messages: Message[] = [
 
 describe("useLatestMessageDataItem", () => {
   // Create a helper component that exposes the results of the hook for mocking.
-  function createTest() {
+  function createTest(format: MessageFormat = "parsedMessages") {
     function Test({ path }: { path: string }) {
-      Test.result(useLatestMessageDataItem(path));
+      Test.result(useLatestMessageDataItem(path, format));
       return null;
     }
     Test.result = jest.fn();
@@ -100,6 +101,24 @@ describe("useLatestMessageDataItem", () => {
       [{ message: messages[1], queriedData: [{ path: "/topic{value==1}.value", value: 1 }] }],
       [{ message: messages[1], queriedData: [{ path: "/topic{value==1}", value: messages[1].message }] }],
     ]);
+
+    root.unmount();
+  });
+
+  it("returns bobjects when told to", async () => {
+    const Test = createTest("bobjects");
+    const root = mount(
+      <MockMessagePipelineProvider messages={[messages[0]]} topics={topics} datatypes={datatypes}>
+        <Test path="/topic" />
+      </MockMessagePipelineProvider>
+    );
+    expect(Test.result.mock.calls).toHaveLength(1);
+    const {
+      message,
+      queriedData: [data],
+    } = Test.result.mock.calls[0][0] ?? {};
+    expect(deepParse(message.message)).toEqual(messages[0].message);
+    expect(deepParse(data.value)).toEqual(messages[0].message);
 
     root.unmount();
   });

@@ -18,10 +18,24 @@ You can also enter an arbitrary number, which will add a horizontal line at that
 
 To take the derivative of a value (change per second), use the special `.@derivative` modifier. This does not work with scatter plots (when using slices).
 
+To switch the sign of a value, use the special `.@negative` modifier at the end of the topic path syntax. The following math functions are also available: `.@abs`, `.@acos`, `.@asin`, `.@atan`, `.@ceil`, `.@cos`, `.@log`, `.@log1p`, `.@log2`, `.@log10`, `.@round`, `.@sign`, `.@sin`, `.@sqrt`, `.@tan`, and `.@trunc`. See the [Javascript Math documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math) for details on each one.
+
 ## Array Index as X-Axis
 
-Go into the Plot panel's settings to change your x-axis from being the messages' timestamps to being the message values' array indices. In this mode, if you add message path `/some_topic.some_array` as a new line in the plot, the plot will chart that array's values against their indices. For example, if `/some_topic.some_array` contained the values `[5, 10, 15]`, the resulting points on the chart would be `[0, 5]`, `[1, 10]`, and `[2, 15]`.
+In the legend, you can change the x-axis from being the messages' timestamps to their values' array indices. In this mode, adding message path `/some_topic.some_array` as a new line in the plot will chart that array's values against their indices. For example, if `/some_topic.some_array` contained the values `[5, 10, 15]`, the resulting points on the chart would be `[0, 5]`, `[1, 10]`, and `[2, 15]`.
+
+This mode always plots just the data from the latest tick.
+
+## Message Data as X-Axis
+
+In the legend, set the x-axis mode to a "msg path" option to specify a path to the data to use for the plot's x-coordinates. For example, you could plot a line for `/some_topic.y`, with the x axis set to `/some_topic.x`.
+
+To plot data from just the most recent tick, use the "msg path (current)" setting. To plot data from _all_ matching messages, use the "msg path (accumulated)" setting.
 
 ## User Interactions
 
-You can zoom by scrolling, and pan by dragging. Double-click to reset. To scroll in only the vertical direction (no horizontal scrolling), you can hold the `v` key while scrolling, and to scroll in only the horizontal direction you can hold the `h` key while scrolling.
+You can zoom by scrolling, and pan by dragging. Double-click to reset.
+
+By default, scrolling will zoom horizontally only. To zoom vertically, hold the `v` key while scrolling. To zoom both horizontally and vertically at the same time, hold the `b` key while scrolling.
+
+Some "default zoom level" settings are available in the panel settings menu. The y-axis limits can be given fixed values for any plot type. For plots where the x-axis represents the message timestamp, you can have the plot "follow" playback by specifying the plot's "viewport" (i.e. width in seconds).

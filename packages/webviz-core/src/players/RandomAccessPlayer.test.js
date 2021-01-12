@@ -9,11 +9,10 @@
 import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_ON_START_NS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
+import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
 import TestProvider from "./TestProvider";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { GetMessagesResult, GetMessagesTopics } from "webviz-core/src/dataProviders/types";
 import {
   type Message,
@@ -22,10 +21,14 @@ import {
   type PlayerState,
 } from "webviz-core/src/players/types";
 import sendNotification from "webviz-core/src/util/sendNotification";
-import { fromNanoSec } from "webviz-core/src/util/time";
+import { fromNanoSec, getSeekToTime, SEEK_ON_START_NS } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
-const playerOptions = { metricsCollector: undefined, seekToTime: { sec: 10, nsec: 0 } };
+const playerOptions = {
+  metricsCollector: undefined,
+  seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } },
+  notifyPlayerManager: async () => {},
+};
 
 class MessageStore {
   _messages: PlayerState[] = [];
@@ -67,6 +70,8 @@ describe("RandomAccessPlayer", () => {
   let mockDateNow;
   beforeEach(() => {
     mockDateNow = jest.spyOn(Date, "now").mockReturnValue(0);
+    // Remove any seek-to param in the URL
+    history.replaceState(null, window.title, location.pathname);
   });
   afterEach(async () => {
     mockDateNow.mockRestore();
@@ -101,11 +106,12 @@ describe("RandomAccessPlayer", () => {
           lastSeekTime: 0,
           messages: [],
           bobjects: [],
+          totalBytesReceived: 0,
           messageOrder: "receiveTime",
           speed: 0.2,
           startTime: { sec: 10, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
-          messageDefinitionsByTopic: {},
+          parsedMessageDefinitionsByTopic: {},
           playerWarnings: {},
         },
         capabilities: [PlayerCapabilities.setSpeed],
@@ -121,11 +127,11 @@ describe("RandomAccessPlayer", () => {
     source.close();
   });
 
-  it("without a specified seekToTime it seeks into the bag by a bit, so that there's something useful on the screen", async () => {
+  it("with the default seekToTime it seeks into the bag by a bit, so that there's something useful on the screen", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer(
       { name: "TestProvider", args: { provider }, children: [] },
-      { ...playerOptions, seekToTime: undefined }
+      { ...playerOptions, seekToTime: getSeekToTime() }
     );
     const store = new MessageStore(2);
     await source.setListener(store.add);
@@ -1165,8 +1171,10 @@ describe("RandomAccessPlayer", () => {
       setSubscriptions(): void {}
       close(): void {}
       recordDataProviderPerformance(): void {}
+      recordDataProviderStall(): void {}
       recordPlaybackTime(_time: Time): void {}
       recordBytesReceived(_bytes: number): void {}
+      recordUncachedRangeRequest(): void {}
       stats() {
         return {
           initialized: this._initialized,
@@ -1177,6 +1185,7 @@ describe("RandomAccessPlayer", () => {
         };
       }
       recordTimeToFirstMsgs(): void {}
+      recordDataProviderInitializePerformance() {}
     }
 
     it("delegates to metricsCollector on actions", async () => {
@@ -1353,6 +1362,24 @@ describe("RandomAccessPlayer", () => {
     player.close();
   });
 
+  it("does not seek until setListener is called to initialize the start and end time", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+
+    player.seekPlayback({ sec: 10, nsec: 0 });
+    expect(provider.getMessages).not.toHaveBeenCalled();
+
+    await player.setListener(store.add);
+    player.seekPlayback({ sec: 10, nsec: 0 });
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
   it("wraps playback when letting it play across the end boundary", async () => {
     const provider = new TestProvider();
     provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
@@ -1466,23 +1493,31 @@ describe("RandomAccessPlayer", () => {
     await store.done;
   });
 
-  it("requests messages for `preloadingFallback` subscriptions when preloading is disabled", async () => {
-    setExperimentalFeature("preloading", "alwaysOff");
-    expect.assertions(1);
-    const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
-    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+  describe("hasCachedRange", () => {
+    it("handles an empty progress range", async () => {
+      const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
+      const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+      await player.setListener(async () => {});
+      provider.extensionPoint.progressCallback({});
 
-    provider.getMessages = (start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> => {
-      expect(topics).toEqual({
-        parsedMessages: ["/fallback_parsed"],
-        bobjects: [],
-      });
-      return Promise.resolve(getMessagesResult);
-    };
+      expect(player.hasCachedRange({ sec: 10, nsec: 0 }, { sec: 10, nsec: 0 })).toBe(false);
+    });
 
-    const store = new MessageStore(2);
-    await source.setListener(store.add);
-    source.setSubscriptions([{ topic: "/fallback_parsed", format: "parsedMessages", preloadingFallback: true }]);
-    await store.done;
+    it("handles non-empty progress ranges", async () => {
+      const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
+      const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+      await player.setListener(async () => {});
+
+      // Provider start/end is 10s/100s. Load from 55s to 100s.
+      provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0.5, end: 1.0 }] });
+
+      expect(player.hasCachedRange({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toBe(false);
+      expect(player.hasCachedRange({ sec: 0, nsec: 0 }, { sec: 100, nsec: 0 })).toBe(false);
+
+      expect(player.hasCachedRange({ sec: 50, nsec: 0 }, { sec: 95, nsec: 0 })).toBe(false);
+      expect(player.hasCachedRange({ sec: 55, nsec: 0 }, { sec: 95, nsec: 0 })).toBe(true);
+      expect(player.hasCachedRange({ sec: 55, nsec: 0 }, { sec: 100, nsec: 0 })).toBe(true);
+      expect(player.hasCachedRange({ sec: 90, nsec: 0 }, { sec: 101, nsec: 0 })).toBe(false);
+    });
   });
 });

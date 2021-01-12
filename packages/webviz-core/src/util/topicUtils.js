@@ -29,16 +29,13 @@ export const makeTopicCombos = (...topicGroups: string[][]): string[] => {
 // Inspired by https://gist.github.com/tansongyang/9695563ad9f1fa5309b0af8aa6b3e7e3
 // ["foo", "bar"], ["cool", "beans"]] => [["foo", "cool"],["foo", "beans"],["bar", "cool"],["bar", "beans"],]
 export function cartesianProduct<T>(arrays: T[][]): T[][] {
-  return arrays.reduce(
-    (a, b) => {
-      return flatten<T[], T[]>(
-        a.map((x) => {
-          return b.map((y) => {
-            return x.concat([y]);
-          });
-        })
-      );
-    },
-    [[]]
-  );
+  return arrays.reduce((a, b) => {
+    return flatten<T[], T[]>(
+      a.map((x) => {
+        return b.map((y) => {
+          return x.concat([y]);
+        });
+      })
+    );
+  }, [[]]);
 }

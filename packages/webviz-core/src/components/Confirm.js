@@ -10,6 +10,7 @@ import React from "react";
 
 import styles from "./Confirm.module.scss";
 import Button from "webviz-core/src/components/Button";
+import Flex from "webviz-core/src/components/Flex";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
 
@@ -40,13 +41,19 @@ export default (props: Props): Promise<boolean> => {
       <Modal onRequestClose={() => close(false)}>
         <div className={styles.container}>
           <Title>{props.title || "Are you sure?"}</Title>
-          <div className={styles.prompt}>{props.prompt}</div>
-          <div className={styles.controls}>
-            {props.cancel !== false && <Button onClick={() => close(false)}>{props.cancel || "Cancel"}</Button>}
-            <Button danger={confirmStyle === "danger"} primary={confirmStyle === "primary"} onClick={() => close(true)}>
-              {props.ok || "OK"}
-            </Button>
-          </div>
+          <hr />
+          <Flex col style={{ padding: "32px" }}>
+            <div className={styles.prompt}>{props.prompt}</div>
+            <div className={styles.controls}>
+              {props.cancel !== false && <Button onClick={() => close(false)}>{props.cancel || "Cancel"}</Button>}
+              <Button
+                danger={confirmStyle === "danger"}
+                primary={confirmStyle === "primary"}
+                onClick={() => close(true)}>
+                {props.ok || "OK"}
+              </Button>
+            </div>
+          </Flex>
         </div>
       </Modal>
     );

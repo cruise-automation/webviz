@@ -16,14 +16,11 @@ type Props = {
 };
 
 const useUserNodes = ({ nodePlayer, userNodes }: Props) => {
-  React.useEffect(
-    () => {
-      if (nodePlayer) {
-        nodePlayer.setUserNodes(userNodes);
-      }
-    },
-    [userNodes, nodePlayer]
-  );
+  React.useEffect(() => {
+    if (nodePlayer) {
+      nodePlayer.setUserNodes(userNodes);
+    }
+  }, [userNodes, nodePlayer]);
 
   return null;
 };

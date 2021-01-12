@@ -8,7 +8,7 @@
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
 import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupSendReportNotificationHandler } from "webviz-core/src/util/RpcUtils";
+import { setupSendReportNotificationHandler } from "webviz-core/src/util/RpcWorkerUtils";
 import { enforceFetchIsBlocked, inSharedWorker } from "webviz-core/src/util/workers";
 
 if (!inSharedWorker()) {

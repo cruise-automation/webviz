@@ -13,6 +13,7 @@ import {
   validateInputTopics,
   compile,
   extractDatatypes,
+  extractGlobalVariables,
   compose,
   getInputTopics,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
@@ -31,6 +32,7 @@ export const baseNodeData: NodeData = {
   transpiledCode: "",
   diagnostics: [],
   inputTopics: [],
+  globalVariables: [],
   outputTopic: "",
   outputDatatype: "",
   datatypes: {},
@@ -73,7 +75,7 @@ describe("pipeline", () => {
       const { inputTopics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, sourceCode }, [], []);
+      )({ ...baseNodeData, sourceCode }, []);
 
       expect(inputTopics).toEqual(expectedTopics);
     });
@@ -87,7 +89,6 @@ describe("pipeline", () => {
           ...baseNodeData,
           sourceCode: "const x: string = 41",
         },
-        [],
         []
       );
       expect(nodeData.diagnostics.map(({ source }) => source)).toEqual([Sources.Typescript]);
@@ -111,7 +112,7 @@ describe("pipeline", () => {
       const { diagnostics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, sourceCode }, [], []);
+      )({ ...baseNodeData, sourceCode }, []);
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(errorCategory);
@@ -136,19 +137,8 @@ describe("pipeline", () => {
     );
   });
   describe("validateOutputTopic", () => {
-    it.each([
-      {
-        outputTopic: `${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`,
-        priorRegisteredTopics: [{ name: `${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`, datatype: "std_msgs/Header" }],
-      },
-    ])("errs duplicate declarations", ({ outputTopic, priorRegisteredTopics }) => {
-      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, [], priorRegisteredTopics);
-      expect(diagnostics.length).toEqual(1);
-      expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
-      expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.NOT_UNIQUE);
-    });
     it.each(["/bad_prefix"])("errs on bad topic prefixes", (outputTopic) => {
-      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, [], []);
+      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic });
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.BAD_PREFIX);
@@ -183,7 +173,7 @@ describe("pipeline", () => {
       const { diagnostics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, name: "/bad_name" }, [], []);
+      )({ ...baseNodeData, name: "/bad_name" }, []);
       expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
     });
     it.each(["const x: string = 'hello webviz'", "const num: number = 1222"])("can compile", (sourceCode) => {
@@ -345,6 +335,57 @@ describe("pipeline", () => {
     });
   });
 
+  describe("compile + extractGlobalVariables", () => {
+    const extract = compose(
+      compile,
+      extractGlobalVariables
+    );
+
+    it("should not run if there were any compile time errors", () => {
+      const nodeData = extract(
+        {
+          ...baseNodeData,
+          sourceCode: "const x: string = 41; type GlobalVariables = { foo: string; };",
+        },
+        []
+      );
+      expect(nodeData.globalVariables).toEqual([]);
+    });
+
+    it("extracts globalVariables from the AST", () => {
+      const nodeData = extract(
+        {
+          ...baseNodeData,
+          sourceCode: "type GlobalVariables = { foo: string; bar: number; };",
+        },
+        []
+      );
+      expect(nodeData.globalVariables).toEqual(["foo", "bar"]);
+    });
+
+    it("handles variables named GlobalVariables", () => {
+      const nodeData = extract(
+        {
+          ...baseNodeData,
+          sourceCode: "const GlobalVariables = { foo: 'string', num: 3 };",
+        },
+        []
+      );
+      expect(nodeData.globalVariables).toEqual([]);
+    });
+
+    it("allows empty GlobalVariables", () => {
+      const nodeData = extract(
+        {
+          ...baseNodeData,
+          sourceCode: "type GlobalVariables = {};",
+        },
+        []
+      );
+      expect(nodeData.globalVariables).toEqual([]);
+    });
+  });
+
   describe("compile + extractDatatypes", () => {
     const extract = compose(
       compile,
@@ -357,7 +398,6 @@ describe("pipeline", () => {
           ...baseNodeData,
           sourceCode: "const x: string = 41",
         },
-        [],
         []
       );
       expect(nodeData.diagnostics.map(({ source }) => source)).toEqual([Sources.Typescript]);
@@ -502,6 +542,15 @@ describe("pipeline", () => {
     const timeDatatypes = {
       [baseNodeData.name]: {
         fields: [{ arrayLength: undefined, isArray: false, isComplex: false, name: "stamp", type: "time" }],
+      },
+    };
+
+    const baseDatatypesWithNestedColor = {
+      ...baseDatatypes,
+      [baseNodeData.name]: {
+        fields: [
+          { arrayLength: undefined, isArray: false, isComplex: true, name: "color", type: "std_msgs/ColorRGBA" },
+        ],
       },
     };
 
@@ -1004,7 +1053,7 @@ describe("pipeline", () => {
         outputDatatype: "visualization_msgs/MarkerArray",
       },
       {
-        description: "Should any arbritrary datatype passed as the return type",
+        description: "Should return any arbritrary datatype as the return type",
         sourceCode: `
           import { Messages } from "ros";
 
@@ -1018,6 +1067,23 @@ describe("pipeline", () => {
           export default publisher;`,
         datatypes: baseDatatypes,
         outputDatatype: "std_msgs/ColorRGBA",
+      },
+      {
+        description: "Should return any arbritrary datatype w/nested autogenerated type as the return type",
+        sourceCode: `
+          import { Messages } from "ros";
+
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+
+          type ReturnType = { color: Messages.std_msgs__ColorRGBA };
+
+          const publisher = (message: any): ReturnType => {
+            return { color: { r: 1, g: 1, b: 1, a: 1 } };
+          };
+          export default publisher;`,
+        datatypes: baseDatatypesWithNestedColor,
+        outputDatatype: "/webviz_node/main",
       },
       {
         description: "Should handle type aliases",
@@ -1070,6 +1136,34 @@ describe("pipeline", () => {
           export default publisher;`,
         datatypes: baseDatatypes,
         outputDatatype: "std_msgs/ColorRGBA",
+      },
+      {
+        description: "Should handle ros json type fields",
+        sourceCode: `
+          import { Messages, json } from "ros";
+
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+
+          type Output = {
+            foo: string;
+            data: json;
+          };
+
+          const publisher = (message: any): Output => {
+            return { foo: 'test', data: { arr: [1, 2, 3], nested: { foo: 'bar' } } };
+          };
+          export default publisher;
+        `,
+        datatypes: {
+          "/webviz_node/main": {
+            fields: [
+              { arrayLength: undefined, isArray: false, isComplex: false, name: "foo", type: "string" },
+              { arrayLength: undefined, isArray: false, isComplex: false, name: "data", type: "json" },
+            ],
+          },
+        },
+        outputDatatype: "/webviz_node/main",
       },
       /*
         ERRORS
@@ -1389,7 +1483,7 @@ describe("pipeline", () => {
       filteredTestCases.forEach(({ description, sourceCode, datatypes = {}, error, outputDatatype, rosLib }) => {
         it(`${error ? "Expected Error: " : ""}${description}`, () => {
           const inputNodeData = { ...baseNodeData, datatypes, sourceCode, ...(rosLib ? { rosLib } : {}) };
-          const nodeData = extract(inputNodeData, [], []);
+          const nodeData = extract(inputNodeData, []);
           if (!error) {
             expect(nodeData.diagnostics).toEqual([]);
             expect(nodeData.outputDatatype).toEqual(outputDatatype || nodeData.name);

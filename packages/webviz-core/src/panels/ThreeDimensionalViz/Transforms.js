@@ -10,6 +10,7 @@ import { mat4, vec3, quat } from "gl-matrix";
 import type { Mat4 } from "gl-matrix";
 
 import type { TF, MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
+import { objectValues } from "webviz-core/src/util";
 
 // allocate some temporary variables
 // so we can copy/in out of them during tf application
@@ -140,11 +141,12 @@ class TfStore {
     return result;
   }
 
-  values = (): Array<Transform> => ((Object.values(this.storage): any): Array<Transform>);
+  values = (): Array<Transform> => objectValues(this.storage);
 }
 
 export default class Transforms {
   storage = new TfStore();
+  empty = true;
 
   // consume a tf message
   consume(tfMessage: TF) {
@@ -155,6 +157,7 @@ export default class Transforms {
     const { rotation, translation } = tfMessage.transform;
     tf.set(translation, rotation);
     tf.parent = this.storage.get(parentId);
+    this.empty = false;
   }
 
   // Apply the tf hierarchy to the original pose and update the pose supplied in the output parameter.

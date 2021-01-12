@@ -18,6 +18,7 @@ import {
   withPose,
 } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import withRenderStateOverrides from "../utils/withRenderStateOverrides";
 import Command, { type CommonCommandProps } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
@@ -144,8 +145,8 @@ const vertexColors = (regl) =>
 
 // command to render triangle lists optionally supporting vertex colors for each triangle
 const triangles = (regl: Regl) => {
-  const single = regl(singleColor(regl));
-  const vertex = regl(vertexColors(regl));
+  const single = withRenderStateOverrides(singleColor)(regl);
+  const vertex = withRenderStateOverrides(vertexColors)(regl);
   return (props: any, isHitmap: boolean) => {
     const items: TriangleList[] = Array.isArray(props) ? props : [props];
     const singleColorItems = [];
@@ -164,6 +165,10 @@ const triangles = (regl: Regl) => {
     single(singleColorItems);
     vertex(vertexColorItems);
   };
+};
+
+export const makeTrianglesCommand = () => {
+  return triangles;
 };
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(3);

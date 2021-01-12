@@ -142,6 +142,18 @@ export type ArrowMarker = $ReadOnly<
   }
 >;
 
+type IconMetadata = {
+  markerStyle: { [att: string]: string | number },
+  name: string,
+  iconOffset: { x: number, y: number },
+};
+export type OverlayIconMarker = $ReadOnly<
+  BaseMarker & {
+    type: 109,
+    metadata: IconMetadata,
+  }
+>;
+
 export type CubeMarker = $ReadOnly<
   BaseMarker & {
     type: 1,

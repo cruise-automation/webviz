@@ -35,7 +35,10 @@ window.videoRecording = {
     if (error) {
       // This object is serialized and deserialized to pass it to Puppeteer, so passing the error object itself will
       // just result in { "action": "error", "error": {} }. Instead pass a string - the stack itself.
-      const payload = { action: "error", error: error.stack };
+      const payload = {
+        action: "error",
+        error: error.stack || error.message || (error.toString && error.toString()) || (error: any),
+      };
       // Clear error, since if it is whitelisted we will ignore and try to keep running
       error = null;
       if (errorSignal) {
@@ -64,6 +67,9 @@ window.videoRecording = {
 };
 
 const params = new URLSearchParams(location.search);
+const [workerIndex = 0, workerTotal = 1] = (params.get("video-recording-worker") || "0/1")
+  .split("/")
+  .map((n) => parseInt(n));
 const msPerFrame = params.has("video-recording-framerate")
   ? 1000 / parseFloat(params.get("video-recording-framerate"))
   : 200;
@@ -71,20 +77,35 @@ const speed = params.has("video-recording-speed") ? parseFloat(params.get("video
 
 class VideoRecordingClient {
   msPerFrame = msPerFrame;
+  workerIndex = workerIndex;
+  workerTotal = workerTotal;
   speed = speed;
   shouldLoadDataBeforePlaying = false;
+  lastFrameStart = 0;
+  preloadStart = 0;
 
-  start() {
-    console.log("videoRecordingClient.start()");
+  start({ bagLengthMs }: { bagLengthMs: number }) {
+    console.log("videoRecordingClient.start()", bagLengthMs);
   }
 
-  markFrameRenderStart() {}
+  markFrameRenderStart() {
+    this.lastFrameStart = performance.now();
+  }
 
-  markFrameRenderEnd() {}
+  markFrameRenderEnd() {
+    return Math.round(performance.now() - this.lastFrameStart);
+  }
 
-  markPreloadStart() {}
+  markPreloadStart() {
+    this.preloadStart = performance.now();
+  }
 
-  markPreloadEnd() {}
+  markPreloadEnd() {
+    const preloadDurationMs = performance.now() - this.preloadStart;
+    const preloadTimeSec = (preloadDurationMs / 1000).toFixed(1);
+    console.log(`[VideoRecordingClient] Preload duration: ${preloadTimeSec}s`);
+    return preloadDurationMs;
+  }
 
   markTotalFrameStart() {}
 
@@ -99,12 +120,9 @@ class VideoRecordingClient {
   }
 
   async onFrameFinished(frameCount: number) {
-    // Don't take screenshots of the first few frames, and then wait a bit,
-    // to allow for the camera to get in position and images to load.
-    if (frameCount < 5) {
-      return;
-    } else if (frameCount === 5) {
-      await delay(3000);
+    // Wait a bit to allow for the camera to get in position and images to load.
+    if (frameCount === 0) {
+      await delay(5000);
       return;
     }
 

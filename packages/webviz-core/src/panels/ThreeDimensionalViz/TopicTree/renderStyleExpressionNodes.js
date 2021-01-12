@@ -124,32 +124,30 @@ function StyleExpressionNode(props) {
 
   // Callbacks
   const onToggleMenu = useCallback(() => setIsOpen((prevIsOpen) => !prevIsOpen), []);
-  const updateSettingsForGlobalVariable = useCallback(
-    (globalVariableName, settings: { active: boolean, color: Color }, sourceIdx = 0) => {
-      const updatedSettings = new Array(2)
-        .fill()
-        .map((_, i) => colorOverrideBySourceIdxByVariable[globalVariableName]?.[i]);
-      updatedSettings[sourceIdx] = settings;
-      setColorOverrideBySourceIdxByVariable({
-        ...colorOverrideBySourceIdxByVariable,
-        [globalVariableName]: updatedSettings,
-      });
-    },
-    [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable]
-  );
+  const updateSettingsForGlobalVariable = useCallback((
+    globalVariableName,
+    settings: { active: boolean, color: Color },
+    sourceIdx = 0
+  ) => {
+    const updatedSettings = new Array(2)
+      .fill()
+      .map((_, i) => colorOverrideBySourceIdxByVariable[globalVariableName]?.[i]);
+    updatedSettings[sourceIdx] = settings;
+    setColorOverrideBySourceIdxByVariable({
+      ...colorOverrideBySourceIdxByVariable,
+      [globalVariableName]: updatedSettings,
+    });
+  }, [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable]);
 
   // Mouse-hover handlers
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-  const mouseEventHandlersByColumnIdx = useMemo(
-    () => {
-      const topicNameByColumnIdx = [topic, joinTopics(SECOND_SOURCE_PREFIX, topic)];
-      return topicNameByColumnIdx.map((_topic) => ({
-        onMouseEnter: () => setHoveredMarkerMatchers([{ topic: _topic, checks: [{ markerKeyPath, value }] }]),
-        onMouseLeave,
-      }));
-    },
-    [markerKeyPath, onMouseLeave, setHoveredMarkerMatchers, topic, value]
-  );
+  const mouseEventHandlersByColumnIdx = useMemo(() => {
+    const topicNameByColumnIdx = [topic, joinTopics(SECOND_SOURCE_PREFIX, topic)];
+    return topicNameByColumnIdx.map((_topic) => ({
+      onMouseEnter: () => setHoveredMarkerMatchers([{ topic: _topic, checks: [{ markerKeyPath, value }] }]),
+      onMouseLeave,
+    }));
+  }, [markerKeyPath, onMouseLeave, setHoveredMarkerMatchers, topic, value]);
 
   const tooltipContent = (
     <TooltipRow>
@@ -211,6 +209,8 @@ function StyleExpressionNode(props) {
                   size="SMALL"
                   unavailableTooltip={""}
                   visibleInScene={active}
+                  diffModeEnabled={false}
+                  columnIndex={sourceIdx}
                   {...mouseEventHandlersByColumnIdx[sourceIdx]}
                 />
               );

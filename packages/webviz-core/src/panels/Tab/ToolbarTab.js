@@ -17,7 +17,6 @@ import styles from "./Tab.module.scss";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { type TabActions } from "webviz-core/src/panels/Tab/TabDndContext";
-import colorsModule from "webviz-core/src/styles/colors.module.scss";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const FONT_SIZE = 12;
@@ -36,7 +35,7 @@ const STab = styled.div.attrs(({ isActive, value, tabCount, isDragging, hidden, 
     opacity: hidden ? 0 : 1,
     borderColor: isDragging || highlight ? colors.DARK6 : "transparent",
     boxShadow: isDragging ? `0px 2px 6px rgba(0, 0, 0, 0.2)` : "none",
-    backgroundColor: isActive ? colors.DARK4 : isDragging ? colorsModule.panelBackground : "transparent",
+    backgroundColor: isActive ? colors.DARK4 : isDragging ? colors.DARK2 : "transparent",
     minWidth: isActive
       ? `calc(max(${MIN_ACTIVE_TAB_WIDTH}px,  min(${Math.ceil(
           measureText(value) + 30
@@ -85,24 +84,21 @@ export function ToolbarTab(props: Props) {
   );
   const setTabTitle = useCallback(() => actions.setTabTitle(tabIndex, title), [actions, tabIndex, title]);
 
-  const onClickTab = useCallback(
-    () => {
-      if (!isActive) {
-        selectTab();
-      } else {
-        setEditingTitle(true);
+  const onClickTab = useCallback(() => {
+    if (!isActive) {
+      selectTab();
+    } else {
+      setEditingTitle(true);
 
-        setImmediate(() => {
-          if (inputRef.current) {
-            const inputEl: HTMLInputElement = inputRef.current;
-            inputEl.focus();
-            inputEl.select();
-          }
-        });
-      }
-    },
-    [isActive, selectTab, inputRef]
-  );
+      setImmediate(() => {
+        if (inputRef.current) {
+          const inputEl: HTMLInputElement = inputRef.current;
+          inputEl.focus();
+          inputEl.select();
+        }
+      });
+    }
+  }, [isActive, selectTab, inputRef]);
 
   const endTitleEditing = useCallback(() => {
     setEditingTitle(false);
@@ -111,50 +107,35 @@ export function ToolbarTab(props: Props) {
     }
   }, []);
 
-  const confirmNewTitle = useCallback(
-    () => {
-      setTabTitle();
-      endTitleEditing();
-    },
-    [endTitleEditing, setTabTitle]
-  );
+  const confirmNewTitle = useCallback(() => {
+    setTabTitle();
+    endTitleEditing();
+  }, [endTitleEditing, setTabTitle]);
 
-  const resetTitle = useCallback(
-    () => {
-      setTitle(tabTitle || "");
-      endTitleEditing();
-    },
-    [endTitleEditing, tabTitle]
-  );
+  const resetTitle = useCallback(() => {
+    setTitle(tabTitle || "");
+    endTitleEditing();
+  }, [endTitleEditing, tabTitle]);
 
-  const onKeyDown = useCallback(
-    (event: SyntheticKeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Escape") {
-        resetTitle();
-      } else if (event.key === "Enter") {
-        confirmNewTitle();
-      }
-    },
-    [confirmNewTitle, resetTitle]
-  );
+  const onKeyDown = useCallback((event: SyntheticKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      resetTitle();
+    } else if (event.key === "Enter") {
+      confirmNewTitle();
+    }
+  }, [confirmNewTitle, resetTitle]);
 
   // If the tab is no longer active, stop editing the title
-  useEffect(
-    () => {
-      if (!isActive) {
-        setEditingTitle(false);
-      }
-    },
-    [isActive]
-  );
+  useEffect(() => {
+    if (!isActive) {
+      setEditingTitle(false);
+    }
+  }, [isActive]);
 
   // Update the cached title if the tabTitle changes
-  useEffect(
-    () => {
-      setTitle(tabTitle);
-    },
-    [tabTitle]
-  );
+  useEffect(() => {
+    setTitle(tabTitle);
+  }, [tabTitle]);
 
   return (
     <STab

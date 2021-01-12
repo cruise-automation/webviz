@@ -67,22 +67,49 @@ type Props = {|
   size?: ?Size,
   unavailableTooltip?: string,
   visibleInScene: boolean,
+  diffModeEnabled: boolean,
+  columnIndex: number,
 |};
+
+function diffModeStyleOverrides(checked: boolean, columnIndex: number): any {
+  if (!checked) {
+    return {
+      border: `1px solid ${DISABLED_COLOR}`,
+    };
+  }
+
+  const firstColor = columnIndex === 0 ? colors.DIFF_MODE_SOURCE_1 : colors.DIFF_MODE_SOURCE_BOTH;
+  const secondColor = columnIndex === 0 ? colors.DIFF_MODE_SOURCE_BOTH : colors.DIFF_MODE_SOURCE_2;
+  return {
+    background: `linear-gradient(90deg, ${firstColor} 0%, ${firstColor} 50%, ${secondColor} 51%, ${secondColor} 100%)`,
+  };
+}
 
 function getStyles({
   checked,
   visibleInScene,
   overrideColor,
   size,
+  diffModeEnabled,
+  columnIndex,
 }: {
   checked: boolean,
   visibleInScene: boolean,
   overrideColor: ?Color,
   size: ?Size,
+  diffModeEnabled: boolean,
+  columnIndex: number,
 }): any {
   const sizeInNumber =
     size === TOGGLE_SIZE_CONFIG.SMALL.name ? TOGGLE_SIZE_CONFIG.SMALL.size : TOGGLE_SIZE_CONFIG.NORMAL.size;
   let styles = { width: sizeInNumber, height: sizeInNumber, borderRadius: sizeInNumber / 2 };
+
+  if (diffModeEnabled) {
+    return {
+      ...styles,
+      ...diffModeStyleOverrides(checked, columnIndex),
+    };
+  }
 
   const overrideHexColor = getHexFromColorSettingWithDefault(overrideColor);
   const { enabledColor, disabledColor } = overrideColor
@@ -118,20 +145,19 @@ export default function VisibilityToggle({
   visibleInScene,
   onMouseEnter,
   onMouseLeave,
+  diffModeEnabled,
+  columnIndex,
 }: Props) {
   // Handle shift + click/enter, option + click/enter, and click/enter.
-  const onChange = useCallback(
-    (e: MouseEvent | KeyboardEvent) => {
-      if (onShiftToggle && e.shiftKey) {
-        onShiftToggle();
-      } else if (onAltToggle && e.altKey) {
-        onAltToggle();
-      } else {
-        onToggle();
-      }
-    },
-    [onAltToggle, onShiftToggle, onToggle]
-  );
+  const onChange = useCallback((e: MouseEvent | KeyboardEvent) => {
+    if (onShiftToggle && e.shiftKey) {
+      onShiftToggle();
+    } else if (onAltToggle && e.altKey) {
+      onAltToggle();
+    } else {
+      onToggle();
+    }
+  }, [onAltToggle, onShiftToggle, onToggle]);
 
   if (!available) {
     return (
@@ -174,6 +200,8 @@ export default function VisibilityToggle({
           visibleInScene,
           size,
           overrideColor,
+          diffModeEnabled,
+          columnIndex,
         })}
       />
     </SToggle>

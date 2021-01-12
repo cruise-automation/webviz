@@ -8,6 +8,7 @@
 
 import { type FieldReader, Uint8Reader, getReader } from "./readers";
 import { DATATYPE, type VertexBuffer } from "./types";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type ColorMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 import type { PointField } from "webviz-core/src/types/Messages";
 
@@ -108,6 +109,8 @@ function extractValues({
   };
 }
 
+export const SPHERICAL_RANGE_SCALE = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.pointCloudSphericalRangeScale;
+
 export function createPositionBuffer({
   data,
   fields,
@@ -119,6 +122,13 @@ export function createPositionBuffer({
   pointCount: number,
   stride: number,
 |}): VertexBuffer {
+  const positions = getGlobalHooks()
+    .perPanelHooks()
+    .ThreeDimensionalViz.createPointCloudPositionBuffer({ data, fields, pointCount, stride });
+  if (positions) {
+    return positions;
+  }
+
   // Check if all position components are stored next to each other
   const positionIsValid =
     fields.y.offset - fields.x.offset === FLOAT_SIZE && fields.z.offset - fields.y.offset === FLOAT_SIZE;

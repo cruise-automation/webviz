@@ -13,6 +13,7 @@ import styled from "styled-components";
 import { getMessageDocumentationLink } from "./utils";
 import Icon from "webviz-core/src/components/Icon";
 import type { Message } from "webviz-core/src/players/types";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import clipboard from "webviz-core/src/util/clipboard";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 
@@ -44,9 +45,10 @@ function CopyMessageButton({ text, onClick }) {
 
 export default function Metadata({ data, diffData, diff, datatype, message, diffMessage }: Props) {
   const onClickCopy = useCallback(
-    (dataToCopy) => (e: SyntheticMouseEvent<HTMLSpanElement>) => {
+    (maybeBobject) => (e: SyntheticMouseEvent<HTMLSpanElement>) => {
       e.stopPropagation();
       e.preventDefault();
+      const dataToCopy = isBobject(maybeBobject) ? deepParse(maybeBobject) : maybeBobject;
       const dataWithoutLargeArrays = cloneDeepWith(dataToCopy, (value) => {
         if (typeof value === "object" && value.buffer) {
           return "<buffer>";

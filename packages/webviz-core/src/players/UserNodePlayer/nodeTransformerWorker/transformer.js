@@ -37,15 +37,18 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 // source code.
 const ts = require("typescript/lib/typescript");
 
+export const hasTransformerErrors = (nodeData: NodeData): boolean =>
+  nodeData.diagnostics.some(({ severity }) => severity === DiagnosticSeverity.Error);
+
 export const getInputTopics = (nodeData: NodeData): NodeData => {
-  const { sourceFile, typeChecker } = nodeData;
   // Do not attempt to run if there were any previous errors.
-  if (nodeData.diagnostics.find(({ severity }) => severity === DiagnosticSeverity.Error)) {
+  if (hasTransformerErrors(nodeData)) {
     return nodeData;
   }
 
+  const { sourceFile, typeChecker } = nodeData;
   if (!sourceFile || !typeChecker) {
-    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
+    throw new Error("Either the 'sourceFile' or 'typeChecker' is absent. There is a problem with the `compile` step.");
   }
 
   if (!sourceFile.symbol) {
@@ -173,13 +176,8 @@ export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeDa
   };
 };
 
-export const validateOutputTopic = (
-  nodeData: NodeData,
-  topics: Topic[],
-  priorRegisteredTopics: $ReadOnlyArray<Topic>
-): NodeData => {
+export const validateOutputTopic = (nodeData: NodeData): NodeData => {
   const { outputTopic } = nodeData;
-
   if (!outputTopic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
     return {
       ...nodeData,
@@ -194,22 +192,6 @@ export const validateOutputTopic = (
       ],
     };
   }
-
-  if (priorRegisteredTopics.some((topic) => topic.name === outputTopic)) {
-    return {
-      ...nodeData,
-      diagnostics: [
-        ...nodeData.diagnostics,
-        {
-          severity: DiagnosticSeverity.Error,
-          message: `Output "${outputTopic}" must be unique`,
-          source: Sources.OutputTopicChecker,
-          code: ErrorCodes.OutputTopicChecker.NOT_UNIQUE,
-        },
-      ],
-    };
-  }
-
   return nodeData;
 };
 
@@ -323,15 +305,40 @@ export const compile = (nodeData: NodeData): NodeData => {
   };
 };
 
+// Currently we only look types matching the exact name "GlobalVariables". In the future,
+// we should check the type of the 2nd arg passed to the publisher function in
+// case users have renamed the GlobalVariables type.
+export const extractGlobalVariables = (nodeData: NodeData): NodeData => {
+  // Do not attempt to run if there were any compile time errors.
+  if (hasTransformerErrors(nodeData)) {
+    return nodeData;
+  }
+
+  const { sourceFile } = nodeData;
+  if (!sourceFile) {
+    throw new Error("'sourceFile' is absent'. There is a problem with the `compile` step.");
+  }
+
+  // If the GlobalVariables type isn't defined, that's ok.
+  const globalVariablesTypeSymbol = sourceFile.locals.get("GlobalVariables");
+  const memberSymbolsByName = globalVariablesTypeSymbol?.declarations[0]?.type?.symbol?.members ?? new Map();
+  const globalVariables = [...memberSymbolsByName.keys()];
+
+  return {
+    ...nodeData,
+    globalVariables,
+  };
+};
+
 export const extractDatatypes = (nodeData: NodeData): NodeData => {
   // Do not attempt to run if there were any compile time errors.
-  if (nodeData.diagnostics.find(({ severity }) => severity === DiagnosticSeverity.Error)) {
+  if (hasTransformerErrors(nodeData)) {
     return nodeData;
   }
 
   const { sourceFile, typeChecker, name, datatypes: sourceDatatypes } = nodeData;
   if (!sourceFile || !typeChecker) {
-    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
+    throw new Error("Either the 'sourceFile' or 'typeChecker' is absent'. There is a problem with the `compile` step.");
   }
 
   // Keys each message definition like { 'std_msg__ColorRGBA': 'std_msg/ColorRGBA' }
@@ -353,7 +360,7 @@ export const extractDatatypes = (nodeData: NodeData): NodeData => {
 
     // If we've hit this case, then we should fix it.
     sendNotification(
-      "Unknown error encountered in Node Playground. Please report to the webviz team.",
+      "Unknown error encountered in Node Playground. Please report to the webviz team",
       error,
       "app",
       "error"
@@ -378,11 +385,11 @@ TODO:
   - what happens when the `register` portion of the node pipeline fails to instantiate the code? can we get the stack trace?
 */
 export const compose = (...transformers: NodeDataTransformer[]): NodeDataTransformer => {
-  return (nodeData: NodeData, topics: Topic[], priorRegisteredTopics: $ReadOnlyArray<Topic>) => {
+  return (nodeData: NodeData, topics: Topic[]) => {
     let newNodeData = nodeData;
     // TODO: try/catch here?
     for (const transformer of transformers) {
-      newNodeData = transformer(newNodeData, topics, priorRegisteredTopics);
+      newNodeData = transformer(newNodeData, topics);
     }
     return newNodeData;
   };
@@ -404,14 +411,12 @@ const transform = ({
   name,
   sourceCode,
   topics,
-  priorRegisteredTopics,
   rosLib,
   datatypes,
 }: {
   name: string,
   sourceCode: string,
   topics: Topic[],
-  priorRegisteredTopics: $ReadOnlyArray<Topic>,
   rosLib: string,
   datatypes: RosDatatypes,
 }): NodeData & { sourceFile: ?void, typeChecker: ?void } => {
@@ -421,7 +426,8 @@ const transform = ({
     compile,
     getInputTopics,
     validateInputTopics,
-    extractDatatypes
+    extractDatatypes,
+    extractGlobalVariables
   );
 
   const result = transformer(
@@ -435,12 +441,12 @@ const transform = ({
       outputTopic: "",
       outputDatatype: "",
       diagnostics: [],
+      globalVariables: [],
       datatypes,
       sourceFile: undefined,
       typeChecker: undefined,
     },
-    topics,
-    priorRegisteredTopics
+    topics
   );
   return { ...result, sourceFile: null, typeChecker: null };
 };

@@ -28,13 +28,15 @@ import Hammer from "hammerjs";
 import React from "react";
 import uuid from "uuid";
 
-import { type ScaleOptions as ManagerScaleOptions } from "./ChartJSManager";
-import MainThreadChartJSWorker from "./ChartJSWorker";
+import type { ScaleOptions as ManagerScaleOptions } from "./ChartJSManager";
 import ChartJSWorker from "./ChartJSWorker.worker";
 import { type ScaleBounds, type ZoomOptions, type PanOptions, wheelZoomHandler } from "./zoomAndPanHelpers";
+import { objectValues } from "webviz-core/src/util";
 import { getFakeRpcs, type RpcLike } from "webviz-core/src/util/FakeRpc";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
+
+const getMainThreadChartJSWorker = () => import(/* webpackChunkName: "main-thread-chartjs" */ "./ChartJSWorker");
 
 export type HoveredElement = any;
 export type ScaleOptions = ManagerScaleOptions;
@@ -60,7 +62,7 @@ type Props = {|
 
 const devicePixelRatio = window.devicePixelRatio || 1;
 
-const webWorkerManager = new WebWorkerManager(ChartJSWorker, 8);
+const webWorkerManager = new WebWorkerManager(ChartJSWorker, 4);
 
 class ChartComponent extends React.PureComponent<Props> {
   canvas: ?HTMLCanvasElement;
@@ -90,7 +92,7 @@ class ChartComponent extends React.PureComponent<Props> {
     panOptions: { mode: "xy", enabled: true, speed: 20, threshold: 10 },
   };
 
-  _getRpc = (): RpcLike => {
+  _getRpc = async (): Promise<RpcLike> => {
     if (this._chartRpc) {
       return this._chartRpc;
     }
@@ -102,11 +104,17 @@ class ChartComponent extends React.PureComponent<Props> {
     } else {
       // Otherwise use a fake RPC so that we don't have to maintain two separate APIs.
       const { mainThreadRpc, workerRpc } = getFakeRpcs();
+      const { default: MainThreadChartJSWorker } = await getMainThreadChartJSWorker();
       new MainThreadChartJSWorker(workerRpc);
       this._chartRpc = mainThreadRpc;
       this._usingWebWorker = false;
     }
     return this._chartRpc;
+  };
+
+  _sendToRpc = async (event: string, data: any, transferrables?: any[]): Promise<ScaleBounds[]> => {
+    const rpc = await this._getRpc();
+    return rpc.send(event, data, transferrables);
   };
 
   componentDidMount() {
@@ -125,23 +133,21 @@ class ChartComponent extends React.PureComponent<Props> {
       node = this.canvas.transferControlToOffscreen();
     }
     this._node = node;
-    this._getRpc()
-      .send(
-        "initialize",
-        {
-          node,
-          id: this._id,
-          type,
-          data,
-          options,
-          scaleOptions,
-          devicePixelRatio,
-          width,
-          height,
-        },
-        [node]
-      )
-      .then((scaleBoundsUpdate) => this._onUpdateScaleBounds(scaleBoundsUpdate));
+    this._sendToRpc(
+      "initialize",
+      {
+        node,
+        id: this._id,
+        type,
+        data,
+        options,
+        scaleOptions,
+        devicePixelRatio,
+        width,
+        height,
+      },
+      [node]
+    ).then((scaleBoundsUpdate) => this._onUpdateScaleBounds(scaleBoundsUpdate));
   }
 
   componentDidUpdate() {
@@ -152,15 +158,14 @@ class ChartComponent extends React.PureComponent<Props> {
       chartUpdateId = uuid.v4();
       this._onEndChartUpdateCallbacks[chartUpdateId] = onEndChartUpdate;
     }
-    this._getRpc()
-      .send("update", {
-        id: this._id,
-        data,
-        options,
-        scaleOptions,
-        width,
-        height,
-      })
+    this._sendToRpc("update", {
+      id: this._id,
+      data,
+      options,
+      scaleOptions,
+      width,
+      height,
+    })
       .then((scaleBoundsUpdate) => {
         this._onUpdateScaleBounds(scaleBoundsUpdate);
       })
@@ -174,8 +179,7 @@ class ChartComponent extends React.PureComponent<Props> {
 
   componentWillUnmount() {
     // If this component will unmount, resolve any pending update callbacks.
-    // $FlowFixMe
-    Object.values(this._onEndChartUpdateCallbacks).forEach((callback) => callback());
+    objectValues(this._onEndChartUpdateCallbacks).forEach((callback) => callback());
     this._onEndChartUpdateCallbacks = {};
 
     if (this._chartRpc) {
@@ -212,13 +216,13 @@ class ChartComponent extends React.PureComponent<Props> {
       x: event.clientX - boundingRect.left,
       y: event.clientY - boundingRect.top,
     };
-    return this._getRpc().send("getElementAtXAxis", { id: this._id, event: newEvent });
+    return this._sendToRpc("getElementAtXAxis", { id: this._id, event: newEvent });
   };
 
   // Pan/zoom section
 
   resetZoom = async () => {
-    const scaleBoundsUpdate = await this._getRpc().send("resetZoom", { id: this._id });
+    const scaleBoundsUpdate = await this._sendToRpc("resetZoom", { id: this._id });
     this._onUpdateScaleBounds(scaleBoundsUpdate);
   };
 
@@ -242,7 +246,7 @@ class ChartComponent extends React.PureComponent<Props> {
         const deltaY = event.deltaY - this._currentDeltaY;
         this._currentDeltaX = event.deltaX;
         this._currentDeltaY = event.deltaY;
-        const scaleBoundsUpdate = await this._getRpc().send("doPan", {
+        const scaleBoundsUpdate = await this._sendToRpc("doPan", {
           id: this._id,
           panOptions: this.props.panOptions,
           deltaX,
@@ -263,7 +267,7 @@ class ChartComponent extends React.PureComponent<Props> {
     hammerManager.on("panend", () => {
       this._currentDeltaX = null;
       this._currentDeltaY = null;
-      this._getRpc().send("resetPanDelta", this._id);
+      this._sendToRpc("resetPanDelta", this._id);
       setTimeout(() => {
         this._panning = false;
       }, 500);
@@ -303,7 +307,7 @@ class ChartComponent extends React.PureComponent<Props> {
       // Keep track of overall scale
       this._currentPinchScaling = e.scale;
 
-      const scaleBoundsUpdate = await this._getRpc().send("doZoom", {
+      const scaleBoundsUpdate = await this._sendToRpc("doZoom", {
         id: this._id,
         zoomOptions: this.props.zoomOptions,
         percentZoomX: diff,
@@ -322,7 +326,7 @@ class ChartComponent extends React.PureComponent<Props> {
     hammerManager.on("pinchend", (e) => {
       handlePinch(e);
       this._currentPinchScaling = 1; // reset
-      this._getRpc().send("resetZoomDelta", { id: this._id });
+      this._sendToRpc("resetZoomDelta", { id: this._id });
     });
   }
 
@@ -331,7 +335,7 @@ class ChartComponent extends React.PureComponent<Props> {
       return;
     }
     const { percentZoomX, percentZoomY, focalPoint } = wheelZoomHandler(event, this.props.zoomOptions);
-    const scaleBoundsUpdate = await this._getRpc().send("doZoom", {
+    const scaleBoundsUpdate = await this._sendToRpc("doZoom", {
       id: this._id,
       zoomOptions: this.props.zoomOptions,
       percentZoomX,
@@ -364,7 +368,7 @@ class ChartComponent extends React.PureComponent<Props> {
       const newEvent = { x, y };
       // Since our next call is asynchronous, we have to persist the event so that React doesn't clear it.
       event.persist();
-      const datalabel = await this._getRpc().send("getDatalabelAtEvent", { id: this._id, event: newEvent });
+      const datalabel = await this._sendToRpc("getDatalabelAtEvent", { id: this._id, event: newEvent });
       onClick(event, datalabel);
     }
   };

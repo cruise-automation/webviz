@@ -6,21 +6,29 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { createMemoryHistory } from "history";
+import { uniq } from "lodash";
 import * as React from "react";
 import { Worldview } from "regl-worldview";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import delay from "webviz-core/shared/delay";
+import { selectAllPanelIds } from "webviz-core/src/actions/mosaic";
 import Flex from "webviz-core/src/components/Flex";
+import PanelLayout from "webviz-core/src/components/PanelLayout";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
 import ThreeDimensionalViz, { type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import type { Frame, Topic } from "webviz-core/src/players/types";
+import createRootReducer from "webviz-core/src/reducers";
 import Store from "webviz-core/src/store";
+import configureStore from "webviz-core/src/store/configureStore";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { basicDatatypes } from "webviz-core/src/util/datatypes";
+import PanelSetupWithBag from "webviz-core/src/stories/PanelSetupWithBag";
+import { ScreenshotSizedContainer } from "webviz-core/src/stories/storyHelpers";
+import { createRosDatatypesFromFrame } from "webviz-core/src/test/datatypes";
+import { objectValues } from "webviz-core/src/util";
+import { isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 export type FixtureExampleData = {
   topics: { [topicName: string]: Topic },
@@ -28,20 +36,20 @@ export type FixtureExampleData = {
   globalVariables?: { [name: string]: string | number },
 };
 
-function bobjectify(fixture: FixtureExampleData, datatypes: RosDatatypes = basicDatatypes): FixtureExampleData {
-  const { SUPPORTED_BOBJECT_MARKER_DATATYPES } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
-  const topicsArray = topics instanceof Array ? topics : Object.keys(topics).map((name) => topics[name]);
+  const topicsArray = topics instanceof Array ? topics : objectValues(topics);
+
+  const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
   topicsArray.forEach(({ name: topicName, datatype }) => {
     if (frame[topicName]) {
-      newFrame[topicName] = frame[topicName].map((msg) => {
-        const message = SUPPORTED_BOBJECT_MARKER_DATATYPES.has(datatype)
-          ? wrapJsObject(datatypes, datatype, msg.message)
-          : msg.message;
-        return { topic: msg.topic, receiveTime: msg.receiveTime, message };
-      });
+      newFrame[topicName] = frame[topicName].map(({ topic, receiveTime, message }) => ({
+        topic,
+        receiveTime,
+        message: !isBobject(message) ? wrapJsObject(datatypes, datatype, message) : message,
+      }));
     }
   });
   return { ...fixture, frame: newFrame };
@@ -53,8 +61,6 @@ type FixtureExampleProps = {|
   loadData?: Promise<FixtureExampleData>,
   futureTime?: boolean,
   onMount?: (?HTMLDivElement, store?: Store) => void,
-  bobjects?: boolean,
-  datatypes?: RosDatatypes,
 |};
 
 type FixtureExampleState = {| fixture: ?any, config: $Shape<ThreeDimensionalVizConfig> |};
@@ -89,7 +95,7 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
   }
 
   updateState = (data: FixtureExampleData) => {
-    const { topics, globalVariables, frame } = data;
+    const { topics, globalVariables } = data;
     this.setState(
       {
         fixture: {
@@ -103,9 +109,8 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
         // Additional delay to allow the 3D panel's dynamic setSubscriptions to take effect
         // *before* the fixture changes, not in the same update cycle.
         setImmediate(() => {
-          const bobjects = getExperimentalFeature("bobject3dPanel");
           this.setState((state) => ({
-            fixture: { ...state.fixture, frame: bobjects ? bobjectify(data, this.props.datatypes).frame : frame },
+            fixture: { ...state.fixture, frame: bobjectify(data).frame },
           }));
           // Additional delay to trigger updating available namespaces after consuming
           // the messages in SceneBuilder.
@@ -144,3 +149,61 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
     );
   }
 }
+
+export const ThreeDimPanelSetupWithBag = ({
+  threeDimensionalConfig,
+  globalVariables = {},
+  bag,
+}: {
+  threeDimensionalConfig: $Shape<ThreeDimensionalVizConfig>,
+  globalVariables: {},
+  bag: string,
+}) => {
+  const store: Store = configureStore(createRootReducer(createMemoryHistory()));
+  const topics = uniq(
+    threeDimensionalConfig.checkedKeys
+      .filter((key) => key.startsWith("t:"))
+      .map((topic) => topic.substring(2))
+      .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics)
+  );
+
+  return (
+    <ScreenshotSizedContainer>
+      <PanelSetupWithBag
+        frameHistoryCompatibility
+        bag={bag}
+        subscriptions={topics}
+        store={store}
+        onMount={() => {
+          setImmediate(async () => {
+            await delay(500); // Wait for the panel to finish resizing
+            // Select the panel so we can control with the keyboard
+            store.dispatch(selectAllPanelIds());
+          });
+        }}
+        getMergedFixture={(bagFixture) => ({
+          ...bagFixture,
+          globalVariables: { ...globalVariables },
+          layout: {
+            first: "3D Panel!a",
+            second: "GlobalVariableSliderPanel!b",
+            direction: "column",
+            splitPercentage: 92.7860696517413,
+          },
+          savedProps: {
+            "3D Panel!a": threeDimensionalConfig,
+            "GlobalVariableSliderPanel!b": {
+              sliderProps: {
+                min: 0,
+                max: 12,
+                step: 0.5,
+              },
+              globalVariableName: "futureTime",
+            },
+          },
+        })}>
+        <PanelLayout />
+      </PanelSetupWithBag>
+    </ScreenshotSizedContainer>
+  );
+};

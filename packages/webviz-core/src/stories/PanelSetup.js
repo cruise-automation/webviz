@@ -13,7 +13,6 @@ import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { Mosaic, MosaicWindow } from "react-mosaic-component";
 
-import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
 import {
   changePanelLayout,
   overwriteGlobalVariables,
@@ -32,6 +31,7 @@ import Store from "webviz-core/src/store";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { MosaicNode, SavedProps, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 import { isBobject } from "webviz-core/src/util/binaryObjects";
 
 export type Fixture = {|
@@ -41,7 +41,6 @@ export type Fixture = {|
   activeData?: $Shape<PlayerStateActiveData>,
   progress?: Progress,
   datatypes?: RosDatatypes,
-  auxiliaryData?: any,
   globalVariables?: GlobalVariables,
   layout?: ?MosaicNode,
   linkedGlobalVariables?: LinkedGlobalVariables,
@@ -57,7 +56,7 @@ type Props = {|
   children: React.Node,
   fixture: Fixture,
   omitDragAndDrop?: boolean,
-  onMount?: (HTMLDivElement, store: Store) => void,
+  onMount?: (HTMLDivElement, store: Store) => ?Promise<any>, // optional promise to allow for awaits in onMount
   onFirstMount?: (HTMLDivElement) => void,
   store?: Store,
   style?: { [string]: any },
@@ -127,7 +126,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
     const {
-      auxiliaryData,
       globalVariables,
       userNodes,
       layout,
@@ -137,9 +135,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       userNodeRosLib,
       savedProps,
     } = props.fixture;
-    if (auxiliaryData) {
-      store.dispatch(setAuxiliaryData(() => auxiliaryData));
-    }
     if (globalVariables) {
       store.dispatch(overwriteGlobalVariables(globalVariables));
     }
@@ -190,7 +185,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       }
       dTypes = dummyDatatypes;
     }
-    const allData = flatten(Object.keys(frame).map((topic) => frame[topic]));
+    const allData = flatten(objectValues(frame));
     const [bobjects, messages] = partition(allData, ({ message }) => isBobject(message));
     return (
       <div
@@ -210,7 +205,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
           topics={topics}
           datatypes={dTypes}
           messages={messages}
-          bobjects={bobjects}
+          bobjects={bobjects.length > 0 ? bobjects : undefined}
           activeData={activeData}
           progress={progress}
           store={this.state.store}>

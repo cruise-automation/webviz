@@ -65,7 +65,7 @@ function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
 }
 
 export function tryToSetDefaultGlobalVar(variableName: string, setGlobalVariables: (GlobalVariables) => void): boolean {
-  const defaultGlobalVars = getGlobalHooks().getDefaultGlobalVariables();
+  const defaultGlobalVars = getGlobalHooks().getDefaultPersistedState().panels.globalVariables;
   if (Object.keys(defaultGlobalVars).includes(variableName)) {
     setGlobalVariables({ [variableName]: defaultGlobalVars[variableName] });
     return true;
@@ -350,7 +350,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
           onSelect={(value: string, item: any, autocomplete: Autocomplete) =>
             this._onSelect(value, autocomplete, autocompleteType, autocompleteRange)
           }
-          hasError={!!autocompleteType && !disableAutocomplete}
+          hasError={!!autocompleteType && !disableAutocomplete && path.length}
           autocompleteKey={autocompleteType}
           placeholder={placeholder || "/some/topic.msgs[0].field"}
           autoSize={autoSize}

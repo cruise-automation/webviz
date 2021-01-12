@@ -7,12 +7,13 @@
 //  You may not use this file except in compliance with the License.
 import path from "path";
 
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { ProcessMessageOutput, RegistrationOutput } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 // Each node runtime worker runs one node at a time, hence why we have one
 // global declaration of 'nodeCallback'.
-let nodeCallback: (message: {}) => void | {} = () => {};
+let nodeCallback: (message: {}, globalVariables: GlobalVariables) => void | {} = () => {};
 
 if (process.env.NODE_ENV === "test") {
   // When in tests, clear out the callback between tests.
@@ -110,7 +111,13 @@ export const registerNode = ({
   }
 };
 
-export const processMessage = ({ message }: { message: {} }): ProcessMessageOutput => {
+export const processMessage = ({
+  message,
+  globalVariables,
+}: {
+  message: {},
+  globalVariables: GlobalVariables,
+}): ProcessMessageOutput => {
   const userNodeLogs = [];
   const userNodeDiagnostics = [];
   self.log = function(...args) {
@@ -122,7 +129,7 @@ export const processMessage = ({ message }: { message: {} }): ProcessMessageOutp
     userNodeLogs.push(...args.map((value) => ({ source: "processMessage", value })));
   };
   try {
-    const newMessage = nodeCallback(message);
+    const newMessage = nodeCallback(message, globalVariables);
     return { message: newMessage, error: null, userNodeLogs, userNodeDiagnostics };
   } catch (e) {
     // TODO: Be able to map line numbers from errors.

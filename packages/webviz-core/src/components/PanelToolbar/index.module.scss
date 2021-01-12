@@ -61,7 +61,7 @@ $panelToolbarSpacing: 4px;
     }
 
     &:not(.hasChildren) .iconContainer {
-      background-color: $toolbar;
+      background-color: $dark3;
       border-radius: 4px;
       box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
     }

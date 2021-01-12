@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
@@ -14,7 +13,7 @@ import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDa
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
 import RewriteBinaryDataProvider from "webviz-core/src/dataProviders/RewriteBinaryDataProvider";
 
-function getProvider(useBinaryObjects: boolean = false) {
+function getProvider() {
   return new ParseMessagesDataProvider(
     {},
     [
@@ -24,7 +23,7 @@ function getProvider(useBinaryObjects: boolean = false) {
         children: [
           {
             name: CoreDataProviders.RewriteBinaryDataProvider,
-            args: { useBinaryObjects },
+            args: {},
             children: [
               {
                 name: CoreDataProviders.BagDataProvider,
@@ -43,17 +42,10 @@ function getProvider(useBinaryObjects: boolean = false) {
 const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
+  notifyPlayerManager: async () => {},
 };
 
 describe("ParseMessagesDataProvider", () => {
-  beforeEach(() => {
-    setExperimentalFeature("preloading", "alwaysOn");
-  });
-
-  afterEach(() => {
-    setExperimentalFeature("preloading", "default");
-  });
-
   it("initializes", async () => {
     const provider = getProvider();
     const result = await provider.initialize(dummyExtensionPoint);
@@ -70,7 +62,11 @@ describe("ParseMessagesDataProvider", () => {
       { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
       { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
     ]);
-    expect(Object.keys(result.datatypes)).toContainOnly([
+    const { messageDefinitions } = result;
+    if (messageDefinitions.type !== "parsed") {
+      throw new Error("ParseMessagesDataProvider should return parsed message definitions");
+    }
+    expect(Object.keys(messageDefinitions.datatypes)).toContainOnly([
       "rosgraph_msgs/Log",
       "std_msgs/Header",
       "turtlesim/Color",
@@ -131,7 +127,7 @@ describe("ParseMessagesDataProvider", () => {
   });
 
   it("does not return parsed messages for binary-only requests", async () => {
-    const provider = getProvider(true);
+    const provider = getProvider();
     await provider.initialize(dummyExtensionPoint);
     const start = { sec: 1396293887, nsec: 844783943 };
     const end = { sec: 1396293888, nsec: 60000000 };

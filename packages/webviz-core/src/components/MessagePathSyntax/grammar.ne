@@ -104,7 +104,7 @@ filter -> "{" simplePath:? "}"
             %}
 
 ## Modifier.
-# Optional modifier at the end of a path, e.g. `.@derivative`. Currently only used by the Plot
+# Optional modifier at the end of a path, e.g. `.@derivative` or Math modifiers. Currently only used by the Plot
 # panel, and we should either deprecate this or actually support it properly.
 modifier -> ".@" id:?
   {% (d) => d[1] || "" %}

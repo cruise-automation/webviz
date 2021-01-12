@@ -9,7 +9,13 @@
 import Worldview from "./Worldview";
 
 export { default as Bounds } from "./utils/Bounds";
-export { selectors as cameraStateSelectors, CameraStore, DEFAULT_CAMERA_STATE } from "./camera/index";
+export {
+  camera,
+  selectors as cameraStateSelectors,
+  CameraStore,
+  DEFAULT_CAMERA_STATE,
+  CameraListener,
+} from "./camera/index";
 export * from "./utils/commandUtils";
 export { default as eulerFromQuaternion } from "./utils/eulerFromQuaternion";
 export { default as fromGeometry } from "./utils/fromGeometry";

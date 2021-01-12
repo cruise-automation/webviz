@@ -10,8 +10,6 @@ import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
 import delay from "webviz-core/shared/delay";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
-import { MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
@@ -28,12 +26,15 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-  type MessageDefinitionsByTopic,
+  type ParsedMessageDefinitionsByTopic,
+  type NotifyPlayerManager,
 } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { SEEK_TO_UNIX_MS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { stringifyParams } from "webviz-core/src/util/layout";
+import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
@@ -41,8 +42,12 @@ import {
   clampTime,
   fromMillis,
   fromNanoSec,
+  getSeekTimeFromSpec,
+  percentOf,
+  SEEK_ON_START_NS,
   subtractTimes,
   toSec,
+  type SeekToTimeSpec,
   type TimestampMethod,
 } from "webviz-core/src/util/time";
 
@@ -66,16 +71,6 @@ const NO_WARNINGS = Object.freeze({});
 // fetching too many.
 export const SEEK_BACK_NANOSECONDS = 299 /* ms */ * 1e6;
 
-// Amount to seek into the bag from the start when loading the player, to show
-// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
-// MemoryCacheDataProvider so we still stay within the first block when fetching
-// initial data.
-export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
-if (SEEK_ON_START_NS >= MEM_CACHE_BLOCK_SIZE_NS) {
-  throw new Error(
-    "SEEK_ON_START_NS should be less than MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
-  );
-}
 if (SEEK_ON_START_NS >= SEEK_BACK_NANOSECONDS) {
   throw new Error(
     "SEEK_ON_START_NS should be less than SEEK_BACK_NANOSECONDS (otherwise we skip over messages at the start)"
@@ -120,18 +115,26 @@ export default class RandomAccessPlayer implements Player {
   _id: string = uuid.v4();
   _messages: Message[] = [];
   _bobjects: $ReadOnlyArray<BobjectMessage> = [];
+  _receivedBytes: number = 0;
   _messageOrder: TimestampMethod = "receiveTime";
   _hasError = false;
   _closed = false;
-  _seekToTime: ?Time;
+  _seekToTime: SeekToTimeSpec;
+  _notifyPlayerManager: NotifyPlayerManager;
   _lastRangeMillis: ?number;
-  _messageDefinitionsByTopic: MessageDefinitionsByTopic;
-  _preloadingEnabled: boolean;
-  _bobjectsEnabled: boolean;
+  _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
-    { metricsCollector, seekToTime }: { metricsCollector: ?PlayerMetricsCollectorInterface, seekToTime: ?Time }
+    {
+      metricsCollector,
+      seekToTime,
+      notifyPlayerManager,
+    }: {
+      metricsCollector: ?PlayerMetricsCollectorInterface,
+      seekToTime: SeekToTimeSpec,
+      notifyPlayerManager: NotifyPlayerManager,
+    }
   ) {
     if (process.env.NODE_ENV === "test" && providerDescriptor.name === "TestProvider") {
       this._provider = providerDescriptor.args.provider;
@@ -140,9 +143,8 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector = metricsCollector || new NoopMetricsCollector();
     this._seekToTime = seekToTime;
-    this._preloadingEnabled = getExperimentalFeature("preloading");
-    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
     this._metricsCollector.playerConstructed();
+    this._notifyPlayerManager = notifyPlayerManager;
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
@@ -191,31 +193,41 @@ export default class RandomAccessPlayer implements Player {
               this._reconnecting = metadata.reconnecting;
               this._emitState();
               break;
-            case "performance":
+            case "average_throughput":
               this._metricsCollector.recordDataProviderPerformance(metadata);
+              break;
+            case "initializationPerformance":
+              this._metricsCollector.recordDataProviderInitializePerformance(metadata);
+              break;
+            case "received_bytes":
+              this._receivedBytes += metadata.bytes;
+              break;
+            case "data_provider_stall":
+              this._metricsCollector.recordDataProviderStall(metadata);
               break;
             default:
               (metadata.type: empty);
           }
         },
+        notifyPlayerManager: this._notifyPlayerManager,
       })
-      .then(({ start, end, topics, datatypes, messageDefinitionsByTopic, providesParsedMessages }) => {
+      .then(({ start, end, topics, messageDefinitions, providesParsedMessages }) => {
         if (!providesParsedMessages) {
           throw new Error("Use ParseMessagesDataProvider to parse raw messages");
         }
+        const parsedMessageDefinitions = messageDefinitions;
+        if (parsedMessageDefinitions.type === "raw") {
+          throw new Error("RandomAccessPlayer requires parsed message definitions");
+        }
 
-        const initialTime = clampTime(
-          this._seekToTime || TimeUtil.add(start, fromNanoSec(SEEK_ON_START_NS)),
-          start,
-          end
-        );
+        const initialTime = getSeekTimeFromSpec(this._seekToTime, start, end);
 
         this._start = start;
         this._currentTime = initialTime;
         this._end = end;
         this._providerTopics = topics;
-        this._providerDatatypes = datatypes;
-        this._messageDefinitionsByTopic = messageDefinitionsByTopic;
+        this._providerDatatypes = parsedMessageDefinitions.datatypes;
+        this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
         this._initializing = false;
         this._reportInitialized();
 
@@ -273,13 +285,12 @@ export default class RandomAccessPlayer implements Player {
 
       // If paused at the start of a datasource, remove seek-to param
       if (atDataStart) {
-        params.delete(SEEK_TO_QUERY_KEY);
+        params.delete(SEEK_TO_UNIX_MS_QUERY_KEY);
       } else {
         // Otherwise, update the seek-to param
-        params.set(SEEK_TO_QUERY_KEY, `${toMillis(this._currentTime)}`);
+        params.set(SEEK_TO_UNIX_MS_QUERY_KEY, `${toMillis(this._currentTime)}`);
       }
-      const newSearch = params.toString();
-      history.replaceState({}, window.title, `${location.pathname}${newSearch ? `?${newSearch}` : newSearch}`);
+      history.replaceState({}, window.title, `${location.pathname}${stringifyParams(params)}`);
     }
 
     const data = {
@@ -294,6 +305,7 @@ export default class RandomAccessPlayer implements Player {
         : {
             messages,
             bobjects,
+            totalBytesReceived: this._receivedBytes,
             messageOrder: this._messageOrder,
             currentTime: clampTime(this._currentTime, this._start, this._end),
             startTime: this._start,
@@ -303,7 +315,7 @@ export default class RandomAccessPlayer implements Player {
             lastSeekTime: this._lastSeekEmitTime,
             topics: this._providerTopics,
             datatypes: this._providerDatatypes,
-            messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+            parsedMessageDefinitionsByTopic: this._parsedMessageDefinitionsByTopic,
             playerWarnings: NO_WARNINGS,
           },
     };
@@ -404,6 +416,9 @@ export default class RandomAccessPlayer implements Player {
     if (parsedTopics.length + bobjectTopics.length === 0) {
       return { parsedMessages: [], bobjects: [] };
     }
+    if (!this.hasCachedRange(start, end)) {
+      this._metricsCollector.recordUncachedRangeRequest();
+    }
     const messages = await this._provider.getMessages(start, end, {
       bobjects: bobjectTopics,
       parsedMessages: parsedTopics,
@@ -469,10 +484,7 @@ export default class RandomAccessPlayer implements Player {
       });
     return {
       parsedMessages: filterMessages(parsedMessages, parsedTopics),
-      // The data providers send ROS binary messages in place of bobjects when the flag is off. This
-      // is useful for some tests, but causes some havoc in practice when people assume `!isBobject`
-      // means "is parsed" in panels and nodes.
-      bobjects: this._bobjectsEnabled ? filterMessages(bobjects, bobjectTopics) : [],
+      bobjects: filterMessages(bobjects, bobjectTopics),
     };
   }
 
@@ -513,7 +525,7 @@ export default class RandomAccessPlayer implements Player {
   }
 
   _setCurrentTime(time: Time): void {
-    this._metricsCollector.recordPlaybackTime(time);
+    this._metricsCollector.recordPlaybackTime(time, !this.hasCachedRange(this._start, this._end));
     this._currentTime = clampTime(time, this._start, this._end);
   }
 
@@ -551,6 +563,10 @@ export default class RandomAccessPlayer implements Player {
   });
 
   seekPlayback(time: Time, backfillDuration: ?Time): void {
+    // Only seek when the provider initialization is done.
+    if (!this._start || !this._end) {
+      return;
+    }
     this._metricsCollector.seek(time);
     this._setCurrentTime(time);
     this._seekPlaybackInternal(backfillDuration);
@@ -567,9 +583,9 @@ export default class RandomAccessPlayer implements Player {
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {
     const [bobjectSubscriptions, parsedSubscriptions] = partition(
       // Anything we can get from the data providers will be in the blocks. Subscriptions for
-      // preloading-fallback codepaths are only needed when preloading is disabled, or for other
-      // data sources without blocks (like nodes and websocket.)
-      newSubscriptions.filter(({ preloadingFallback }) => !this._preloadingEnabled || !preloadingFallback),
+      // preloading-fallback codepaths are only needed for other data sources without blocks (like
+      // nodes and websocket.)
+      newSubscriptions.filter(({ preloadingFallback }) => !preloadingFallback),
       ({ format }) => format === "bobjects"
     );
     this._parsedSubscribedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
@@ -600,4 +616,16 @@ export default class RandomAccessPlayer implements Player {
     this._metricsCollector.close();
     document.removeEventListener("visibilitychange", this._handleDocumentVisibilityChange);
   }
+
+  // Exposed for testing.
+  hasCachedRange(start: Time, end: Time) {
+    const fractionStart = percentOf(this._start, this._end, start) / 100;
+    const fractionEnd = percentOf(this._start, this._end, end) / 100;
+    return isRangeCoveredByRanges(
+      { start: fractionStart, end: fractionEnd },
+      this._progress.fullyLoadedFractionRanges ?? []
+    );
+  }
+
+  setGlobalVariables() {}
 }

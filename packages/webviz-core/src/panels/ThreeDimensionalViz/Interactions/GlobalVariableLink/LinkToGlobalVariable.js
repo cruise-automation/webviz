@@ -48,15 +48,12 @@ export default function LinkToGlobalVariable({
   const [isOpen, _setIsOpen] = React.useState<boolean>(false);
   const [name, setName] = React.useState(() => getInitialName(markerKeyPath));
 
-  const setIsOpen = React.useCallback(
-    (newValue: boolean) => {
-      _setIsOpen(newValue);
-      if (newValue) {
-        setName(getInitialName(markerKeyPath));
-      }
-    },
-    [markerKeyPath]
-  );
+  const setIsOpen = React.useCallback((newValue: boolean) => {
+    _setIsOpen(newValue);
+    if (newValue) {
+      setName(getInitialName(markerKeyPath));
+    }
+  }, [markerKeyPath]);
 
   const { setGlobalVariables } = useGlobalVariables();
   const { linkedGlobalVariables, setLinkedGlobalVariables } = useLinkedGlobalVariables();

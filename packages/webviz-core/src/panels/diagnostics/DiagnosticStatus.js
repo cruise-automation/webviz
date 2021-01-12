@@ -335,7 +335,9 @@ class DiagnosticStatus extends React.Component<Props, *> {
                     Name: <code>{status.name}</code>
                   </div>
                 }>
-                <th colSpan={2}>{displayName}</th>
+                <th data-test="DiagnosticStatus-display-name" colSpan={2}>
+                  {displayName}
+                </th>
               </Tooltip>
             </tr>
             <tr className={cx(style.row, statusClass)}>

@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
-import type { Message } from "webviz-core/src/players/types";
+import type { Message, PlayerState } from "webviz-core/src/players/types";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 let lastSeekTimeCounter = 1;
@@ -16,7 +16,7 @@ const lastSeekTime = () => {
   return lastSeekTimeCounter;
 };
 
-const playerStateWithMessages = (messages, messageOrder) => ({
+const playerStateWithMessages = (messages, messageOrder): PlayerState => ({
   isPresent: true,
   showSpinner: false,
   showInitializing: false,
@@ -29,7 +29,7 @@ const playerStateWithMessages = (messages, messageOrder) => ({
       { name: "/bar", datatype: "visualization_msgs/Marker" },
     ],
     datatypes: {},
-    messageDefinitionsByTopic: {},
+    parsedMessageDefinitionsByTopic: {},
     currentTime: {
       sec: 1,
       nsec: 11,
@@ -43,6 +43,7 @@ const playerStateWithMessages = (messages, messageOrder) => ({
     bobjects: [],
     messageOrder,
     playerWarnings: {},
+    totalBytesReceived: 1234,
   },
 });
 

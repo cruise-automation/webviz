@@ -10,7 +10,7 @@ import type { UserNodeDiagnostics, UserNodeLogs } from "webviz-core/src/players/
 
 type SET_USER_NODE_DIAGNOSTICS = {
   type: "SET_USER_NODE_DIAGNOSTICS",
-  payload: UserNodeDiagnostics,
+  payload: { diagnostics: UserNodeDiagnostics, skipSettingLocalStorage: true },
 };
 
 type ADD_USER_NODE_LOGS = {
@@ -28,9 +28,9 @@ type SET_USER_NODE_ROS_LIB = {
   payload: string,
 };
 
-export const setUserNodeDiagnostics = (payload: UserNodeDiagnostics) => ({
+export const setUserNodeDiagnostics = (diagnostics: UserNodeDiagnostics) => ({
   type: "SET_USER_NODE_DIAGNOSTICS",
-  payload,
+  payload: { diagnostics, skipSettingLocalStorage: true },
 });
 
 export const addUserNodeLogs = (payload: UserNodeLogs) => ({

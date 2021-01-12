@@ -5,6 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { debounce } from "lodash";
+
 export function arrayToPoint(v: ?[number, number, number]) {
   if (!v) {
     return null;
@@ -76,3 +78,36 @@ export function downloadFiles(files: { blob: Blob, fileName: string }[]) {
 export function positiveModulo(number: number, modulus: number): number {
   return ((number % modulus) + modulus) % modulus;
 }
+
+// Object.values returns mixed[], which is difficult to get Flow to accept.
+export function objectValues<K, V>(o: $ReadOnly<{ [keys: K]: V }>): V[] {
+  return (Object.values(o): any);
+}
+
+// Used when we want to limit some log rate, but the log contents depend on the combined contents
+// of each event (like a sum).
+export const debounceReduce = <A, T>({
+  action, // Debounced function
+  wait,
+  reducer, // Combining/mapping function for action's argument
+  initialValue,
+}: {
+  action: (A) => void,
+  wait: number,
+  reducer: (A, T) => A,
+  initialValue: A,
+}): ((T) => void) => {
+  let current = initialValue;
+  const debounced = debounce(
+    () => {
+      action(current);
+      current = initialValue;
+    },
+    wait,
+    { leading: true, trailing: true }
+  );
+  return (next: T) => {
+    current = reducer(current, next);
+    debounced();
+  };
+};

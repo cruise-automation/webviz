@@ -18,9 +18,9 @@ import TextContent from "webviz-core/src/components/TextContent";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import logEvent, { getEventNames } from "webviz-core/src/util/logEvent";
 import Storage from "webviz-core/src/util/Storage";
 
-const { logger, eventNames } = getGlobalHooks().getEventLogger() || {};
 // All these are exported for tests; please don't use them directly in your code.
 export type FeatureDescriptions = {
   [id: string]: {|
@@ -30,6 +30,8 @@ export type FeatureDescriptions = {
     productionDefault: boolean,
   |},
 };
+
+export type FeatureValue = "default" | "alwaysOn" | "alwaysOff";
 export type FeatureStorage = { [id: string]: "alwaysOn" | "alwaysOff" };
 export type FeatureSettings = { [id: string]: { enabled: boolean, manuallySet: boolean } };
 export const EXPERIMENTAL_FEATURES_STORAGE_KEY = "experimentalFeaturesSettings";
@@ -45,7 +47,7 @@ function getDefaultKey(): "productionDefault" | "developmentDefault" {
 function getExperimentalFeatureSettings(): FeatureSettings {
   const experimentalFeaturesList = getExperimentalFeaturesList();
   const settings: FeatureSettings = {};
-  const featureStorage = new Storage().get<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
+  const featureStorage = new Storage().getItem<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
   for (const id in experimentalFeaturesList) {
     if (["alwaysOn", "alwaysOff"].includes(featureStorage[id])) {
       settings[id] = { enabled: featureStorage[id] === "alwaysOn", manuallySet: true };
@@ -92,18 +94,18 @@ export function getExperimentalFeature(id: string): boolean {
   return settings[id].enabled;
 }
 
-export function setExperimentalFeature(id: string, value: "default" | "alwaysOn" | "alwaysOff"): void {
+export function setExperimentalFeature(id: string, value: FeatureValue): void {
   const storage = new Storage();
-  const newSettings = { ...storage.get(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
-  if (logger && eventNames?.CHANGE_EXPERIMENTAL_FEATURE) {
-    logger({ name: eventNames.CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
-  }
+  const newSettings = { ...storage.getItem(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
+
+  logEvent({ name: getEventNames().CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
+
   if (value === "default") {
     delete newSettings[id];
   } else {
     newSettings[id] = value;
   }
-  storage.set(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
+  storage.setItem(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
   for (const update of subscribedComponents) {
     update();
   }
@@ -150,57 +152,62 @@ export function ExperimentalFeaturesModal(props: {|
 
   return (
     <Modal onRequestClose={props.onRequestClose || noop}>
-      <div style={{ padding: 16, maxWidth: 500, maxHeight: "90vh", overflow: "auto" }}>
-        <Title>Experimental Features</Title>
-        <TextContent>
-          <p>
-            Enable or disable any experimental features. These settings will be stored your the browser’s{" "}
-            <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">local storage</a> for{" "}
-            <em>{window.location.host}</em>. They will <em>not</em> be associated with your layout, user account, or
-            persisted in any backend.
-          </p>
-          {Object.keys(list).length === 0 && (
+      <div style={{ maxWidth: 500, maxHeight: "90vh", overflow: "auto" }}>
+        <Title>Experimental features</Title>
+        <hr />
+        <div style={{ padding: "32px" }}>
+          <TextContent>
             <p>
-              <em>Currently there are no experimental features.</em>
+              Enable or disable any experimental features. These settings will be stored your the browser’s{" "}
+              <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">local storage</a> for{" "}
+              <em>{window.location.host}</em>. They will <em>not</em> be associated with your layout, user account, or
+              persisted in any backend.
             </p>
-          )}
-        </TextContent>
-        {Object.keys(list).map((id: string) => {
-          const feature = list[id];
-          return (
-            <div key={id} style={{ marginTop: 24 }}>
-              <TextContent>
-                <h2>
-                  {feature.name} <code style={{ fontSize: 12 }}>{id}</code>{" "}
-                  <span style={{ whiteSpace: "nowrap" }}>
-                    {settings[id].enabled ? <IconOn /> : <IconOff />}
-                    {settings[id].manuallySet ? <IconManuallySet /> : undefined}
-                  </span>
-                </h2>
-                {feature.description}
-              </TextContent>
-              <div style={{ marginTop: 8 }}>
-                <Radio
-                  selectedId={settings[id].manuallySet ? (settings[id].enabled ? "alwaysOn" : "alwaysOff") : "default"}
-                  onChange={(value) => {
-                    if (value !== "default" && value !== "alwaysOn" && value !== "alwaysOff") {
-                      throw new Error(`Invalid value for radio button: ${value}`);
+            {Object.keys(list).length === 0 && (
+              <p>
+                <em>Currently there are no experimental features.</em>
+              </p>
+            )}
+          </TextContent>
+          {Object.keys(list).map((id: string) => {
+            const feature = list[id];
+            return (
+              <div key={id} style={{ marginTop: 24 }}>
+                <TextContent>
+                  <h2>
+                    {feature.name} <code style={{ fontSize: 12 }}>{id}</code>{" "}
+                    <span style={{ whiteSpace: "nowrap" }}>
+                      {settings[id].enabled ? <IconOn /> : <IconOff />}
+                      {settings[id].manuallySet ? <IconManuallySet /> : undefined}
+                    </span>
+                  </h2>
+                  {feature.description}
+                </TextContent>
+                <div style={{ marginTop: 8 }}>
+                  <Radio
+                    selectedId={
+                      settings[id].manuallySet ? (settings[id].enabled ? "alwaysOn" : "alwaysOff") : "default"
                     }
-                    setExperimentalFeature(id, value);
-                  }}
-                  options={[
-                    {
-                      id: "default",
-                      label: `Default for ${window.location.host} (${feature[getDefaultKey()] ? "on" : "off"})`,
-                    },
-                    { id: "alwaysOn", label: "Always on" },
-                    { id: "alwaysOff", label: "Always off" },
-                  ]}
-                />
+                    onChange={(value) => {
+                      if (value !== "default" && value !== "alwaysOn" && value !== "alwaysOff") {
+                        throw new Error(`Invalid value for radio button: ${value}`);
+                      }
+                      setExperimentalFeature(id, value);
+                    }}
+                    options={[
+                      {
+                        id: "default",
+                        label: `Default for ${window.location.host} (${feature[getDefaultKey()] ? "on" : "off"})`,
+                      },
+                      { id: "alwaysOn", label: "Always on" },
+                      { id: "alwaysOff", label: "Always off" },
+                    ]}
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </Modal>
   );

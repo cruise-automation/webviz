@@ -220,7 +220,6 @@ export default class CachedFilelike implements Filelike {
           this._logFn(`Connection @ ${rangeToString(range)} threw another error; closing: ${error.toString()}`);
 
           this._closed = true;
-          currentConnection.stream.destroy();
           for (const request of this._readRequests) {
             request.callback(error);
           }
@@ -232,6 +231,7 @@ export default class CachedFilelike implements Filelike {
       // mark the current connection as destroyed, and try again.
       this._logFn(`Connection @ ${rangeToString(range)} threw error; trying to continue: ${error.toString()}`);
       this._lastErrorTime = Date.now();
+      currentConnection.stream.destroy();
       delete this._currentConnection;
       this._updateState();
     });

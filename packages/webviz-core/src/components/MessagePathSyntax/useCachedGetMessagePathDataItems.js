@@ -16,13 +16,14 @@ import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSynta
 import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
-import type { ReflectiveMessage, RosValue, Topic } from "webviz-core/src/players/types";
+import type { ReflectiveMessage, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { fieldNames, getField, getIndex } from "webviz-core/src/util/binaryObjects";
 import { useChangeDetector, useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
 import { enumValuesByDatatypeAndField, getTopicsByTopicName } from "webviz-core/src/util/selectors";
 
 export type MessagePathDataItem = {|
-  value: RosValue, // The actual value.
+  value: mixed, // The actual value.
   // TODO(JP): Maybe this should just be a simple path without nice ids, and then have a separate function
   // to generate "nice ids". Because they might not always be reliable and we might want to use different
   // kinds of "nice ids" for different purposes, e.g. `[10]{id==5}{other_id=123}` for tooltips (more information)
@@ -43,19 +44,16 @@ export function useCachedGetMessagePathDataItems(
 
   // We first fill in global variables in the paths, so we can later see which paths have really
   // changed when the global variables have changed.
-  const unmemoizedFilledInPaths: { [string]: RosPath } = useMemo(
-    () => {
-      const filledInPaths = {};
-      for (const path of memoizedPaths) {
-        const rosPath = parseRosPath(path);
-        if (rosPath) {
-          filledInPaths[path] = fillInGlobalVariablesInPath(rosPath, globalVariables);
-        }
+  const unmemoizedFilledInPaths: { [string]: RosPath } = useMemo(() => {
+    const filledInPaths = {};
+    for (const path of memoizedPaths) {
+      const rosPath = parseRosPath(path);
+      if (rosPath) {
+        filledInPaths[path] = fillInGlobalVariablesInPath(rosPath, globalVariables);
       }
-      return filledInPaths;
-    },
-    [globalVariables, memoizedPaths]
-  );
+    }
+    return filledInPaths;
+  }, [globalVariables, memoizedPaths]);
   const memoizedFilledInPaths = useDeepMemo<{ [string]: RosPath }>(unmemoizedFilledInPaths);
 
   // Cache MessagePathDataItem arrays by Message. We need to clear out this cache whenever
@@ -79,29 +77,26 @@ export function useCachedGetMessagePathDataItems(
     }
   }
 
-  return useCallback(
-    (path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
-      if (!memoizedPaths.includes(path)) {
-        throw new Error(`path (${path}) was not in the list of cached paths`);
-      }
-      const filledInPath = memoizedFilledInPaths[path];
-      if (!filledInPath) {
-        return;
-      }
-      if (!cachesByPath.current[path]) {
-        cachesByPath.current[path] = { filledInPath, weakMap: new WeakMap() };
-      }
-      const { weakMap } = cachesByPath.current[path];
-      if (!weakMap.has(message)) {
-        const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
-        weakMap.set(message, messagePathDataItems);
-        return messagePathDataItems;
-      }
-      const messagePathDataItems = weakMap.get(message);
+  return useCallback((path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
+    if (!memoizedPaths.includes(path)) {
+      throw new Error(`path (${path}) was not in the list of cached paths`);
+    }
+    const filledInPath = memoizedFilledInPaths[path];
+    if (!filledInPath) {
+      return;
+    }
+    if (!cachesByPath.current[path]) {
+      cachesByPath.current[path] = { filledInPath, weakMap: new WeakMap() };
+    }
+    const { weakMap } = cachesByPath.current[path];
+    if (!weakMap.has(message)) {
+      const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
+      weakMap.set(message, messagePathDataItems);
       return messagePathDataItems;
-    },
-    [datatypes, memoizedFilledInPaths, memoizedPaths, providerTopics]
-  );
+    }
+    const messagePathDataItems = weakMap.get(message);
+    return messagePathDataItems;
+  }, [datatypes, memoizedFilledInPaths, memoizedPaths, providerTopics]);
 }
 
 function filterMatches(filter: MessagePathFilter, value: any) {
@@ -111,7 +106,7 @@ function filterMatches(filter: MessagePathFilter, value: any) {
 
   let currentValue = value;
   for (const name of filter.path) {
-    currentValue = currentValue[name];
+    currentValue = getField(currentValue, name);
     if (currentValue == null) {
       return false;
     }
@@ -217,7 +212,7 @@ export function getMessagePathDataItems(
       const next = structureItem.nextByName[pathItem.name];
       const nextStructIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
       traverse(
-        value[pathItem.name],
+        getField(value, pathItem.name),
         pathIndex + 1,
         `${path}.${pathItem.name}`,
         !nextStructIsJson ? next : { structureType: "primitive", primitiveType: "json", datatype: "" }
@@ -226,7 +221,12 @@ export function getMessagePathDataItems(
       pathItem.type === "name" &&
       (structureItem.primitiveType === "time" || structureItem.primitiveType === "duration")
     ) {
-      traverse(value[pathItem.name], pathIndex + 1, `${path}.${pathItem.name}`, TIME_NEXT_BY_NAME[pathItem.name]);
+      traverse(
+        getField(value, pathItem.name),
+        pathIndex + 1,
+        `${path}.${pathItem.name}`,
+        TIME_NEXT_BY_NAME[pathItem.name]
+      );
     } else if (pathItem.type === "slice" && (structureItem.structureType === "array" || structureIsJson)) {
       const { start, end } = pathItem;
       if (typeof start === "object" || typeof end === "object") {
@@ -239,9 +239,11 @@ export function getMessagePathDataItems(
       }
 
       // If the `pathItem` is a slice, iterate over all the relevant elements in the array.
-      for (let i = startIdx; i <= Math.min(endIdx, value.length - 1); i++) {
-        const index = i >= 0 ? i : value.length + i;
-        if (value[index] === undefined) {
+      const arrayLength = getField(value, "length");
+      for (let i = startIdx; i <= Math.min(endIdx, arrayLength - 1); i++) {
+        const index = i >= 0 ? i : arrayLength + i;
+        const arrayElement = getIndex(value, index);
+        if (arrayElement == null) {
           continue;
         }
         // Ideally show something like `/topic.object[:]{some_id=123}` for the path, but fall
@@ -252,10 +254,10 @@ export function getMessagePathDataItems(
           // If we have a filter set after this, it will update the path appropriately.
           newPath = `${path}[:]`;
         } else {
-          // See if `value[index]` has a property that we typically filter on. If so, show that.
-          const name = Object.keys(value[index]).find((key) => isTypicalFilterName(key));
+          // See if `arrayElement` has a property that we typically filter on. If so, show that.
+          const name = fieldNames(arrayElement).find((key) => isTypicalFilterName(key));
           if (name) {
-            newPath = `${path}[:]{${name}==${value[index][name]}}`;
+            newPath = `${path}[:]{${name}==${getField(arrayElement, name)}}`;
           } else {
             // Use `i` here instead of `index`, since it's only different when `i` is negative,
             // and in that case it's probably more useful to show to the user how many elements
@@ -265,7 +267,7 @@ export function getMessagePathDataItems(
           }
         }
         traverse(
-          value[index],
+          arrayElement,
           pathIndex + 1,
           newPath,
           !structureIsJson && structureItem.structureType === "array" ? structureItem.next : structureItem // Structure is already JSON.
@@ -276,7 +278,8 @@ export function getMessagePathDataItems(
         traverse(value, pathIndex + 1, `${path}{${pathItem.repr}}`, structureItem);
       }
     } else if (structureIsJson && pathItem.name) {
-      traverse(value[pathItem.name], pathIndex + 1, `${path}.${pathItem.name}`, {
+      // Use getField just in case.
+      traverse(getField(value, pathItem.name), pathIndex + 1, `${path}.${pathItem.name}`, {
         structureType: "primitive",
         primitiveType: "json",
         datatype: "",
@@ -294,35 +297,32 @@ export const useDecodeMessagePathsForMessagesByTopic = (paths: string[]) => {
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems(memoizedPaths);
   // Note: Let callers define their own memoization scheme for messagesByTopic. For regular playback
   // useMemo might be appropriate, but weakMemo will likely better for blocks.
-  return useCallback(
-    (messagesByTopic: $ReadOnly<{ [topicName: string]: $ReadOnlyArray<ReflectiveMessage> }>) => {
-      const obj = {};
-      for (const path of memoizedPaths) {
-        // Create an array for invalid paths, and valid paths with entries in messagesByTopic
-        const rosPath = parseRosPath(path);
-        if (!rosPath) {
-          obj[path] = [];
-          continue;
-        }
-        if (!messagesByTopic[rosPath.topicName]) {
-          // For the playback pipeline messagesByTopic will always include an entry for every topic.
-          // For the blocks, missing entries are semantically interesting, and should result in
-          // missing (not empty) entries in the output so that information is communicated
-          // downstream.
-          continue;
-        }
+  return useCallback((messagesByTopic: $ReadOnly<{ [topicName: string]: $ReadOnlyArray<ReflectiveMessage> }>) => {
+    const obj = {};
+    for (const path of memoizedPaths) {
+      // Create an array for invalid paths, and valid paths with entries in messagesByTopic
+      const rosPath = parseRosPath(path);
+      if (!rosPath) {
         obj[path] = [];
+        continue;
+      }
+      if (!messagesByTopic[rosPath.topicName]) {
+        // For the playback pipeline messagesByTopic will always include an entry for every topic.
+        // For the blocks, missing entries are semantically interesting, and should result in
+        // missing (not empty) entries in the output so that information is communicated
+        // downstream.
+        continue;
+      }
+      obj[path] = [];
 
-        for (const message of messagesByTopic[rosPath.topicName]) {
-          // Add the item (if it exists) to the array.
-          const queriedData = cachedGetMessagePathDataItems(path, message);
-          if (queriedData) {
-            obj[path].push({ message, queriedData });
-          }
+      for (const message of messagesByTopic[rosPath.topicName]) {
+        // Add the item (if it exists) to the array.
+        const queriedData = cachedGetMessagePathDataItems(path, message);
+        if (queriedData) {
+          obj[path].push({ message, queriedData });
         }
       }
-      return obj;
-    },
-    [memoizedPaths, cachedGetMessagePathDataItems]
-  );
+    }
+    return obj;
+  }, [memoizedPaths, cachedGetMessagePathDataItems]);
 };

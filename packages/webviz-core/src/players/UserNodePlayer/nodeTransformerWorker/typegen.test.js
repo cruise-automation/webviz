@@ -26,6 +26,7 @@ const baseNodeData: NodeData = {
   inputTopics: [],
   outputTopic: "",
   outputDatatype: "",
+  globalVariables: [],
   datatypes: {},
   sourceFile: undefined,
   typeChecker: undefined,

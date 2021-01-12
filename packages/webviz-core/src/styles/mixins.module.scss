@@ -8,7 +8,7 @@
 
 $padding: 8px;
 $text-size: 12px;
-$control-padding: $padding ($padding + 4px);
+$control-padding: 8px 8px 8px 16px;
 $control-margin: 0 0.2em;
 
 %bold {
@@ -25,10 +25,10 @@ $control-margin: 0 0.2em;
 }
 
 %floating-box {
-  background-color: $toolbar;
+  background-color: $dark3;
   border-radius: 4px;
   padding: 0;
-  box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0px 32px rgba(8, 8, 10, 0.6);
   overflow: hidden;
   pointer-events: auto;
   flex-shrink: 0;
@@ -36,7 +36,7 @@ $control-margin: 0 0.2em;
 
 %menu-item {
   text-decoration: none;
-  padding: $control-padding;
+  padding: 8px 16px;
   cursor: pointer;
   color: $text-control;
   user-select: none;
@@ -64,15 +64,10 @@ $control-margin: 0 0.2em;
   }
 }
 
-%menu-item-active {
-  color: $text-normal;
-  // @extend %bold;
-  background-color: $background-control-selected;
-}
-
+%menu-item-active,
 %menu-item-hover {
-  background-color: $menu-item-hover;
-  color: $text-normal;
+  color: rgba(255, 255, 255, 1);
+  background-color: $dark5;
 }
 
 $sans-serif-font: "Inter UI", -apple-system, BlinkMacSystemFont, sans-serif;

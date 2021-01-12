@@ -52,14 +52,11 @@ export default function Checkbox({
   dataTest,
 }: Props) {
   const Component = checked ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
-  const onClick = React.useCallback(
-    () => {
-      if (!disabled) {
-        onChange(!checked);
-      }
-    },
-    [checked, disabled, onChange]
-  );
+  const onClick = React.useCallback(() => {
+    if (!disabled) {
+      onChange(!checked);
+    }
+  }, [checked, disabled, onChange]);
 
   const styledLabel = (
     <SLabel labelDirection={labelDirection} disabled={disabled} style={labelStyle}>

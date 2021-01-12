@@ -16,10 +16,12 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import SelectableTimestamp from "webviz-core/src/components/SelectableTimestamp";
 import clipboard from "webviz-core/src/util/clipboard";
-import { formatDuration, subtractTimes } from "webviz-core/src/util/time";
+import { formatDuration } from "webviz-core/src/util/formatTime";
+import { subtractTimes, toSec } from "webviz-core/src/util/time";
 
 const STableContainer = styled.div`
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 `;
 
 const STable = styled.div`
@@ -40,9 +42,10 @@ const SCell = styled.div`
   overflow: hidden;
   font-size: 14px;
   line-height: 1.6;
-  width: 50%;
+  width: 33%;
   display: inline-block;
   padding: 2px 8px;
+  white-space: nowrap;
 `;
 
 const SHeader = styled.div`
@@ -73,61 +76,73 @@ function SourceInfo(): Node {
       []
     )
   );
+  if (!startTime || !endTime) {
+    return (
+      <>
+        <PanelToolbar floating />
+        <EmptyState>Waiting for player data...</EmptyState>
+      </>
+    );
+  }
 
+  const duration = subtractTimes(endTime, startTime);
   return (
     <>
       <PanelToolbar floating />
-      {startTime && endTime ? (
-        <STableContainer>
-          <SHeader>
-            <SHeaderItem>
-              <STitle>Start time:</STitle>
-              <SelectableTimestamp
-                startTime={startTime}
-                endTime={endTime}
-                currentTime={startTime}
-                pausePlayback={() => {}}
-                seekPlayback={() => {}}
-              />
-            </SHeaderItem>
-            <SHeaderItem>
-              <STitle>End Time:</STitle>
-              <SelectableTimestamp
-                startTime={startTime}
-                endTime={endTime}
-                currentTime={endTime}
-                pausePlayback={() => {}}
-                seekPlayback={() => {}}
-              />
-            </SHeaderItem>
-            <SHeaderItem>
-              <STitle>Duration: {formatDuration(subtractTimes(endTime, startTime))}</STitle>
-            </SHeaderItem>
-          </SHeader>
-          <STable>
-            {topics.map((t) => (
-              <SRow key={t.name}>
-                <SCell
-                  title={`Click to copy topic name ${t.name} to clipboard.`}
-                  onClick={() => {
-                    clipboard.copy(t.name);
-                  }}>
-                  {t.name}
+      <STableContainer>
+        <SHeader>
+          <SHeaderItem>
+            <STitle>Start time:</STitle>
+            <SelectableTimestamp
+              startTime={startTime}
+              endTime={endTime}
+              currentTime={startTime}
+              pausePlayback={() => {}}
+              seekPlayback={() => {}}
+            />
+          </SHeaderItem>
+          <SHeaderItem>
+            <STitle>End Time:</STitle>
+            <SelectableTimestamp
+              startTime={startTime}
+              endTime={endTime}
+              currentTime={endTime}
+              pausePlayback={() => {}}
+              seekPlayback={() => {}}
+            />
+          </SHeaderItem>
+          <SHeaderItem>
+            <STitle>Duration: {formatDuration(duration)}</STitle>
+          </SHeaderItem>
+        </SHeader>
+        <STable>
+          {topics.map((t) => (
+            <SRow key={t.name}>
+              <SCell
+                title={`Click to copy topic name ${t.name} to clipboard.`}
+                onClick={() => {
+                  clipboard.copy(t.name);
+                }}>
+                {t.name}
+              </SCell>
+              <SCell
+                title={`Click to copy topic type ${t.datatype} to clipboard.`}
+                onClick={() => {
+                  clipboard.copy(t.datatype);
+                }}>
+                {t.datatype}
+              </SCell>
+              {t.numMessages != null ? (
+                <SCell>
+                  {t.numMessages} msgs ({(t.numMessages / toSec(duration)).toFixed(2)} Hz)
                 </SCell>
-                <SCell
-                  title={`Click to copy topic type ${t.datatype} to clipboard.`}
-                  onClick={() => {
-                    clipboard.copy(t.datatype);
-                  }}>
-                  {t.datatype}
-                </SCell>
-              </SRow>
-            ))}
-          </STable>
-        </STableContainer>
-      ) : (
-        <EmptyState>Waiting for player data...</EmptyState>
-      )}
+              ) : (
+                <SCell />
+              )}
+            </SRow>
+          ))}
+        </STable>
+      </STableContainer>
     </>
   );
 }

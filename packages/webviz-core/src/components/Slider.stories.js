@@ -55,6 +55,10 @@ storiesOf("<Slider>", module)
           <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>
             <Slider min={10} max={200} onChange={(v) => onChange("value", v)} value={state.value} />
           </div>
+          <p>disabled (not clickable)</p>
+          <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>
+            <Slider disabled min={10} max={200} onChange={(v) => onChange("value", v)} value={state.value} />
+          </div>
           <p>no value</p>
           <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>
             <Slider min={10} max={200} onChange={() => {}} value={null} />

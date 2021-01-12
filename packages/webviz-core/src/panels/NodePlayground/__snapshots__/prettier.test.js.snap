@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getPrettifiedCode formats valid Typescript code 1`] = `
+"import { Input, Messages } from \\"ros\\";
+const VALUE = \\"val\\";
+const publisher = (
+  message: Input<\\"/foo/bar\\">
+): Messages.visualization_msgs__WebvizMarkerArray | undefined => {
+  return { VALUE };
+};
+"
+`;

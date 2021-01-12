@@ -22,6 +22,7 @@ import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
 import { emptyPose } from "webviz-core/src/util/Pose";
 
 export type TargetPose = { target: Vec3, targetOrientation: Vec4 };
@@ -98,12 +99,26 @@ export function useTransformedCameraState({
   return { transformedCameraState, targetPose: targetPose || lastTargetPose };
 }
 
-export const getInstanceObj = (marker: any, idx: number) => marker?.metadataByIndex?.[idx];
-export const getObject = (selectedObject: MouseEventObject) =>
-  (selectedObject.instanceIndex !== undefined &&
-    selectedObject.object.metadataByIndex !== undefined &&
-    getInstanceObj(selectedObject.object, selectedObject.instanceIndex)) ||
-  selectedObject?.object;
+export const getInstanceObj = (marker: any, idx: number): any => {
+  if (!marker) {
+    return;
+  }
+  if (!isBobject(marker)) {
+    return marker?.metadataByIndex?.[idx];
+  }
+  if (!marker.metadataByIndex) {
+    return;
+  }
+  return marker.metadataByIndex()?.[idx];
+};
+export const getObject = (selectedObject: MouseEventObject) => {
+  const object =
+    (selectedObject.instanceIndex !== undefined &&
+      selectedObject.object.metadataByIndex !== undefined &&
+      getInstanceObj(selectedObject.object, selectedObject.instanceIndex)) ||
+    selectedObject?.object;
+  return isBobject(object) ? deepParse(object) : object;
+};
 export const getInteractionData = (selectedObject: MouseEventObject): ?InteractionData =>
   selectedObject.object.interactionData || getObject(selectedObject)?.interactionData;
 
@@ -111,12 +126,11 @@ export function getUpdatedGlobalVariablesBySelectedObject(
   selectedObject: MouseEventObject,
   linkedGlobalVariables: LinkedGlobalVariables
 ): ?GlobalVariables {
-  const instanceObject = selectedObject && getInstanceObj(selectedObject.object, selectedObject.instanceIndex);
-  const interactionData = selectedObject?.object.interactionData;
+  const object = getObject(selectedObject);
+  const interactionData = getInteractionData(selectedObject);
   if (!linkedGlobalVariables.length || !interactionData?.topic) {
     return;
   }
-  const object = instanceObject || selectedObject.object;
   const newGlobalVariables = {};
   linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
     if (interactionData?.topic === topic) {

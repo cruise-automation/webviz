@@ -11,88 +11,14 @@ import memoize from "memoize-weak";
 import { type RosMsgField } from "rosbag";
 
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { PrimitiveArrayView, getReverseWrapperArrayView } from "webviz-core/src/util/binaryObjects/ArrayViews";
 import {
   addTimeTypes,
   associateDatatypes,
   deepParseSymbol,
   friendlyTypeName,
+  isComplex,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
-
-class PrimitiveArrayWrapper<T> {
-  value: T[];
-  constructor(value: T[]) {
-    this.value = value;
-  }
-  get(index: number) {
-    return this.value[index];
-  }
-  length() {
-    return this.value.length;
-  }
-  // https://stackoverflow.com/questions/48491307/iterable-class-in-flow
-  /*::
-  @@iterator(): Iterator<T> {
-    // $FlowFixMe
-    return this[Symbol.iterator]()
-  }
-  */
-  // $FlowFixMe
-  *[Symbol.iterator](): Iterable<T> {
-    for (const o of this.value) {
-      yield o;
-    }
-  }
-  // Use deepParse(arr)
-  // $FlowFixMe
-  [deepParseSymbol](): T[] {
-    return this.value;
-  }
-  toArray(): T[] {
-    return this.value;
-  }
-}
-
-const getReverseArrayWrapper = <T>(Class) =>
-  class {
-    value: T[];
-    constructor(value: T[]) {
-      this.value = value;
-    }
-    get(index: number) {
-      return new Class(this.value[index]);
-    }
-    length(): number {
-      return this.value.length;
-    }
-    // https://stackoverflow.com/questions/48491307/iterable-class-in-flow
-    /*::
-    @@iterator(): Iterator<T> {
-      // $FlowFixMe
-      return this[Symbol.iterator]()
-    }
-    */
-    // $FlowFixMe
-    *[Symbol.iterator](): Iterable<T> {
-      for (const o of this.value) {
-        yield isBobject(o) ? o : new Class(o);
-      }
-    }
-    // Use deepParse(arr)
-    // $FlowFixMe
-    [deepParseSymbol](): T[] {
-      return this.value.map((o) => (isBobject(o) ? deepParse(o) : deepParse(new Class(o))));
-    }
-    toArray(): T[] {
-      const ret = [];
-      let i = 0;
-      for (const o of this) {
-        ret[i] = o;
-        i += 1;
-      }
-      return ret;
-    }
-  };
 
 const arrayTypeName = (typeName: string): string => `${friendlyTypeName(typeName)}$Array`;
 
@@ -110,12 +36,12 @@ if ($fieldValue == null || $fieldValue[$deepParse] != null) {
 }
 return new ${type}($fieldValue);`;
   if (field.isArray && field.type !== "int8" && field.type !== "uint8") {
-    if (field.isComplex || field.type === "time" || field.type === "duration") {
+    if (isComplex(field.type) || field.type === "time" || field.type === "duration") {
       return complexExpression(arrayTypeName(field.type));
     }
-    return complexExpression("$PrimitiveArrayWrapper");
+    return complexExpression("$PrimitiveArrayView");
   }
-  if (field.isComplex || field.type === "time" || field.type === "duration") {
+  if (isComplex(field.type) || field.type === "time" || field.type === "duration") {
     return complexExpression(friendlyTypeName(field.type));
   }
   // Primitives and byte arrays -- just return as-is, no bobject or null checks.
@@ -128,9 +54,9 @@ export const printFieldDefinition = (field: RosMsgField): string => {
   return [`${field.name}() {`, indent(body, 2), "}"].join("\n");
 };
 
-const deepParseFieldExpression = ({ name, type, isArray, isComplex }) => {
+const deepParseFieldExpression = ({ name, type, isArray }) => {
   const isRealArray = isArray && type !== "int8" && type !== "uint8";
-  const isRealComplex = isComplex || type === "time" || type === "duration";
+  const isRealComplex = isComplex(type) || type === "time" || type === "duration";
   if (isRealArray || isRealComplex) {
     return `$maybeDeepParse(this.${name}())`;
   }
@@ -160,7 +86,7 @@ ${indent(deepParseFieldExpressions.join("\n"), 6)}
     };
   }
 }
-const ${arrayTypeName(typeName)} = $context.getReverseArrayWrapper(${friendlyTypeName(typeName)});
+const ${arrayTypeName(typeName)} = $context.getReverseWrapperArrayView(${friendlyTypeName(typeName)});
 `;
 };
 
@@ -177,7 +103,7 @@ export const printClasses = (inputTypesByName: RosDatatypes): string => {
   return `const $value = Symbol();
 const $deepParse = $context.deepParse;
 const $maybeDeepParse = (o) => o && o[$deepParse]()
-const $PrimitiveArrayWrapper = $context.PrimitiveArrayWrapper;
+const $PrimitiveArrayView = $context.PrimitiveArrayView;
 ${classDefinitions.join("\n")}
 
 return {
@@ -187,7 +113,7 @@ ${indent(classExpressions.join("\n"), 2)}
 
 const getJsWrapperClasses = memoize(
   (typesByName: RosDatatypes): { [typeName: string]: any } => {
-    const context = { deepParse: deepParseSymbol, PrimitiveArrayWrapper, getReverseArrayWrapper };
+    const context = { deepParse: deepParseSymbol, PrimitiveArrayView, getReverseWrapperArrayView };
     /* eslint-disable no-new-func */
     // $FlowFixMe
     const classes = Function("$context", printClasses(typesByName))(context);

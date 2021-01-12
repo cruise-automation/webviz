@@ -8,18 +8,15 @@
 
 .container {
   min-width: 200px;
-  padding: 16px;
   @extend %clearfix;
 }
 
 .prompt {
-  padding: 8px 0;
   white-space: pre-line;
   line-height: 1.4;
 }
 
 .controls {
   padding-top: 8px;
-  float: right;
-  margin-right: -0.2em;
+  align-self: flex-end;
 }

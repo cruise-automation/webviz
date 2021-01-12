@@ -70,12 +70,14 @@ const markerObject = {
   },
 };
 
-const selectedObject = { object: markerObject, instanceIndex: null };
+const interactiveMarkerObject = {
+  ...markerObject,
+  interactionData: { topic: "/foo/bar", originalMessage: markerObject },
+};
+const selectedObject = { object: interactiveMarkerObject, instanceIndex: null };
 
 const sharedProps = {
   selectedObject,
-  interactionData: { topic: "/foo/bar", originalMessage: markerObject },
-  isDrawing: false,
   interactionsTabType: OBJECT_TAB_TYPE,
   setInteractionsTabType: () => {},
 };
@@ -233,8 +235,6 @@ storiesOf("<Interaction>", module)
         <PanelSetupWithData title="With instanced interactionData">
           <Interactions
             {...sharedProps}
-            interactionData={null}
-            isDrawing={false}
             interactionsTabType={OBJECT_TAB_TYPE}
             selectedObject={{
               object: { metadataByIndex: [{ ...markerObject, interactionData: { topic: "/foo/bar" } }] },
@@ -254,15 +254,27 @@ storiesOf("<Interaction>", module)
         <PanelSetupWithData title="default with point color">
           <Interactions
             {...sharedProps}
-            selectedObject={{ instanceIndex: 0, object: { ...cloud1, type: 102 } }}
-            interactionData={{ topic: "/foo/bar", originalMessage: selectedObject.object }}
+            selectedObject={{
+              instanceIndex: 0,
+              object: {
+                ...cloud1,
+                type: 102,
+                interactionData: { topic: "/foo/bar", originalMessage: selectedObject.object },
+              },
+            }}
           />
         </PanelSetupWithData>
         <PanelSetupWithData title="with additional fields">
           <Interactions
             {...sharedProps}
-            selectedObject={{ instanceIndex: 0, object: { ...cloud2, type: 102 } }}
-            interactionData={{ topic: "/foo/bar", originalMessage: selectedObject.object }}
+            selectedObject={{
+              instanceIndex: 0,
+              object: {
+                ...cloud2,
+                type: 102,
+                interactionData: { topic: "/foo/bar", originalMessage: selectedObject.object },
+              },
+            }}
           />
         </PanelSetupWithData>
       </SWrapper>

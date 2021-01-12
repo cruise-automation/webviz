@@ -3,8 +3,27 @@
 
 .root {
   z-index: 1;
-  background-color: $panel-background;
+  background-color: $dark;
   position: relative;
+
+  &:after {
+    content: "";
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    opacity: 0;
+    border: 1px solid $accent;
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.125s ease-out;
+    z-index: 100000; // highest level within panel
+  }
+
+  &.selected:after {
+    opacity: 1;
+    transition: opacity 0.05s ease-out;
+  }
 }
 
 .rootFullScreen {
@@ -43,7 +62,7 @@
   .root:hover > &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
-    background-color: rgba(110, 81, 238, 0.15);
+    background-color: rgba(45, 45, 51, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,7 +123,7 @@
   .root:hover &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
-    background-color: rgba(45, 45, 51, 0.7);
+    background-color: rgba(45, 45, 51, 1);
   }
 }
 
@@ -122,7 +141,7 @@
   right: 8px;
   z-index: 102;
   opacity: 1;
-  background-color: $toolbar;
+  background-color: $dark3;
   display: none;
   .root:hover & {
     display: block;

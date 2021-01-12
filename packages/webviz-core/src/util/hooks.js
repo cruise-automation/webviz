@@ -215,25 +215,22 @@ export function useContextSelector<T, U>(context: SelectableContext<T>, selector
   });
 
   // Subscribe to context updates, and setSelectedValue() only when the selected value changes.
-  useLayoutEffect(
-    () => {
-      const sub = (newValue) => {
-        const newSelectedValue = selector(newValue);
-        if (isBailout(newSelectedValue)) {
-          return;
-        }
-        if (newSelectedValue !== latestSelectedValue.current) {
-          // Because newSelectedValue might be a function, we have to always use the reducer form of setState.
-          setSelectedValue(() => newSelectedValue);
-        }
-      };
-      handle.addSubscriber(sub);
-      return () => {
-        handle.removeSubscriber(sub);
-      };
-    },
-    [handle, selector]
-  );
+  useLayoutEffect(() => {
+    const sub = (newValue) => {
+      const newSelectedValue = selector(newValue);
+      if (isBailout(newSelectedValue)) {
+        return;
+      }
+      if (newSelectedValue !== latestSelectedValue.current) {
+        // Because newSelectedValue might be a function, we have to always use the reducer form of setState.
+        setSelectedValue(() => newSelectedValue);
+      }
+    };
+    handle.addSubscriber(sub);
+    return () => {
+      handle.removeSubscriber(sub);
+    };
+  }, [handle, selector]);
 
   return selectedValue;
 }

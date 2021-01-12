@@ -18,7 +18,7 @@ import { List, AutoSizer } from "react-virtualized";
 import type { Config as DiagnosticStatusConfig } from "./DiagnosticStatusPanel";
 import helpContent from "./DiagnosticSummary.help.md";
 import styles from "./DiagnosticSummary.module.scss";
-import { LEVELS, type DiagnosticId, type DiagnosticInfo, getNodesByLevel, getSortedNodes } from "./util";
+import { LEVELS, type DiagnosticId, type DiagnosticInfo, getDiagnosticsByLevel, getSortedDiagnostics } from "./util";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
@@ -26,6 +26,7 @@ import { Item } from "webviz-core/src/components/Menu";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
+import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import DiagnosticsHistory from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
 import type { Topic } from "webviz-core/src/players/types";
@@ -175,7 +176,7 @@ class DiagnosticSummary extends React.Component<Props> {
         <Flex col>
           <DiagnosticsHistory topic={topicToRender}>
             {(buffer) => {
-              if (buffer.diagnosticsById.size === 0) {
+              if (buffer.diagnosticsByNameByTrimmedHardwareId.size === 0) {
                 return (
                   <EmptyState>
                     Waiting for <code>{topicToRender}</code> messages
@@ -183,16 +184,29 @@ class DiagnosticSummary extends React.Component<Props> {
                 );
               }
               const { pinnedIds, hardwareIdFilter, sortByLevel = true } = this.props.config;
-              const pinnedNodes = pinnedIds.map((id) => buffer.diagnosticsById.get(id));
+              const pinnedNodes = filterMap(pinnedIds, (id) => {
+                const [_, trimmedHardwareId, name] = id.split("|");
+                const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(trimmedHardwareId);
+                if (diagnosticsByName == null) {
+                  return;
+                }
+                return diagnosticsByName.get(name);
+              });
 
+              const nodesByLevel = getDiagnosticsByLevel(buffer);
               const sortedNodes = sortByLevel
-                ? [
-                    ...getSortedNodes(getNodesByLevel(buffer, LEVELS.STALE), hardwareIdFilter, pinnedIds),
-                    ...getSortedNodes(getNodesByLevel(buffer, LEVELS.ERROR), hardwareIdFilter, pinnedIds),
-                    ...getSortedNodes(getNodesByLevel(buffer, LEVELS.WARN), hardwareIdFilter, pinnedIds),
-                    ...getSortedNodes(getNodesByLevel(buffer, LEVELS.OK), hardwareIdFilter, pinnedIds),
-                  ]
-                : getSortedNodes(buffer.diagnosticsInOrderReceived, hardwareIdFilter, pinnedIds);
+                ? [].concat(
+                    ...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) =>
+                      getSortedDiagnostics(nodesByLevel[level], hardwareIdFilter, pinnedIds)
+                    )
+                  )
+                : getSortedDiagnostics(
+                    [].concat(
+                      ...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) => nodesByLevel[level])
+                    ),
+                    hardwareIdFilter,
+                    pinnedIds
+                  );
 
               const nodes: DiagnosticInfo[] = [...compact(pinnedNodes), ...sortedNodes];
               return !nodes.length ? null : (

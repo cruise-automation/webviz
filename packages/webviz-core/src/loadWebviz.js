@@ -16,7 +16,11 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => undefined,
+  getEventLogger: () => ({
+    logger: () => {},
+    eventNames: {},
+    eventTags: {},
+  }),
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);

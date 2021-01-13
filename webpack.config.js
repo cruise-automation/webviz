@@ -7,6 +7,7 @@
 const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { spawnSync } = require("child_process");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const path = require("path");
 const retext = require("retext");
@@ -16,6 +17,7 @@ const visit = require("unist-util-visit");
 const webpack = require("webpack");
 
 const STATIC_WEBVIZ = process.env.STATIC_WEBVIZ === "true";
+const WEBVIZ_DEV = process.env.WEBVIZ_DEV === "true";
 
 // Enable smart quotes:
 // https://github.com/mdx-js/mdx/blob/ad58be384c07672dc415b3d9d9f45dcebbfd2eb8/docs/advanced/retext-plugins.md
@@ -53,19 +55,22 @@ const gitInfo = (() => {
 
 module.exports = {
   devtool: "cheap-module-eval-source-map",
-  entry: STATIC_WEBVIZ
-    ? {
-        webvizCoreBundle: "./packages/webviz-core/src/index.js",
-      }
-    : {
-        docs: "./docs/src/index.js",
-        webvizCoreBundle: "./packages/webviz-core/src/index.js",
-      },
+  entry:
+    STATIC_WEBVIZ || WEBVIZ_DEV
+      ? {
+          webvizCoreBundle: "./packages/webviz-core/src/index.js",
+        }
+      : {
+          docs: "./docs/src/index.js",
+          webvizCoreBundle: "./packages/webviz-core/src/index.js",
+        },
   output: {
-    path: STATIC_WEBVIZ
+    path: WEBVIZ_DEV
+      ? path.resolve(`${__dirname}/dist`)
+      : STATIC_WEBVIZ
       ? path.resolve(`${__dirname}/__static_webviz__`)
       : path.resolve(`${__dirname}/docs/public/dist`),
-    publicPath: STATIC_WEBVIZ ? "" : "/dist/",
+    publicPath: STATIC_WEBVIZ || WEBVIZ_DEV ? "" : "/dist/",
     pathinfo: true,
     filename: "[name].js",
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
@@ -203,11 +208,19 @@ module.exports = {
   },
   performance: { hints: false },
   devServer: {
-    contentBase: path.resolve(`${__dirname}/docs/public`),
+    contentBase: WEBVIZ_DEV ? path.resolve(`${__dirname}/dist`) : path.resolve(`${__dirname}/docs/public`),
     hot: true,
     open: true,
   },
 };
+
+if (WEBVIZ_DEV) {
+  module.exports.plugins.push(
+    new HtmlWebpackPlugin({
+      template: path.resolve(`${__dirname}/packages/webviz-core/public/index.html`),
+    })
+  );
+}
 
 if (process.env.NODE_ENV === "production") {
   module.exports.mode = "production";
@@ -217,7 +230,11 @@ if (process.env.NODE_ENV === "production") {
     throw new Error("If STATIC_WEBVIZ=true is set the NODE_ENV=production must be set!");
   }
   module.exports.mode = "development";
-  module.exports.entry.docs = [module.exports.entry.docs, "webpack-hot-middleware/client"];
+  if (WEBVIZ_DEV) {
+    module.exports.entry.webvizCoreBundle = [module.exports.entry.webvizCoreBundle, "webpack-hot-middleware/client"];
+  } else {
+    module.exports.entry.docs = [module.exports.entry.docs, "webpack-hot-middleware/client"];
+  }
   module.exports.plugins.push(new webpack.HotModuleReplacementPlugin());
   module.exports.output.globalObject = "this"; // Workaround for https://github.com/webpack/webpack/issues/6642#issuecomment-370222543
 }

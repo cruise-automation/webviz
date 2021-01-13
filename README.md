@@ -66,6 +66,24 @@ Similarly to recording videos, we have a script to measure the performance of a 
 
 ## Developing
 
+To install dependencies, first run `npm run bootstrap`. This command will populate the repos root `/node_modules` and underyling packages `/node_modules`. From there, you have a few options depending on where you'd like to make changes.
+
+### Webviz Core
+
+```npm run webviz-dev```
+
+### Docs
+
+```npm run docs-dev```
+
+### Storybook
+
+```npm run storybook```
+
+Useful for `regl-worldview` changes.
+
+### Full list of scripts
+- `npm run webviz-dev` to run a webviz-only server that you can develop Webviz on.
 - `npm run bootstrap` in the root directory to install dependencies.
 - `npm run build` to run a single build or `npm run watch` to watch and build.
 - `npm run docs` to run the docs app (e.g. go to http://localhost:8080/app to open Webviz). Requires `build` to be run first.

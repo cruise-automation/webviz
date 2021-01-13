@@ -15,7 +15,9 @@ export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";
 export const DISABLE_WORKERS_QUERY_KEY = "no-workers";
-export const SEEK_TO_QUERY_KEY = "seek-to";
+export const SEEK_TO_UNIX_MS_QUERY_KEY = "seek-to"; // Used on load and set when paused
+export const SEEK_TO_RELATIVE_MS_QUERY_KEY = "seek-by"; // Only used on load. Can be negative.
+export const SEEK_TO_FRACTION_QUERY_KEY = "seek-fraction"; // Only used on load
 export const LAYOUT_QUERY_KEY = "layout";
 export const LAYOUT_URL_QUERY_KEY = "layout-url";
 export const PATCH_QUERY_KEY = "patch";
@@ -34,12 +36,23 @@ export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
 export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
+export const GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE = "geometry_msgs/PolygonStamped";
+export const NAV_MSGS_OCCUPANCY_GRID_DATATYPE = "nav_msgs/OccupancyGrid";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
-export const LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
+export const SENSOR_MSGS_LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
 export const WEBVIZ_MARKER_DATATYPE = "visualization_msgs/WebvizMarker";
 export const WEBVIZ_MARKER_ARRAY_DATATYPE = "visualization_msgs/WebvizMarkerArray";
+export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerArray";
 export const TF_DATATYPE = "tf2_msgs/TFMessage";
+export const VISUALIZATION_MSGS_MARKER_DATATYPE = "visualization_msgs/Marker";
+export const VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE = "visualization_msgs/MarkerArray";
+
+export const MARKER_ARRAY_DATATYPES = [
+  "visualization_msgs/MarkerArray",
+  FUTURE_VIZ_MSGS_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+];
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
 
@@ -80,7 +93,9 @@ export const MARKER_MSG_TYPES = {
   TEXT_VIEW_FACING: 9,
   MESH_RESOURCE: 10,
   TRIANGLE_LIST: 11,
+  FILLED_POLYGON: 107,
   INSTANCED_LINE_LIST: 108,
+  OVERLAY_ICON: 109,
 };
 
 export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };

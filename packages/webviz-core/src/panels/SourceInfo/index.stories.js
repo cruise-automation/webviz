@@ -22,8 +22,8 @@ const SNarrow = styled.div`
 function PanelWithData() {
   return (
     <PanelSetupWithBag
-      bagFileUrl={bagFile}
-      topics={["/turtle1/pose", "/turtle2/pose", "/turtle1/cmd_vel", "/turtle2/cmd_vel"]}>
+      bag={bagFile}
+      subscriptions={["/turtle1/pose", "/turtle2/pose", "/turtle1/cmd_vel", "/turtle2/cmd_vel"]}>
       <SourceInfo />
     </PanelSetupWithBag>
   );

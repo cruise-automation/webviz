@@ -8,7 +8,6 @@
 
 import { uniq } from "lodash";
 import * as React from "react";
-import Dimensions from "react-container-dimensions";
 import { hot } from "react-hot-loader/root";
 import stringHash from "string-hash";
 import styled, { css } from "styled-components";
@@ -16,6 +15,7 @@ import tinycolor from "tinycolor2";
 
 import helpContent from "./index.help.md";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
@@ -26,11 +26,11 @@ import TimeBasedChart, {
   type DataPoint,
 } from "webviz-core/src/components/TimeBasedChart";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import colors from "webviz-core/src/styles/colors.module.scss";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 import { subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
@@ -81,10 +81,10 @@ const SChartContainerInner = styled.div`
   margin-top: 10px;
 `;
 
-const inputColor = tinycolor(colors.toolbar)
+const inputColor = tinycolor(colors.DARK3)
   .setAlpha(0.7)
   .toHexString();
-const inputColorBright = tinycolor(colors.toolbar)
+const inputColorBright = tinycolor(colors.DARK3)
   .lighten(8)
   .toHexString();
 const inputLeft = 20;
@@ -297,7 +297,7 @@ class StateTransitions extends React.PureComponent<Props> {
                   dataItem.colors.unshift(color);
                   const label = constantName ? `${constantName} (${String(value)})` : String(value);
                   const x = toSec(subtractTimes(timestamp, startTime));
-                  const y = pathIndex.toString();
+                  const y = pathIndex;
                   const tooltip: TimeBasedChartTooltipData = {
                     x,
                     y,

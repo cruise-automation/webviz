@@ -27,6 +27,8 @@ module.exports = {
   ],
   setupTestFrameworkScriptFile: "<rootDir>/packages/webviz-core/src/test/setupTestFramework.js",
   moduleNameMapper: {
+    "worker-loader.*!.*/UserNodePlayer/.+Worker":
+      "<rootDir>/packages/webviz-core/src/players/UserNodePlayer/worker.mock.js",
     "worker-loader.*!.*": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
     "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",

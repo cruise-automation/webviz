@@ -9,39 +9,24 @@
 import { mapValues } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import type { MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { cast, type Message } from "webviz-core/src/players/types";
 import type { RosObject } from "webviz-core/src/players/types";
 import type { StampedMessage } from "webviz-core/src/types/Messages";
 
-const defaultGetHeaderStamp = (message: ?$ReadOnly<RosObject>): ?Time => {
+export const defaultGetHeaderStamp = (message: ?$ReadOnly<RosObject>): ?Time => {
   if (message != null && message.header != null) {
     return cast<StampedMessage>(message).header.stamp;
   }
 };
 
-// Get all timestamps of all messages, newest first
-function allItemStampsNewestFirst(
-  itemsByPath: MessageHistoryItemsByPath,
+function allMessageStampsNewestFirst(
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }>,
   getHeaderStamp?: (itemMessage: Message) => ?Time
-): Time[] {
-  const stamps = [];
-  for (const path in itemsByPath) {
-    for (const item of itemsByPath[path]) {
-      const stamp = getHeaderStamp ? getHeaderStamp(item.message) : defaultGetHeaderStamp(item.message?.message);
-      if (!stamp) {
-        return [];
-      }
-      stamps.push(stamp);
-    }
-  }
-  return stamps.sort((a, b) => -TimeUtil.compare(a, b));
-}
-function allMessageStampsNewestFirst(messagesByTopic: { [topic: string]: Message[] }) {
+) {
   const stamps = [];
   for (const topic in messagesByTopic) {
-    for (const { message } of messagesByTopic[topic]) {
-      const stamp = defaultGetHeaderStamp(message);
+    for (const message of messagesByTopic[topic]) {
+      const stamp = getHeaderStamp ? getHeaderStamp(message) : defaultGetHeaderStamp(message.message);
       if (stamp) {
         stamps.push(stamp);
       }
@@ -51,39 +36,38 @@ function allMessageStampsNewestFirst(messagesByTopic: { [topic: string]: Message
 }
 
 // Get a subset of items matching a particular timestamp
-function itemsMatchingStamp(
+function messagesMatchingStamp(
   stamp: Time,
-  itemsByPath: MessageHistoryItemsByPath,
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }>,
   getHeaderStamp?: (itemMessage: Message) => ?Time
-): ?MessageHistoryItemsByPath {
-  const synchronizedItemsByPath = {};
-  for (const path in itemsByPath) {
-    let found = false;
-    for (const item of itemsByPath[path]) {
-      const thisStamp = getHeaderStamp ? getHeaderStamp(item.message) : defaultGetHeaderStamp(item.message?.message);
-      if (thisStamp && TimeUtil.areSame(stamp, thisStamp)) {
-        found = true;
-        synchronizedItemsByPath[path] = [item];
-        break;
-      }
-    }
-    if (!found) {
+): ?$ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }> {
+  const synchronizedMessagesByTopic = {};
+  for (const topic in messagesByTopic) {
+    const synchronizedMessage = messagesByTopic[topic].find((message) => {
+      const thisStamp = getHeaderStamp ? getHeaderStamp(message) : defaultGetHeaderStamp(message.message);
+      return thisStamp && TimeUtil.areSame(stamp, thisStamp);
+    });
+    if (synchronizedMessage != null) {
+      synchronizedMessagesByTopic[topic] = [synchronizedMessage];
+    } else {
       return null;
     }
   }
-  return synchronizedItemsByPath;
+  return synchronizedMessagesByTopic;
 }
 
-// Return a synchronized subset of the messages in `itemsByPath` with exactly matching header.stamps.
-// If multiple sets of synchronized messages are included, the one with the later header.stamp is returned.
+// Return a synchronized subset of the messages in `messagesByTopic` with exactly matching
+// header.stamps.
+// If multiple sets of synchronized messages are included, the one with the later header.stamp is
+// returned.
 export default function synchronizeMessages(
-  itemsByPath: MessageHistoryItemsByPath,
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }>,
   getHeaderStamp?: (itemMessage: Message) => ?Time
-): ?MessageHistoryItemsByPath {
-  for (const stamp of allItemStampsNewestFirst(itemsByPath, getHeaderStamp)) {
-    const synchronizedItemsByPath = itemsMatchingStamp(stamp, itemsByPath, getHeaderStamp);
-    if (synchronizedItemsByPath) {
-      return synchronizedItemsByPath;
+): ?$ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }> {
+  for (const stamp of allMessageStampsNewestFirst(messagesByTopic, getHeaderStamp)) {
+    const synchronizedMessagesByTopic = messagesMatchingStamp(stamp, messagesByTopic, getHeaderStamp);
+    if (synchronizedMessagesByTopic != null) {
+      return synchronizedMessagesByTopic;
     }
   }
   return null;

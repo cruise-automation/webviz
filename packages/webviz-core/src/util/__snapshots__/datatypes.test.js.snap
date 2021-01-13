@@ -1,0 +1,74 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getContentBasedDatatypes maps different datatypes to the different types 1`] = `
+Object {
+  "fakeDatatypes": Object {
+    "f_0_0": Object {
+      "fields": Array [
+        Object {
+          "isArray": false,
+          "isComplex": true,
+          "name": "foo",
+          "type": "f_0_1",
+        },
+        Object {
+          "isArray": false,
+          "isComplex": true,
+          "name": "bar",
+          "type": "f_0_2",
+        },
+      ],
+    },
+    "f_0_1": Object {
+      "fields": Array [
+        Object {
+          "isArray": false,
+          "isComplex": false,
+          "name": "value1",
+          "type": "int32",
+        },
+      ],
+    },
+    "f_0_2": Object {
+      "fields": Array [
+        Object {
+          "isArray": false,
+          "isComplex": false,
+          "name": "value",
+          "type": "int32",
+        },
+      ],
+    },
+    "f_0_3": Object {
+      "fields": Array [
+        Object {
+          "isArray": false,
+          "isComplex": true,
+          "name": "foo",
+          "type": "f_0_4",
+        },
+        Object {
+          "isArray": false,
+          "isComplex": true,
+          "name": "bar",
+          "type": "f_0_2",
+        },
+      ],
+    },
+    "f_0_4": Object {
+      "fields": Array [
+        Object {
+          "isArray": false,
+          "isComplex": false,
+          "name": "value2",
+          "type": "int32",
+        },
+      ],
+    },
+  },
+  "fakeDatatypesByTopic": Object {
+    "topic1": "f_0_0",
+    "topic2": "f_0_3",
+  },
+}
+`;

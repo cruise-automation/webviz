@@ -6,10 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+
 export const fixture = {
   topics: [
     { name: "/msgs/big_topic", datatype: "msgs/big_topic" },
     { name: "/foo", datatype: "std_msgs/String" },
+    { name: `${SECOND_SOURCE_PREFIX}/foo`, datatype: "std_msgs/String" },
     { name: "/baz/num", datatype: "baz/num" },
     { name: "/baz/text", datatype: "baz/text" },
     { name: "/baz/array", datatype: "baz/array" },
@@ -52,32 +55,50 @@ export const fixture = {
         message: { some_array: ["a", "b", "c", "d", "e", "f"], some_id_example_2: { some_id: 123 } },
       },
     ],
+    [`${SECOND_SOURCE_PREFIX}/foo`]: [
+      {
+        topic: `${SECOND_SOURCE_PREFIX}/foo`,
+        receiveTime: { sec: 123, nsec: 456789011 },
+        message: {
+          some_array: ["a", "f", "n", "o", "p"],
+          some_deleted_key: "BYE",
+          some_id_example_2: { some_id: 567 },
+        },
+      },
+    ],
     "/baz/num": [
       {
         topic: "/baz/num",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: 3425363211,
+        message: { value: 3425363211 },
       },
     ],
     "/baz/text": [
       {
         topic: "/baz/text",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: "lidar_side_left/caliper_ogrid_node",
+        message: {
+          value: new Array(10).fill("string").join(" "),
+          value_long: new Array(1024).fill("string").join(" "),
+          value_with_newlines: new Array(1024)
+            .fill()
+            .map((_, i) => `this is line ${i} of the text`)
+            .join("\n"),
+        },
       },
     ],
     "/baz/array": [
       {
         topic: "/baz/array",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: [false],
+        message: { value: [false] },
       },
     ],
     "/baz/array/obj": [
       {
         topic: "/baz/array/obj",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: [{ a: "b", c: "d", e: "f" }],
+        message: { value: [{ a: "b", c: "d", e: "f" }] },
       },
     ],
     "/geometry/types": [
@@ -97,6 +118,62 @@ export const fixture = {
         },
       },
     ],
+  },
+  datatypes: {
+    "baz/num": { fields: [{ name: "value", type: "float64" }] },
+    "baz/text": {
+      fields: [
+        { name: "value", type: "string" },
+        { name: "value_long", type: "string" },
+        { name: "value_with_newlines", type: "string" },
+      ],
+    },
+    "baz/array": { fields: [{ name: "value", type: "bool", isArray: true }] },
+    "baz/array/obj": {
+      fields: [{ name: "value", type: "baz/array/ace", isArray: true, isComplex: true }],
+    },
+    "baz/array/ace": {
+      fields: [{ name: "a", type: "string" }, { name: "c", type: "string" }, { name: "e", type: "string" }],
+    },
+    "geometry/types": {
+      fields: [
+        { name: "point2d", type: "geometry/types/Point2", isComplex: true },
+        { name: "point3d", type: "geometry/types/Point3", isComplex: true },
+      ],
+    },
+    "geometry/types/Point2": {
+      fields: [{ name: "x", type: "float64" }, { name: "y", type: "float64" }],
+    },
+    "geometry/types/Point3": {
+      fields: [{ name: "x", type: "float64" }, { name: "y", type: "float64" }, { name: "z", type: "float64" }],
+    },
+    "std_msgs/String": { fields: [{ name: "value", type: "string" }] },
+    "msgs/big_topic": {
+      fields: [
+        { name: "LotsOfStuff", type: "msgs/LotsOfStuff", isComplex: true },
+        { name: "timestamp_example_1", type: "time" },
+        { name: "timestamp_example_2", type: "time" },
+        { name: "timestamp_example_3", type: "time" },
+        { name: "some_id_example_1", type: "msgs/has_id_1", isComplex: true },
+        { name: "some_id_example_2", type: "msgs/has_id_2", isComplex: true },
+        { name: "some_short_data", type: "int8", isArray: true },
+        { name: "some_long_data", type: "uint8", isArray: true },
+        { name: "some_float_data", type: "float64", isArray: true },
+      ],
+    },
+    "msgs/LotsOfStuff": {
+      fields: [
+        { name: "SomeBoolean", type: "bool" },
+        { name: "SomeInteger", type: "float64" },
+        { name: "count", type: "int32" },
+        { name: "time", type: "time" },
+        { name: "valid", type: "bool" },
+      ],
+    },
+    "msgs/has_id_1": {
+      fields: [{ name: "someId", type: "int32" }, { name: "additional_data", type: "int32" }],
+    },
+    "msgs/has_id_2": { fields: [{ name: "some_id", type: "int32" }] },
   },
 };
 
@@ -152,6 +229,9 @@ export const enumAdvancedFixture = {
         { type: "uint32", name: "animal", isArray: false },
       ],
     },
+    "baz/enum_advanced_array": {
+      fields: [{ type: "baz/enum_advanced", name: "value", isArray: true, isComplex: true }],
+    },
     "baz/animals": {
       fields: [
         { type: "uint32", name: "CAT", isConstant: true, value: 10000 },
@@ -191,22 +271,6 @@ export const withMissingData = {
   },
 };
 
-export const withLongString = {
-  topics: [{ name: "/baz/text", datatype: "baz/text" }],
-  frame: {
-    "/baz/text": [
-      {
-        topic: "/baz/text",
-        receiveTime: { sec: 123, nsec: 456789012 },
-        message: {
-          text: new Array(10).fill("string").join(" "),
-          long_text: new Array(1024).fill("string").join(" "),
-        },
-      },
-    ],
-  },
-};
-
 export const topicsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [
@@ -240,27 +304,32 @@ export const topicsToDiffFixture = {
 export const topicsWithIdsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [
-    { name: "/baz/enum_advanced", datatype: "baz/enum_advanced" },
-    { name: "/another/baz/enum_advanced", datatype: "baz/enum_advanced" },
+    { name: "/baz/enum_advanced_array", datatype: "baz/enum_advanced_array" },
+    { name: "/another/baz/enum_advanced_array", datatype: "baz/enum_advanced_array" },
   ],
   frame: {
-    "/baz/enum_advanced": [
+    "/baz/enum_advanced_array": [
       {
-        ...enumAdvancedFixture.frame["/baz/enum_advanced"][0],
-        message: [
-          { ...exampleMessage, toBeDeletedVal: "Bye!", toBeDeletedObj: { a: 1, b: 2, c: 3 }, id: 1 },
-          { ...exampleMessage, id: 2 },
-        ],
+        receiveTime: enumAdvancedFixture.frame["/baz/enum_advanced"][0].receiveTime,
+        topic: "/baz/enum_advanced_array",
+        message: {
+          value: [
+            { ...exampleMessage, toBeDeletedVal: "Bye!", toBeDeletedObj: { a: 1, b: 2, c: 3 }, id: 1 },
+            { ...exampleMessage, id: 2 },
+          ],
+        },
       },
     ],
-    "/another/baz/enum_advanced": [
+    "/another/baz/enum_advanced_array": [
       {
-        ...enumAdvancedFixture.frame["/baz/enum_advanced"][0],
-        topic: "/another/baz/enum_advanced",
-        message: [
-          { ...exampleMessage, state: 5, id: 2 },
-          { ...exampleMessage, state: 2, color: 3, newField: "hello", id: 1 },
-        ],
+        receiveTime: enumAdvancedFixture.frame["/baz/enum_advanced"][0].receiveTime,
+        topic: "/another/baz/enum_advanced_array",
+        message: {
+          value: [
+            { ...exampleMessage, state: 5, id: 2 },
+            { ...exampleMessage, state: 2, color: 3, newField: "hello", id: 1 },
+          ],
+        },
       },
     ],
   },

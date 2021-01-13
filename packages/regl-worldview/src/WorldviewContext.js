@@ -37,6 +37,7 @@ type ConstructorArgs = {
   cameraState: CameraState,
   defaultCameraState?: CameraState,
   onCameraStateChange: ?(CameraState) => void,
+  contextAttributes?: ?{ [string]: any },
 };
 
 type InitializedData = {
@@ -98,11 +99,19 @@ export class WorldviewContext {
   canvasBackgroundColor: Vec4 = [0, 0, 0, 1];
   // group all initialized data together so it can be checked for existence to verify initialization is complete
   initializedData: ?InitializedData;
+  contextAttributes: ?{ [string]: any };
 
-  constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
+  constructor({
+    dimension,
+    canvasBackgroundColor,
+    cameraState,
+    onCameraStateChange,
+    contextAttributes,
+  }: ConstructorArgs) {
     // used for children to call paint() directly
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
+    this.contextAttributes = contextAttributes;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
       if (onCameraStateChange) {
         onCameraStateChange(cameraState);
@@ -121,6 +130,7 @@ export class WorldviewContext {
     const regl = this._instrumentCommands(
       createREGL({
         canvas,
+        attributes: this.contextAttributes || {},
         extensions: [
           "angle_instanced_arrays",
           "oes_texture_float",

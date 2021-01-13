@@ -15,7 +15,6 @@ import cx from "classnames";
 import { last, uniq } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import { createSelector } from "reselect";
 import styled from "styled-components";
 
 import ImageCanvas from "./ImageCanvas";
@@ -28,6 +27,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import dropDownStyles from "webviz-core/src/components/Dropdown/index.module.scss";
 import EmptyState from "webviz-core/src/components/EmptyState";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
@@ -37,7 +37,7 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
-import type { Topic, Message, TypedMessage } from "webviz-core/src/players/types";
+import type { Message, TypedMessage } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
@@ -45,6 +45,7 @@ import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { colors as sharedColors } from "webviz-core/src/util/sharedStyleConstants";
 import { getSynchronizingReducers } from "webviz-core/src/util/synchronizeMessages";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
@@ -63,6 +64,7 @@ export type ImageViewPanelHooks = {
   defaultConfig: DefaultConfig,
   imageMarkerDatatypes: string[],
 };
+const DEFAULT_PANEL_HOOKS = { imageMarkerDatatypes: [] };
 
 export type Config = {|
   ...DefaultConfig,
@@ -92,7 +94,7 @@ const SEmptyStateWrapper = styled.div`
   height: 100%;
   position: absolute;
   z-index: 200;
-  background: ${colors.panelBackground};
+  background: ${sharedColors.DARK2};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,15 +132,6 @@ const ToggleComponent = ({
 };
 
 // Group image topics by the first component of their name
-const imageTopicsByNamespaceSelector = createSelector(
-  (topics?: $ReadOnlyArray<Topic>) => topics || [],
-  (topics: $ReadOnlyArray<Topic>): Map<string, Topic[]> => {
-    const imageTopics = topics.filter(
-      (topic) => topic.datatype === "sensor_msgs/Image" || topic.datatype === "sensor_msgs/CompressedImage"
-    );
-    return groupTopics(imageTopics);
-  }
-);
 
 function renderEmptyState(
   cameraTopic: string,
@@ -230,6 +223,8 @@ const AddTopic = ({ onSelectTopic, topics }: { onSelectTopic: (string) => void, 
   );
 };
 
+const NO_CUSTOM_OPTIONS = [];
+
 function ImageView(props: Props) {
   const { config, saveConfig } = props;
   const {
@@ -239,67 +234,61 @@ function ImageView(props: Props) {
     enabledMarkerTopics,
     panelHooks,
     transformMarkers,
-    customMarkerTopicOptions = [],
+    customMarkerTopicOptions = NO_CUSTOM_OPTIONS,
   } = config;
   const { topics } = PanelAPI.useDataSourceInfo();
+  const isDemoMode = useExperimentalFeature("demoMode");
   const cameraTopicFullObject = useMemo(() => getTopicsByTopicName(topics)[cameraTopic], [cameraTopic, topics]);
 
-  const imageTopicsByNamespace = imageTopicsByNamespaceSelector(topics);
-  // Represents marker topics based on the camera topic prefix (e.g. "/camera_front_medium")
-  const allCameraNamespaces = imageTopicsByNamespace ? [...imageTopicsByNamespace.keys()] : [];
+  // Namespaces represent marker topics based on the camera topic prefix (e.g. "/camera_front_medium")
+  const { allCameraNamespaces, imageTopicsByNamespace } = useMemo(() => {
+    const imageTopics = (topics ?? []).filter(({ datatype }) =>
+      ["sensor_msgs/Image", "sensor_msgs/CompressedImage"].includes(datatype)
+    );
+    const topicsByNamespace = groupTopics(imageTopics);
+    return { imageTopicsByNamespace: topicsByNamespace, allCameraNamespaces: [...topicsByNamespace.keys()] };
+  }, [topics]);
 
-  const { imageMarkerDatatypes } = panelHooks ||
-    getGlobalHooks().perPanelHooks().ImageView || { imageMarkerDatatypes: [] };
-  const defaultAvailableMarkerTopics = getMarkerOptions(cameraTopic, topics, allCameraNamespaces, imageMarkerDatatypes);
-  const availableAndEnabledMarkerTopics = uniq([
-    ...defaultAvailableMarkerTopics,
-    ...customMarkerTopicOptions,
-    ...enabledMarkerTopics,
-  ]).sort();
-  const onToggleMarkerName = useCallback(
-    (markerTopic: string) => {
-      saveConfig({ enabledMarkerTopics: toggle(enabledMarkerTopics, markerTopic) });
-    },
-    [saveConfig, enabledMarkerTopics]
+  const { imageMarkerDatatypes } = panelHooks || getGlobalHooks().perPanelHooks().ImageView || DEFAULT_PANEL_HOOKS;
+  const defaultAvailableMarkerTopics = useMemo(
+    () => getMarkerOptions(cameraTopic, topics, allCameraNamespaces, imageMarkerDatatypes),
+    [cameraTopic, topics, allCameraNamespaces, imageMarkerDatatypes]
   );
-
-  const onChangeCameraTopic = useCallback(
-    (newCameraTopic: string) => {
-      const newAvailableMarkerTopics = getMarkerOptions(
-        newCameraTopic,
-        topics,
-        allCameraNamespaces,
-        imageMarkerDatatypes
-      );
-
-      const newEnabledMarkerTopics = getRelatedMarkerTopics(enabledMarkerTopics, newAvailableMarkerTopics);
-      saveConfig({
-        cameraTopic: newCameraTopic,
-        transformMarkers: getGlobalHooks()
-          .perPanelHooks()
-          .ImageView.canTransformMarkersByTopic(newCameraTopic),
-
-        enabledMarkerTopics: newEnabledMarkerTopics,
-      });
-    },
-    [topics, allCameraNamespaces, imageMarkerDatatypes, enabledMarkerTopics, saveConfig]
+  const availableAndEnabledMarkerTopics = useShallowMemo(
+    uniq([...defaultAvailableMarkerTopics, ...customMarkerTopicOptions, ...enabledMarkerTopics]).sort()
   );
+  const onToggleMarkerName = useCallback((markerTopic: string) => {
+    saveConfig({ enabledMarkerTopics: toggle(enabledMarkerTopics, markerTopic) });
+  }, [saveConfig, enabledMarkerTopics]);
 
-  const onChangeScale = useCallback(
-    (newScale: number) => {
-      saveConfig({ scale: newScale });
-    },
-    [saveConfig]
-  );
+  const onChangeCameraTopic = useCallback((newCameraTopic: string) => {
+    const newAvailableMarkerTopics = getMarkerOptions(
+      newCameraTopic,
+      topics,
+      allCameraNamespaces,
+      imageMarkerDatatypes
+    );
 
-  const onToggleSynchronize = useCallback(
-    () => {
-      saveConfig({ synchronize: !config.synchronize });
-    },
-    [saveConfig, config.synchronize]
-  );
+    const newEnabledMarkerTopics = getRelatedMarkerTopics(enabledMarkerTopics, newAvailableMarkerTopics);
+    saveConfig({
+      cameraTopic: newCameraTopic,
+      transformMarkers: getGlobalHooks()
+        .perPanelHooks()
+        .ImageView.canTransformMarkersByTopic(newCameraTopic),
 
-  const renderImageTopicDropdown = () => {
+      enabledMarkerTopics: newEnabledMarkerTopics,
+    });
+  }, [topics, allCameraNamespaces, imageMarkerDatatypes, enabledMarkerTopics, saveConfig]);
+
+  const onChangeScale = useCallback((newScale: number) => {
+    saveConfig({ scale: newScale });
+  }, [saveConfig]);
+
+  const onToggleSynchronize = useCallback(() => {
+    saveConfig({ synchronize: !config.synchronize });
+  }, [saveConfig, config.synchronize]);
+
+  const imageTopicDropdown = useMemo(() => {
     const cameraNamespace = getCameraNamespace(cameraTopic);
 
     if (!imageTopicsByNamespace || imageTopicsByNamespace.size === 0) {
@@ -344,9 +333,58 @@ function ImageView(props: Props) {
     return (
       <Dropdown toggleComponent={<ToggleComponent dataTest={"topics-dropdown"} text={cameraTopic} />}>{items}</Dropdown>
     );
-  };
+  }, [cameraTopic, imageTopicsByNamespace, onChangeCameraTopic]);
 
-  const renderMarkerDropdown = (cameraInfo: ?CameraInfo, renderedMarkerTimestamps: { [topic: string]: string }) => {
+  const cameraInfoTopic = getCameraInfoTopic(cameraTopic);
+  const cameraInfo: ?CameraInfo = PanelAPI.useMessageReducer({
+    topics: cameraInfoTopic ? [cameraInfoTopic] : [],
+    restore: useCallback((value) => value, []),
+    addMessage: useCallback((value, { message }: TypedMessage<CameraInfo>) => message, []),
+  });
+
+  const shouldSynchronize = config.synchronize && enabledMarkerTopics.length > 0;
+  const imageAndMarkerTopics = useShallowMemo([{ topic: cameraTopic, imageScale: scale }, ...enabledMarkerTopics]);
+  const { messagesByTopic, synchronizedMessages } = useOptionallySynchronizedMessages(
+    shouldSynchronize,
+    imageAndMarkerTopics
+  );
+
+  const markersToRender: Message[] = useMemo(
+    () =>
+      shouldSynchronize
+        ? synchronizedMessages
+          ? enabledMarkerTopics.map((topic) => synchronizedMessages[topic])
+          : []
+        : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic])),
+    [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages]
+  );
+
+  // Timestamps are displayed for informational purposes in the markers menu
+  const renderedMarkerTimestamps = useMemo(() => {
+    const stamps = {};
+    for (const { topic, message } of markersToRender) {
+      // In some cases, a user may have subscribed to a topic that does not include a header stamp.
+      stamps[topic] = message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ not available ]";
+    }
+    return stamps;
+  }, [markersToRender]);
+
+  const addTopicsMenu = useMemo(
+    () => (
+      <AddTopic
+        topics={topics.map(({ name }) => name).filter((topic) => !availableAndEnabledMarkerTopics.includes(topic))}
+        onSelectTopic={(topic) =>
+          saveConfig({
+            enabledMarkerTopics: [...enabledMarkerTopics, topic],
+            customMarkerTopicOptions: [...customMarkerTopicOptions, topic],
+          })
+        }
+      />
+    ),
+    [topics, availableAndEnabledMarkerTopics, saveConfig, enabledMarkerTopics, customMarkerTopicOptions]
+  );
+
+  const markerDropdown = useMemo(() => {
     const missingRequiredCameraInfo = scale !== 1 && !cameraInfo;
 
     return (
@@ -384,20 +422,20 @@ function ImageView(props: Props) {
             )}
           </Item>
         ))}
-        {
-          <AddTopic
-            topics={topics.map(({ name }) => name).filter((topic) => !availableAndEnabledMarkerTopics.includes(topic))}
-            onSelectTopic={(topic) =>
-              saveConfig({
-                enabledMarkerTopics: [...enabledMarkerTopics, topic],
-                customMarkerTopicOptions: [...customMarkerTopicOptions, topic],
-              })
-            }
-          />
-        }
+        {addTopicsMenu}
       </Dropdown>
     );
-  };
+  }, [
+    addTopicsMenu,
+    availableAndEnabledMarkerTopics,
+    cameraInfo,
+    customMarkerTopicOptions,
+    enabledMarkerTopics,
+    onToggleMarkerName,
+    renderedMarkerTimestamps,
+    saveConfig,
+    scale,
+  ]);
 
   const menuContent = useMemo(
     () => (
@@ -420,19 +458,6 @@ function ImageView(props: Props) {
     [scale, onChangeScale, synchronize, onToggleSynchronize]
   );
 
-  const cameraInfoTopic = getCameraInfoTopic(cameraTopic);
-  const cameraInfo: ?CameraInfo = PanelAPI.useMessageReducer({
-    topics: cameraInfoTopic ? [cameraInfoTopic] : [],
-    restore: useCallback((value) => value, []),
-    addMessage: useCallback((value, { message }: TypedMessage<CameraInfo>) => message, []),
-  });
-
-  const shouldSynchronize = config.synchronize && enabledMarkerTopics.length > 0;
-  const imageAndMarkerTopics = useShallowMemo([{ topic: cameraTopic, imageScale: scale }, ...enabledMarkerTopics]);
-  const { messagesByTopic, synchronizedMessages } = useOptionallySynchronizedMessages(
-    shouldSynchronize,
-    imageAndMarkerTopics
-  );
   const imageMessage = messagesByTopic?.[cameraTopic]?.[0];
   const lastImageMessageRef = React.useRef(imageMessage);
   if (imageMessage) {
@@ -442,39 +467,14 @@ function ImageView(props: Props) {
   // Improve perf by hiding the ImageCanvas while seeking, instead of unmounting and remounting it.
   const imageMessageToRender = imageMessage || lastImageMessageRef.current;
 
-  const markersToRender: Message[] = useMemo(
-    () =>
-      shouldSynchronize
-        ? synchronizedMessages
-          ? enabledMarkerTopics.map((topic) => synchronizedMessages[topic])
-          : []
-        : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic])),
-    [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages]
-  );
-  // Timestamps are displayed for informational purposes in the markers menu
-  const renderedMarkerTimestamps = useMemo(
-    () => {
-      const stamps = {};
-      for (const { topic, message } of markersToRender) {
-        // In some cases, a user may have subscribed to a topic that does not include a header stamp.
-        stamps[topic] = message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ not available ]";
-      }
-      return stamps;
-    },
-    [markersToRender]
-  );
-
   const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
-  const onStartRenderImage = useCallback(
-    () => {
-      const resumeFrame = pauseFrame("ImageView");
-      const onFinishRenderImage = () => {
-        resumeFrame();
-      };
-      return onFinishRenderImage;
-    },
-    [pauseFrame]
-  );
+  const onStartRenderImage = useCallback(() => {
+    const resumeFrame = pauseFrame("ImageView");
+    const onFinishRenderImage = () => {
+      resumeFrame();
+    };
+    return onFinishRenderImage;
+  }, [pauseFrame]);
 
   const rawMarkerData = {
     markers: markersToRender,
@@ -483,16 +483,16 @@ function ImageView(props: Props) {
     cameraInfo: markersToRender.length > 0 ? cameraInfo : null,
   };
 
-  const renderToolbar = () => {
+  const toolbar = useMemo(() => {
     return (
       <PanelToolbar floating helpContent={helpContent} menuContent={menuContent}>
         <div className={style.controls}>
-          {renderImageTopicDropdown()}
-          {renderMarkerDropdown(cameraInfo, renderedMarkerTimestamps)}
+          {imageTopicDropdown}
+          {markerDropdown}
         </div>
       </PanelToolbar>
     );
-  };
+  }, [imageTopicDropdown, markerDropdown, menuContent]);
 
   const renderBottomBar = () => {
     return (
@@ -538,7 +538,7 @@ function ImageView(props: Props) {
 
   return (
     <Flex col clip>
-      {renderToolbar()}
+      {toolbar}
       {/* If rendered, EmptyState will hide the always-present ImageCanvas */}
       {showEmptyState && renderEmptyState(cameraTopic, enabledMarkerTopics, shouldSynchronize, messagesByTopic)}
       {/* Always render the ImageCanvas because it's expensive to unmount and start up. */}
@@ -553,7 +553,7 @@ function ImageView(props: Props) {
           onStartRenderImage={onStartRenderImage}
         />
       )}
-      {!showEmptyState && renderBottomBar()}
+      {!showEmptyState && !isDemoMode && renderBottomBar()}
     </Flex>
   );
 }

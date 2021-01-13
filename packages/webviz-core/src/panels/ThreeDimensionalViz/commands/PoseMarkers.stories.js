@@ -20,7 +20,7 @@ const MARKER_DATA = {
   },
   scale: { x: 1, y: 1, z: 1 },
   color: { r: 1, g: 1, b: 1, a: 0.5 },
-  settings: { color: undefined },
+  settings: { overrideColor: undefined },
 };
 const targetPosition = MARKER_DATA.pose.position;
 const targetOffset = [targetPosition.x, targetPosition.y, targetPosition.z];
@@ -43,7 +43,7 @@ function Example({ alpha = 0.3, color = { r: 0.2, g: 0.59, b: 0.2, a: 0.3 } }: {
       orientation: { x: -0.9928242172830276, y: 0, z: 0, w: 0.11958291506876588 },
     },
     settings: {
-      color,
+      overrideColor: color,
       size: {
         shaftWidth: 0.5,
         headWidth: 2,
@@ -58,7 +58,7 @@ function Example({ alpha = 0.3, color = { r: 0.2, g: 0.59, b: 0.2, a: 0.3 } }: {
       orientation: { x: 0, y: 0, z: -0.9928242172830276, w: 0.11958291506876588 },
     },
     settings: {
-      useCarModel: true,
+      modelType: "car-model",
       alpha,
     },
   };

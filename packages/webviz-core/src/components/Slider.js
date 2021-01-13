@@ -29,6 +29,7 @@ type Props = {|
   value: ?number,
   min: number,
   max: number,
+  disabled?: boolean, // Disable the mouse interactions.
   step?: number,
   draggable?: boolean,
   onChange: (number) => void,
@@ -39,7 +40,7 @@ const StyledSlider = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   border-radius: 2px;
 `;
 
@@ -98,7 +99,10 @@ export default class Slider extends React.Component<Props> {
   }
 
   _onClick = (e: SyntheticMouseEvent<HTMLDivElement>) => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     // handled in mouse up/out if draggable
     if (draggable) {
       return;
@@ -113,7 +117,10 @@ export default class Slider extends React.Component<Props> {
   };
 
   _onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>): void => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     const { mouseDown } = this;
     if (!draggable || !mouseDown) {
       return;
@@ -123,7 +130,10 @@ export default class Slider extends React.Component<Props> {
   };
 
   _onMouseDown = (e: SyntheticMouseEvent<HTMLDivElement>): void => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     if (!draggable) {
       return;
     }
@@ -138,7 +148,7 @@ export default class Slider extends React.Component<Props> {
   };
 
   render() {
-    const { min, max, value, renderSlider, draggable } = this.props;
+    const { min, max, value, renderSlider, draggable, disabled } = this.props;
     const { mouseDown } = this;
 
     if (max < min) {
@@ -148,7 +158,11 @@ export default class Slider extends React.Component<Props> {
     }
 
     return (
-      <StyledSlider ref={(el) => (this.el = el)} onClick={this._onClick} onMouseDown={this._onMouseDown}>
+      <StyledSlider
+        disabled={disabled}
+        ref={(el) => (this.el = el)}
+        onClick={this._onClick}
+        onMouseDown={this._onMouseDown}>
         <DocumentEvents
           target={window}
           enabled={mouseDown && draggable}

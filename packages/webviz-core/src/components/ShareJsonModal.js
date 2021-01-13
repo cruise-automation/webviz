@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import cx from "classnames";
+import { type BrowserHistory } from "history";
 import React, { Component } from "react";
 
 import styles from "./ShareJsonModal.module.scss";
@@ -15,6 +16,8 @@ import Flex from "webviz-core/src/components/Flex";
 import Modal from "webviz-core/src/components/Modal";
 import { downloadTextFile } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
+import { LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY, PATCH_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { stringifyParams } from "webviz-core/src/util/layout";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 type Props = {
@@ -24,6 +27,7 @@ type Props = {
   // this will be serialized to json & displayed
   value: any, // eslint-disable-line react/no-unused-prop-types
   noun: string,
+  history?: BrowserHistory,
 };
 
 type State = {|
@@ -64,7 +68,7 @@ export default class ShareJsonModal extends Component<Props, State> {
   };
 
   onChange = () => {
-    const { onChange, onRequestClose } = this.props;
+    const { onChange, onRequestClose, history } = this.props;
     let { value } = this.state;
     if (value.length === 0) {
       value = JSON.stringify({});
@@ -72,6 +76,14 @@ export default class ShareJsonModal extends Component<Props, State> {
     try {
       onChange(decode(value));
       onRequestClose();
+      if (history) {
+        const params = new URLSearchParams(window.location.search);
+        params.delete(LAYOUT_QUERY_KEY);
+        params.delete(LAYOUT_URL_QUERY_KEY);
+        params.delete(PATCH_QUERY_KEY);
+        const query = stringifyParams(params);
+        history.push(`${location.pathname}${query}`);
+      }
     } catch (e) {
       if (process.env.NODE_ENV !== "test") {
         console.error("Error parsing value from base64 json", e);
@@ -113,7 +125,7 @@ export default class ShareJsonModal extends Component<Props, State> {
           display: "flex",
         }}>
         <Flex col className={styles.container}>
-          <p>
+          <p style={{ lineHeight: "22px" }}>
             <em>Paste a new {this.props.noun} to use it, or copy this one to share it:</em>
           </p>
           <textarea

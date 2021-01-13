@@ -15,6 +15,7 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
+  notifyPlayerManager: async () => {},
 };
 
 describe("BagDataProvider", () => {
@@ -37,18 +38,20 @@ describe("BagDataProvider", () => {
       { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
       { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
     ]);
-    expect(Object.keys(result.datatypes)).toContainOnly([
-      "rosgraph_msgs/Log",
-      "std_msgs/Header",
-      "turtlesim/Color",
-      "tf2_msgs/TFMessage",
-      "geometry_msgs/TransformStamped",
-      "geometry_msgs/Transform",
-      "geometry_msgs/Vector3",
-      "geometry_msgs/Quaternion",
-      "turtlesim/Pose",
-      "tf/tfMessage",
-      "geometry_msgs/Twist",
+    const { messageDefinitions } = result;
+    if (messageDefinitions.type !== "raw") {
+      throw new Error("BagDataProvider requires raw message definitions");
+    }
+    expect(Object.keys(messageDefinitions.messageDefinitionsByTopic)).toContainOnly([
+      "/rosout",
+      "/turtle1/color_sensor",
+      "/tf_static",
+      "/turtle2/color_sensor",
+      "/turtle1/pose",
+      "/turtle2/pose",
+      "/tf",
+      "/turtle2/cmd_vel",
+      "/turtle1/cmd_vel",
     ]);
   });
 
@@ -71,18 +74,20 @@ describe("BagDataProvider", () => {
       { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
       { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
     ]);
-    expect(Object.keys(result.datatypes)).toContainOnly([
-      "rosgraph_msgs/Log",
-      "std_msgs/Header",
-      "turtlesim/Color",
-      "tf2_msgs/TFMessage",
-      "geometry_msgs/TransformStamped",
-      "geometry_msgs/Transform",
-      "geometry_msgs/Vector3",
-      "geometry_msgs/Quaternion",
-      "turtlesim/Pose",
-      "tf/tfMessage",
-      "geometry_msgs/Twist",
+    const { messageDefinitions } = result;
+    if (messageDefinitions.type !== "raw") {
+      throw new Error("BagDataProvider requires raw message definitions");
+    }
+    expect(Object.keys(messageDefinitions.messageDefinitionsByTopic)).toContainOnly([
+      "/rosout",
+      "/turtle1/color_sensor",
+      "/tf_static",
+      "/turtle2/color_sensor",
+      "/turtle1/pose",
+      "/turtle2/pose",
+      "/tf",
+      "/turtle2/cmd_vel",
+      "/turtle1/cmd_vel",
     ]);
   });
 
@@ -156,9 +161,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 10, nsec: 500 },
       endTime: { sec: 10, nsec: 599 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1"],
         totalSizeOfMessages: 10,
         numberOfMessages: 1,
@@ -171,9 +174,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 10, nsec: 600 },
       endTime: { sec: 10, nsec: 699 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1", "/topic2"],
         totalSizeOfMessages: 10,
         numberOfMessages: 1,
@@ -190,9 +191,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 10, nsec: 500 },
       endTime: { sec: 10, nsec: 599 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1"],
         totalSizeOfMessages: 10,
         numberOfMessages: 1,
@@ -205,9 +204,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 20, nsec: 600 },
       endTime: { sec: 20, nsec: 699 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1"],
         totalSizeOfMessages: 10,
         numberOfMessages: 1,
@@ -224,9 +221,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 10, nsec: 500 },
       endTime: { sec: 10, nsec: 599 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1"],
         totalSizeOfMessages: 10,
         numberOfMessages: 1,
@@ -239,9 +234,7 @@ describe("statsAreAdjacent", () => {
       startTime: { sec: 10, nsec: 600 },
       endTime: { sec: 10, nsec: 699 },
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: "localBag",
+        type: "average_throughput",
         topics: ["/topic1"],
         totalSizeOfMessages: 12,
         numberOfMessages: 2,

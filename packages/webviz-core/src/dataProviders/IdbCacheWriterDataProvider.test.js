@@ -61,8 +61,10 @@ describe("IdbCacheWriterDataProvider", () => {
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
       topics: [],
-      datatypes: {},
-      messageDefinitionsByTopic: {},
+      messageDefinitions: {
+        type: "raw",
+        messageDefinitionsByTopic: {},
+      },
       providesParsedMessages: false,
     });
   });
@@ -93,7 +95,7 @@ describe("IdbCacheWriterDataProvider", () => {
 
     // See comment in previous test for why we make this many calls.
     expect(mockProgressCallback.mock.calls.length).toEqual(4 + 4e9 / BLOCK_SIZE_NS);
-    expect(emptyArray).toEqual({ bobjects: undefined, parsedMessages: undefined, rosBinaryMessages: undefined });
+    expect(emptyArray).toEqual({ bobjects: undefined, parsedMessages: undefined, rosBinaryMessages: [] });
 
     const db = await getIdbCacheDataProviderDatabase("some-id");
     const messages = await db.getRange(MESSAGES_STORE_NAME, TIMESTAMP_INDEX, 0, 2e9);
@@ -147,12 +149,12 @@ describe("IdbCacheWriterDataProvider", () => {
     expect(await getMessagesPromise1).toEqual({
       bobjects: undefined,
       parsedMessages: undefined,
-      rosBinaryMessages: undefined,
+      rosBinaryMessages: [],
     });
     expect(await getMessagesPromise2).toEqual({
       bobjects: undefined,
       parsedMessages: undefined,
-      rosBinaryMessages: undefined,
+      rosBinaryMessages: [],
     });
 
     const db = await getIdbCacheDataProviderDatabase("some-id");

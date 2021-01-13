@@ -9,34 +9,47 @@ import _, { flatten, groupBy, isEqual, keyBy, mapValues, some, xor } from "lodas
 import type { Time } from "rosbag";
 import shallowequal from "shallowequal";
 
+import type { SkipTransformSpec, ThreeDimensionalVizHooks } from "./types";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
 import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
   BinaryMarker,
-  BinaryOccupancyGrid,
   BinaryPolygonStamped,
   BinaryPoseStamped,
-  InstancedLineListMarker,
+  BinaryInstancedMarker,
 } from "webviz-core/src/types/BinaryMessages";
 import type {
-  LaserScan,
+  Color,
   Marker,
   Namespace,
   NavMsgs$OccupancyGrid,
   MutablePose,
-  PointCloud2,
   Pose,
-  PoseStamped,
   StampedMessage,
 } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { objectValues } from "webviz-core/src/util";
+import { getField, getIndex, deepParse } from "webviz-core/src/util/binaryObjects";
 import Bounds from "webviz-core/src/util/Bounds";
-import { POSE_MARKER_SCALE, LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
+import {
+  POSE_MARKER_SCALE,
+  LINED_CONVEX_HULL_RENDERING_SETTING,
+  MARKER_ARRAY_DATATYPES,
+  TRANSFORM_STATIC_TOPIC,
+  TRANSFORM_TOPIC,
+  WEBVIZ_MARKER_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
+  POSE_STAMPED_DATATYPE,
+  NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
+  POINT_CLOUD_DATATYPE,
+  SENSOR_MSGS_LASER_SCAN_DATATYPE,
+  GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
+} from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -48,13 +61,15 @@ export type TopicSettingsCollection = {
 
 // builds a syntehtic arrow marker from a geometry_msgs/PoseStamped
 // these pose sizes were manually configured in rviz; for now we hard-code them here
-export const buildSyntheticArrowMarker = ({ topic, message }: Message, pose: Pose) => ({
+export const buildSyntheticArrowMarker = (
+  { topic, message }: Message,
+  pose: Pose,
+  getSyntheticArrowMarkerColor: (string) => Color
+) => ({
   type: 103,
   pose,
   scale: POSE_MARKER_SCALE,
-  color: getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.getSyntheticArrowMarkerColor(topic),
+  color: getSyntheticArrowMarkerColor(topic),
   interactionData: { topic, originalMessage: message },
 });
 
@@ -79,41 +94,71 @@ type SelectedNamespacesByTopic = { [topicName: string]: string[] };
 
 type MarkerMatchersByTopic = { [string]: Array<MarkerMatcher> };
 
-function getSceneErrorsByTopic(sceneErrors: SceneErrors): { [topicName: string]: string[] } {
+const missingTransformMessage = (
+  rootTransformId: string,
+  error: ErrorDetails,
+  transforms: Transforms,
+  skipTransform: ?SkipTransformSpec
+): string => {
+  if (skipTransform != null && error.frameIds.has(skipTransform.frameId)) {
+    return `missing transform. Is ${skipTransform.sourceTopic} present?`;
+  }
+  if (transforms.empty) {
+    return `missing transform. Is ${TRANSFORM_TOPIC} or ${TRANSFORM_STATIC_TOPIC} present?`;
+  }
+  const frameIds = [...error.frameIds].sort().join(",");
+  const s = error.frameIds.size === 1 ? "" : "s"; // for plural
+  return `missing transforms to root frame ${rootTransformId} from frame${s} ${frameIds}.`;
+};
+
+export function getSceneErrorsByTopic(
+  sceneErrors: SceneErrors,
+  transforms: Transforms,
+  skipTransform: ?SkipTransformSpec
+): { [topicName: string]: string[] } {
   const res = {};
-  // generic errors
-  for (const [topic, message] of sceneErrors.topicsWithError) {
+  const addError = (topic, message) => {
     if (!res[topic]) {
       res[topic] = [];
     }
     res[topic].push(message);
+  };
+  // generic errors
+  for (const [topic, message] of sceneErrors.topicsWithError) {
+    addError(topic, message);
   }
   // errors related to missing frame ids and transform ids
-  [
-    { description: "missing frame id", errors: sceneErrors.topicsMissingFrameIds },
-    {
-      description: `missing transforms to root transform ${sceneErrors.rootTransformID}`,
-      errors: sceneErrors.topicsMissingTransforms,
-    },
-  ].forEach(({ description, errors }) => {
-    errors.forEach((_err, topic) => {
-      if (!res[topic]) {
-        res[topic] = [];
-      }
-      res[topic].push(description);
-    });
+  sceneErrors.topicsMissingTransforms.forEach((err, topic) => {
+    addError(topic, missingTransformMessage(sceneErrors.rootTransformID, err, transforms, skipTransform));
+  });
+  sceneErrors.topicsMissingFrameIds.forEach((_err, topic) => {
+    addError(topic, "missing frame id");
   });
   return res;
 }
 
 // Only display one non-lifetime message at a time, so we filter to the last one.
-function filterToSingleNonLifetimeMessage(messages: any) {
+export function filterOutSupersededMessages(messages: any, datatype: string) {
+  // Later messages take precedence over earlier messages, so iterate from latest to earliest to
+  // find the last one that matters.
+  const reversedMessages = messages.slice().reverse();
+  if (MARKER_ARRAY_DATATYPES.includes(datatype)) {
+    // Many marker arrays begin with a command to "delete all markers on this topic". If we see
+    // this, we can ignore any earlier messages on the topic.
+    const earliestMessageToKeepIndex = reversedMessages.findIndex(({ message }) => {
+      const markers = getField(message, "markers") ?? getField(message, "allMarkers");
+      return getField(getIndex(markers, 0), "action") === 3;
+    });
+    if (earliestMessageToKeepIndex !== -1) {
+      return reversedMessages.slice(0, earliestMessageToKeepIndex + 1).reverse();
+    }
+    return messages;
+  }
   const filteredMessages = [];
   let hasSeenNonLifetimeMessage = false;
-  // iterate back to front.
-  for (const message of messages.slice().reverse()) {
-    // $FlowFixMe flow doesn't like optional function calls.
-    if (isBobject(message) ? message?.message?.()?.lifetime?.() : message?.message?.lifetime) {
+  for (const message of reversedMessages) {
+    const hasLifetime = !!getField(message.message, "lifetime");
+    if (hasLifetime) {
       // Show all messages that have a lifetime.
       filteredMessages.unshift(message);
     } else if (!hasSeenNonLifetimeMessage) {
@@ -160,6 +205,8 @@ export default class SceneBuilder implements MarkerProvider {
   // When not-empty, override the color of matching markers
   _colorOverrideMarkerMatchersByTopic: MarkerMatchersByTopic = {};
 
+  _hooks: ThreeDimensionalVizHooks;
+
   allNamespaces: Namespace[] = [];
   // TODO(Audrey): remove enabledNamespaces once we release topic groups
   enabledNamespaces: Namespace[] = [];
@@ -174,6 +221,10 @@ export default class SceneBuilder implements MarkerProvider {
   // stored message arrays allowing used to re-render topics even when the latest
   // frame does not not contain that topic
   lastSeenMessages: { [string]: Message[] } = {};
+
+  constructor(hooks: ThreeDimensionalVizHooks) {
+    this._hooks = hooks;
+  }
 
   setTransforms = (transforms: Transforms, rootTransformID: string) => {
     this.transforms = transforms;
@@ -258,21 +309,21 @@ export default class SceneBuilder implements MarkerProvider {
       const newNamespaces = selectedNamespacesByTopic[topicName];
       const previousNamespaces = [...(this.selectedNamespacesByTopic?.[topicName] || [])];
       if (xor(newNamespaces, previousNamespaces).length > 0) {
-        this.topicsToRender.add(topicName);
+        this._markTopicToRender(topicName);
       }
     });
     this.selectedNamespacesByTopic = mapValues(selectedNamespacesByTopic, (namespaces) => new Set(namespaces));
   }
 
   setGlobalVariables = ({ globalVariables }: { globalVariables: GlobalVariables }) => {
-    const { getSelectionState, getTopicsToRender } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+    const { getSelectionState, getTopicsToRender } = this._hooks;
     const prevSelectionState = this.selectionState;
     this.selectionState = getSelectionState(globalVariables);
 
     // Because setSelectedNamespacesByTopic is called before setGlobalVariables,
     // we need to add the topics here instead of overwriting them.
     const updatedTopics = getTopicsToRender(prevSelectionState, this.selectionState);
-    updatedTopics.forEach((topicName) => this.topicsToRender.add(topicName));
+    updatedTopics.forEach((topicName) => this._markTopicToRender(topicName));
   };
 
   setHighlightedMatchers(markerMatchers: Array<MarkerMatcher>) {
@@ -296,7 +347,13 @@ export default class SceneBuilder implements MarkerProvider {
     );
     // If any of the matchers have changed, we need to rerender all of the topics
     if (!shallowequal(matchersBefore, newMarkerMatchers)) {
-      Object.keys(this.topicsByName).forEach((name) => this.topicsToRender.add(name));
+      Object.keys(this.topicsByName).forEach((name) => this._markTopicToRender(name));
+    }
+  }
+
+  _markTopicToRender(topicName: string) {
+    if (this.topicsByName[topicName]) {
+      this.topicsToRender.add(topicName);
     }
   }
 
@@ -331,7 +388,7 @@ export default class SceneBuilder implements MarkerProvider {
 
   // Update the field anytime the errors change in order to generate a new object to trigger TopicTree to rerender.
   _updateErrorsByTopic() {
-    const errorsByTopic = getSceneErrorsByTopic(this.errors);
+    const errorsByTopic = getSceneErrorsByTopic(this.errors, this.transforms, this._hooks.skipTransformFrame);
     if (!isEqual(this.errorsByTopic, errorsByTopic)) {
       this.errorsByTopic = errorsByTopic;
       if (this._onForceUpdate) {
@@ -375,41 +432,7 @@ export default class SceneBuilder implements MarkerProvider {
     }
   }
 
-  _transformMarkerPose = (topic: string, marker: Marker): ?MutablePose => {
-    const { frame_id } = marker.header;
-
-    if (!frame_id) {
-      const error = this._addError(this.errors.topicsMissingFrameIds, topic);
-      error.namespaces.add(marker.ns);
-      return null;
-    }
-
-    if (frame_id === this.rootTransformID) {
-      // Transforming is a bit expensive, and this (no transformation necessary) is the common-case
-      // TODO: Need to deep-clone, callers mutate the result; fix this downstream.
-      return {
-        position: { ...marker.pose.position },
-        orientation: { ...marker.pose.orientation },
-      };
-    }
-
-    // frame_id !== this.rootTransformID.
-    // We continue to render these, though they may be inaccurate
-    this._reportBadFrameId(topic);
-    const badFrameError = this._addError(this.errors.topicsWithBadFrameIds, topic);
-    badFrameError.namespaces.add(marker.ns);
-    badFrameError.frameIds.add(frame_id);
-
-    const pose = this.transforms.apply(emptyPose(), marker.pose, frame_id, this.rootTransformID);
-    if (!pose) {
-      const topicMissingError = this._addError(this.errors.topicsMissingTransforms, topic);
-      topicMissingError.namespaces.add(marker.ns);
-      topicMissingError.frameIds.add(frame_id);
-    }
-    return pose;
-  };
-
-  _transformBobjectMarkerPose = (topic: string, marker: BinaryMarker | InstancedLineListMarker): ?MutablePose => {
+  _transformMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
     const frame_id = marker.header().frame_id();
 
     if (!frame_id) {
@@ -442,59 +465,16 @@ export default class SceneBuilder implements MarkerProvider {
   };
 
   _consumeMarkerArray = (topic: string, message: any): void => {
-    for (let i = 0; i < message.markers.length; i++) {
-      this._consumeMarker(topic, message.markers[i]);
-    }
-  };
-
-  _consumeBobjectMarkerArray = (topic: string, message: any): void => {
     for (const marker of message.markers()) {
-      this._consumeBobjectMarker(topic, marker);
+      this._consumeMarker(topic, marker);
     }
   };
 
-  _consumeMarker(topic: string, message: Marker): void {
-    if (message.ns) {
-      // Consume namespaces even if the message is later discarded
-      // Otherwise, the namespace won't be shown as available.
-      this._consumeNamespace(topic, message.ns);
-      if (!this.namespaceIsEnabled(topic, message.ns)) {
-        return;
-      }
-    }
-
-    // Marker names are used to identify previously rendered markers for "deletes" and over-writing
-    // "adds".
-    // In each topic, the namespace (`ns`) and identifier (`id`) uniquely identify the marker.
-    // See https://github.com/ros-visualization/rviz/blob/4b6c0f4/src/rviz/default_plugin/markers/marker_base.h#L56
-    // and https://github.com/ros-visualization/rviz/blob/4b6c0f4/src/rviz/default_plugin/marker_display.cpp#L422
-    const name = `${topic}/${message.ns}/${message.id}`;
-    switch (message.action) {
-      case 0: // add
-        break;
-      case 1: // deprecated in ros
-        this._setTopicError(topic, "Marker.action=1 is deprecated");
-        return;
-      case 2: // delete
-        this.collectors[topic].deleteMarker(name);
-        return;
-      case 3:
-        this.collectors[topic].deleteAll();
-        return;
-      default:
-        this._setTopicError(topic, `Unsupported action type: ${message.action}`);
-        return;
-    }
-
-    const pose = this._transformMarkerPose(topic, message);
-    if (!pose) {
-      return;
-    }
-
-    const { points } = (message: any);
-    const { position } = pose;
-
+  _addMarker({ topic, message, name }: { topic: string, message: Marker, name: string }) {
     let minZ = Number.MAX_SAFE_INTEGER;
+
+    const { points, pose } = (message: any);
+    const { position } = pose;
 
     // if the marker has points, adjust bounds by the points
     if (points && points.length) {
@@ -520,9 +500,8 @@ export default class SceneBuilder implements MarkerProvider {
     // HACK(jacob): rather than hard-coding this, we should
     //  (a) produce this visualization dynamically from a non-marker topic
     //  (b) fix translucency so it looks correct (harder)
-    const color = getGlobalHooks()
-      .perPanelHooks()
-      .ThreeDimensionalViz.getMarkerColor(topic, message.color);
+    // HACK(steel): color should always be present. But don't crash just in case?
+    const color = this._hooks.getMarkerColor(topic, (message.color: any));
 
     // Allow topic settings to override marker color (see MarkerSettingsEditor.js)
     let { overrideColor } = this._settingsByKey[`ns:${topic}:${message.ns}`] || this._settingsByKey[`t:${topic}`] || {};
@@ -557,8 +536,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].addMarker(marker, name);
   }
 
-  _consumeBobjectMarker(topic: string, message: BinaryMarker | InstancedLineListMarker): void {
-    // TODO(bobject3dPanel): Convert this to bobject-logic
+  _consumeMarker(topic: string, message: BinaryMarker | BinaryInstancedMarker): void {
     const namespace = message.ns();
     if (namespace) {
       // Consume namespaces even if the message is later discarded
@@ -592,7 +570,7 @@ export default class SceneBuilder implements MarkerProvider {
         return;
     }
 
-    const pose = this._transformBobjectMarkerPose(topic, message);
+    const pose = this._transformMarkerPose(topic, message);
     if (!pose) {
       return;
     }
@@ -603,8 +581,9 @@ export default class SceneBuilder implements MarkerProvider {
     let minZ = Number.MAX_SAFE_INTEGER;
 
     const parsedPoints = [];
-    // if the marker has points, adjust bounds by the points
-    if (points.length()) {
+    // if the marker has points, adjust bounds by the points. (Constructed markers sometimes don't
+    // have points.)
+    if (points && points.length()) {
       for (const point of points) {
         const x = point.x();
         const y = point.y();
@@ -629,9 +608,7 @@ export default class SceneBuilder implements MarkerProvider {
     // HACK(jacob): rather than hard-coding this, we should
     //  (a) produce this visualization dynamically from a non-marker topic
     //  (b) fix translucency so it looks correct (harder)
-    const color = getGlobalHooks()
-      .perPanelHooks()
-      .ThreeDimensionalViz.getMarkerColor(topic, deepParse(message.color()));
+    const color = this._hooks.getMarkerColor(topic, deepParse(message.color()));
 
     // Allow topic settings to override marker color (see MarkerSettingsEditor.js)
     let { overrideColor } = this._settingsByKey[`ns:${topic}:${namespace}`] || this._settingsByKey[`t:${topic}`] || {};
@@ -661,14 +638,14 @@ export default class SceneBuilder implements MarkerProvider {
     const marker: any = {
       type: message.type(),
       scale: deepParse(message.scale()),
-      lifetime: lifetime && deepParse(lifetime),
+      lifetime: deepParse(lifetime),
       pose,
       interactionData,
       color: overrideColor || color,
       colors: overrideColor ? [] : deepParse(message.colors()),
       points: parsedPoints,
       // These fields are probably unused, but Flow asks for them.
-      // TODO(bobject3dPanel): Loosen the flow-type here?
+      // TODO(useBinaryTranslation): Loosen the flow-type here?
       id: message.id(),
       ns: message.ns(),
       header: deepParse(message.header()),
@@ -678,11 +655,11 @@ export default class SceneBuilder implements MarkerProvider {
     if (message.text != null) {
       marker.text = message.text();
     }
-    // InstancedLineList fields
-    if (message.poses) {
-      marker.poses = message.poses();
+    // InstancedLineList fields. Check some fields, some fixtures do not include them all.
+    if (message.metadataByIndex) {
+      marker.poses = message.poses && message.poses();
       marker.metadataByIndex = message.metadataByIndex();
-      marker.closed = message.closed();
+      marker.closed = message.closed && message.closed();
     }
     this.collectors[topic].addMarker(marker, name);
   }
@@ -714,9 +691,7 @@ export default class SceneBuilder implements MarkerProvider {
 
     // set ogrid texture & alpha based on current rviz settings
     // in the future these will be customizable via the UI
-    const [alpha, map] = getGlobalHooks()
-      .perPanelHooks()
-      .ThreeDimensionalViz.getOccupancyGridValues(topic);
+    const [alpha, map] = this._hooks.getOccupancyGridValues(topic);
 
     const mappedMessage = {
       ...message,
@@ -725,63 +700,6 @@ export default class SceneBuilder implements MarkerProvider {
       type,
       name,
       pose,
-      interactionData: { topic, originalMessage: message },
-    };
-
-    // if we neeed to flatten the ogrid clone the position and change the z to match the flattenedZHeightPose
-    if (mappedMessage.info.origin.position.z === 0 && this.flattenedZHeightPose && this.flatten) {
-      const originalInfo = mappedMessage.info;
-      const originalPosition = originalInfo.origin.position;
-      mappedMessage.info = {
-        ...originalInfo,
-        origin: {
-          ...originalInfo.origin,
-          position: { ...originalPosition, z: this.flattenedZHeightPose.position.z },
-        },
-      };
-    }
-    this.collectors[topic].addNonMarker(topic, mappedMessage);
-  };
-
-  _consumeBobjectOccupancyGrid = (topic: string, message: BinaryOccupancyGrid): void => {
-    // TODO(bobject3dPanel): Convert this to bobject-logic
-    const frameId = message.header().frame_id();
-
-    if (!frameId) {
-      this._addError(this.errors.topicsMissingFrameIds, topic);
-      return;
-    }
-
-    if (frameId !== this.rootTransformID) {
-      this._reportBadFrameId(topic);
-      const error = this._addError(this.errors.topicsWithBadFrameIds, topic);
-      error.frameIds.add(frameId);
-    }
-
-    let pose = emptyPose();
-    pose = this.transforms.apply(pose, pose, frameId, this.rootTransformID);
-    if (!pose) {
-      const error = this._addError(this.errors.topicsMissingTransforms, topic);
-      error.frameIds.add(frameId);
-      return;
-    }
-
-    const type = 101;
-    const name = `${topic}/${type}`;
-
-    // set ogrid texture & alpha based on current rviz settings
-    // in the future these will be customizable via the UI
-    const [alpha, map] = getGlobalHooks()
-      .perPanelHooks()
-      .ThreeDimensionalViz.getOccupancyGridValues(topic);
-
-    const mappedMessage = {
-      alpha,
-      map,
-      type,
-      name,
-      pose,
-      info: deepParse(message.info()),
       interactionData: { topic, originalMessage: message },
     };
 
@@ -839,10 +757,7 @@ export default class SceneBuilder implements MarkerProvider {
 
   // extracts renderable markers from the ros frame
   render() {
-    this.flattenedZHeightPose =
-      getGlobalHooks()
-        .perPanelHooks()
-        .ThreeDimensionalViz.getFlattenedPose(this.frame) || this.flattenedZHeightPose;
+    this.flattenedZHeightPose = this._hooks.getFlattenedPose(this.frame) || this.flattenedZHeightPose;
 
     if (this.flattenedZHeightPose && this.flattenedZHeightPose.position) {
       this.bounds.update(this.flattenedZHeightPose.position);
@@ -857,101 +772,37 @@ export default class SceneBuilder implements MarkerProvider {
     this.topicsToRender.clear();
   }
 
-  _consumeMessage = (topic: string, datatype: string, msg: Message): void => {
+  _consumeMessage = (topic: string, datatype: string, msg: BobjectMessage): void => {
     const { message } = msg;
-    const SUPPORTED_MARKER_DATATYPES = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES;
-
     switch (datatype) {
-      case SUPPORTED_MARKER_DATATYPES.WEBVIZ_MARKER_DATATYPE:
-      case SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_DATATYPE:
-        this._consumeMarker(topic, message);
+      case WEBVIZ_MARKER_DATATYPE:
+      case VISUALIZATION_MSGS_MARKER_DATATYPE:
+        this._consumeMarker(topic, cast<BinaryMarker>(message));
         break;
-      case SUPPORTED_MARKER_DATATYPES.WEBVIZ_MARKER_ARRAY_DATATYPE:
-      case SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
+      case WEBVIZ_MARKER_ARRAY_DATATYPE:
+      case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
         this._consumeMarkerArray(topic, message);
         break;
-      case SUPPORTED_MARKER_DATATYPES.POSE_STAMPED_DATATYPE: {
-        // make synthetic arrow marker from the stamped pose
-        const { pose } = cast<PoseStamped>(msg.message);
-        this.collectors[topic].addNonMarker(topic, buildSyntheticArrowMarker(msg, pose));
-        break;
-      }
-      case SUPPORTED_MARKER_DATATYPES.NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
-        // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
-        this._consumeOccupancyGrid(topic, message);
-        break;
-      case SUPPORTED_MARKER_DATATYPES.POINT_CLOUD_DATATYPE:
-        this._consumeNonMarkerMessage(topic, cast<PointCloud2>(message), 102);
-        break;
-      case SUPPORTED_MARKER_DATATYPES.SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        this._consumeNonMarkerMessage(topic, cast<LaserScan>(message), 104);
-        break;
-      case SUPPORTED_MARKER_DATATYPES.GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
-        // convert Polygon to a line strip
-        const { polygon } = message;
-        if (polygon.points.length === 0) {
-          break;
-        }
-        const newMessage = {
-          ...message,
-          points: polygon.points,
-          closed: true,
-          scale: { x: 0.2 },
-          color: { r: 0, g: 1, b: 0, a: 1 },
-        };
-        this._consumeNonMarkerMessage(topic, newMessage, 4 /* line strip */, message);
-        break;
-      }
-      default: {
-        const { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState } = this;
-        getGlobalHooks()
-          .perPanelHooks()
-          .ThreeDimensionalViz.consumeMessage(
-            topic,
-            datatype,
-            msg,
-            {
-              consumeMarkerArray: this._consumeMarkerArray,
-              consumeNonMarkerMessage: this._consumeNonMarkerMessage,
-            },
-            { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState }
-          );
-      }
-    }
-  };
-
-  _consumeBobject = (topic: string, datatype: string, msg: BobjectMessage): void => {
-    const { message } = msg;
-    const SUPPORTED_MARKER_DATATYPES = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES;
-
-    switch (datatype) {
-      case SUPPORTED_MARKER_DATATYPES.WEBVIZ_MARKER_DATATYPE:
-      case SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_DATATYPE:
-        this._consumeBobjectMarker(topic, cast<BinaryMarker>(message));
-        break;
-      case SUPPORTED_MARKER_DATATYPES.WEBVIZ_MARKER_ARRAY_DATATYPE:
-      case SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
-        this._consumeBobjectMarkerArray(topic, message);
-        break;
-      case SUPPORTED_MARKER_DATATYPES.POSE_STAMPED_DATATYPE: {
+      case POSE_STAMPED_DATATYPE: {
         // make synthetic arrow marker from the stamped pose
         const pose = deepParse(cast<BinaryPoseStamped>(msg.message).pose());
-        this.collectors[topic].addNonMarker(topic, buildSyntheticArrowMarker(msg, pose));
+        this.collectors[topic].addNonMarker(
+          topic,
+          buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
+        );
         break;
       }
-      case SUPPORTED_MARKER_DATATYPES.NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
+      case NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
-        this._consumeBobjectOccupancyGrid(topic, cast<BinaryOccupancyGrid>(message));
+        this._consumeOccupancyGrid(topic, deepParse(message));
         break;
-      case SUPPORTED_MARKER_DATATYPES.POINT_CLOUD_DATATYPE:
-        // TODO(bobject3dPanel): Check performance is acceptable.
+      case POINT_CLOUD_DATATYPE:
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;
-      case SUPPORTED_MARKER_DATATYPES.SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        // TODO(bobject3dPanel): Check performance is acceptable.
+      case SENSOR_MSGS_LASER_SCAN_DATATYPE:
         this._consumeNonMarkerMessage(topic, deepParse(message), 104);
         break;
-      case SUPPORTED_MARKER_DATATYPES.GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
+      case GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
         // convert Polygon to a line strip
         const polygonStamped = cast<BinaryPolygonStamped>(message);
         const polygon = polygonStamped.polygon();
@@ -970,18 +821,16 @@ export default class SceneBuilder implements MarkerProvider {
       }
       default: {
         const { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState } = this;
-        getGlobalHooks()
-          .perPanelHooks()
-          .ThreeDimensionalViz.consumeBobject(
-            topic,
-            datatype,
-            msg,
-            {
-              consumeMarkerArray: this._consumeBobjectMarkerArray,
-              consumeNonMarkerMessage: this._consumeNonMarkerMessage,
-            },
-            { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState }
-          );
+        this._hooks.consumeBobject(
+          topic,
+          datatype,
+          msg,
+          {
+            consumeMarkerArray: this._consumeMarkerArray,
+            consumeNonMarkerMessage: this._consumeNonMarkerMessage,
+          },
+          { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState }
+        );
       }
     }
   };
@@ -1000,13 +849,14 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].setClock(this._clock);
     this.collectors[topic].flush();
 
-    const filteredMessages = filterToSingleNonLifetimeMessage(messages);
+    const datatype = this.topicsByName[topic].datatype;
+    // If topic has a decayTime set, markers with no lifetime will get one
+    // later on, so we don't need to filter them. Note: A decayTime of zero is
+    // defined as an infinite lifetime
+    const decayTime = this._settingsByKey[`t:${topic}`]?.decayTime;
+    const filteredMessages = decayTime === undefined ? filterOutSupersededMessages(messages, datatype) : messages;
     for (const message of filteredMessages) {
-      if (isBobject(message.message)) {
-        this._consumeBobject(topic, this.topicsByName[topic].datatype, message);
-      } else {
-        this._consumeMessage(topic, this.topicsByName[topic].datatype, message);
-      }
+      this._consumeMessage(topic, datatype, message);
     }
   };
 
@@ -1018,8 +868,7 @@ export default class SceneBuilder implements MarkerProvider {
   }
 
   renderMarkers(add: MarkerCollector) {
-    for (const topicName of Object.keys(this.topicsByName)) {
-      const topic = this.topicsByName[topicName];
+    for (const topic of objectValues(this.topicsByName)) {
       const collector = this.collectors[topic.name];
       if (!collector) {
         continue;
@@ -1102,8 +951,9 @@ export default class SceneBuilder implements MarkerProvider {
       case 104: return add.laserScan(marker);
       case 107: return add.filledPolygon(marker);
       case 108: return add.instancedLineList(marker);
+      case 109: return add.overlayIcon(marker)
       default: {
-        if (!getGlobalHooks().perPanelHooks().ThreeDimensionalViz.addMarkerToCollector(add, marker)) {
+        if (!this._hooks.addMarkerToCollector(add, marker)) {
           this._setTopicError(topic.name, `Unsupported marker type: ${marker.type}`);
         }
       }

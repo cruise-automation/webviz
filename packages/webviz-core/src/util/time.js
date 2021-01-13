@@ -6,50 +6,33 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual } from "lodash";
-import momentDurationFormatSetup from "moment-duration-format";
-import moment from "moment-timezone";
+// No time functions that require `moment` should live in this file.
 import { type Time, TimeUtil } from "rosbag";
 
+import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
 import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
-import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { parseTimeStr } from "webviz-core/src/util/formatTime";
+import {
+  SEEK_TO_FRACTION_QUERY_KEY,
+  SEEK_TO_RELATIVE_MS_QUERY_KEY,
+  SEEK_TO_UNIX_MS_QUERY_KEY,
+} from "webviz-core/src/util/globalConstants";
 
 type BatchTimestamp = {
   seconds: number,
   nanoseconds: number,
 };
 
-momentDurationFormatSetup(moment);
-
 export type TimestampMethod = "receiveTime" | "headerStamp";
 
 // Unfortunately, using %checks on this function doesn't actually allow Flow to conclude that the object is a Time.
 // Related: https://github.com/facebook/flow/issues/3614
-const timeFields = new Set(["sec", "nsec"]);
 export function isTime(obj: mixed): boolean {
-  return !!obj && typeof obj === "object" && isEqual(new Set(Object.getOwnPropertyNames(obj)), timeFields);
-}
-
-export function format(stamp: Time) {
-  return `${formatDate(stamp)} ${formatTime(stamp)}`;
-}
-
-export function formatDate(stamp: Time, timezone?: ?string) {
-  if (stamp.sec < 0 || stamp.nsec < 0) {
-    console.error("Times are not allowed to be negative");
-    return "(invalid negative time)";
-  }
-  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("YYYY-MM-DD");
-}
-
-export function formatTime(stamp: Time, timezone?: ?string) {
-  if (stamp.sec < 0 || stamp.nsec < 0) {
-    console.error("Times are not allowed to be negative");
-    return "(invalid negative time)";
-  }
-  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("h:mm:ss.SSS A z");
+  return (
+    !!obj && typeof obj === "object" && "sec" in obj && "nsec" in obj && Object.getOwnPropertyNames(obj).length === 2
+  );
 }
 
 export function formatTimeRaw(stamp: Time) {
@@ -75,10 +58,6 @@ export function fromSecondStamp(stamp: string): Time {
   return { sec: parseInt(secondString), nsec: parseInt(nanosecond) };
 }
 
-export function formatDuration(stamp: Time) {
-  return moment.duration(Math.round(stamp.sec * 1000 + stamp.nsec / 1e6)).format("h:mm:ss.SSS", { trim: false });
-}
-
 // note: sub-millisecond precision is lost
 export function toDate(stamp: Time): Date {
   const { sec, nsec } = stamp;
@@ -97,6 +76,11 @@ export function percentOf(start: Time, end: Time, target: Time) {
   const totalDuration = subtractTimes(end, start);
   const targetDuration = subtractTimes(target, start);
   return (toSec(targetDuration) / toSec(totalDuration)) * 100;
+}
+
+export function interpolateTimes(start: Time, end: Time, fraction: number): Time {
+  const duration = subtractTimes(end, start);
+  return TimeUtil.add(start, fromNanoSec(fraction * toNanoSec(duration)));
 }
 
 function fixTime(t: Time): Time {
@@ -131,7 +115,7 @@ export function toMicroSec({ sec, nsec }: Time) {
 }
 
 // WARNING! Imprecise float; see above.
-export function toSec({ sec, nsec }: Time) {
+export function toSec({ sec, nsec }: Time): number {
   return sec + nsec * 1e-9;
 }
 
@@ -244,6 +228,13 @@ export function clampTime(time: Time, start: Time, end: Time): Time {
   return time;
 }
 
+export const isTimeInRangeInclusive = (time: Time, start: Time, end: Time) => {
+  if (TimeUtil.compare(start, time) > 0 || TimeUtil.compare(end, time) < 0) {
+    return false;
+  }
+  return true;
+};
+
 export function parseRosTimeStr(str: string): ?Time {
   if (/^\d+\.?$/.test(str)) {
     // Whole number with optional "." at the end.
@@ -265,21 +256,54 @@ export function parseRosTimeStr(str: string): ?Time {
   return fixTime({ sec: parseInt(partials[0], 10) || 0, nsec });
 }
 
-export function parseTimeStr(str: string): ?Time {
-  const newMomentTimeObj = moment(str, "YYYY-MM-DD h:mm:ss.SSS A z");
-  const date = newMomentTimeObj.toDate();
-  const result = (newMomentTimeObj.isValid() && fromDate(date)) || null;
+// Functions and types for specifying and applying player initial seek time intentions.
+// When loading from a copied URL, the exact unix time is used.
+type AbsoluteSeekToTime = $ReadOnly<{| type: "absolute", time: Time |}>;
+// If no seek time is specified, we default to 299ms from the start of the bag. Finer control is
+// exposed for use-cases where it's needed.
+type RelativeSeekToTime = $ReadOnly<{| type: "relative", startOffset: Time |}>;
+// Currently unused: We may expose interactive seek controls before the bag duration is known, and
+// store the seek state as a fraction of the eventual bag length.
+type SeekFraction = $ReadOnly<{| type: "fraction", fraction: number |}>;
+export type SeekToTimeSpec = AbsoluteSeekToTime | RelativeSeekToTime | SeekFraction;
 
-  if (!result || result.sec <= 0 || result.nsec < 0) {
-    return null;
-  }
-  return result;
+// Amount to seek into the bag from the start when loading the player, to show
+// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
+// MemoryCacheDataProvider so we still stay within the first block when fetching
+// initial data.
+export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
+if (SEEK_ON_START_NS >= MIN_MEM_CACHE_BLOCK_SIZE_NS) {
+  throw new Error(
+    "SEEK_ON_START_NS should be less than MIN_MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
+  );
 }
 
-export function getSeekToTime(): ?Time {
+export function getSeekToTime(): SeekToTimeSpec {
   const params = new URLSearchParams(window.location.search);
-  const seekToParam = params.get(SEEK_TO_QUERY_KEY);
-  return seekToParam ? fromMillis(parseInt(seekToParam)) : null;
+  const absoluteSeek = params.get(SEEK_TO_UNIX_MS_QUERY_KEY);
+  const defaultResult = { type: "relative", startOffset: fromNanoSec(SEEK_ON_START_NS) };
+  if (absoluteSeek != null) {
+    return isNaN(absoluteSeek) ? defaultResult : { type: "absolute", time: fromMillis(parseInt(absoluteSeek)) };
+  }
+  const relativeSeek = params.get(SEEK_TO_RELATIVE_MS_QUERY_KEY);
+  if (relativeSeek != null) {
+    return isNaN(relativeSeek) ? defaultResult : { type: "relative", startOffset: fromMillis(parseInt(relativeSeek)) };
+  }
+  const seekFraction = params.get(SEEK_TO_FRACTION_QUERY_KEY);
+  if (seekFraction != null) {
+    return isNaN(seekFraction) ? defaultResult : { type: "fraction", fraction: parseFloat(seekFraction) };
+  }
+  return defaultResult;
+}
+
+export function getSeekTimeFromSpec(spec: SeekToTimeSpec, start: Time, end: Time): Time {
+  const rawSpecTime =
+    spec.type === "absolute"
+      ? spec.time
+      : spec.type === "relative"
+      ? TimeUtil.add(TimeUtil.isLessThan(spec.startOffset, { sec: 0, nsec: 0 }) ? end : start, spec.startOffset)
+      : interpolateTimes(start, end, spec.fraction);
+  return clampTime(rawSpecTime, start, end);
 }
 
 export function getTimestampForMessage(message: Message, timestampMethod?: TimestampMethod): ?Time {
@@ -311,4 +335,38 @@ export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
   if (isTime(stamp)) {
     return stamp;
   }
+};
+
+export const getRosTimeFromString = (text: string) => {
+  if (!text.length || isNaN(text)) {
+    return;
+  }
+  const textAsNum = Number(text);
+  return { sec: Math.floor(textAsNum), nsec: textAsNum * 1e9 - Math.floor(textAsNum) * 1e9 };
+};
+
+const todTimeRegex = /^\d+:\d+:\d+.\d+\s[PpAa][Mm]\s[A-Za-z$]+/;
+export const getValidatedTimeAndMethodFromString = ({
+  text,
+  date,
+  timezone,
+}: {
+  text: ?string,
+  date: string,
+  timezone: ?string,
+}): ?{ time: ?Time, method: "ROS" | "TOD" } => {
+  if (!text) {
+    return;
+  }
+  const isInvalidRosTime = isNaN(text);
+  const isInvalidTodTime = !(todTimeRegex.test(text || "") && parseTimeStr(`${date} ${text || ""}`, timezone));
+
+  if (isInvalidRosTime && isInvalidTodTime) {
+    return;
+  }
+
+  return {
+    time: !isInvalidRosTime ? getRosTimeFromString(text || "") : parseTimeStr(`${date} ${text || ""}`, timezone),
+    method: isInvalidRosTime ? "TOD" : "ROS",
+  };
 };

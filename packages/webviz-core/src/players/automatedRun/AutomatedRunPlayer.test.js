@@ -33,7 +33,9 @@ class TestRunClient implements AutomatedRunClient {
   }
   markTotalFrameEnd() {}
   markFrameRenderStart() {}
-  markFrameRenderEnd() {}
+  markFrameRenderEnd() {
+    return 0;
+  }
   markPreloadStart = jest.fn();
   markPreloadEnd = jest.fn();
   async onFrameFinished() {}

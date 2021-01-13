@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import { compact, flatMap, xor, uniq } from "lodash";
-import LZString from "lz-string";
+import CBOR from "cbor-js";
+import { compact, cloneDeep, flatMap, isEmpty, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -16,7 +16,10 @@ import {
   updateTree,
   type MosaicUpdate,
 } from "react-mosaic-component";
+import zlib from "zlib";
 
+import { isInIFrame } from "./iframeUtils";
+import { getLayoutNameAndVersion } from "webviz-core/shared/layout";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
@@ -33,9 +36,14 @@ import {
   LAYOUT_QUERY_KEY,
   LAYOUT_URL_QUERY_KEY,
   PATCH_QUERY_KEY,
+  TITLE_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 
 const jsondiffpatch = require("jsondiffpatch").create({});
+
+const IS_IN_IFRAME = isInIFrame();
+
+const PARAMS_TO_DECODE = new Set([LAYOUT_URL_QUERY_KEY]);
 
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
@@ -177,10 +185,12 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   if (!relatedConfigs) {
     return { configs: [{ id, config }] };
   }
-  const templateIds = Object.keys(relatedConfigs);
+  const templateIds = getPanelIdsInsideTabPanels([id], { [id]: config });
   const panelIdMap = mapTemplateIdsToNewIds(templateIds);
   let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
-  newConfigs = newConfigs.concat([{ id, config }]).map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
+  newConfigs = [...newConfigs, { id, config }]
+    .filter((configObj) => configObj.config)
+    .map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
   return { configs: newConfigs };
 };
 
@@ -206,6 +216,9 @@ export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps): stri
 }
 
 export const validateTabPanelConfig = (config: ?PanelConfig) => {
+  if (!config) {
+    return false;
+  }
   if (!Array.isArray(config?.tabs) || typeof config?.activeTabIdx !== "number") {
     const error = new Error("A non-Tab panel config is being operated on as if it were a Tab panel.");
     console.log("Invalid Tab panel config:", config, error);
@@ -448,25 +461,95 @@ export function getLayoutPatch(baseState: ?PanelsState, newState: ?PanelsState):
   return delta ? JSON.stringify(delta) : "";
 }
 
-export function getUpdatedURLWithDecodedLayout(params: URLSearchParams): string {
-  const hasLayoutUrl = params.has(LAYOUT_URL_QUERY_KEY);
-  const layoutId = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY) || "";
-  params.delete(LAYOUT_QUERY_KEY);
-  params.delete(LAYOUT_URL_QUERY_KEY);
-  return `?${hasLayoutUrl ? LAYOUT_URL_QUERY_KEY : LAYOUT_QUERY_KEY}=${decodeURIComponent(
-    layoutId
-  )}&${params.toString()}`;
+export function stringifyParams(params: URLSearchParams): string {
+  const stringifiedParams = [];
+  for (const [key, value] of params) {
+    if (PARAMS_TO_DECODE.has(key)) {
+      stringifiedParams.push(`${key}=${decodeURIComponent(value)}`);
+    } else {
+      stringifiedParams.push(`${key}=${encodeURIComponent(value)}`);
+    }
+  }
+  return stringifiedParams.length ? `?${stringifiedParams.join("&")}` : "";
 }
 
-export function getUpdatedURLWithPatch(diff: string): string {
-  const params = new URLSearchParams(window.location.search);
-  params.set(PATCH_QUERY_KEY, LZString.compressToEncodedURIComponent(diff));
-  return getUpdatedURLWithDecodedLayout(params);
+const stateKeyMap = {
+  layout: "l",
+  savedProps: "sa",
+  globalVariables: "g",
+  userNodes: "u",
+  linkedGlobalVariables: "lg",
+  version: "v",
+  playbackConfig: "p",
+};
+const layoutKeyMap = { direction: "d", first: "f", second: "se", row: "r", column: "c", splitPercentage: "sp" };
+export const dictForPatchCompression = { ...layoutKeyMap, ...stateKeyMap };
+
+export function getUpdatedURLWithPatch(search: string, diff: string): string {
+  // Return the original search directly if the diff is empty.
+  if (!diff) {
+    return search;
+  }
+  const params = new URLSearchParams(search);
+
+  const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(diff)));
+  const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
+  const zlibPatch = zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
+
+  params.set(PATCH_QUERY_KEY, zlibPatch);
+  return stringifyParams(params);
 }
 
-export function getUpdatedURLWithNewVersion(name: string, version?: string): string {
-  const params = new URLSearchParams(window.location.search);
+export function getUpdatedURLWithNewVersion(search: string, name: string, version?: string): string {
+  const params = new URLSearchParams(search);
   params.set(LAYOUT_QUERY_KEY, `${name}${version ? `@${version}` : ""}`);
   params.delete(PATCH_QUERY_KEY);
-  return getUpdatedURLWithDecodedLayout(params);
+  return stringifyParams(params);
+}
+export function getShouldProcessPatch() {
+  // Skip processing patch in iframe (currently used for MiniViz) since we can't update the URL anyway.
+  return !IS_IN_IFRAME;
+}
+// If we have a URL patch, the user has edited the layout.
+export function hasEditedLayout() {
+  const params = new URLSearchParams(window.location.search);
+  return params.has(PATCH_QUERY_KEY);
+}
+
+// There are 2 cases for updating the document title based on layout:
+// - Update when initializing redux store (can read layout name from URL or localStorage)
+// - After URL is updated.
+export function updateDocumentTitle({ search, layoutName }: { search?: string, layoutName?: string }) {
+  if (!search && !layoutName) {
+    return;
+  }
+  const params = new URLSearchParams(search || "");
+  const title = params.get(TITLE_QUERY_KEY);
+
+  // Update directly if title is present at URL.
+  if (title) {
+    document.title = `${title} | webviz`;
+    return;
+  }
+  const fullLayoutName = layoutName || params.get(LAYOUT_QUERY_KEY);
+  const { name } = getLayoutNameAndVersion(fullLayoutName);
+  if (name) {
+    document.title = `${name.split("/").pop()} | webviz`;
+    return;
+  }
+  document.title = `webviz`;
+}
+
+export function setDefaultFields(defaultLayout: PanelsState, layout: PanelsState): PanelsState {
+  const clonedLayout = cloneDeep(layout);
+
+  // Extra checks to make sure all the common fields for panels are present.
+  Object.keys(defaultLayout).forEach((fieldName) => {
+    const newFieldValue = clonedLayout[fieldName];
+    if (isEmpty(newFieldValue)) {
+      // $FlowFixMe - Flow does not understand that the types for fieldName in both objects match
+      clonedLayout[fieldName] = defaultLayout[fieldName];
+    }
+  });
+  return clonedLayout;
 }

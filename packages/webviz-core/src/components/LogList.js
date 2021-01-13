@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import _ from "lodash";
 import * as React from "react";
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import uuid from "uuid";
@@ -67,19 +66,16 @@ function LogList<Item>({ items, renderRow }: {| items: $ReadOnlyArray<Item>, ren
   // `onWheel` is only called when the user explicitly scrolls using the scroll wheel or track pad.
   // This is reliable, so we don't need any buffers or checks. However, this doesn't cover all cases
   // of users scrolling (e.g. keyboard or dragging the scroll bar) so we also need `onScroll` below.
-  const onWheel = React.useCallback(
-    () => {
-      const containerEl = document.getElementById(listId.current);
-      if (!containerEl) {
-        return;
-      }
-      const newAutoScroll = containerEl.scrollHeight - containerEl.scrollTop <= containerEl.clientHeight;
-      if (newAutoScroll !== autoScroll) {
-        setAutoScroll(newAutoScroll);
-      }
-    },
-    [autoScroll]
-  );
+  const onWheel = React.useCallback(() => {
+    const containerEl = document.getElementById(listId.current);
+    if (!containerEl) {
+      return;
+    }
+    const newAutoScroll = containerEl.scrollHeight - containerEl.scrollTop <= containerEl.clientHeight;
+    if (newAutoScroll !== autoScroll) {
+      setAutoScroll(newAutoScroll);
+    }
+  }, [autoScroll]);
 
   // As said above, we need `onScroll` to catch some of the user scroll events. However, it's also
   // triggered when a scroll happens for a different reason, e.g. by the browser or initiated from
@@ -87,22 +83,19 @@ function LogList<Item>({ items, renderRow }: {| items: $ReadOnlyArray<Item>, ren
   // rendering the `onScroll` events can't quite keep up with the actual rendering, so we require
   // rendering to not have happened for a second, and we have a bit of a buffer for how much
   // scrolling we require to have been done. In practice this seems to be working reasonably well.
-  const onScroll = React.useCallback(
-    () => {
-      if (Date.now() - lastRenderTime.current < 1000) {
-        return;
-      }
-      const containerEl = document.getElementById(listId.current);
-      if (!containerEl) {
-        return;
-      }
-      const newAutoScroll = containerEl.scrollHeight - containerEl.scrollTop <= containerEl.clientHeight + 5;
-      if (newAutoScroll !== autoScroll) {
-        setAutoScroll(newAutoScroll);
-      }
-    },
-    [autoScroll]
-  );
+  const onScroll = React.useCallback(() => {
+    if (Date.now() - lastRenderTime.current < 1000) {
+      return;
+    }
+    const containerEl = document.getElementById(listId.current);
+    if (!containerEl) {
+      return;
+    }
+    const newAutoScroll = containerEl.scrollHeight - containerEl.scrollTop <= containerEl.clientHeight + 5;
+    if (newAutoScroll !== autoScroll) {
+      setAutoScroll(newAutoScroll);
+    }
+  }, [autoScroll]);
 
   const onResetView = React.useCallback(() => {
     setAutoScroll(true);

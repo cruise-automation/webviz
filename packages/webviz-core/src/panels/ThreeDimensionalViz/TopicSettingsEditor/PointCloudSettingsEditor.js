@@ -77,15 +77,12 @@ const RainbowText = React.memo(function RainbowText({ children: text }: { childr
 export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps<PointCloud2, PointCloudSettings>) {
   const { message, settings = {}, onFieldChange, onSettingsChange } = props;
 
-  const onColorModeChange = useCallback(
-    (newValue: ?ColorMode | ((?ColorMode) => ?ColorMode)) => {
-      onSettingsChange((newSettings) => ({
-        ...newSettings,
-        colorMode: typeof newValue === "function" ? newValue(newSettings.colorMode) : newValue,
-      }));
-    },
-    [onSettingsChange]
-  );
+  const onColorModeChange = useCallback((newValue: ?ColorMode | ((?ColorMode) => ?ColorMode)) => {
+    onSettingsChange((newSettings) => ({
+      ...newSettings,
+      colorMode: typeof newValue === "function" ? newValue(newSettings.colorMode) : newValue,
+    }));
+  }, [onSettingsChange]);
 
   const hasRGB = message && message.fields && message.fields.some(({ name }) => name === "rgb");
   const defaultColorField = message && message.fields && message.fields.find(({ name }) => name !== "rgb")?.name;

@@ -49,7 +49,7 @@ type ColorPickerSettingsPanelProps = {|
   onChange: (newColor: Color) => void,
 |};
 
-function getRGBAFromColor(color: { color: string, alpha: number }): Color {
+export function getRGBAFromColor(color: { color: string, alpha: number }): Color {
   const rgbaColor = tinyColor(color.color)
     .setAlpha(color.alpha / 100)
     .toRgb();

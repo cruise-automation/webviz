@@ -6,45 +6,49 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { type BrowserHistory } from "history";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 
-import { importPanelLayout } from "webviz-core/src/actions/panels";
+import { loadLayout } from "webviz-core/src/actions/panels";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 
 type OwnProps = {|
   onRequestClose: () => void,
+  history?: BrowserHistory,
 |};
 
 type Props = {|
   ...OwnProps,
   panels: PanelsState,
-  importPanelLayout: typeof importPanelLayout,
+  loadLayout: typeof loadLayout,
 |};
 
-function UnconnectedLayoutModal({ onRequestClose, importPanelLayout: importLayout, panels }: Props) {
-  const onChange = useCallback(
-    (layoutPayload: ImportPanelLayoutPayload) => {
-      importLayout(layoutPayload);
-    },
-    [importLayout]
+function UnconnectedLayoutModal({ onRequestClose, loadLayout: loadFetchedLayout, panels, history }: Props) {
+  const onChange = useCallback((layoutPayload: PanelsState) => {
+    loadFetchedLayout(layoutPayload);
+  }, [loadFetchedLayout]);
+  return (
+    <ShareJsonModal
+      history={history}
+      onRequestClose={onRequestClose}
+      value={panels}
+      onChange={onChange}
+      noun="layout"
+    />
   );
-  return <ShareJsonModal onRequestClose={onRequestClose} value={panels} onChange={onChange} noun="layout" />;
 }
 
-// TODO(JP): Use useSelector and useDispatch here, but unfortunately `importPanelLayout` needs
+// TODO(JP): Use useSelector and useDispatch here, but unfortunately `loadLayout` needs
 // a `getState` function in addition to `dispatch`, so needs a bit of rework.
 const LayoutModal = connect<Props, OwnProps, _, _, _, _>(
-  (state: State) => ({
-    panels: state.panels,
-  }),
-  { importPanelLayout }
+  (state: State) => ({ panels: state.persistedState.panels }),
+  { loadLayout }
 )(UnconnectedLayoutModal);
 
-export function openLayoutModal() {
-  const modal = renderToBody(<LayoutModal onRequestClose={() => modal.remove()} />);
+export function openLayoutModal(history?: BrowserHistory) {
+  const modal = renderToBody(<LayoutModal history={history} onRequestClose={() => modal.remove()} />);
 }

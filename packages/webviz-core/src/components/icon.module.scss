@@ -3,12 +3,20 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+@import "~webviz-core/src/styles/colors.module.scss";
 
 .icon > svg {
   fill: currentColor;
   width: 1em;
   height: 1em;
   vertical-align: text-top;
+}
+.xlarge,
+.xlarge img {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+  vertical-align: middle;
 }
 
 .large,
@@ -35,6 +43,22 @@
   vertical-align: middle;
 }
 
+.xsmall,
+.xsmall img {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.xxsmall,
+.xxsmall img {
+  width: 11px;
+  height: 11px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
 .clickable {
   cursor: pointer;
 }
@@ -44,14 +68,24 @@
 }
 
 .fade {
-  opacity: 0.5;
+  opacity: 0.6;
   transition: opacity 0.2s ease-in-out;
 
   &:hover {
-    opacity: 1;
+    opacity: 0.8;
   }
 
   &.active {
-    opacity: 0.9;
+    opacity: 1;
+  }
+}
+
+.wrappedIcon {
+  &:hover {
+    background-color: $dark3;
+  }
+
+  &.active {
+    background-color: $dark4;
   }
 }

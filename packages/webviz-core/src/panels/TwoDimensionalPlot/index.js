@@ -6,8 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { flatten, pick, round, uniq } from "lodash";
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import Dimensions from "react-container-dimensions";
+import * as React from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
 import { hot } from "react-hot-loader/root";
@@ -16,17 +15,22 @@ import styled from "styled-components";
 import helpContent from "./index.help.md";
 import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelToolbarStyles";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import { useLatestMessageDataItem } from "webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import ChartComponent from "webviz-core/src/components/ReactChartjs";
-import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
+import ChartComponent, { type HoveredElement } from "webviz-core/src/components/ReactChartjs";
+import { type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
+import Tooltip from "webviz-core/src/components/Tooltip";
+import { cast } from "webviz-core/src/players/types";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import { colors, ROBOTO_MONO } from "webviz-core/src/util/sharedStyleConstants";
 
 const SResetZoom = styled.div`
   position: absolute;
@@ -46,6 +50,7 @@ const SRoot = styled.div`
   flex: 1 1 auto;
   width: 100%;
   overflow: hidden;
+  position: relative;
 `;
 
 // TODO: Autocomplete should only show paths that actually match the format this panel supports
@@ -66,35 +71,165 @@ const keysToPick = [
   "data",
 ];
 
+const messagePathInputStyle = { height: "100%" };
+
 const isValidMinMaxVal = (val?: string) => {
   return val == null || val === "" || !isNaN(parseFloat(val));
 };
 
 type Path = { value: string };
-type Config = { path: Path, minXVal?: string, maxXVal?: string, minYVal?: string, maxYVal?: string };
+type Config = {
+  path: Path,
+  minXVal?: string,
+  maxXVal?: string,
+  minYVal?: string,
+  maxYVal?: string,
+  pointRadiusOverride?: string,
+};
 type Props = { config: Config, saveConfig: ($Shape<Config>) => void };
 export type Line = {
-  order: number,
+  order?: number,
   label: string,
   backgroundColor?: string,
   borderColor?: string,
-  borderDash?: string,
+  borderDash?: number[],
   borderWidth?: number,
   pointBackgroundColor?: string,
   pointBorderColor?: string,
   pointBorderWidth?: number,
   pointRadius?: number,
-  pointStyle?: string,
+  pointStyle?:
+    | "circle"
+    | "cross"
+    | "crossRot"
+    | "dash"
+    | "line"
+    | "rect"
+    | "rectRounded"
+    | "rectRot"
+    | "star"
+    | "triangle",
   lineTension?: number,
   data: { x: number, y: number }[],
 };
 
+const SWrapper = styled.div`
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+  // "visibility" and "transform" are set by JS, but outside of React.
+  visibility: hidden;
+`;
+
+const SBar = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  margin-left: -4px;
+  display: block;
+  border-style: solid;
+  border-color: #f7be00 transparent;
+  background: #f7be00 padding-box;
+  border-width: 4px;
+`;
+
+type Position = { x: number, y: number };
+
+type HoverBarProps = {
+  children?: React.Node,
+  mousePosition: ?Position,
+};
+
+function hideBar(wrapper) {
+  if (wrapper.style.visibility !== "hidden") {
+    wrapper.style.visibility = "hidden";
+  }
+}
+
+function showBar(wrapper, position: number) {
+  wrapper.style.visibility = "visible";
+  wrapper.style.transform = `translateX(${position}px)`;
+}
+
+// TODO: It'd be a lot more performant to draw directly to the canvas here
+// instead of using React state lifecycles to update the hover bar.
+const HoverBar = React.memo<HoverBarProps>(({ children, mousePosition }: HoverBarProps) => {
+  const wrapper = React.useRef<?HTMLDivElement>(null);
+  // We avoid putting the visibility and transforms into react state to try to keep updates snappy.
+  // Mouse interactions are frequent, and adding/removing the bar from the DOM would slow things
+  // down a lot more than mutating the style props does.
+  if (wrapper.current != null) {
+    const { current } = wrapper;
+    if (mousePosition != null) {
+      showBar(current, mousePosition.x);
+    } else {
+      hideBar(current);
+    }
+  }
+
+  return <SWrapper ref={wrapper}>{children}</SWrapper>;
+});
+
+type TooltipProps = {|
+  datapoints: { datapoint: Position, label: string, backgroundColor?: string }[],
+  xAxisLabel: ?string,
+  tooltipElement: ?HoveredElement,
+|};
+
+const TwoDimensionalTooltip = ({ datapoints, xAxisLabel, tooltipElement }: TooltipProps) => {
+  if (!tooltipElement) {
+    return null;
+  }
+
+  const contents = (
+    <div style={{ fontFamily: ROBOTO_MONO }}>
+      <div style={{ color: colors.TEXT_MUTED, padding: "4px 0" }}>
+        {xAxisLabel}: {round(tooltipElement.data.x, 5)}
+      </div>
+      {datapoints
+        .sort((a, b) => b.datapoint.y - a.datapoint.y)
+        .map(({ datapoint, label, backgroundColor }, i) => {
+          return (
+            <div key={i} style={{ padding: "4px 0", display: "flex", alignItems: "center" }}>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  backgroundColor: backgroundColor || colors.GRAY,
+                  marginRight: "2px",
+                }}
+              />
+              <div>
+                {label}: {round(datapoint.y, 5)}
+              </div>
+            </div>
+          );
+        })}
+    </div>
+  );
+  return (
+    <Tooltip defaultShown placement="top" contents={contents}>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          transform: `translate(${tooltipElement.view.x}px, ${tooltipElement.view.y}px)`,
+        }}
+      />
+    </Tooltip>
+  );
+};
+
 // NOTE: Keep this type (and its dependencies) in sync with the corresponding
 // Node Playground types in 'userUtils'.
-type PlotMessage = {
+export type PlotMessage = {
   lines: Line[],
-  points: Line[],
-  polygons: Line[],
+  points?: Line[],
+  polygons?: Line[],
   title?: string,
   yAxisLabel?: string,
   xAxisLabel?: string,
@@ -102,13 +237,11 @@ type PlotMessage = {
 };
 
 type MenuContentProps = {
-  minXVal?: string,
-  maxXVal?: string,
-  minYVal?: string,
-  maxYVal?: string,
+  config: Config,
   saveConfig: ($Shape<Config>) => void,
 };
-function MenuContent({ minXVal, maxXVal, minYVal, maxYVal, saveConfig }: MenuContentProps) {
+function MenuContent({ config, saveConfig }: MenuContentProps) {
+  const { pointRadiusOverride, minXVal, maxXVal, minYVal, maxYVal } = config;
   return (
     <>
       <Item>
@@ -159,27 +292,52 @@ function MenuContent({ minXVal, maxXVal, minYVal, maxYVal, saveConfig }: MenuCon
           </Flex>
         </Flex>
       </Item>
+      <Item>
+        <PanelToolbarLabel>Point Radius Override</PanelToolbarLabel>
+        <PanelToolbarInput
+          value={pointRadiusOverride}
+          onChange={({ target }) => saveConfig({ pointRadiusOverride: target.value })}
+          onClick={(e) => e.stopPropagation()}
+          placeholder="auto"
+        />
+      </Item>
     </>
   );
 }
 
 function TwoDimensionalPlot(props: Props) {
-  const {
-    config: { path, minXVal, maxXVal, minYVal, maxYVal },
-    saveConfig,
-  } = props;
-  const [hasUserPannedOrZoomed, setHasUserPannedOrZoomed] = useState<boolean>(false);
-  const tooltip = useRef<?HTMLDivElement>(null);
-  const chartComponent = useRef<?ChartComponent>(null);
+  const { config, saveConfig } = props;
+  const { path, minXVal, maxXVal, minYVal, maxYVal, pointRadiusOverride } = config;
+  const [hasUserPannedOrZoomed, setHasUserPannedOrZoomed] = React.useState<boolean>(false);
+  const [hasVerticalExclusiveZoom, setHasVerticalExclusiveZoom] = React.useState<boolean>(false);
+  const [hasBothAxesZoom, setHasBothAxesZoom] = React.useState<boolean>(false);
+  const tooltip = React.useRef<?HTMLDivElement>(null);
+  const chartComponent = React.useRef<?ChartComponent>(null);
 
-  const message: PlotMessage = (useLatestMessageDataItem(path.value)?.queriedData[0]?.value: any);
+  const [mousePosition, updateMousePosition] = React.useState<?{ x: number, y: number }>(null);
+
+  const maybeBobject: mixed = useLatestMessageDataItem(path.value, "bobjects")?.queriedData[0]?.value;
+  const message: ?PlotMessage = isBobject(maybeBobject) ? deepParse(maybeBobject) : cast<PlotMessage>(maybeBobject);
   const { title, yAxisLabel, xAxisLabel, gridColor, lines = [], points = [], polygons = [] } = message || {};
-  const datasets = useMemo(
+  const datasets = React.useMemo(
     () =>
       message
         ? [
-            ...lines.map((line) => ({ ...pick(line, keysToPick), showLine: true, fill: false })),
-            ...points.map((point) => pick(point, keysToPick)),
+            ...lines.map((line) => {
+              const l = { ...pick(line, keysToPick), showLine: true, fill: false };
+              if (pointRadiusOverride) {
+                l.pointRadius = pointRadiusOverride;
+              }
+
+              return l;
+            }),
+            ...points.map((point) => {
+              const pt = pick(point, keysToPick);
+              if (pointRadiusOverride) {
+                pt.pointRadius = pointRadiusOverride;
+              }
+              return pt;
+            }),
             ...polygons.map((polygon) => ({
               ...pick(polygon, keysToPick),
               data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
@@ -190,10 +348,10 @@ function TwoDimensionalPlot(props: Props) {
             })),
           ].sort((a, b) => (b.order || 0) - (a.order || 0))
         : [],
-    [lines, message, points, polygons]
+    [lines, message, pointRadiusOverride, points, polygons]
   );
 
-  const { allXs, allYs } = useMemo(
+  const { allXs, allYs } = React.useMemo(
     () => ({
       allXs: flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : []))),
       allYs: flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : []))),
@@ -201,7 +359,7 @@ function TwoDimensionalPlot(props: Props) {
     [datasets]
   );
 
-  const getBufferedMinMax = useCallback((allVals: number[]) => {
+  const getBufferedMinMax = React.useCallback((allVals: number[]) => {
     const minVal = Math.min(...allVals);
     const maxVal = Math.max(...allVals);
     const diff = maxVal - minVal;
@@ -211,7 +369,7 @@ function TwoDimensionalPlot(props: Props) {
     };
   }, []);
 
-  const options = useMemo(
+  const options = React.useMemo(
     () => ({
       title: { display: !!title, text: title },
       scales: {
@@ -263,14 +421,12 @@ function TwoDimensionalPlot(props: Props) {
     ]
   );
 
-  const menuContent = useMemo(
-    () => (
-      <MenuContent minXVal={minXVal} maxXVal={maxXVal} minYVal={minYVal} maxYVal={maxYVal} saveConfig={saveConfig} />
-    ),
-    [maxXVal, maxYVal, minXVal, minYVal, saveConfig]
-  );
+  const menuContent = React.useMemo(() => <MenuContent config={config} saveConfig={saveConfig} />, [
+    config,
+    saveConfig,
+  ]);
 
-  const removeTooltip = useCallback(() => {
+  const removeTooltip = React.useCallback(() => {
     if (tooltip.current) {
       ReactDOM.unmountComponentAtNode(tooltip.current);
     }
@@ -281,92 +437,101 @@ function TwoDimensionalPlot(props: Props) {
     }
   }, []);
 
-  const onMouseMove = useCallback(
-    async (event: MouseEvent) => {
-      const currentChartComponent = chartComponent.current;
-      if (!currentChartComponent || !currentChartComponent.canvas) {
-        removeTooltip();
-        return;
-      }
-      const { canvas } = currentChartComponent;
-      const canvasRect = canvas.getBoundingClientRect();
-      const isTargetingCanvas = event.target === canvas;
-      if (
-        event.pageX < canvasRect.left ||
-        event.pageX > canvasRect.right ||
-        event.pageY < canvasRect.top ||
-        event.pageY > canvasRect.bottom ||
-        !isTargetingCanvas
-      ) {
-        removeTooltip();
-        return;
-      }
+  const scaleBounds = React.useRef<?$ReadOnlyArray<ScaleBounds>>();
+  const hoverBar = React.useRef<?HTMLElement>();
 
-      const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
-      if (!tooltipElement) {
-        removeTooltip();
-        return;
-      }
-      let tooltipDatapoint, tooltipLabel;
-      for (const { data: dataPoints, label } of datasets) {
-        const datapoint = dataPoints.find(
-          (_datapoint) =>
-            _datapoint.x === tooltipElement.data.x && String(_datapoint.y) === String(tooltipElement.data.y)
-        );
-        if (datapoint) {
-          tooltipDatapoint = datapoint;
-          tooltipLabel = label;
-          break;
-        }
-      }
-      if (!tooltipDatapoint) {
-        removeTooltip();
-        return;
-      }
+  const onScaleBoundsUpdate = React.useCallback((scales) => {
+    scaleBounds.current = scales;
+    const firstYScale = scales.find(({ axes }) => axes === "yAxes");
+    if (firstYScale != null && hoverBar.current != null) {
+      const { current } = hoverBar;
+      const topPx = Math.min(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+      const bottomPx = Math.max(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+      current.style.top = `${topPx}px`;
+      current.style.height = `${bottomPx - topPx}px`;
+    }
+  }, [scaleBounds]);
 
-      if (!tooltip.current) {
-        tooltip.current = document.createElement("div");
-        if (canvas.parentNode) {
-          canvas.parentNode.appendChild(tooltip.current);
-        }
-      }
+  const onMouseMove = React.useCallback(async (event: MouseEvent) => {
+    const currentChartComponent = chartComponent.current;
+    if (!currentChartComponent || !currentChartComponent.canvas) {
+      removeTooltip();
+      return;
+    }
+    const { canvas } = currentChartComponent;
+    const canvasRect = canvas.getBoundingClientRect();
+    const isTargetingCanvas = event.target === canvas;
+    const xMousePosition = event.pageX - canvasRect.left;
+    const yMousePosition = event.pageY - canvasRect.top;
 
-      const currentTooltip = tooltip.current;
-      if (currentTooltip) {
-        let label = tooltipLabel ? `${tooltipLabel}: ` : "";
-        label += `(${round(tooltipDatapoint.x, 5)}, ${round(tooltipDatapoint.y, 5)})`;
-        ReactDOM.render(
-          <div
-            className={tooltipStyles.tooltip}
-            style={{ position: "absolute", left: tooltipElement.view.x, top: tooltipElement.view.y }}>
-            {label}
-          </div>,
-          currentTooltip
-        );
-      }
-    },
-    [datasets, removeTooltip]
-  );
+    if (
+      event.pageX < canvasRect.left ||
+      event.pageX > canvasRect.right ||
+      event.pageY < canvasRect.top ||
+      event.pageY > canvasRect.bottom ||
+      !isTargetingCanvas
+    ) {
+      removeTooltip();
+      updateMousePosition(null);
+      return;
+    }
 
-  const onResetZoom = useCallback(
-    () => {
-      if (chartComponent.current) {
-        chartComponent.current.resetZoom();
-        setHasUserPannedOrZoomed(false);
-      }
-    },
-    [setHasUserPannedOrZoomed]
-  );
+    const newMousePosition = { x: xMousePosition, y: yMousePosition };
+    updateMousePosition(newMousePosition);
 
-  const onPanZoom = useCallback(
-    () => {
-      if (!hasUserPannedOrZoomed) {
-        setHasUserPannedOrZoomed(true);
+    const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+    if (!tooltipElement) {
+      removeTooltip();
+      return;
+    }
+    const tooltipDatapoints = [];
+    for (const { data: dataPoints, label, backgroundColor } of datasets) {
+      const datapoint = dataPoints.find((_datapoint) => _datapoint.x === tooltipElement.data.x);
+      if (datapoint) {
+        tooltipDatapoints.push({
+          datapoint,
+          label,
+          backgroundColor,
+        });
       }
-    },
-    [hasUserPannedOrZoomed]
-  );
+    }
+    if (!tooltipDatapoints.length) {
+      removeTooltip();
+      return;
+    }
 
+    if (!tooltip.current) {
+      tooltip.current = document.createElement("div");
+      if (canvas.parentNode) {
+        canvas.parentNode.appendChild(tooltip.current);
+      }
+    }
+
+    const currentTooltip = tooltip.current;
+    if (currentTooltip) {
+      ReactDOM.render(
+        <TwoDimensionalTooltip
+          tooltipElement={tooltipElement}
+          datapoints={tooltipDatapoints}
+          xAxisLabel={xAxisLabel}
+        />,
+        currentTooltip
+      );
+    }
+  }, [datasets, removeTooltip, xAxisLabel]);
+
+  const onResetZoom = React.useCallback(() => {
+    if (chartComponent.current) {
+      chartComponent.current.resetZoom();
+      setHasUserPannedOrZoomed(false);
+    }
+  }, [setHasUserPannedOrZoomed]);
+
+  const onPanZoom = React.useCallback(() => {
+    if (!hasUserPannedOrZoomed) {
+      setHasUserPannedOrZoomed(true);
+    }
+  }, [hasUserPannedOrZoomed]);
   if (useDeepChangeDetector([pick(props.config, ["minXVal", "maxXVal", "minYVal", "maxYVal"])], false)) {
     // Reset the view to the default when the default changes.
     if (hasUserPannedOrZoomed) {
@@ -374,21 +539,45 @@ function TwoDimensionalPlot(props: Props) {
     }
   }
 
+  let zoomMode = "x";
+  if (hasVerticalExclusiveZoom) {
+    zoomMode = "y";
+  } else if (hasBothAxesZoom) {
+    zoomMode = "xy";
+  }
+
+  const keyDownHandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(true),
+      b: () => setHasBothAxesZoom(true),
+    }),
+    []
+  );
+
+  const keyUphandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(false),
+      b: () => setHasBothAxesZoom(false),
+    }),
+    [setHasVerticalExclusiveZoom, setHasBothAxesZoom]
+  );
+
   // Always clean up tooltips when unmounting.
-  useEffect(() => removeTooltip, [removeTooltip]);
+  React.useEffect(() => removeTooltip, [removeTooltip]);
   const emptyMessage = !points.length && !lines.length && !polygons.length;
 
   if (uniq(datasets.map(({ label }) => label)).length !== datasets.length) {
     throw new Error("2D Plot datasets do not have unique labels");
   }
 
+  const onChange = React.useCallback((newValue) => saveConfig({ path: { value: newValue } }), [saveConfig]);
   return (
     <SContainer>
       <PanelToolbar helpContent={helpContent} menuContent={menuContent}>
         <MessagePathInput
           path={path.value}
-          onChange={(newValue) => saveConfig({ path: { value: newValue } })}
-          inputStyle={{ height: "100%" }}
+          onChange={onChange}
+          inputStyle={messagePathInputStyle}
           validTypes={VALID_TYPES}
           placeholder="Select topic messages with 2D Plot data to visualize"
           autoSize
@@ -403,6 +592,9 @@ function TwoDimensionalPlot(props: Props) {
           <Dimensions>
             {({ width, height }) => (
               <>
+                <HoverBar mousePosition={mousePosition}>
+                  <SBar ref={hoverBar} />
+                </HoverBar>
                 <ChartComponent
                   ref={chartComponent}
                   type="scatter"
@@ -411,7 +603,12 @@ function TwoDimensionalPlot(props: Props) {
                   key={`${width}x${height}`}
                   options={options}
                   onPanZoom={onPanZoom}
+                  onScaleBoundsUpdate={onScaleBoundsUpdate}
                   data={{ datasets }}
+                  zoomOptions={{
+                    ...ChartComponent.defaultProps.zoomOptions,
+                    mode: zoomMode,
+                  }}
                 />
                 {hasUserPannedOrZoomed && (
                   <SResetZoom>
@@ -424,6 +621,7 @@ function TwoDimensionalPlot(props: Props) {
             )}
           </Dimensions>
           <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
+          <KeyListener global keyDownHandlers={keyDownHandlers} keyUpHandlers={keyUphandlers} />
         </SRoot>
       )}
     </SContainer>

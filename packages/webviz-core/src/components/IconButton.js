@@ -10,24 +10,25 @@ import React, { type Node } from "react";
 
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
-import colors from "webviz-core/src/styles/colors.module.scss";
 
 type Props = {
   tooltip: string,
   onClick: () => void,
   icon: Node,
   id?: string,
+  className?: string,
   style?: StyleObj,
   disabled?: boolean,
 };
 
 export default React.memo<Props>(function IconButton(props: Props) {
-  const { tooltip, onClick, id, icon, style, disabled } = props;
+  const { tooltip, onClick, id, icon, className, style, disabled } = props;
   return (
     <Button
       id={id}
       tooltip={tooltip}
-      style={{ width: 32, height: 32, padding: 0, backgroundColor: colors.toolbar, ...style }}
+      className={className}
+      style={{ width: "32px", height: "32px", ...style }}
       onClick={onClick}
       disabled={disabled}>
       <Icon small>{icon}</Icon>

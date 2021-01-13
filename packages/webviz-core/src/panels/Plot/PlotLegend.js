@@ -55,29 +55,23 @@ export default function PlotLegend(props: PlotLegendProps) {
   const { paths, saveConfig, showLegend, xAxisVal, xAxisPath, pathsWithMismatchedDataLengths } = props;
   const lastPath = last(paths);
 
-  const onInputChange = useCallback(
-    (value: string, index: ?number) => {
-      if (index == null) {
-        throw new Error("index not set");
-      }
-      const newPaths = paths.slice();
-      newPaths[index] = { ...newPaths[index], value: value.trim() };
-      saveConfig({ paths: newPaths });
-    },
-    [paths, saveConfig]
-  );
+  const onInputChange = useCallback((value: string, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
+    const newPaths = paths.slice();
+    newPaths[index] = { ...newPaths[index], value: value.trim() };
+    saveConfig({ paths: newPaths });
+  }, [paths, saveConfig]);
 
-  const onInputTimestampMethodChange = useCallback(
-    (value: TimestampMethod, index: ?number) => {
-      if (index == null) {
-        throw new Error("index not set");
-      }
-      const newPaths = paths.slice();
-      newPaths[index] = { ...newPaths[index], timestampMethod: value };
-      saveConfig({ paths: newPaths });
-    },
-    [paths, saveConfig]
-  );
+  const onInputTimestampMethodChange = useCallback((value: TimestampMethod, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
+    const newPaths = paths.slice();
+    newPaths[index] = { ...newPaths[index], timestampMethod: value };
+    saveConfig({ paths: newPaths });
+  }, [paths, saveConfig]);
 
   const { toggleToHideLegend, toggleToShowLegend } = useMemo(
     () => ({

@@ -23,9 +23,8 @@ const data = {
     bobjects: undefined,
   },
   topics: [{ name: "/some_topic", datatype: "some_datatype" }],
-  datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
+  messageDefinitionsByTopic: { some_datatype: "dummy" },
   providesParsedMessages: false,
-  messageDefinitionsByTopic: {},
 };
 const dummyChildren = [{ name: "MemoryDataProvider", args: {}, children: [] }];
 
@@ -40,8 +39,10 @@ describe("RpcDataProvider", () => {
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
       topics: [{ datatype: "some_datatype", name: "/some_topic" }],
-      datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
-      messageDefinitionsByTopic: {},
+      messageDefinitions: {
+        type: "raw",
+        messageDefinitionsByTopic: { some_datatype: "dummy" },
+      },
       providesParsedMessages: false,
     });
   });
@@ -70,6 +71,7 @@ describe("RpcDataProvider", () => {
     const extensionPoint = {
       progressCallback() {},
       reportMetadataCallback: jest.fn(),
+      notifyPlayerManager: jest.fn(),
     };
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);

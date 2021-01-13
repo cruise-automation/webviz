@@ -2,15 +2,9 @@
 
 The 2D Plot panel allows users to define within their ROS messages the points, lines, and polygons they would like to visualize on an x- and y-axis.
 
-The panel's API currently allows users to specify the plot's title and axes labels, and supports the visualization of 3 types of markers: `points`, `lines`, and `polygons`. Any incoming message with these 3 keys pointing to an array of API-conforming marker objects can be displayed in the 2D Plot panel.
+The panel's API currently allows users to specify the plot's title and axes labels (`title`, `xAxisLabel`, and `yAxisLabel`), and supports the visualization of 3 marker types: `points`, `lines`, and `polygons`. Any incoming message with these 3 keys pointing to an array of API-conforming marker objects can be displayed in the 2D Plot panel.
 
-The chart options supported by the 2D Plot panel API are:
-
-- `title`
-- `xAxisLabel`
-- `yAxisLabel`
-
-There are 3 types of datasets supported by the 2D PLot panel API - `lines`, `points`, and `polygons`. Each of these dataset types can be customized by the following options:
+Each marker type can be constructed using the following options:
 
 - `order` - z-index
 - `label` - unique ID
@@ -30,17 +24,17 @@ Only `label` and `data` are required - all other options have reasonable default
 Below are the ROS message definitions needed for a 2D Plot message:
 
 ```cpp
-# webviz_msgs/TwoDimensionalPlotMsg definition
+# webviz_msgs/TwoDimensionalPlot definition
 std_msgs/Header header
 string title
 string xAxisLabel
 string yAxisLabel
 string gridColor
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] lines
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] points
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] polygons
+webviz_msgs/TwoDimensionalPlotDatapoint[] lines
+webviz_msgs/TwoDimensionalPlotDatapoint[] points
+webviz_msgs/TwoDimensionalPlotDatapoint[] polygons
 
-# webviz_msgs/TwoDimensionalPlotDatapointMsg definition
+# webviz_msgs/TwoDimensionalPlotDatapoint definition
 uint8 order
 string label
 string backgroundColor
@@ -63,7 +57,7 @@ Below is an example of an output message (in JavaScript) that could be consumed 
 ```js
 {
   topic: "/plot_a",
-  datatype: "webviz_msgs/TwoDimensionalPlotMsg",
+  datatype: "webviz_msgs/TwoDimensionalPlot",
   receiveTime: { sec: 1532375120, nsec: 317760607 },
   message: {
     title: "This is Plot A",
@@ -110,3 +104,9 @@ Below is an example of an output message (in JavaScript) that could be consumed 
   },
 }
 ```
+
+## User Interactions
+
+You can zoom by scrolling, and pan by dragging. Double-click to reset.
+
+By default, scrolling will zoom horizontally only. To zoom vertically, hold the `v` key while scrolling. To zoom both horizontally and vertically at the same time, hold the `b` key while scrolling.

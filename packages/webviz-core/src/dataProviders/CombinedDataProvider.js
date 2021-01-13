@@ -8,8 +8,10 @@
 
 import { assign, flatten, isEqual } from "lodash";
 import memoizeWeak from "memoize-weak";
+import allSettled from "promise.allsettled";
 import { TimeUtil, type Time, type RosMsgField } from "rosbag";
 
+import rawMessageDefinitionsToParsed from "./rawMessageDefinitionsToParsed";
 import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
@@ -19,9 +21,13 @@ import type {
   GetMessagesTopics,
   InitializationResult,
   DataProvider,
+  MessageDefinitions,
+  ParsedMessageDefinitions,
 } from "webviz-core/src/dataProviders/types";
-import type { Message, Progress } from "webviz-core/src/players/types";
+import type { Message, Progress, Topic } from "webviz-core/src/players/types";
+import { objectValues } from "webviz-core/src/util";
 import { deepIntersect } from "webviz-core/src/util/ranges";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { clampTime } from "webviz-core/src/util/time";
 
 const sortTimes = (times: Time[]) => times.sort(TimeUtil.compare);
@@ -118,6 +124,37 @@ const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {
       }
     });
 };
+// We parse all message definitions here and then merge them.
+function mergeMessageDefinitions(messageDefinitionArr: MessageDefinitions[], topicsArr: Topic[][]): MessageDefinitions {
+  const parsedMessageDefinitionArr: ParsedMessageDefinitions[] = messageDefinitionArr.map((messageDefinitions, index) =>
+    rawMessageDefinitionsToParsed(messageDefinitions, topicsArr[index])
+  );
+  // $FlowFixMe - flow does not work with Object.entries :(
+  throwOnUnequalDatatypes(flatten(parsedMessageDefinitionArr.map(({ datatypes }) => Object.entries(datatypes))));
+  throwOnDuplicateTopics(
+    flatten(parsedMessageDefinitionArr.map(({ messageDefinitionsByTopic }) => Object.keys(messageDefinitionsByTopic)))
+  );
+  throwOnDuplicateTopics(
+    flatten(
+      parsedMessageDefinitionArr.map(({ parsedMessageDefinitionsByTopic }) =>
+        Object.keys(parsedMessageDefinitionsByTopic)
+      )
+    )
+  );
+
+  return {
+    type: "parsed",
+    messageDefinitionsByTopic: assign(
+      {},
+      ...parsedMessageDefinitionArr.map(({ messageDefinitionsByTopic }) => messageDefinitionsByTopic)
+    ),
+    parsedMessageDefinitionsByTopic: assign(
+      {},
+      ...parsedMessageDefinitionArr.map(({ parsedMessageDefinitionsByTopic }) => parsedMessageDefinitionsByTopic)
+    ),
+    datatypes: assign({}, ...parsedMessageDefinitionArr.map(({ datatypes }) => datatypes)),
+  };
+}
 
 const throwOnMixedParsedMessages = (childProvidesParsedMessages: boolean[]) => {
   if (childProvidesParsedMessages.includes(true) && childProvidesParsedMessages.includes(false)) {
@@ -147,11 +184,18 @@ function fullyLoadedProgress() {
   return { fullyLoadedFractionRanges: [{ start: 0, end: 1 }] };
 }
 
+type ProcessedInitializationResult = $ReadOnly<{|
+  start: Time,
+  end: Time,
+  topicSet: Set<string>,
+|}>;
+
 // A DataProvider that combines multiple underlying DataProviders, optionally adding topic prefixes
 // or removing certain topics.
 export default class CombinedDataProvider implements DataProvider {
   _providers: DataProvider[];
-  _initializationResultsPerProvider: { start: Time, end: Time, topicSet: Set<string> }[] = [];
+  // Initialization result will be null for providers that don't successfully initialize.
+  _initializationResultsPerProvider: (?ProcessedInitializationResult)[] = [];
   _progressPerProvider: (Progress | null)[];
   _extensionPoint: ExtensionPoint;
 
@@ -169,20 +213,26 @@ export default class CombinedDataProvider implements DataProvider {
     this._extensionPoint = extensionPoint;
 
     const providerInitializePromises = this._providers.map(async (provider, idx) => {
-      const childExtensionPoint = {
+      return provider.initialize({
+        ...extensionPoint,
         progressCallback: (progress: Progress) => {
           this._updateProgressForChild(idx, progress);
         },
-        reportMetadataCallback: extensionPoint.reportMetadataCallback,
-      };
-      return provider.initialize(childExtensionPoint);
+      });
     });
-    const results: InitializationResult[] = await Promise.all(providerInitializePromises);
-    this._initializationResultsPerProvider = results.map((result) => ({
-      start: result.start,
-      end: result.end,
-      topicSet: new Set(result.topics.map((t) => t.name)),
-    }));
+    const initializeOutcomes = await allSettled(providerInitializePromises);
+    const results = initializeOutcomes.filter(({ status }) => status === "fulfilled").map(({ value }) => value);
+    this._initializationResultsPerProvider = initializeOutcomes.map((outcome) => {
+      if (outcome.status === "fulfilled") {
+        const { start, end, topics } = outcome.value;
+        return { start, end, topicSet: new Set(topics.map((t) => t.name)) };
+      }
+      sendNotification("Data unavailable", outcome.reason, "user", "warn");
+      return null;
+    });
+    if (initializeOutcomes.every(({ status }) => status === "rejected")) {
+      return new Promise(() => {}); // Just never finish initializing.
+    }
 
     // Any providers that didn't report progress in `initialize` are assumed fully loaded
     this._progressPerProvider.forEach((p, i) => {
@@ -195,23 +245,18 @@ export default class CombinedDataProvider implements DataProvider {
     // Error handling
     const mergedTopics = flatten(results.map(({ topics }) => topics));
     throwOnDuplicateTopics(mergedTopics.map(({ name }) => name));
-    throwOnDuplicateTopics(
-      flatten(results.map(({ messageDefinitionsByTopic }) => Object.keys(messageDefinitionsByTopic)))
-    );
-    // $FlowFixMe - flow does not work with Object.entries :(
-    throwOnUnequalDatatypes(flatten(results.map(({ datatypes }) => Object.entries(datatypes))));
     throwOnMixedParsedMessages(results.map(({ providesParsedMessages }) => providesParsedMessages));
+    const combinedMessageDefinitions = mergeMessageDefinitions(
+      results.map(({ messageDefinitions }) => messageDefinitions),
+      results.map(({ topics }) => topics)
+    );
 
     return {
       start,
       end,
       topics: mergedTopics,
-      datatypes: assign({}, ...results.map(({ datatypes }) => datatypes)),
       providesParsedMessages: results.length ? results[0].providesParsedMessages : false,
-      messageDefinitionsByTopic: assign(
-        {},
-        ...results.map(({ messageDefinitionsByTopic }) => messageDefinitionsByTopic)
-      ),
+      messageDefinitions: combinedMessageDefinitions,
     };
   }
 
@@ -223,6 +268,9 @@ export default class CombinedDataProvider implements DataProvider {
     const messagesPerProvider = await Promise.all(
       this._providers.map(async (provider, index) => {
         const initializationResult = this._initializationResultsPerProvider[index];
+        if (initializationResult == null) {
+          return { bobjects: undefined, parsedMessages: undefined, rosBinaryMessages: undefined };
+        }
         const availableTopics = initializationResult.topicSet;
         const filterTopics = (maybeTopics) => maybeTopics && maybeTopics.filter((topic) => availableTopics.has(topic));
         const filteredTopicsByFormat = {
@@ -230,7 +278,7 @@ export default class CombinedDataProvider implements DataProvider {
           parsedMessages: filterTopics(topics.parsedMessages),
           rosBinaryMessages: filterTopics(topics.rosBinaryMessages),
         };
-        const hasSubscriptions = Object.keys(filteredTopicsByFormat).some((key) => filteredTopicsByFormat[key]?.length);
+        const hasSubscriptions = objectValues(filteredTopicsByFormat).some((formatTopics) => formatTopics?.length);
         if (!hasSubscriptions) {
           // If we don't need any topics from this provider, we shouldn't call getMessages at all.  Therefore,
           // the provider doesn't know that we currently don't care about any of its topics, so it won't report
@@ -248,8 +296,7 @@ export default class CombinedDataProvider implements DataProvider {
         const clampedStart = clampTime(start, initializationResult.start, initializationResult.end);
         const clampedEnd = clampTime(end, initializationResult.start, initializationResult.end);
         const providerResult = await provider.getMessages(clampedStart, clampedEnd, filteredTopicsByFormat);
-        for (const messageType of Object.keys(providerResult)) {
-          const messages = providerResult[messageType];
+        for (const messages of objectValues(providerResult)) {
           if (messages == null) {
             continue;
           }

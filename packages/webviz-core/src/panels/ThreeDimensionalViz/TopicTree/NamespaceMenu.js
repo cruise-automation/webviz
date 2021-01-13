@@ -11,7 +11,7 @@ import UndoVariantIcon from "@mdi/svg/svg/undo-variant.svg";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 
-import { ROW_HEIGHT } from "./TreeNodeRow";
+import { ROW_HEIGHT, SDotMenuPlaceholder } from "./TreeNodeRow";
 import type { OnNamespaceOverrideColorChange, SetEditingNamespace } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
@@ -104,8 +104,9 @@ export default function NamespaceMenu({
   const { toggleCheckAllAncestors } = useGuaranteedContext(TopicTreeContext, "TopicTreeContext");
   // Don't render the dot menu if the datasources are unavailable.
   if (!providerAvailable) {
-    return null;
+    return <SDotMenuPlaceholder />;
   }
+
   return (
     <ChildToggle
       position="below"

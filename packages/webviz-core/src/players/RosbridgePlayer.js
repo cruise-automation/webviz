@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, sortBy } from "lodash";
+import { isEqual, sortBy, partition } from "lodash";
 import * as React from "react";
 import { MessageReader, type Time, parseMessageDefinition } from "rosbag";
 import uuid from "uuid";
@@ -23,10 +23,12 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-  type MessageDefinitionsByTopic,
+  type ParsedMessageDefinitionsByTopic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 import { bagConnectionsToDatatypes } from "webviz-core/src/util/bagConnectionsHelper";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -56,12 +58,15 @@ export default class RosbridgePlayer implements Player {
   _start: ?Time; // The time at which we started playing.
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
-  _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
+  _parsedMessages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
   _bobjects: BobjectMessage[] = []; // Queue of bobjects that we'll send in next _emitState() call.
   _messageOrder: TimestampMethod = "receiveTime";
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
-  _messageDefinitionsByTopic: MessageDefinitionsByTopic = {};
+  _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic = {};
+  _bobjectTopics: Set<string> = new Set();
+  _parsedTopics: Set<string> = new Set();
+  _receivedBytes: number = 0;
 
   constructor(url: string) {
     this._url = url;
@@ -144,11 +149,10 @@ export default class RosbridgePlayer implements Player {
         }
         topics.push({ name: topicName, datatype: type });
         datatypeDescriptions.push({ type, messageDefinition });
-        const parsedMessageDefinition =
+        const parsedDefinition =
           typeof messageDefinition === "string" ? parseMessageDefinition(messageDefinition) : messageDefinition;
-        messageReaders[type] =
-          messageReaders[type] || new MessageReader(parsedMessageDefinition, { freeze: FREEZE_MESSAGES });
-        this._messageDefinitionsByTopic[topicName] = messageDefinition;
+        messageReaders[type] = messageReaders[type] || new MessageReader(parsedDefinition, { freeze: FREEZE_MESSAGES });
+        this._parsedMessageDefinitionsByTopic[topicName] = parsedDefinition;
       }
 
       // Sort them for easy comparison. If nothing has changed here, bail out.
@@ -171,6 +175,7 @@ export default class RosbridgePlayer implements Player {
       this._providerTopics = sortedTopics;
       this._providerDatatypes = bagConnectionsToDatatypes(datatypeDescriptions);
       this._messageReadersByDatatype = messageReaders;
+
       // Try subscribing again, since we might now be able to subscribe to some new topics.
       this.setSubscriptions(this._requestedSubscriptions);
       this._emitState();
@@ -204,8 +209,8 @@ export default class RosbridgePlayer implements Player {
     setTimeout(this._emitState, 100);
 
     const currentTime = fromMillis(Date.now());
-    const messages = this._messages;
-    this._messages = [];
+    const messages = this._parsedMessages;
+    this._parsedMessages = [];
     const bobjects = this._bobjects;
     this._bobjects = [];
     return this._listener({
@@ -219,6 +224,7 @@ export default class RosbridgePlayer implements Player {
       activeData: {
         messages,
         bobjects,
+        totalBytesReceived: this._receivedBytes,
         messageOrder: this._messageOrder,
         startTime: _start,
         endTime: currentTime,
@@ -230,7 +236,7 @@ export default class RosbridgePlayer implements Player {
         lastSeekTime: 1,
         topics: _providerTopics,
         datatypes: _providerDatatypes,
-        messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+        parsedMessageDefinitionsByTopic: this._parsedMessageDefinitionsByTopic,
         playerWarnings: NO_WARNINGS,
       },
     });
@@ -255,6 +261,10 @@ export default class RosbridgePlayer implements Player {
       return;
     }
 
+    const [bobjectSubscriptions, parsedSubscriptions] = partition(subscriptions, ({ format }) => format === "bobjects");
+    this._bobjectTopics = new Set(bobjectSubscriptions.map(({ topic }) => topic));
+    this._parsedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
+
     // See what topics we actually can subscribe to.
     const availableTopicsByTopicName = getTopicsByTopicName(this._providerTopics);
     const topicNames = subscriptions
@@ -275,11 +285,26 @@ export default class RosbridgePlayer implements Player {
           if (!this._providerTopics) {
             return;
           }
-          this._messages.push({
-            topic: topicName,
-            receiveTime: fromMillis(Date.now()),
-            message: messageReader.readMessage(Buffer.from(message.bytes)),
-          });
+
+          const topic = topicName;
+          const receiveTime = fromMillis(Date.now());
+          const innerMessage = messageReader.readMessage(Buffer.from(message.bytes));
+          if (this._bobjectTopics.has(topicName) && this._providerDatatypes) {
+            this._bobjects.push({
+              topic,
+              receiveTime,
+              message: wrapJsObject(this._providerDatatypes, datatype, innerMessage),
+            });
+          }
+
+          if (this._parsedTopics.has(topicName)) {
+            this._parsedMessages.push({
+              topic,
+              receiveTime,
+              message: innerMessage,
+            });
+          }
+
           this._emitState();
         });
       }
@@ -297,8 +322,8 @@ export default class RosbridgePlayer implements Player {
   setPublishers(publishers: AdvertisePayload[]) {
     // Since `setPublishers` is rarely called, we can get away with just throwing away the old
     // ROSLIB.Topic objects and creating new ones.
-    for (const topic of Object.keys(this._topicPublishers)) {
-      this._topicPublishers[topic].unadvertise();
+    for (const publisher of objectValues(this._topicPublishers)) {
+      publisher.unadvertise();
     }
     this._topicPublishers = {};
     for (const { topic, datatype } of publishers) {
@@ -330,4 +355,5 @@ export default class RosbridgePlayer implements Player {
   seekPlayback(_time: Time) {}
   setPlaybackSpeed(_speedFraction: number) {}
   requestBackfill() {}
+  setGlobalVariables() {}
 }

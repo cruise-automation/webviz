@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import SettingsIcon from "@mdi/svg/svg/settings.svg";
+import CogIcon from "@mdi/svg/svg/cog.svg";
 import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
 
@@ -26,7 +26,7 @@ function Example({
     ? {
         toggleComponent: (
           <Icon fade>
-            <SettingsIcon />
+            <CogIcon />
           </Icon>
         ),
       }

@@ -41,6 +41,7 @@ export type Regl = {
     pointSizeDims: [number, number],
   },
   prop: (string) => any,
+  context: (string) => any,
 };
 
 export type CommandProps = {

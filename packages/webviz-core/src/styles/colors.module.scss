@@ -7,8 +7,6 @@
 $background: #121217;
 $background-control: rgba(247, 247, 243, 0.1);
 $background-control-selected: rgba(59, 46, 118, 0.6);
-$toolbar-background: rgba(0, 0, 0, 0.9);
-$tooltip-background: rgba(71, 69, 81, 0.9);
 
 // $text-control: mix($background, white, 25%); //#ededed;
 $text-bright: rgba(247, 247, 243, 0.88);
@@ -23,22 +21,30 @@ $text-input-disabled: rgba(0, 0, 0, 0.3);
 
 $highlight: #29bee7;
 
-$menu-item-selected: $background-control-selected;
-$menu-item-hover: #3b2e76;
+$menu-item-selected: rgba(45, 45, 51, 1);
 
 $divider: rgba(247, 247, 243, 0.1);
 
+$light1: #f0f0f0;
+$dark2: #1a1a1f;
+$dark4: #2d2d33;
 $green: #05d27d;
 $light-green: #5cd6a9;
 $yellow: #f5d358;
 $light-purple: #c1c5d6;
 $grey: #e7e9ef;
-$panel-background: #1a1a1f;
 $toolbar-fixed: #1f1e27;
-$toolbar: #2d2c33;
-$accent: #22b5ff;
+$accent: #248eff;
 $orange: #ccb862;
 $red: #ff7c96;
+
+// Robot styles colors
+$light: #ffffff;
+$dark: #08080a;
+$dark2: #1a1a1f;
+$dark3: #242429;
+$dark4: #2d2d33;
+$dark5: #36363d;
 
 :export {
   highlight: $highlight;
@@ -48,12 +54,9 @@ $red: #ff7c96;
   yellow: $yellow;
   lightPurple: $light-purple;
   grey: $grey;
-  panelBackground: $panel-background;
   orange: $orange;
-  toolbar: $toolbar;
   red: $red;
   divider: $divider;
-  tooltipBackground: $tooltip-background;
   textMuted: $text-muted;
   textBright: $text-bright;
   textDisabled: $text-disabled;

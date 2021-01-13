@@ -16,13 +16,6 @@ function message(topic, stamp) {
   };
 }
 
-function item(topic, stamp) {
-  return {
-    message: message(topic, stamp),
-    queriedData: [],
-  };
-}
-
 describe("synchronizeMessages", () => {
   it("returns nothing for empty frame", () => {
     expect(synchronizeMessages({})).toEqual(null);
@@ -32,14 +25,14 @@ describe("synchronizeMessages", () => {
   it("returns nothing for missing header", () => {
     expect(
       synchronizeMessages({
-        "/foo": [item("/foo", undefined)],
+        "/foo": [message("/foo", undefined)],
       })
     ).toEqual(null);
 
     expect(
       synchronizeMessages(
         {
-          "/foo": [item("/foo", { sec: 1, nsec: 2 })],
+          "/foo": [message("/foo", { sec: 1, nsec: 2 })],
         },
         () => null
       )
@@ -48,16 +41,16 @@ describe("synchronizeMessages", () => {
 
   it("works with single message", () => {
     const itemsByPath = {
-      "/foo": [item("/foo", { sec: 1, nsec: 2 })],
+      "/foo": [message("/foo", { sec: 1, nsec: 2 })],
     };
     expect(synchronizeMessages(itemsByPath)).toEqual(itemsByPath);
   });
 
   it("works with multiple messages", () => {
     const itemsByPath = {
-      "/foo": [item("/foo", { sec: 1, nsec: 0 })],
-      "/bar": [item("/bar", { sec: 1, nsec: 0 })],
-      "/baz": [item("/baz", { sec: 1, nsec: 0 })],
+      "/foo": [message("/foo", { sec: 1, nsec: 0 })],
+      "/bar": [message("/bar", { sec: 1, nsec: 0 })],
+      "/baz": [message("/baz", { sec: 1, nsec: 0 })],
     };
     expect(synchronizeMessages(itemsByPath)).toEqual(itemsByPath);
   });
@@ -65,15 +58,15 @@ describe("synchronizeMessages", () => {
   it("returns nothing for different stamps and missing messages", () => {
     expect(
       synchronizeMessages({
-        "/foo": [item("/foo", { sec: 1, nsec: 0 })],
-        "/bar": [item("/bar", { sec: 2, nsec: 0 })],
+        "/foo": [message("/foo", { sec: 1, nsec: 0 })],
+        "/bar": [message("/bar", { sec: 2, nsec: 0 })],
       })
     ).toBeNull();
 
     expect(
       synchronizeMessages({
-        "/foo": [item("/foo", { sec: 1, nsec: 0 })],
-        "/bar": [item("/bar", { sec: 1, nsec: 0 })],
+        "/foo": [message("/foo", { sec: 1, nsec: 0 })],
+        "/bar": [message("/bar", { sec: 1, nsec: 0 })],
         "/baz": [],
       })
     ).toBeNull();
@@ -82,16 +75,16 @@ describe("synchronizeMessages", () => {
   it("returns latest of multiple matches regardless of order", () => {
     expect(
       synchronizeMessages({
-        "/foo": [item("/foo", { sec: 1, nsec: 0 }), item("/foo", { sec: 2, nsec: 0 })],
+        "/foo": [message("/foo", { sec: 1, nsec: 0 }), message("/foo", { sec: 2, nsec: 0 })],
         "/bar": [
-          item("/bar", { sec: 2, nsec: 0 }),
-          item("/bar", { sec: 0, nsec: 0 }),
-          item("/bar", { sec: 1, nsec: 0 }),
+          message("/bar", { sec: 2, nsec: 0 }),
+          message("/bar", { sec: 0, nsec: 0 }),
+          message("/bar", { sec: 1, nsec: 0 }),
         ],
       })
     ).toEqual({
-      "/foo": [item("/foo", { sec: 2, nsec: 0 })],
-      "/bar": [item("/bar", { sec: 2, nsec: 0 })],
+      "/foo": [message("/foo", { sec: 2, nsec: 0 })],
+      "/bar": [message("/bar", { sec: 2, nsec: 0 })],
     });
   });
 });

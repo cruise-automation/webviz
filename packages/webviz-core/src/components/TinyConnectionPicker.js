@@ -11,7 +11,7 @@ import * as React from "react";
 import styled from "styled-components";
 
 import ChildToggle from "webviz-core/src/components/ChildToggle";
-import Icon from "webviz-core/src/components/Icon";
+import { WrappedIcon } from "webviz-core/src/components/Icon";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -44,9 +44,9 @@ export function TinyConnectionPicker({
       onToggle={onToggle}
       dataTest="open-connection-picker"
       style={{ height: 18 }}>
-      <Icon tooltip="Sources" small fade active={isOpen}>
+      <WrappedIcon tooltip="Sources" medium fade active={isOpen}>
         {showSpinner ? <SpinningLoadingIcon /> : <DatabaseIcon />}
-      </Icon>
+      </WrappedIcon>
       <SConnectionPicker>
         {inputDescription}
         <div style={{ marginTop: "1em", whiteSpace: "nowrap" }}>

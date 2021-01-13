@@ -17,11 +17,12 @@ $grey: #777;
   }
 
   .mosaic-tile {
-    margin: 0;
+    margin: 1px;
   }
 
   .mosaic-window {
     box-shadow: none;
+    width: 100%;
   }
 
   .mosaic-preview {
@@ -51,10 +52,27 @@ $grey: #777;
     background: none;
     z-index: 99;
     .mosaic-split-line {
-      box-shadow: 0 0 0 1px $toolbar;
+      box-shadow: 0 0 0 1px $dark3;
     }
     &:hover .mosaic-split-line {
       box-shadow: 0 0 0 1px $grey;
+    }
+
+    &.-row {
+      margin-top: 2px;
+    }
+  }
+
+  &.borderless {
+    .mosaic-split {
+      opacity: 0;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+    .mosaic-tile {
+      margin: 0;
     }
   }
 

@@ -6,21 +6,29 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import Chart from "chart.js";
+
 import ChartJSManager from "./ChartJSManager";
 import type { RpcLike } from "webviz-core/src/util/FakeRpc";
+import installChartjs from "webviz-core/src/util/installChartjs";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupWorker } from "webviz-core/src/util/RpcUtils";
+import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
+import { inWebWorker } from "webviz-core/src/util/workers";
 
-const inWorkerEnvironment = global.postMessage && !global.onmessage;
+let hasInstalledChartjs = false;
 
 export default class ChartJSWorker {
   _rpc: RpcLike;
   _managersById: { [string]: ChartJSManager };
 
   constructor(rpc: RpcLike) {
+    if (!hasInstalledChartjs) {
+      installChartjs(Chart);
+      hasInstalledChartjs = true;
+    }
     this._managersById = {};
 
-    if (process.env.NODE_ENV !== "test" && inWorkerEnvironment && this._rpc instanceof Rpc) {
+    if (process.env.NODE_ENV !== "test" && inWebWorker() && this._rpc instanceof Rpc) {
       setupWorker(this._rpc);
     }
 

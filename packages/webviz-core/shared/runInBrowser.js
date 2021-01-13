@@ -114,6 +114,7 @@ export async function runInPage<T>(
 
     log.info(`Navigating to URL: ${url}`);
     await page.goto(url, { waitUntil: "networkidle2", timeout: pageLoadTimeout });
+    await page.waitFor(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
 
     await setupPageLogging(page, pageOptions);
     await setupWebvizLayout(page, layoutOptions);
@@ -178,7 +179,7 @@ export async function withBrowser<T>(
     }
     return Promise.reject();
   } catch (error) {
-    console.error(error);
+    console.error(error.stack || (error.toString && error.toString()) || error);
     throw error;
   } finally {
     if (browser) {
@@ -193,24 +194,38 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
   // Pass through console from the page.
   page.on("console", (msg) => {
     getArgStrings(msg).then((args) => {
-      const text = `${msg.text()} --- ${JSON.stringify(args)}`;
+      const text = `${msg.text()} ${args.length > 1 ? `--- ${JSON.stringify(args.slice(1))}` : ""}`;
       if (msg.type() === "error") {
         onError(text);
       }
       if (captureLogs) {
         onLog(text);
+        console.log(text);
       }
     });
   });
 
-  page.on("error", (error) => {
-    const errorMessage = `${error.toString()} (stack trace: ${error.stack})`;
+  function onPuppeteerError(error: any) {
+    const errorMessage: string = (error.jsonValue && error.jsonValue()) || error.toString();
     log.error(`[runInBrowser error] ${errorMessage}`);
+    console.warn(errorMessage);
     onError(errorMessage);
+  }
+
+  page.on("pageerror", (error) => {
+    onPuppeteerError(error);
+  });
+  page.on("error", (error) => {
+    onPuppeteerError(error);
   });
 
   await page.evaluate(() => {
     window.addEventListener("error", (error) => {
+      // This can happen when ResizeObserver can't resolve its callbacks fast enough, but we can ignore it.
+      // See https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+      if (error.message.includes("ResizeObserver loop limit exceeded")) {
+        return;
+      }
       console.error(error);
     });
     window.addEventListener("unhandledrejection", (event) => {
@@ -223,15 +238,18 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
 export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
   const { panelLayout, experimentalFeatureSettings, filePaths } = options;
 
-  if (panelLayout) {
-    await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
-  }
+  // Make sure the page is ready before proceeding.
+  await page.waitForSelector(".app-container");
 
   if (experimentalFeatureSettings) {
     await page.evaluate(
       (settings: any) => localStorage.setItem("experimentalFeaturesSettings", (settings: string)),
       experimentalFeatureSettings
     );
+  }
+
+  if (panelLayout) {
+    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
   }
 
   if (filePaths && filePaths.length) {

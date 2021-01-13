@@ -10,6 +10,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import GlobalVariables from "./index";
+import delay from "webviz-core/shared/delay";
 import { type LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 
@@ -71,14 +72,25 @@ function PanelWithData({
   );
 }
 
+const DEFAULT_DELAY = 100;
+
 storiesOf("<GlobalVariables>", module)
   .add("default", () => {
     return <PanelWithData />;
   })
+  .add("with linked variables", () => {
+    return <PanelWithData linkedGlobalVariables={linkedGlobalVariables} />;
+  })
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("click 'Add variable' button", () => {
     return (
       <PanelWithData
-        onMount={(el) => {
+        onMount={async (el) => {
+          await delay(DEFAULT_DELAY);
           const addBtn = el.querySelector("[data-test='add-variable-btn']");
           if (addBtn) {
             addBtn.click();
@@ -90,16 +102,16 @@ storiesOf("<GlobalVariables>", module)
   .add("error state: empty variable name", () => {
     return (
       <PanelWithData
-        onMount={(el) => {
+        onMount={async (el) => {
+          await delay(DEFAULT_DELAY);
           const addBtn = el.querySelector("[data-test='add-variable-btn']");
           if (addBtn) {
             addBtn.click();
-            setImmediate(() => {
-              const firstKeyInput = document.querySelector("[data-test='global-variable-key'] input");
-              if (firstKeyInput) {
-                triggerInputChange(firstKeyInput, "");
-              }
-            });
+            await delay(DEFAULT_DELAY);
+            const firstKeyInput = document.querySelector("[data-test='global-variable-key'] input");
+            if (firstKeyInput) {
+              triggerInputChange(firstKeyInput, "");
+            }
           }
         }}
       />
@@ -108,29 +120,16 @@ storiesOf("<GlobalVariables>", module)
   .add("error state: variable name collision", () => {
     return (
       <PanelWithData
-        onMount={(el) => {
+        onMount={async (el) => {
+          await delay(DEFAULT_DELAY);
           const addBtn = el.querySelector("[data-test='add-variable-btn']");
           if (addBtn) {
             addBtn.click();
-            setImmediate(() => {
-              const firstKeyInput = document.querySelector("[data-test='global-variable-key'] input");
-              if (firstKeyInput) {
-                triggerInputChange(firstKeyInput, "$someText");
-              }
-            });
-          }
-        }}
-      />
-    );
-  })
-  .add("still show linked variables after clicking 'Clear all' button", () => {
-    return (
-      <PanelWithData
-        linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
-          const clearAllBtn = el.querySelector("[data-test='clear-all-btn']");
-          if (clearAllBtn) {
-            clearAllBtn.click();
+            await delay(DEFAULT_DELAY);
+            const firstKeyInput = document.querySelector("[data-test='global-variable-key'] input");
+            if (firstKeyInput) {
+              triggerInputChange(firstKeyInput, "$someText");
+            }
           }
         }}
       />
@@ -140,27 +139,31 @@ storiesOf("<GlobalVariables>", module)
     return (
       <PanelWithData
         linkedGlobalVariables={linkedGlobalVariables}
-        onMount={() => {
+        onMount={async () => {
+          await delay(DEFAULT_DELAY);
           const allJsonInput = document.querySelectorAll("[data-test='json-input']");
-          const lastJsonInput = allJsonInput[allJsonInput.length - 1];
-          if (lastJsonInput) {
-            triggerInputChange(lastJsonInput, "value is not 100 any more");
+          const linkedVarJsonInput = allJsonInput[2];
+          if (linkedVarJsonInput) {
+            triggerInputChange(linkedVarJsonInput, "value is not 100 any more");
           }
         }}
       />
     );
   })
-  .add("with linked variables", () => {
-    return <PanelWithData linkedGlobalVariables={linkedGlobalVariables} />;
-  })
   .add("unlink a variable with a single link", () => {
     return (
       <PanelWithData
         linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
+        onMount={async (el) => {
+          await delay(DEFAULT_DELAY);
           const btn = el.querySelector("[data-test='unlink-linkedName']");
           if (btn) {
             btn.click();
+            await delay(DEFAULT_DELAY);
+            const pathBtn = document.querySelector("[data-test='unlink-path']");
+            if (pathBtn) {
+              pathBtn.click();
+            }
           }
         }}
       />
@@ -170,29 +173,16 @@ storiesOf("<GlobalVariables>", module)
     return (
       <PanelWithData
         linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
+        onMount={async (el) => {
+          await delay(DEFAULT_DELAY);
           const btn = el.querySelector("[data-test='unlink-linkedId']");
           if (btn) {
             btn.click();
-          }
-        }}
-      />
-    );
-  })
-  .add(`after unlinking a variable called "linkedName"`, () => {
-    return (
-      <PanelWithData
-        linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
-          const btn = el.querySelector("[data-test='unlink-linkedName']");
-          if (btn) {
-            btn.click();
-            setImmediate(() => {
-              const unlinkFormBtn = document.querySelector("[data-test='unlink-form'] button");
-              if (unlinkFormBtn) {
-                unlinkFormBtn.click();
-              }
-            });
+            await delay(DEFAULT_DELAY);
+            const pathBtn = document.querySelector("[data-test='unlink-path']");
+            if (pathBtn) {
+              pathBtn.click();
+            }
           }
         }}
       />

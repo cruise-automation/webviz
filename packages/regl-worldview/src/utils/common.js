@@ -9,3 +9,7 @@
 export function getNodeEnv() {
   return process && process.env && process.env.NODE_ENV;
 }
+
+/* eslint-disable no-undef */
+export const inWebWorker = () =>
+  global.postMessage && typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;

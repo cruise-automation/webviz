@@ -80,8 +80,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
     expect(messages).toHaveLength(1);
     const { activeData } = messages[0];
@@ -98,6 +99,13 @@ describe("NodePlayer", () => {
       { name: "/input/bar", datatype: "bar" },
       { name: "/webviz/test", datatype: "test" },
     ]);
+  });
+
+  it("will throw if the output datatype isn't present", () => {
+    const fakePlayer = new FakePlayer();
+    expect(
+      () => new NodePlayer(fakePlayer, [{ ...node, output: { name: "/webviz/test", datatype: "unknown_msgs/T" } }])
+    ).toThrow('The datatype "unknown_msgs/T" is not defined');
   });
 
   it("does not include a node if none of the input topics are available", () => {
@@ -119,8 +127,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -153,8 +162,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -299,8 +309,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
 
     await done;
@@ -352,8 +363,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
 
     await done;
@@ -386,8 +398,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
 
     fakePlayer.emit({
@@ -403,8 +416,9 @@ describe("NodePlayer", () => {
       lastSeekTime: 1,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     });
     await done;
     expect(messages).toHaveLength(4);
@@ -467,8 +481,9 @@ describe("NodePlayer", () => {
         lastSeekTime: 0,
         topics: [{ name: "/input/foo", datatype: "foo" }],
         datatypes,
-        messageDefinitionsByTopic: {},
+        parsedMessageDefinitionsByTopic: {},
         playerWarnings: {},
+        totalBytesReceived: 1234,
       });
 
       await done;

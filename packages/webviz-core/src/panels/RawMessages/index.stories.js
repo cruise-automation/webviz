@@ -14,13 +14,13 @@ import {
   enumFixture,
   enumAdvancedFixture,
   withMissingData,
-  withLongString,
   topicsToDiffFixture,
   topicsWithIdsToDiffFixture,
   multipleNumberMessagesFixture,
 } from "./fixture";
-import RawMessages, { PREV_MSG_METHOD } from "webviz-core/src/panels/RawMessages";
+import RawMessages, { PREV_MSG_METHOD, OTHER_SOURCE_METHOD } from "webviz-core/src/panels/RawMessages";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const noDiffConfig = { diffMethod: "custom", diffTopicPath: "", diffEnabled: false, showFullMessageForDiff: false };
 const diffConfig = {
@@ -35,6 +35,11 @@ const expandAll = () => {
     label.click();
   }
 };
+const scrollToBottom = () => {
+  const scrollContainer = document.querySelectorAll(".Flex-module__scroll___3l7to")[0];
+  scrollContainer.scrollTop = scrollContainer.scrollHeight;
+};
+
 storiesOf("<RawMessages>", module)
   .add("folded", () => {
     return (
@@ -53,28 +58,42 @@ storiesOf("<RawMessages>", module)
   .add("display big value – num", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
-        <RawMessages config={{ topicPath: "/baz/num", ...noDiffConfig }} />
+        <RawMessages config={{ topicPath: "/baz/num.value", ...noDiffConfig }} />
       </PanelSetup>
     );
   })
   .add("display big value – text", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
-        <RawMessages config={{ topicPath: "/baz/text", ...noDiffConfig }} />
+        <RawMessages config={{ topicPath: "/baz/text.value", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display big value – text truncated", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={() => setImmediate(scrollToBottom)}>
+        <RawMessages config={{ topicPath: "/baz/text.value_long", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display big value – text with newlines", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={() => setImmediate(scrollToBottom)}>
+        <RawMessages config={{ topicPath: "/baz/text.value_with_newlines", ...noDiffConfig }} />
       </PanelSetup>
     );
   })
   .add("display big value – single element array", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
-        <RawMessages config={{ topicPath: "/baz/array", ...noDiffConfig }} />
+        <RawMessages config={{ topicPath: "/baz/array.value", ...noDiffConfig }} />
       </PanelSetup>
     );
   })
   .add("display single object array", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
-        <RawMessages config={{ topicPath: "/baz/array/obj", ...noDiffConfig }} />
+        <RawMessages config={{ topicPath: "/baz/array/obj.value", ...noDiffConfig }} />
       </PanelSetup>
     );
   })
@@ -101,7 +120,7 @@ storiesOf("<RawMessages>", module)
   })
   .add("with a truncated long string", () => {
     return (
-      <PanelSetup fixture={withLongString} style={{ width: 350 }}>
+      <PanelSetup fixture={fixture} style={{ width: 350 }}>
         <RawMessages config={{ topicPath: "/baz/text", ...noDiffConfig }} />
       </PanelSetup>
     );
@@ -128,9 +147,15 @@ storiesOf("<RawMessages>", module)
     );
   })
   .add("display diff with ID fields", () => {
+    const config = {
+      ...diffConfig,
+      topicPath: "/baz/enum_advanced_array.value",
+      diffTopicPath: "/another/baz/enum_advanced_array.value",
+      showFullMessageForDiff: false,
+    };
     return (
       <PanelSetup fixture={topicsWithIdsToDiffFixture} style={{ width: 350 }} onMount={expandAll}>
-        <RawMessages config={{ ...diffConfig, showFullMessageForDiff: false }} />
+        <RawMessages config={config} />
       </PanelSetup>
     );
   })
@@ -180,6 +205,51 @@ storiesOf("<RawMessages>", module)
             diffMethod: PREV_MSG_METHOD,
             diffTopicPath: "/another/baz/enum_advanced",
             diffEnabled: false,
+            showFullMessageForDiff: true,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("diff messages from different sources", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={expandAll}>
+        <RawMessages
+          config={{
+            topicPath: "/foo",
+            diffMethod: OTHER_SOURCE_METHOD,
+            diffTopicPath: "",
+            diffEnabled: true,
+            showFullMessageForDiff: true,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("diff messages from different sources when base topic is from second source", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={expandAll}>
+        <RawMessages
+          config={{
+            topicPath: `${SECOND_SOURCE_PREFIX}/foo`,
+            diffMethod: OTHER_SOURCE_METHOD,
+            diffTopicPath: "",
+            diffEnabled: true,
+            showFullMessageForDiff: true,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("display empty state if second source is not available", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={expandAll}>
+        <RawMessages
+          config={{
+            topicPath: "/baz/text",
+            diffMethod: OTHER_SOURCE_METHOD,
+            diffTopicPath: "/foo",
+            diffEnabled: true,
             showFullMessageForDiff: true,
           }}
         />

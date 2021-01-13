@@ -16,7 +16,8 @@ import FakePlayer from "./FakePlayer";
 import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import sendNotification from "webviz-core/src/util/sendNotification";
+import tick from "webviz-core/shared/tick";
+import { initializeLogEvent, resetLogEventForTests } from "webviz-core/src/util/logEvent";
 
 jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
 
@@ -112,6 +113,43 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       player.emit();
     });
     expect(() => player.emit()).toThrow("New playerState was emitted before last playerState was rendered.");
+  });
+
+  it("waits for the previous frame to finish before calling setGlobalVariables again", async () => {
+    let pauseFrame;
+    const player = new FakePlayer();
+    jest.spyOn(player, "setGlobalVariables");
+
+    const promise = signal();
+    const pipeline = mount(
+      <MessagePipelineProvider player={player} globalVariables={{}}>
+        <MessagePipelineConsumer>
+          {(context) => {
+            pauseFrame = context.pauseFrame;
+            promise.resolve();
+            return null;
+          }}
+        </MessagePipelineConsumer>
+      </MessagePipelineProvider>
+    );
+    await Promise.all([promise, tick()]);
+    if (!pauseFrame) {
+      return;
+    }
+
+    expect(player.setGlobalVariables).toHaveBeenCalledWith({});
+    expect(player.setGlobalVariables).toHaveBeenCalledTimes(1);
+    const onFrameRendered = pauseFrame("Wait");
+
+    // Pass in new globalVariables and make sure they aren't used until the frame is done
+    pipeline.setProps({ player, globalVariables: { futureTime: 1 } });
+    await tick();
+    expect(player.setGlobalVariables).toHaveBeenCalledTimes(1);
+
+    // Once the frame is done, setGlobalVariables will be called with the new value
+    onFrameRendered();
+    await tick();
+    expect(player.setGlobalVariables).toHaveBeenCalledWith({ futureTime: 1 });
   });
 
   it("sets subscriptions", (done) => {
@@ -430,8 +468,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(2);
@@ -476,18 +515,23 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(3);
 
-    // Calling setSubscriptions right after activeData is emitted results in a warning.
-    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "parsedMessages" }]));
+    // Calling setSubscriptions right after activeData is ok if the set of topics doesn't change
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "bobjects" }]));
+    // $FlowFixMe - Flow doesn't understand `console.warn.mock`
+    expect(console.warn.mock.calls).toEqual([]);
+    // But changing the set of topics results in a warning
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test2", format: "parsedMessages" }]));
     // $FlowFixMe - Flow doesn't understand `console.warn.mock`
     expect(console.warn.mock.calls).toEqual([
       [
-        "Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: /test",
+        "Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: /test2",
       ],
     ]);
 
@@ -499,9 +543,12 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   });
 
   describe("pauseFrame", () => {
-    let pauseFrame, player, el;
+    let pauseFrame, player, el, logger;
 
     beforeEach(async () => {
+      logger = jest.fn();
+      initializeLogEvent(logger, { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" }, { PANEL_TYPES: "panel_types" });
+
       player = new FakePlayer();
       el = mount(
         <MessagePipelineProvider player={player}>
@@ -515,6 +562,10 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       );
 
       await delay(20);
+    });
+
+    afterEach(() => {
+      resetLogEventForTests();
     });
 
     it("frames automatically resolve without calling pauseFrame", async () => {
@@ -622,8 +673,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
       await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
       expect(hasFinishedFrame).toEqual(true);
-
-      sendNotification.expectCalledDuringTest();
+      expect(logger).toHaveBeenCalled();
     });
 
     it("Adding multiple promises that do not resolve eventually results in an error, and then continues playing", async () => {
@@ -643,8 +693,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
       await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
       expect(hasFinishedFrame).toEqual(true);
-
-      sendNotification.expectCalledDuringTest();
+      expect(logger).toHaveBeenCalled();
     });
 
     it("does not accidentally resolve the second player's promise when replacing the player", async () => {

@@ -16,18 +16,23 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => undefined,
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);
     const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
-    return fetch(layoutUrl).then((result) => {
-      return result
-        .json()
-        .then((json) => json)
-        .catch(() => undefined);
-    });
+    return fetch(layoutUrl)
+      .then((result) => {
+        try {
+          return result.json();
+        } catch (e) {
+          throw new Error(`Failed to parse JSON layout: ${e.message}`);
+        }
+      })
+      .catch((e) => {
+        throw new Error(`Failed to fetch layout from URL: ${e.message}`);
+      });
   },
+  getDemoModeComponent: () => undefined,
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -46,31 +51,35 @@ const defaultHooks = {
     });
   },
   nodes: () => [],
-  getDefaultGlobalStates() {
+  getDefaultPersistedState() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
     /* eslint-disable no-restricted-modules */
     const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
+    // All panel fields have to be present.
     return {
-      layout: {
-        direction: "row",
-        first: "DiagnosticSummary!3edblo1",
-        second: {
+      fetchedLayout: { isLoading: false, data: undefined },
+      search: "",
+      panels: {
+        layout: {
           direction: "row",
-          first: "RosOut!1f38b3d",
-          second: "3D Panel!1my2ydk",
-          splitPercentage: 50,
+          first: "DiagnosticSummary!3edblo1",
+          second: {
+            direction: "row",
+            first: "RosOut!1f38b3d",
+            second: "3D Panel!1my2ydk",
+            splitPercentage: 50,
+          },
+          splitPercentage: 33.3333333333,
         },
-        splitPercentage: 33.3333333333,
+        savedProps: {},
+        globalVariables: {},
+        userNodes: {},
+        linkedGlobalVariables: [],
+        playbackConfig: defaultPlaybackConfig,
+        version: CURRENT_LAYOUT_VERSION,
       },
-      savedProps: {},
-      globalVariables: {},
-      userNodes: {},
-      linkedGlobalVariables: [],
-      playbackConfig: defaultPlaybackConfig,
-      version: CURRENT_LAYOUT_VERSION,
     };
   },
-  getDefaultGlobalVariables: () => ({}),
   migratePanels(panels) {
     const migratePanels = require("webviz-core/migrations").default;
     return migratePanels(panels);
@@ -116,7 +125,7 @@ const defaultHooks = {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
-  load: () => {
+  load: async () => {
     if (process.env.NODE_ENV === "production" && window.ga) {
       window.ga("create", "UA-82819136-10", "auto");
     } else {
@@ -125,6 +134,9 @@ const defaultHooks = {
       };
     }
     window.ga("send", "pageview");
+
+    const { initializeLogEvent } = require("webviz-core/src/util/logEvent");
+    initializeLogEvent(() => undefined, {}, {});
   },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
@@ -132,12 +144,6 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      groupLines: {
-        name: "Group Lines When Rendering",
-        description: "A faster method of rendering lines in the 3D panel by grouping them together.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",
         description:
@@ -145,29 +151,10 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
-      preloading: {
-        name: "Preloading",
-        description: "Allow panels to use data from caches directly, without playback.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
       unlimitedMemoryCache: {
         name: "Unlimited in-memory cache (requires reload)",
         description:
           "If you have a lot of memory in your computer, and you frequently have to play all the way through large bags, you can turn this on to fully buffer the bag into memory. However, use at your own risk, as this might crash the browser.",
-        developmentDefault: false,
-        productionDefault: false,
-      },
-      globalVariableColorOverrides: {
-        name: "Global variable color overrides",
-        description: "Change the color of markers when they match a linkedGlobalVariable.",
-        developmentDefault: false,
-        productionDefault: false,
-      },
-      bobject3dPanel: {
-        name: "Use binary messages in the 3D panel instead of parsed messages",
-        description:
-          "Either use binary messages or _pretend_ to use binary messages in the 3D panel. Very broken, work in progress.",
         developmentDefault: false,
         productionDefault: false,
       },
@@ -178,7 +165,18 @@ const defaultHooks = {
     const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     return [REMOTE_BAG_URL_2_QUERY_KEY];
   },
-  maybeUpdateURLToTrackLayout: () => {},
+  updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
+    // Persist the layout state in URL or remote storage if needed.
+    await Promise.resolve();
+  },
+  getPoseErrorScaling() {
+    const scaling = {
+      x: 1,
+      y: 1,
+    };
+
+    return { originalScaling: scaling, updatedScaling: scaling };
+  },
 };
 
 let hooks = defaultHooks;
@@ -195,33 +193,28 @@ export function resetHooksToDefault() {
   hooks = defaultHooks;
 }
 
-export function loadWebviz(hooksToSet) {
+export async function loadWebviz(hooksToSet) {
   if (hooksToSet) {
     setHooks(hooksToSet);
   }
 
   require("webviz-core/src/styles/global.scss");
+  const Confirm = require("webviz-core/src/components/Confirm").default;
   const prepareForScreenshots = require("webviz-core/src/stories/prepareForScreenshots").default;
   const installDevtoolsFormatters = require("webviz-core/src/util/installDevtoolsFormatters").default;
   const overwriteFetch = require("webviz-core/src/util/overwriteFetch").default;
-  const { hideLoadingLogo } = require("webviz-core/src/util/hideLoadingLogo");
   const { clearIndexedDbWithoutConfirmation } = require("webviz-core/src/util/indexeddb/clearIndexedDb");
+  const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
 
   prepareForScreenshots(); // For integration screenshot tests.
   installDevtoolsFormatters();
   overwriteFetch();
   window.clearIndexedDb = clearIndexedDbWithoutConfirmation; // For integration tests.
 
-  const initializationResult = hooks.load();
-
-  const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
-  const Confirm = require("webviz-core/src/components/Confirm").default;
-
-  // Importing from /webviz-core/shared/delay seems to not work for some reason (maybe a bundle issue)? Just duplicate
-  // it here.
-  async function delay(timeoutMs) {
-    return new Promise((resolve) => setTimeout(resolve, timeoutMs));
-  }
+  // In production, hooks.load() will return initializationResult immediately.
+  // In a performance measuring mode, we delay the load while the Polly library
+  // loads so we can record and replay network requests before the app starts.
+  const initializationResult = await hooks.load();
 
   async function render() {
     const rootEl = document.getElementById("root");
@@ -231,10 +224,6 @@ export function loadWebviz(hooksToSet) {
     }
 
     await waitForFonts();
-    // Wait for any async load functions to start running while we are doing the initial render.
-    // The number isn't really important here, we just want to make sure that other async callbacks have a chance to
-    // run, because once we start the initial Webviz render we hold the main thread for ~500ms.
-    await delay(5);
     ReactDOM.render(<hooks.Root history={history} initializationResult={initializationResult} />, rootEl);
   }
 
@@ -243,7 +232,9 @@ export function loadWebviz(hooksToSet) {
   const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
   if (chromeVersion < MINIMUM_CHROME_VERSION) {
-    hideLoadingLogo();
+    if (window.webviz_hideLoadingLogo) {
+      window.webviz_hideLoadingLogo();
+    }
     Confirm({
       title: "Update your browser",
       prompt:

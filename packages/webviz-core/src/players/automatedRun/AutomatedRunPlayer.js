@@ -11,7 +11,6 @@ import Queue from "promise-queue";
 import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
 import type {
   AdvertisePayload,
@@ -25,7 +24,6 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import { USER_ERROR_PREFIX } from "webviz-core/src/util/globalConstants";
-import Logger from "webviz-core/src/util/Logger";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, {
   type NotificationType,
@@ -39,15 +37,17 @@ import { clampTime, subtractTimes, toMillis } from "webviz-core/src/util/time";
 export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
+  workerIndex?: number;
+  workerTotal?: number;
   shouldLoadDataBeforePlaying: boolean;
   onError(any): Promise<void>;
   start({ bagLengthMs: number }): void;
   markTotalFrameStart(): void;
   markTotalFrameEnd(): void;
   markFrameRenderStart(): void;
-  markFrameRenderEnd(): void;
+  markFrameRenderEnd(): number;
   markPreloadStart(): void;
-  markPreloadEnd(): void;
+  markPreloadEnd(): number;
   onFrameFinished(frameIndex: number): Promise<void>;
   finish(): any;
 }
@@ -55,7 +55,11 @@ export interface AutomatedRunClient {
 export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
 const NO_WARNINGS = Object.freeze({});
 
-const logger = new Logger(__filename);
+function formatSeconds(sec: number): string {
+  const date = new Date(0);
+  date.setSeconds(sec);
+  return date.toISOString().substr(11, 8);
+}
 
 export default class AutomatedRunPlayer implements Player {
   static className = "AutomatedRunPlayer";
@@ -75,17 +79,16 @@ export default class AutomatedRunPlayer implements Player {
   _error: ?Error;
   _waitToReportErrorPromise: ?Promise<void>;
   _startCalled: boolean = false;
+  _receivedBytes: number = 0;
   // Calls to this._listener must not happen concurrently, and we want them to happen
   // deterministically so we put them in a FIFO queue.
   _emitStateQueue: Queue = new Queue(1);
-  _bobjectsEnabled: boolean;
 
   constructor(provider: DataProvider, client: AutomatedRunClient) {
     this._provider = provider;
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
-    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
     // Report errors from sendNotification and those thrown on the window object to the client.
     setNotificationHandler(
       (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
@@ -107,6 +110,11 @@ export default class AutomatedRunPlayer implements Player {
       }
     );
     window.addEventListener("error", (e: Error) => {
+      // This can happen when ResizeObserver can't resolve its callbacks fast enough, but we can ignore it.
+      // See https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+      if (e.message.includes("ResizeObserver loop limit exceeded")) {
+        return;
+      }
       this._error = e;
       this._waitToReportErrorPromise = client.onError(e);
     });
@@ -151,10 +159,7 @@ export default class AutomatedRunPlayer implements Player {
           message: message.message,
         };
       });
-    const filteredParsedMessages = filterMessages(parsedMessages);
-    const filteredBobjects = this._bobjectsEnabled ? filterMessages(bobjects) : [];
-
-    return { parsedMessages: filteredParsedMessages, bobjects: filteredBobjects };
+    return { parsedMessages: filterMessages(parsedMessages), bobjects: filterMessages(bobjects) };
   }
 
   _emitState(
@@ -166,6 +171,10 @@ export default class AutomatedRunPlayer implements Player {
       if (!this._listener) {
         return;
       }
+      const initializationResult = this._providerResult;
+      if (initializationResult.messageDefinitions.type === "raw") {
+        throw new Error("AutomatedRunPlayer requires parsed message definitions");
+      }
       return this._listener({
         isPresent: true,
         showSpinner: false,
@@ -176,6 +185,7 @@ export default class AutomatedRunPlayer implements Player {
         activeData: {
           messages,
           bobjects,
+          totalBytesReceived: this._receivedBytes,
           currentTime,
           startTime: this._providerResult.start,
           endTime: this._providerResult.end,
@@ -184,8 +194,8 @@ export default class AutomatedRunPlayer implements Player {
           messageOrder: "receiveTime",
           lastSeekTime: 0,
           topics: this._providerResult.topics,
-          datatypes: this._providerResult.datatypes,
-          messageDefinitionsByTopic: this._providerResult.messageDefinitionsByTopic,
+          datatypes: initializationResult.messageDefinitions.datatypes,
+          parsedMessageDefinitionsByTopic: initializationResult.messageDefinitions.parsedMessageDefinitionsByTopic,
           playerWarnings: NO_WARNINGS,
         },
       });
@@ -211,7 +221,6 @@ export default class AutomatedRunPlayer implements Player {
       return; // Prevent double loads.
     }
     this._initialized = true;
-    logger.info(`AutomatedRunPlayer._initialize()`);
 
     this._providerResult = await this._provider.initialize({
       progressCallback: (progress: Progress) => {
@@ -228,13 +237,21 @@ export default class AutomatedRunPlayer implements Player {
               "error"
             );
             break;
-          case "performance":
+          case "average_throughput":
             // Don't need analytics for data provider callbacks in video generation.
+            break;
+          case "initializationPerformance":
+            break;
+          case "received_bytes":
+            this._receivedBytes += metadata.bytes;
+            break;
+          case "data_provider_stall":
             break;
           default:
             (metadata.type: empty);
         }
       },
+      notifyPlayerManager: async () => {},
     });
 
     await this._start();
@@ -291,30 +308,51 @@ export default class AutomatedRunPlayer implements Player {
     }
     this._isPlaying = true;
     this._client.markPreloadEnd();
-    logger.info("AutomatedRunPlayer._run()");
+    console.log("AutomatedRunPlayer._run()");
     await this._emitState([], [], this._providerResult.start);
 
     let currentTime = this._providerResult.start;
-    this._client.start({
-      bagLengthMs: toMillis(subtractTimes(this._providerResult.end, this._providerResult.start)),
-    });
+    const workerIndex = this._client.workerIndex ?? 0;
+    const workerCount = this._client.workerTotal ?? 1;
 
+    const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._providerResult.start));
+    this._client.start({ bagLengthMs });
+
+    const startEpoch = Date.now();
     const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
+
+    // We split up the frames between the workers,
+    // so we need to advance time based on the number of workers
+    const nsFrameTimePerWorker = nsBagTimePerFrame * workerCount;
+    currentTime = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
 
     let frameCount = 0;
     while (TimeUtil.isLessThan(currentTime, this._providerResult.end)) {
       if (this._waitToReportErrorPromise) {
         await this._waitToReportErrorPromise;
       }
-      const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame });
+      const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsFrameTimePerWorker });
+
       this._client.markTotalFrameStart();
       const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
-
       this._client.markFrameRenderStart();
+
       // Wait for the frame render to finish.
       await this._emitState(parsedMessages, bobjects, end);
+
       this._client.markTotalFrameEnd();
-      this._client.markFrameRenderEnd();
+      const frameRenderDurationMs = this._client.markFrameRenderEnd();
+
+      const bagTimeSinceStartMs = toMillis(subtractTimes(currentTime, this._providerResult.start));
+      const percentComplete = bagTimeSinceStartMs / bagLengthMs;
+      const msPerPercent = (Date.now() - startEpoch) / percentComplete;
+      const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);
+      const eta = formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */));
+      console.log(
+        `[${workerIndex}/${workerCount}] Recording ${(percentComplete * 100).toFixed(
+          1
+        )}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
+      );
 
       await this._client.onFrameFinished(frameCount);
 
@@ -323,7 +361,8 @@ export default class AutomatedRunPlayer implements Player {
     }
 
     await this._client.finish();
-    logger.info("AutomatedRunPlayer._run() finished");
+    const totalDuration = (Date.now() - startEpoch) / 1000;
+    console.log(`AutomatedRunPlayer finished in ${formatSeconds(totalDuration)}`);
   }
 
   /* Public API shared functions */
@@ -357,4 +396,7 @@ export default class AutomatedRunPlayer implements Player {
   }
 
   requestBackfill() {}
+  setGlobalVariables() {
+    throw new Error(`Unsupported in AutomatedRunPlayer`);
+  }
 }

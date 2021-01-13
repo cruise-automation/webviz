@@ -6,10 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { MessageDefinitionsByTopic, ParsedMessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { WEBVIZ_MARKER_DATATYPE, WEBVIZ_MARKER_ARRAY_DATATYPE } from "webviz-core/src/util/globalConstants";
-
-export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerArray";
+import { isComplex } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
+import {
+  FUTURE_VIZ_MSGS_DATATYPE,
+  WEBVIZ_MARKER_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+} from "webviz-core/src/util/globalConstants";
 
 // Returns the subset of allDatatypes needed to fully define datatypes.
 // If datatypes is ["visualization_msgs/Marker"], the returned set will include definitions of
@@ -31,7 +35,7 @@ export const getTransitiveSubsetForDatatypes = (
       }
       ret[datatype] = definition;
       for (const field of definition.fields) {
-        if (field.isComplex && ret[field.type] == null) {
+        if (isComplex(field.type) && ret[field.type] == null) {
           nextDatatypesToExplore.add(field.type);
         }
       }
@@ -186,4 +190,103 @@ export const basicDatatypes: RosDatatypes = {
       { type: "float64", name: "w", isArray: false, isComplex: false },
     ],
   },
+};
+
+let datatypeSetsGenerated = 0;
+function getGetDatatypeName() {
+  const prefix = `f_${datatypeSetsGenerated++}`;
+  let count = 0;
+  const names = {};
+  return (key) => {
+    if (names[key] == null) {
+      names[key] = `${prefix}_${count++}`;
+    }
+    return names[key];
+  };
+}
+
+export const resetDatatypePrefixForTest = () => {
+  datatypeSetsGenerated = 0;
+};
+
+const renameDatatypes = (datatypes: RosDatatypes, typeName: string, getNewName) => {
+  // Generate name/id mappings.
+  const nameMapping = {};
+  Object.keys(datatypes).forEach((datatype) => {
+    const childDatatypes = Object.keys(getTransitiveSubsetForDatatypes(datatypes, [datatype])).sort();
+    const typeKey = childDatatypes.map((childType) => JSON.stringify(datatypes[childType])).join("\n");
+    nameMapping[datatype] = getNewName(typeKey);
+  });
+
+  // Generate mapped datatype definitions.
+  const idMappedDatatypes = {};
+  Object.keys(datatypes).forEach((datatype) => {
+    idMappedDatatypes[nameMapping[datatype]] = {
+      fields: datatypes[datatype].fields.map((field) => ({
+        ...field,
+        type: nameMapping[field.type] ?? field.type,
+      })),
+    };
+  });
+
+  return { idMappedDatatypes, topicDatatypeId: nameMapping[typeName] };
+};
+
+// Replace all type names with names that depend only on structural properties.
+// If two messages have the same fields they should get the same name.
+// If they have different fields (or even if their children differ in any way) they should get
+// different names.
+export const getContentBasedDatatypes = (
+  messageDefinitionsByTopic: MessageDefinitionsByTopic,
+  parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic,
+  datatypesByTopic: { [topic: string]: string }
+): { fakeDatatypesByTopic: { [topic: string]: string }, fakeDatatypes: RosDatatypes } => {
+  // Parsing message definitions is expensive, but topics often share message definitions.
+  // We only compute new datatypes for unique string message definitions, and copy the result to
+  // topics with those definitions.
+  const topicsByStringDefinition = {};
+  const fakeDatatypesByStringDefinition = {};
+  const allFakeDatatypes = {};
+  const getDatatypeName = getGetDatatypeName();
+
+  // The string message definitions by topic could be incomplete, so use the parsed ones to turn into datatypes.
+  Object.keys(parsedMessageDefinitionsByTopic).forEach((topic) => {
+    const definition = messageDefinitionsByTopic[topic];
+    const parsedDefinition = parsedMessageDefinitionsByTopic[topic];
+    // This "key" is just used to group topics with identical sets of datatypes.
+    const stringDefinitionKey = definition != null ? definition : JSON.stringify(parsedDefinition);
+    if (topicsByStringDefinition[stringDefinitionKey]) {
+      // Already generated datatypes for these message types.
+      topicsByStringDefinition[stringDefinitionKey].push(topic);
+    } else {
+      // First time seeing this definition. Generate new datatypes for it.
+      topicsByStringDefinition[stringDefinitionKey] = [topic];
+
+      // Convert parsedDefinition:RosMsgField[] to datatypes:RosDatatypes
+      const datatypes = {};
+      parsedDefinition.forEach((datatype) => {
+        const typeName = datatype.name ?? datatypesByTopic[topic];
+        datatypes[typeName] = { fields: datatype.definitions };
+      });
+
+      // Rename datatypes for this set of message definitions (reusing types we've seen before.)
+      const { idMappedDatatypes, topicDatatypeId } = renameDatatypes(
+        datatypes,
+        datatypesByTopic[topic],
+        getDatatypeName
+      );
+      Object.assign(allFakeDatatypes, idMappedDatatypes);
+      fakeDatatypesByStringDefinition[stringDefinitionKey] = topicDatatypeId;
+    }
+  });
+
+  // Transform "per stringified set of message definitions" output to "per topic".
+  const fakeDatatypesByTopic = {};
+  Object.keys(topicsByStringDefinition).forEach((stringDefinition) => {
+    topicsByStringDefinition[stringDefinition].forEach((topic) => {
+      fakeDatatypesByTopic[topic] = fakeDatatypesByStringDefinition[stringDefinition];
+    });
+  });
+
+  return { fakeDatatypesByTopic, fakeDatatypes: allFakeDatatypes };
 };

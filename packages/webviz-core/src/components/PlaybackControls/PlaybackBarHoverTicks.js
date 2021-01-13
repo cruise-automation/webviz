@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import React, { useMemo, useState } from "react";
-import Dimensions from "react-container-dimensions";
 import styled, { css } from "styled-components";
 
+import Dimensions from "webviz-core/src/components/Dimensions";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import HoverBar from "webviz-core/src/components/TimeBasedChart/HoverBar";
 import { toSec } from "webviz-core/src/util/time";
@@ -52,28 +52,25 @@ export default React.memo<Props>(({ componentId }: Props) => {
   const { startTime, endTime } = useMessagePipeline(getStartAndEndTime);
   const [width, setWidth] = useState<?number>();
 
-  const scaleBounds = useMemo(
-    () => {
-      if (width == null || startTime == null || endTime == null) {
-        return null;
-      }
-      return {
-        // HoverBar takes a ref to avoid rerendering (and avoid needing to rerender) when the bounds
-        // change in charts that scroll at playback speed.
-        current: [
-          {
-            id: componentId,
-            min: 0,
-            max: toSec(endTime) - toSec(startTime),
-            axes: "xAxes",
-            minAlongAxis: 0,
-            maxAlongAxis: width,
-          },
-        ],
-      };
-    },
-    [width, startTime, endTime, componentId]
-  );
+  const scaleBounds = useMemo(() => {
+    if (width == null || startTime == null || endTime == null) {
+      return null;
+    }
+    return {
+      // HoverBar takes a ref to avoid rerendering (and avoid needing to rerender) when the bounds
+      // change in charts that scroll at playback speed.
+      current: [
+        {
+          id: componentId,
+          min: 0,
+          max: toSec(endTime) - toSec(startTime),
+          axes: "xAxes",
+          minAlongAxis: 0,
+          maxAlongAxis: width,
+        },
+      ],
+    };
+  }, [width, startTime, endTime, componentId]);
 
   return (
     <>

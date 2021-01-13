@@ -6,16 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Chart } from "./ChartJSManager";
 import ChartJSWorker from "./ChartJSWorker";
-import installChartjs from "webviz-core/src/util/installChartjs";
 import Rpc from "webviz-core/src/util/Rpc";
-
-const inWorkerEnvironment = global.postMessage && !global.onmessage;
+import { inWebWorker } from "webviz-core/src/util/workers";
 
 export default ChartJSWorker;
 
-if (inWorkerEnvironment) {
-  installChartjs(Chart);
+if (inWebWorker()) {
   new ChartJSWorker(new Rpc(global));
 }

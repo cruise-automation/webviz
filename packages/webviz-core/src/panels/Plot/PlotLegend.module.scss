@@ -6,7 +6,7 @@
 
 @import "~webviz-core/src/styles/mixins.module.scss";
 
-$legend-highlight-color: rgba($toolbar, 0.7);
+$legend-highlight-color: rgba($dark3, 0.7);
 $legend-highlight-color-bright: lighten(rgba($legend-highlight-color, 1), 8%);
 $legend-highlight-color-brighter: lighten(rgba($legend-highlight-color, 1), 17%);
 $legend-item-height: 20px;

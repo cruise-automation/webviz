@@ -8,10 +8,15 @@
 import type { ExtensionPoint } from "webviz-core/src/dataProviders/types";
 
 export function mockExtensionPoint() {
+  const metadata = [];
   return {
     extensionPoint: ({
-      progressCallback() {},
-      reportMetadataCallback() {},
+      notifyPlayerManager: async () => {},
+      progressCallback: () => {},
+      reportMetadataCallback: (m) => {
+        metadata.push(m);
+      },
     }: ExtensionPoint),
+    metadata,
   };
 }

@@ -6,7 +6,30 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEmail, cameraStateValidator, polygonPointsValidator, point2DValidator, isWebsocketUrl } from "./validators";
+import {
+  isEmail,
+  layoutNameValidator,
+  cameraStateValidator,
+  polygonPointsValidator,
+  point2DValidator,
+  isWebsocketUrl,
+  getLayoutNameError,
+  getWebsocketUrlError,
+} from "./validators";
+
+describe("isLayoutName", () => {
+  it("validates layoutName", () => {
+    expect(layoutNameValidator("")).toBe("must contain at least 1 character");
+    expect(
+      layoutNameValidator(
+        "Labore adipisicing ut eu velit irure voluptate id nulla sunt amet reprehenderit anim. Consequat reprehenderit magna id cillum aute ut Lorem qui duis sunt proident veniam in. Aliquip enim paria"
+      )
+    ).toBe("must contain at most 120 characters");
+    expect(layoutNameValidator("abc@")).toBe(getLayoutNameError("abc@"));
+    expect(layoutNameValidator("abc#")).toBe(undefined);
+    expect(layoutNameValidator("abc_some-allowed*characters")).toBe(undefined);
+  });
+});
 
 describe("isEmail", () => {
   it("validates email", () => {
@@ -138,9 +161,9 @@ describe("point2DValidator", () => {
 describe("isWebsocketUrl", () => {
   it("validates if the input string is websocket url", () => {
     let val = " ";
-    expect(isWebsocketUrl(val)).toEqual(`${val} is not a valid WebSocket URL`);
+    expect(isWebsocketUrl(val)).toEqual(getWebsocketUrlError(val));
     val = "ws:";
-    expect(isWebsocketUrl(val)).toEqual(`${val} is not a valid WebSocket URL`);
+    expect(isWebsocketUrl(val)).toEqual(getWebsocketUrlError(val));
     expect(isWebsocketUrl("ws://example.com")).toEqual(undefined);
     expect(isWebsocketUrl("wss://example.me")).toEqual(undefined);
     expect(isWebsocketUrl("ws://localhost:3000")).toEqual(undefined);

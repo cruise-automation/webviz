@@ -171,4 +171,13 @@ storiesOf("<Table>", module)
         <Table config={{ topicPath: "/my_arr.array[:].primitiveArray" }} saveConfig={() => {}} />
       </PanelSetup>
     );
+  })
+  .add("constrained width", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <div style={{ width: "100px" }}>
+          <Table config={{ topicPath: "/my_arr.array[:]{val==3}" }} saveConfig={() => {}} />
+        </div>
+      </PanelSetup>
+    );
   });

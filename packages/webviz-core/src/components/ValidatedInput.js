@@ -86,85 +86,73 @@ export function ValidatedInputBase({
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   // validate the input string, and setError or call onChange if needed
-  const memorizedInputValidation = useCallback(
-    (newInputVal: string, onChangeFcn?: OnChange) => {
-      let newVal;
-      let newError;
-      // parse the empty string directly as empty array or object for validation and onChange callback
-      if (newInputVal.trim() === "") {
-        newVal = Array.isArray(value) ? [] : {};
-      } else {
-        try {
-          newVal = parse(newInputVal);
-        } catch (e) {
-          newError = e.message;
-        }
+  const memorizedInputValidation = useCallback((newInputVal: string, onChangeFcn?: OnChange) => {
+    let newVal;
+    let newError;
+    // parse the empty string directly as empty array or object for validation and onChange callback
+    if (newInputVal.trim() === "") {
+      newVal = Array.isArray(value) ? [] : {};
+    } else {
+      try {
+        newVal = parse(newInputVal);
+      } catch (e) {
+        newError = e.message;
       }
+    }
 
+    if (newError) {
+      setError(newError);
+      return;
+    }
+    setError(""); // clear the previous error
+    const validationResult = dataValidator(newVal);
+    if (validationResult) {
+      setError(validationErrorToString(validationResult));
+      return;
+    }
+    if (onChangeFcn) {
+      onChangeFcn(newVal);
+    }
+  }, [dataValidator, parse, value]);
+
+  // when not in editing mode, whenever the incoming value changes, we'll compare the new value with prevIncomingVal, and reset local state values if they are different
+  useLayoutEffect(() => {
+    if (!isEditing && value !== prevIncomingVal.current) {
+      if (isEqual(value, prevIncomingVal.current)) {
+        return;
+      }
+      let newVal = "";
+      let newError;
+      try {
+        newVal = stringify(value);
+      } catch (e) {
+        newError = `Error stringifying the new value, using "" as default. ${e.message}`;
+      }
+      setInputStr(newVal);
+      prevIncomingVal.current = value;
       if (newError) {
         setError(newError);
         return;
       }
-      setError(""); // clear the previous error
-      const validationResult = dataValidator(newVal);
-      if (validationResult) {
-        setError(validationErrorToString(validationResult));
-        return;
-      }
-      if (onChangeFcn) {
-        onChangeFcn(newVal);
-      }
-    },
-    [dataValidator, parse, value]
-  );
+      // try to validate if successfully stringified the new value
+      memorizedInputValidation(newVal);
+    }
+  }, [value, stringify, memorizedInputValidation, isEditing]);
 
-  // when not in editing mode, whenever the incoming value changes, we'll compare the new value with prevIncomingVal, and reset local state values if they are different
-  useLayoutEffect(
-    () => {
-      if (!isEditing && value !== prevIncomingVal.current) {
-        if (isEqual(value, prevIncomingVal.current)) {
-          return;
-        }
-        let newVal = "";
-        let newError;
-        try {
-          newVal = stringify(value);
-        } catch (e) {
-          newError = `Error stringifying the new value, using "" as default. ${e.message}`;
-        }
-        setInputStr(newVal);
-        prevIncomingVal.current = value;
-        if (newError) {
-          setError(newError);
-          return;
-        }
-        // try to validate if successfully stringified the new value
-        memorizedInputValidation(newVal);
-      }
-    },
-    [value, stringify, memorizedInputValidation, isEditing]
-  );
+  const handleChange = useCallback((e) => {
+    const val = e.currentTarget && e.currentTarget.value;
+    if (!isEditing) {
+      setIsEditing(true);
+    }
+    setInputStr(val);
+    memorizedInputValidation(val, onChange);
+  }, [isEditing, memorizedInputValidation, onChange]);
 
-  const handleChange = useCallback(
-    (e) => {
-      const val = e.currentTarget && e.currentTarget.value;
-      if (!isEditing) {
-        setIsEditing(true);
-      }
-      setInputStr(val);
-      memorizedInputValidation(val, onChange);
-    },
-    [isEditing, memorizedInputValidation, onChange]
-  );
-
-  useEffect(
-    () => {
-      if (onError && error) {
-        onError(error);
-      }
-    },
-    [error, onError]
-  );
+  useEffect(() => {
+    if (onError && error) {
+      onError(error);
+    }
+  }, [error, onError]);
 
   // scroll to the bottom when the text gets too long
   useLayoutEffect(

@@ -9,6 +9,7 @@
 import { rosPrimitiveTypes } from "rosbag";
 
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { isComplex } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 
 function getPrimitiveDefault(type: string) {
   if (type === "string") {
@@ -40,20 +41,20 @@ export default function addMessageDefaults(datatypes: RosDatatypes, datatypeName
   if (!datatypes[datatypeName]) {
     throw new Error(`addMessageDefaults: datatype "${datatypeName}" missing from datatypes`);
   }
-  for (const { name, type, isConstant, isComplex, isArray } of datatypes[datatypeName].fields) {
+  for (const { name, type, isConstant, isArray } of datatypes[datatypeName].fields) {
     // Don't set any constant fields - they are not written anyways.
     if (!isConstant && object[name] == null) {
       if (isArray) {
         object[name] = [];
       } else if (rosPrimitiveTypes.has(type)) {
         object[name] = getPrimitiveDefault(type);
-      } else if (isComplex) {
+      } else if (isComplex(type)) {
         object[name] = {};
         addMessageDefaults(datatypes, type, object[name]);
       } else {
         throw new Error(`addMessageDefaults: object of type "${datatypeName}" is missing field "${name}"`);
       }
-    } else if (!isConstant && isComplex) {
+    } else if (!isConstant && isComplex(type)) {
       if (isArray) {
         for (const index in object[name]) {
           addMessageDefaults(datatypes, type, object[name][index]);

@@ -13,11 +13,12 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { diffLabels, diffArrow } from "webviz-core/src/panels/RawMessages/getDiff";
 
 // Strings longer than this many characters will start off collapsed.
-const COLLAPSE_TEXT_OVER_LENGTH = 1000;
+const COLLAPSE_TEXT_OVER_LENGTH = 512;
 
 export const SDiffSpan = styled.span`
   padding: 0px 4px;
   text-decoration: inherit;
+  white-space: pre-line;
 `;
 
 export function HighlightedValue({ itemLabel }: { itemLabel: string }) {
@@ -45,7 +46,7 @@ export function HighlightedValue({ itemLabel }: { itemLabel: string }) {
   );
 }
 
-function MaybeCollapsedValue({ itemLabel }: { itemLabel: string }) {
+export function MaybeCollapsedValue({ itemLabel }: { itemLabel: string }) {
   const lengthOverLimit = itemLabel.length >= COLLAPSE_TEXT_OVER_LENGTH;
   const [showingEntireLabel, setShowingEntireLabel] = useState(!lengthOverLimit);
   const itemLabelToShow = showingEntireLabel ? itemLabel : itemLabel.slice(0, COLLAPSE_TEXT_OVER_LENGTH);

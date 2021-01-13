@@ -40,8 +40,9 @@ import { isRangeCoveredByRanges, type Range } from "./ranges";
 export default class VirtualLRUBuffer {
   byteLength: number; // How many bytes does this buffer represent.
   _blocks: Buffer[] = []; // Actual `Buffer` for each block.
-  // How many bytes is each block; for some reason in browsers we need to subtract 1 from kMaxLength.
-  _blockSize: number = buffer.kMaxLength - 1;
+  // How many bytes is each block. This used to work up to 2GiB minus a byte, and now seems to crash
+  // past 2GiB minus 4KiB. Default to 1GiB so we don't get caught out next time the limit drops.
+  _blockSize: number = Math.trunc(buffer.kMaxLength / 2);
   _numberOfBlocks: number = Infinity; // How many blocks are we allowed to have at any time.
   _lastAccessedBlockIndices: number[] = []; // Indexes of blocks, from least to most recently accessed.
   _rangesWithData: Range[] = []; // Ranges for which we have data copied in (and have not been evicted).

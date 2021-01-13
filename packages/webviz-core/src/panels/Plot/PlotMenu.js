@@ -59,8 +59,16 @@ function formatData(
   return [x, receiveTimeFloat, stampTime, label, y];
 }
 
-export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[]): string {
-  const headLine = ["elapsed time", "receive time", "header.stamp", "topic", "value"];
+const xAxisCsvColumnName = (xAxisVal: PlotXAxisVal): string =>
+  ({
+    timestamp: "elapsed time",
+    index: "index",
+    custom: "x value",
+    currentCustom: "x value",
+  }[xAxisVal]);
+
+export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], xAxisVal: PlotXAxisVal): string {
+  const headLine = [xAxisCsvColumnName(xAxisVal), "receive time", "header.stamp", "topic", "value"];
   const combinedLines = [];
   combinedLines.push(headLine);
   datasets.forEach((dataset) => {
@@ -71,8 +79,8 @@ export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipD
   return combinedLines.join("\n");
 }
 
-function downloadCsvFile(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[]) {
-  const csv = getCSVData(datasets, tooltips);
+function downloadCsvFile(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], xAxisVal: PlotXAxisVal) {
+  const csv = getCSVData(datasets, tooltips, xAxisVal);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   downloadFiles([{ blob, fileName: `plot_data_export.csv` }]);
 }
@@ -104,77 +112,74 @@ export default function PlotMenu({
   stableDatasets.current = datasets;
   const stableTooltips = useRef<TimeBasedChartTooltipData[]>(tooltips);
   stableTooltips.current = tooltips;
-  return useMemo(
-    () => {
-      const followWidthItem =
-        xAxisVal === "timestamp" ? (
-          <>
-            <Item onClick={() => saveConfig({ followingViewWidth: "" })} tooltip="Plot width in sec">
-              <SFlexRow>
-                <SLabel>X range</SLabel>
-                <PanelToolbarInput
-                  type="number"
-                  className={cx(styles.input, { [styles.inputError]: !isValidWidth(displayWidth) })}
-                  value={displayWidth}
-                  onChange={({ target: { value } }) => {
-                    const isZero = parseFloat(value) === 0;
-                    saveConfig({ followingViewWidth: isZero ? "" : value });
-                  }}
-                  min="0"
-                  onClick={(event) => event.stopPropagation()}
-                  placeholder="auto"
-                />
-              </SFlexRow>
-            </Item>
-            <Item>
-              <SButton onClick={setWidth}>Set to current view</SButton>
-            </Item>
-          </>
-        ) : null;
-      return (
+  return useMemo(() => {
+    const followWidthItem =
+      xAxisVal === "timestamp" ? (
         <>
-          <Item onClick={() => downloadCsvFile(stableDatasets.current, stableTooltips.current)}>
-            Download plot data (csv)
-          </Item>
-          <hr />
-          <Item isHeader>Zoom extents</Item>
-          <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })} tooltip="Maximum y-axis value">
+          <Item onClick={() => saveConfig({ followingViewWidth: "" })} tooltip="Plot width in sec">
             <SFlexRow>
-              <SLabel>Y max</SLabel>
+              <SLabel>X range</SLabel>
               <PanelToolbarInput
                 type="number"
-                className={cx(styles.input, { [styles.inputError]: !isValidInput(maxYValue) })}
-                value={maxYValue}
-                onChange={(event) => {
-                  saveConfig({ maxYValue: event.target.value });
+                className={cx(styles.input, { [styles.inputError]: !isValidWidth(displayWidth) })}
+                value={displayWidth}
+                onChange={({ target: { value } }) => {
+                  const isZero = parseFloat(value) === 0;
+                  saveConfig({ followingViewWidth: isZero ? "" : value });
                 }}
-                onClick={(event) => event.stopPropagation()}
-                placeholder="auto"
-              />
-            </SFlexRow>
-          </Item>
-          <Item onClick={() => saveConfig({ minYValue: minYValue === "" ? "-10" : "" })} tooltip="Minimum y-axis value">
-            <SFlexRow>
-              <SLabel>Y min</SLabel>
-              <PanelToolbarInput
-                type="number"
-                className={cx(styles.input, { [styles.inputError]: !isValidInput(minYValue) })}
-                value={minYValue}
-                onChange={(event) => {
-                  saveConfig({ minYValue: event.target.value });
-                }}
+                min="0"
                 onClick={(event) => event.stopPropagation()}
                 placeholder="auto"
               />
             </SFlexRow>
           </Item>
           <Item>
-            <SButton onClick={setMinMax}>Set to current view</SButton>
+            <SButton onClick={setWidth}>Set to current view</SButton>
           </Item>
-          {followWidthItem}
         </>
-      );
-    },
-    [xAxisVal, displayWidth, setWidth, maxYValue, minYValue, setMinMax, saveConfig]
-  );
+      ) : null;
+    return (
+      <>
+        <Item onClick={() => downloadCsvFile(stableDatasets.current, stableTooltips.current, xAxisVal)}>
+          Download plot data (csv)
+        </Item>
+        <hr />
+        <Item isHeader>Zoom extents</Item>
+        <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })} tooltip="Maximum y-axis value">
+          <SFlexRow>
+            <SLabel>Y max</SLabel>
+            <PanelToolbarInput
+              type="number"
+              className={cx(styles.input, { [styles.inputError]: !isValidInput(maxYValue) })}
+              value={maxYValue}
+              onChange={(event) => {
+                saveConfig({ maxYValue: event.target.value });
+              }}
+              onClick={(event) => event.stopPropagation()}
+              placeholder="auto"
+            />
+          </SFlexRow>
+        </Item>
+        <Item onClick={() => saveConfig({ minYValue: minYValue === "" ? "-10" : "" })} tooltip="Minimum y-axis value">
+          <SFlexRow>
+            <SLabel>Y min</SLabel>
+            <PanelToolbarInput
+              type="number"
+              className={cx(styles.input, { [styles.inputError]: !isValidInput(minYValue) })}
+              value={minYValue}
+              onChange={(event) => {
+                saveConfig({ minYValue: event.target.value });
+              }}
+              onClick={(event) => event.stopPropagation()}
+              placeholder="auto"
+            />
+          </SFlexRow>
+        </Item>
+        <Item>
+          <SButton onClick={setMinMax}>Set to current view</SButton>
+        </Item>
+        {followWidthItem}
+      </>
+    );
+  }, [xAxisVal, displayWidth, setWidth, maxYValue, minYValue, setMinMax, saveConfig]);
 }

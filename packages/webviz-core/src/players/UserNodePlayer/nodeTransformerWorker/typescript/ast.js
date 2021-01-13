@@ -113,6 +113,10 @@ const buildTypeMapFromArgs = (typeArguments: ts.TypeNode[] = [], typeMap: TypeMa
   return newTypeParamMap;
 };
 
+const isNodeFromRosModule = (node: ts.SyntaxKind.TypeLiteral | ts.SyntaxKind.InterfaceDeclaration): boolean => {
+  return node.getSourceFile().fileName.endsWith("ros/index.d.ts");
+};
+
 export const findDefaultExportFunction = (source: ts.SourceFile, checker: ts.TypeChecker): ts.Node => {
   const defaultExportSymbol = checker.getExportsOfModule(source.symbol).find((node) => node.escapedName === "default");
   if (!defaultExportSymbol) {
@@ -265,9 +269,8 @@ export const constructDatatypes = (
   // definition, we can check whether it exists in the 'ros' module and just
   // return the ros-specific definition, e.g. 'std_msgs/ColorRGBA', instead of
   // our own definition. This allows user nodes to operate much more freely.
-  const sourceFile = node.getSourceFile();
   const interfaceName = node?.name?.text;
-  if (sourceFile.fileName.endsWith("ros/index.d.ts") && messageDefinitionMap[interfaceName]) {
+  if (isNodeFromRosModule(node) && messageDefinitionMap[interfaceName]) {
     return {
       outputDatatype: messageDefinitionMap[interfaceName],
       datatypes: baseDatatypes,
@@ -312,7 +315,23 @@ export const constructDatatypes = (
     switch (tsNode.kind) {
       case ts.SyntaxKind.InterfaceDeclaration:
       case ts.SyntaxKind.TypeLiteral: {
-        const nestedType = `${currentDatatype}/${name}`;
+        const symbolName = tsNode.symbol.name;
+
+        // The 'json' type is special because rosbagjs represents it as a primitive field
+        if (isNodeFromRosModule(tsNode) && symbolName === "json") {
+          return {
+            name,
+            type: "json",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+          };
+        }
+
+        const nestedType =
+          isNodeFromRosModule(tsNode) && messageDefinitionMap[symbolName]
+            ? messageDefinitionMap[symbolName]
+            : `${currentDatatype}/${name}`;
         const { datatypes: nestedDatatypes } = constructDatatypes(
           checker,
           tsNode,

@@ -567,7 +567,7 @@ describe("useTopicTree", () => {
       const result0 = Test.result.mock.calls[0][0];
       const topicNode0 = result0.nodesByKey[topicNodeKey];
       expect(result0.getIsTreeNodeVisibleInScene(topicNode0, 0)).toEqual(false);
-      expect(result0.getIsTreeNodeVisibleInScene(topicNode0, 0, namespaceNodeKey)).toEqual(false);
+      expect(result0.getIsTreeNodeVisibleInScene(topicNode0, 0, "ns1")).toEqual(false);
 
       root.setProps({ providerTopics: makeTopics(["/foo", "/webviz_source_2/foo"]) });
       const result1 = Test.result.mock.calls[1][0];
@@ -581,7 +581,8 @@ describe("useTopicTree", () => {
       const topicNode2 = result1.nodesByKey[topicNodeKey];
       expect(result2.getIsTreeNodeVisibleInScene(topicNode2, 0, "ns1")).toEqual(true);
     });
-    it("returns namespace nodes as visibile by default (when the nodes are not checked)", () => {
+
+    it("returns namespace nodes as visible by default (when the nodes are not checked)", () => {
       const topicNodeKey = "t:/foo";
       const Test = createTest();
       mount(
@@ -598,7 +599,7 @@ describe("useTopicTree", () => {
       expect(result.getIsTreeNodeVisibleInScene(topicNode, 0, "ns1")).toEqual(true);
     });
 
-    it("does not return namespace nodes as visibile by default if namespaces are modified", () => {
+    it("does not return namespace nodes as visible by default if namespaces are modified", () => {
       const topicNodeKey = "t:/foo";
       const Test = createTest();
       mount(
@@ -664,6 +665,33 @@ describe("useTopicTree", () => {
       const topicNode3 = result3.nodesByKey[topicNodeKey];
       expect(result3.getIsTreeNodeVisibleInScene(topicNode3, 1)).toEqual(true);
       expect(result3.getIsTreeNodeVisibleInScene(topicNode3, 1, "ns1")).toEqual(false);
+    });
+
+    it("returns the namespace node as not visible when topic becomes unavailable", () => {
+      const topicNodeKey = "t:/foo";
+      const namespaceNodeKey = "ns:/foo:ns1";
+
+      const Test = createTest();
+      const root = mount(
+        <Test
+          {...sharedProps}
+          providerTopics={makeTopics(["/foo"])}
+          checkedKeys={["name:Group1", namespaceNodeKey, topicNodeKey]}
+        />
+      );
+
+      // Topic and namespace are both visible.
+      const result0 = Test.result.mock.calls[0][0];
+      const topicNode0 = result0.nodesByKey[topicNodeKey];
+      expect(result0.getIsTreeNodeVisibleInScene(topicNode0, 0)).toEqual(true);
+      expect(result0.getIsTreeNodeVisibleInScene(topicNode0, 0, "ns1")).toEqual(true);
+
+      // When the topic becomes unavailable, both topic and namespace nodes become invisible.
+      root.setProps({ providerTopics: makeTopics([]) });
+      const result1 = Test.result.mock.calls[1][0];
+      const topicNode1 = result1.nodesByKey[topicNodeKey];
+      expect(result1.getIsTreeNodeVisibleInScene(topicNode1, 0)).toEqual(false);
+      expect(result1.getIsTreeNodeVisibleInScene(topicNode1, 0, "ns1")).toEqual(false);
     });
   });
 

@@ -105,6 +105,8 @@ const utilsSourceCode = `
   }
 `;
 
+const SIDEBAR_OPEN_CLICK_TIMEOUT = 500;
+
 storiesOf("<NodePlayground>", module)
   .addParameters({
     screenshot: {
@@ -148,7 +150,7 @@ storiesOf("<NodePlayground>", module)
         userNodeLogs: { nodeId1: { logs: [] } },
       }}
       onMount={(el, store) => {
-        setImmediate(() => {
+        setTimeout(() => {
           // Change the userNodes to confirm the code in the Editor updates
           store.dispatch(
             setUserNodes({
@@ -159,7 +161,7 @@ storiesOf("<NodePlayground>", module)
             })
           );
           el.querySelectorAll("[data-test=node-explorer]")[0].click();
-        });
+        }, 500);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
       <SExpectedResult style={{ left: "375px", top: "150px" }}>Should show function norm() code</SExpectedResult>
@@ -207,9 +209,9 @@ storiesOf("<NodePlayground>", module)
         userNodeLogs: { nodeId1: { logs: [] } },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           el.querySelectorAll("[data-test=go-back]")[0].click();
-        });
+        }, 500);
       }}>
       <NodePlayground
         config={{
@@ -231,9 +233,9 @@ storiesOf("<NodePlayground>", module)
       <PanelSetup
         fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
-          setImmediate(() => {
+          setTimeout(() => {
             el.querySelectorAll("[data-test=node-explorer]")[0].click();
-          });
+          }, SIDEBAR_OPEN_CLICK_TIMEOUT);
         }}>
         <NodePlayground />
       </PanelSetup>
@@ -244,9 +246,9 @@ storiesOf("<NodePlayground>", module)
       <PanelSetup
         fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
-          setImmediate(() => {
+          setTimeout(() => {
             el.querySelectorAll("[data-test=node-explorer]")[0].click();
-          });
+          }, SIDEBAR_OPEN_CLICK_TIMEOUT);
         }}>
         <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
       </PanelSetup>
@@ -258,9 +260,9 @@ storiesOf("<NodePlayground>", module)
       <PanelSetup
         fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
-          setImmediate(() => {
+          setTimeout(() => {
             el.querySelectorAll("[data-test=docs-explorer]")[0].click();
-          });
+          }, SIDEBAR_OPEN_CLICK_TIMEOUT);
         }}>
         <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
       </PanelSetup>
@@ -271,9 +273,9 @@ storiesOf("<NodePlayground>", module)
       <PanelSetup
         fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
-          setImmediate(() => {
+          setTimeout(() => {
             el.querySelectorAll("[data-test=utils-explorer]")[0].click();
-          });
+          }, SIDEBAR_OPEN_CLICK_TIMEOUT);
         }}>
         <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
       </PanelSetup>
@@ -284,9 +286,9 @@ storiesOf("<NodePlayground>", module)
       <PanelSetup
         fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
-          setImmediate(() => {
+          setTimeout(() => {
             el.querySelectorAll("[data-test=templates-explorer]")[0].click();
-          });
+          }, SIDEBAR_OPEN_CLICK_TIMEOUT);
         }}>
         <NodePlayground />
       </PanelSetup>
@@ -327,6 +329,8 @@ storiesOf("<NodePlayground>", module)
     );
   });
 
+const OPEN_BOTTOM_BAR_TIMEOUT = 500;
+
 storiesOf("NodePlayground - <BottomBar>", module)
   .addParameters({
     screenshot: {
@@ -351,12 +355,12 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           const diagnosticsErrorsLabel = el.querySelector("[data-test=np-errors]");
           if (diagnosticsErrorsLabel) {
             diagnosticsErrorsLabel.click();
           }
-        });
+        }, OPEN_BOTTOM_BAR_TIMEOUT);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
@@ -369,12 +373,12 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           const logsLabel = el.querySelector("[data-test=np-logs]");
           if (logsLabel) {
             logsLabel.click();
           }
-        });
+        }, OPEN_BOTTOM_BAR_TIMEOUT);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
@@ -467,12 +471,12 @@ storiesOf("NodePlayground - <BottomBar>", module)
         },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           const diagnosticsErrorsLabel = el.querySelector("[data-test=np-errors]");
           if (diagnosticsErrorsLabel) {
             diagnosticsErrorsLabel.click();
           }
-        });
+        }, OPEN_BOTTOM_BAR_TIMEOUT);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
@@ -507,12 +511,12 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodeLogs: { nodeId1: { logs } },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           const logsLabel = el.querySelector("[data-test=np-logs]");
           if (logsLabel) {
             logsLabel.click();
           }
-        });
+        }, OPEN_BOTTOM_BAR_TIMEOUT);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
@@ -526,7 +530,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodeLogs: { nodeId1: { logs } },
       }}
       onMount={(el) => {
-        setImmediate(() => {
+        setTimeout(() => {
           const logsLabel = el.querySelector("[data-test=np-logs]");
           if (logsLabel) {
             logsLabel.click();
@@ -535,7 +539,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
               clearBtn.click();
             }
           }
-        });
+        }, OPEN_BOTTOM_BAR_TIMEOUT);
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
@@ -547,9 +551,27 @@ storiesOf("<NodePlaygroundSettings>", module)
       delay: 1000,
     },
   })
-  .add("enabled vim mode", () => (
-    <NodePlaygroundSettings config={{ selectedNodeId: undefined, vimMode: true }} saveConfig={() => {}} />
+  .add("enabled auto format on save", () => (
+    <NodePlaygroundSettings
+      config={{ selectedNodeId: undefined, autoFormatOnSave: true, vimMode: false }}
+      saveConfig={() => {}}
+    />
   ))
-  .add("disabled vim mode", () => (
-    <NodePlaygroundSettings config={{ selectedNodeId: undefined, vimMode: false }} saveConfig={() => {}} />
+  .add("enabled vim mode", () => (
+    <NodePlaygroundSettings
+      config={{ selectedNodeId: undefined, autoFormatOnSave: false, vimMode: true }}
+      saveConfig={() => {}}
+    />
+  ))
+  .add("both modes disabled", () => (
+    <NodePlaygroundSettings
+      config={{ selectedNodeId: undefined, autoFormatOnSave: false, vimMode: false }}
+      saveConfig={() => {}}
+    />
+  ))
+  .add("both modes enabled", () => (
+    <NodePlaygroundSettings
+      config={{ selectedNodeId: undefined, autoFormatOnSave: true, vimMode: true }}
+      saveConfig={() => {}}
+    />
   ));

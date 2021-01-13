@@ -10,7 +10,7 @@ import findIndex from "lodash/findIndex";
 import sortBy from "lodash/sortBy";
 
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcUtils";
+import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 
 // This file provides a convenient way to set up and tear down workers as needed. It will create only a single worker
 // of each class, and terminate the worker when all listeners are unregistered.
@@ -44,7 +44,7 @@ export default class WebWorkerManager {
     if (currentWorkerCount < this._maxWorkerCount) {
       const worker = new this._classType();
       const rpc = new Rpc(worker);
-      setupReceiveReportErrorHandler(rpc);
+      setupMainThreadRpc(rpc);
 
       const emptyIndex = findIndex(this._workerStates, (x) => !x);
       this._workerStates[emptyIndex] = { worker, rpc, listenerIds: [id] };

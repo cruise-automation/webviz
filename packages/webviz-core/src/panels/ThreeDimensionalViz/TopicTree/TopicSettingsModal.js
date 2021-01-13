@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Tabs } from "antd";
 import { isEmpty, omit } from "lodash";
+import Tabs, { TabPane } from "rc-tabs";
 import React, { useCallback } from "react";
 import styled from "styled-components";
 
@@ -23,7 +23,7 @@ import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STopicSettingsEditor = styled.div`
-  background: ${colors.TOOLBAR};
+  background: ${colors.DARK2};
   color: ${colors.TEXT};
   padding: 16px;
 `;
@@ -42,6 +42,26 @@ const SDatatype = styled.p`
 const SEditorWrapper = styled.div`
   color: ${colors.TEXT};
   width: 400px;
+`;
+
+const STabWrapper = styled.div`
+  .rc-tabs-nav-list {
+    display: flex;
+  }
+  .rc-tabs-tab {
+    margin-right: 16px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    color: ${colors.TEXT};
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .rc-tabs-tab-active {
+    border-bottom: 2px solid ${colors.BLUEL1};
+  }
+  .rc-tabs-nav-operations {
+    display: none;
+  }
 `;
 
 function getSettingsByColumnWithDefaults(topicName: string, settingsByColumn: ?(any[])): ?{ settingsByColumn: any[] } {
@@ -126,30 +146,23 @@ function TopicSettingsModal({
   settingsByKey,
 }: Props) {
   const topicSettingsKey = `t:${topicName}`;
-  const onSettingsChange = useCallback(
-    (settings: any | ((prevSettings: {}) => {})) => {
-      if (typeof settings !== "function" && isEmpty(settings)) {
-        // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
-        saveConfig({ settingsByKey: omit(settingsByKey, [topicSettingsKey]) });
-        return;
-      }
-      saveConfig({
-        settingsByKey: {
-          ...settingsByKey,
-          [topicSettingsKey]:
-            typeof settings === "function" ? settings(settingsByKey[topicSettingsKey] || {}) : settings,
-        },
-      });
-    },
-    [saveConfig, settingsByKey, topicSettingsKey]
-  );
+  const onSettingsChange = useCallback((settings: any | ((prevSettings: {}) => {})) => {
+    if (typeof settings !== "function" && isEmpty(settings)) {
+      // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
+      saveConfig({ settingsByKey: omit(settingsByKey, [topicSettingsKey]) });
+      return;
+    }
+    saveConfig({
+      settingsByKey: {
+        ...settingsByKey,
+        [topicSettingsKey]: typeof settings === "function" ? settings(settingsByKey[topicSettingsKey] || {}) : settings,
+      },
+    });
+  }, [saveConfig, settingsByKey, topicSettingsKey]);
 
-  const onFieldChange = useCallback(
-    (fieldName: string, value: any) => {
-      onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
-    },
-    [onSettingsChange]
-  );
+  const onFieldChange = useCallback((fieldName: string, value: any) => {
+    onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
+  }, [onSettingsChange]);
 
   const columnIndex = topicName.startsWith(SECOND_SOURCE_PREFIX) ? 1 : 0;
   const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
@@ -174,12 +187,13 @@ function TopicSettingsModal({
           maxWidth: 480,
           display: "flex",
           flexDirection: "column",
+          overflow: "auto",
         }}>
         <STopicSettingsEditor>
           <STitle>{currentEditingTopic.name}</STitle>
           <SDatatype>{currentEditingTopic.datatype}</SDatatype>
           {hasFeatureColumn ? (
-            <div className="ant-component">
+            <STabWrapper>
               <Tabs
                 activeKey={`${columnIndex}`}
                 onChange={(newKey) => {
@@ -187,14 +201,14 @@ function TopicSettingsModal({
                     newKey === "0" ? nonPrefixedTopic : `${SECOND_SOURCE_PREFIX}${nonPrefixedTopic}`;
                   setCurrentEditingTopic({ datatype, name: newEditingTopicName });
                 }}>
-                <Tabs.TabPane tab={"base"} key={"0"}>
+                <TabPane tab={"base"} key={"0"}>
                   {editorElem}
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
+                </TabPane>
+                <TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
                   {editorElem}
-                </Tabs.TabPane>
+                </TabPane>
               </Tabs>
-            </div>
+            </STabWrapper>
           ) : (
             editorElem
           )}

@@ -21,6 +21,7 @@ import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import { objectValues } from "webviz-core/src/util";
 
 type TfTreeNode = {
   tf: Transform,
@@ -62,10 +63,8 @@ const buildTfTree = (transforms: Transform[]): TfTree => {
     }
   }
 
-  // Cast the list to satisfy flow (because Object.values returns array of mixed).
-  const allNodes = ((Object.values(tree.nodes): any): TfTreeNode[]);
   // Do a final pass sorting all the children lists.
-  for (const node of allNodes) {
+  for (const node of objectValues(tree.nodes)) {
     node.children = sortBy(node.children, treeNodeToTfId);
   }
   tree.roots = sortBy(tree.roots, treeNodeToTfId);
@@ -132,62 +131,47 @@ const FollowTFControl = memo<Props>((props: Props) => {
 
   const autocomplete = createRef<Autocomplete>();
 
-  const getDefaultFollowTransformFrame = useCallback(
-    () => {
-      return nodesWithoutDefaultFollowTfFrame ? newFollowTfFrame : defaultFollowTfFrame;
-    },
-    [nodesWithoutDefaultFollowTfFrame, newFollowTfFrame]
-  );
+  const getDefaultFollowTransformFrame = useCallback(() => {
+    return nodesWithoutDefaultFollowTfFrame ? newFollowTfFrame : defaultFollowTfFrame;
+  }, [nodesWithoutDefaultFollowTfFrame, newFollowTfFrame]);
 
-  const getFollowButtonTooltip = useCallback(
-    () => {
-      if (!tfToFollow) {
-        if (lastSelectedFrame) {
-          return `Follow ${lastSelectedFrame}`;
-        }
-        return `Follow ${getDefaultFollowTransformFrame()}`;
-      } else if (!followOrientation) {
-        return "Follow Orientation";
+  const getFollowButtonTooltip = useCallback(() => {
+    if (!tfToFollow) {
+      if (lastSelectedFrame) {
+        return `Follow ${lastSelectedFrame}`;
       }
-      return "Unfollow";
-    },
-    [tfToFollow, followOrientation, lastSelectedFrame, getDefaultFollowTransformFrame]
-  );
+      return `Follow ${getDefaultFollowTransformFrame()}`;
+    } else if (!followOrientation) {
+      return "Follow Orientation";
+    }
+    return "Unfollow";
+  }, [tfToFollow, followOrientation, lastSelectedFrame, getDefaultFollowTransformFrame]);
 
-  const onClickFollowButton = useCallback(
-    () => {
-      if (!tfToFollow) {
-        if (lastSelectedFrame) {
-          return onFollowChange(lastSelectedFrame);
-        }
-        return onFollowChange(getDefaultFollowTransformFrame());
-      } else if (!followOrientation) {
-        return onFollowChange(tfToFollow, true);
+  const onClickFollowButton = useCallback(() => {
+    if (!tfToFollow) {
+      if (lastSelectedFrame) {
+        return onFollowChange(lastSelectedFrame);
       }
-      return onFollowChange(false);
-    },
-    [tfToFollow, lastSelectedFrame, onFollowChange, getDefaultFollowTransformFrame, followOrientation]
-  );
+      return onFollowChange(getDefaultFollowTransformFrame());
+    } else if (!followOrientation) {
+      return onFollowChange(tfToFollow, true);
+    }
+    return onFollowChange(false);
+  }, [tfToFollow, lastSelectedFrame, onFollowChange, getDefaultFollowTransformFrame, followOrientation]);
 
-  const onSelectFrame = useCallback(
-    (id: string, item: mixed, autocompleteNode: Autocomplete) => {
-      setLastSelectedFrame(id === getDefaultFollowTransformFrame() ? undefined : id);
-      onFollowChange(id, followOrientation);
-      autocompleteNode.blur();
-    },
-    [setLastSelectedFrame, getDefaultFollowTransformFrame, onFollowChange, followOrientation]
-  );
+  const onSelectFrame = useCallback((id: string, item: mixed, autocompleteNode: Autocomplete) => {
+    setLastSelectedFrame(id === getDefaultFollowTransformFrame() ? undefined : id);
+    onFollowChange(id, followOrientation);
+    autocompleteNode.blur();
+  }, [setLastSelectedFrame, getDefaultFollowTransformFrame, onFollowChange, followOrientation]);
 
-  const openFrameList = useCallback(
-    (event: SyntheticEvent<Element>) => {
-      event.preventDefault();
-      setForceShowFrameList(true);
-      if (autocomplete.current) {
-        autocomplete.current.focus();
-      }
-    },
-    [setForceShowFrameList, autocomplete]
-  );
+  const openFrameList = useCallback((event: SyntheticEvent<Element>) => {
+    event.preventDefault();
+    setForceShowFrameList(true);
+    if (autocomplete.current) {
+      autocomplete.current.focus();
+    }
+  }, [setForceShowFrameList, autocomplete]);
 
   // slight delay to prevent the arrow from disappearing when you're trying to click it
   const onMouseLeaveDebounced = useCallback(
@@ -197,13 +181,10 @@ const FollowTFControl = memo<Props>((props: Props) => {
     [setHovering]
   );
 
-  const onMouseEnter = useCallback(
-    () => {
-      onMouseLeaveDebounced.cancel();
-      setHovering(true);
-    },
-    [onMouseLeaveDebounced, setHovering]
-  );
+  const onMouseEnter = useCallback(() => {
+    onMouseLeaveDebounced.cancel();
+    setHovering(true);
+  }, [onMouseLeaveDebounced, setHovering]);
 
   const followingCustomFrame = tfToFollow && tfToFollow !== getDefaultFollowTransformFrame();
   const showFrameList = lastSelectedFrame != null || forceShowFrameList || followingCustomFrame;

@@ -9,7 +9,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { loadFetchedLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
+import { loadLayout as loadLayoutAction, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
@@ -30,6 +30,7 @@ import {
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
 import AutomatedRunPlayer from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
 import PerformanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
@@ -57,7 +58,6 @@ import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
-  const useBinaryObjects = !!getExperimentalFeature("bobject3dPanel");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
     args: {},
@@ -68,7 +68,7 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
         children: [
           {
             name: CoreDataProviders.RewriteBinaryDataProvider,
-            args: { useBinaryObjects },
+            args: {},
             children: [childDescriptor],
           },
         ],
@@ -82,7 +82,11 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
   if (inPlaybackPerformanceMeasuringMode()) {
     return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), new PerformanceMeasuringClient());
   }
-  return new RandomAccessPlayer(rootDescriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
+  return new RandomAccessPlayer(rootDescriptor, {
+    metricsCollector: undefined,
+    seekToTime: getSeekToTime(),
+    notifyPlayerManager: async () => {},
+  });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
@@ -141,8 +145,15 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
     return {
       player: buildPlayerFromDescriptor({
         name: CoreDataProviders.CombinedDataProvider,
-        args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
-        children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
+        args: {},
+        children: [
+          getRemoteBagDescriptor(urls[0], guids[0]),
+          {
+            name: CoreDataProviders.RenameDataProvider,
+            args: { prefix: SECOND_SOURCE_PREFIX },
+            children: [getRemoteBagDescriptor(urls[1], guids[1])],
+          },
+        ],
       }),
       inputDescription: (
         <>
@@ -157,9 +168,10 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
 type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
-  loadFetchedLayout: typeof loadFetchedLayout,
+  loadLayout: typeof loadLayoutAction,
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
+  globalVariables: GlobalVariables,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeRosLib: SetUserNodeRosLib,
@@ -167,16 +179,18 @@ type Props = OwnProps & {
 };
 
 function PlayerManager({
-  loadFetchedLayout: loadLayout,
+  loadLayout,
   children,
   messageOrder,
   userNodes,
+  globalVariables,
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
   setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
+  const globalVariablesRef = React.useRef<GlobalVariables>(globalVariables);
   const [player, setPlayerInternal] = React.useState<?OrderedStampPlayer>();
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
@@ -184,97 +198,89 @@ function PlayerManager({
   // initialize it with the right order, so make a variable for its initial value we can use in the
   // dependency array below to defeat the linter.
   const [initialMessageOrder] = React.useState(messageOrder);
-  const setPlayer = React.useCallback(
-    (playerDefinition: ?PlayerDefinition) => {
-      if (!playerDefinition) {
-        setPlayerInternal(undefined);
-        setInputDescription("No input selected.");
-        return;
-      }
-      setInputDescription(playerDefinition.inputDescription);
-      const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
-        setUserNodeDiagnostics: setDiagnostics,
-        addUserNodeLogs: setLogs,
-        setUserNodeRosLib: setRosLib,
-      });
-      const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
-      setPlayerInternal(headerStampPlayer);
-    },
-    [setDiagnostics, setLogs, initialMessageOrder, setRosLib]
-  );
+  const setPlayer = React.useCallback((playerDefinition: ?PlayerDefinition) => {
+    if (!playerDefinition) {
+      setPlayerInternal(undefined);
+      setInputDescription("No input selected.");
+      return;
+    }
+    setInputDescription(playerDefinition.inputDescription);
+    const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
+      setUserNodeDiagnostics: setDiagnostics,
+      addUserNodeLogs: setLogs,
+      setUserNodeRosLib: setRosLib,
+    });
+    const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
+    headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
+    setPlayerInternal(headerStampPlayer);
+  }, [setDiagnostics, setLogs, setRosLib, initialMessageOrder]);
 
-  React.useEffect(
-    () => {
-      const params = new URLSearchParams(window.location.search);
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-      const globalVariables = getGlobalVariablesFromUrl(params);
-      if (globalVariables) {
-        setVariables(globalVariables);
-      }
+    const globalVariablesFromUrl = getGlobalVariablesFromUrl(params);
+    if (globalVariablesFromUrl) {
+      setVariables(globalVariablesFromUrl);
+    }
 
-      // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
-      const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
-      if (layoutUrl) {
-        fetch(layoutUrl)
-          .then((response) => (response ? response.json() : undefined))
-          .then((json) => {
-            if (json) {
-              loadLayout({ ...json, skipSettingLocalStorage: false });
-            }
-          })
-          .catch((error) => {
-            sendNotification(
-              "Layout failed to load",
-              `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
-              "user",
-              "error"
-            );
-          });
-      } else if (params.has(DEMO_QUERY_KEY)) {
-        loadLayout({ ...demoLayoutJson, isFromUrl: false, skipSettingLocalStorage: true });
-      }
-
-      const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
-      if (params.has(DEMO_QUERY_KEY)) {
-        buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
-          setPlayer(playerDefinition);
-          // When we're showing a demo, then automatically start playback (we don't normally
-          // do that).
-          if (playerDefinition) {
-            setTimeout(() => {
-              playerDefinition.player.startPlayback();
-            }, 1000);
+    // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
+    const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
+    if (layoutUrl) {
+      fetch(layoutUrl)
+        .then((response) => (response ? response.json() : undefined))
+        .then((json) => {
+          if (json) {
+            loadLayout({ ...json, skipSettingLocalStorage: false });
           }
+        })
+        .catch((error) => {
+          sendNotification(
+            "Layout failed to load",
+            `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
+            "user",
+            "error"
+          );
         });
-      }
-      if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
-        const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
-        buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
-          setPlayer(playerDefinition);
-        });
-      } else {
-        const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
-        setPlayer({
-          player: new RosbridgePlayer(websocketUrl),
-          inputDescription: (
-            <>
-              Using WebSocket at <code>{websocketUrl}</code>.
-            </>
-          ),
-        });
-      }
-    },
-    [loadLayout, setPlayer, setVariables]
-  );
+    } else if (params.has(DEMO_QUERY_KEY)) {
+      loadLayout({ ...demoLayoutJson, isFromUrl: false, skipSettingLocalStorage: true });
+    }
 
-  React.useEffect(
-    () => {
-      if (player) {
-        player.setMessageOrder(messageOrder);
-      }
-    },
-    [messageOrder, player]
-  );
+    const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
+    if (params.has(DEMO_QUERY_KEY)) {
+      buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
+        setPlayer(playerDefinition);
+        // When we're showing a demo, then automatically start playback (we don't normally
+        // do that).
+        if (playerDefinition) {
+          setTimeout(() => {
+            playerDefinition.player.startPlayback();
+          }, 1000);
+        }
+      });
+    }
+    if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
+      const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
+      buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
+        setPlayer(playerDefinition);
+      });
+    } else {
+      const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
+      setPlayer({
+        player: new RosbridgePlayer(websocketUrl),
+        inputDescription: (
+          <>
+            Using WebSocket at <code>{websocketUrl}</code>.
+          </>
+        ),
+      });
+    }
+  }, [loadLayout, setPlayer, setVariables]);
+
+  React.useEffect(() => {
+    if (player) {
+      player.setMessageOrder(messageOrder);
+    }
+  }, [messageOrder, player]);
   useUserNodes({ nodePlayer: player, userNodes });
 
   return (
@@ -299,18 +305,21 @@ function PlayerManager({
           </div>
         </DropOverlay>
       </DocumentDropListener>
-      <MessagePipelineProvider player={player}>{children({ inputDescription })}</MessagePipelineProvider>
+      <MessagePipelineProvider player={player} globalVariables={globalVariables}>
+        {children({ inputDescription })}
+      </MessagePipelineProvider>
     </>
   );
 }
 
 export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
-    messageOrder: state.panels.playbackConfig.messageOrder,
-    userNodes: state.panels.userNodes,
+    messageOrder: state.persistedState.panels.playbackConfig.messageOrder,
+    userNodes: state.persistedState.panels.userNodes,
+    globalVariables: state.persistedState.panels.globalVariables,
   }),
   {
-    loadFetchedLayout,
+    loadLayout: loadLayoutAction,
     setUserNodeDiagnostics,
     addUserNodeLogs,
     setUserNodeRosLib,

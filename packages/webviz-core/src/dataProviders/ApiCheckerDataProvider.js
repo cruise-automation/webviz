@@ -41,7 +41,7 @@ export function instrumentTreeWithApiCheckerDataProvider(
 ): DataProviderDescriptor {
   return {
     name: CoreDataProviders.ApiCheckerDataProvider,
-    args: { name: `${treeRoot.name}@${depth}` },
+    args: { name: `${treeRoot.name}@${depth}`, isRoot: depth === 0 },
     children: [
       {
         ...treeRoot,
@@ -57,9 +57,15 @@ export default class ApiCheckerDataProvider implements DataProvider {
   _initializationResult: ?InitializationResult;
   _topicNames: string[] = [];
   _closed: boolean = false;
+  _isRoot: boolean;
 
-  constructor(args: { name: string }, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor(
+    args: { name: string, isRoot: boolean },
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
     this._name = args.name;
+    this._isRoot = args.isRoot;
     if (children.length !== 1) {
       this._warn(`Required exactly 1 child, but received ${children.length}`);
       return;
@@ -77,19 +83,40 @@ export default class ApiCheckerDataProvider implements DataProvider {
     if (initializationResult.topics.length === 0) {
       this._warn("No topics returned at all; should have thrown error instead (with details of why this is happening)");
     }
+    if (this._isRoot && initializationResult.messageDefinitions.type !== "parsed") {
+      this._warn(`Root data provider should return parsed message definitions but instead returned raw`);
+    }
     for (const topic of initializationResult.topics) {
       this._topicNames.push(topic.name);
-      if (!initializationResult.datatypes[topic.datatype]) {
-        this._warn(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
-      }
-      if (!initializationResult.providesParsedMessages && !initializationResult.messageDefinitionsByTopic[topic.name]) {
-        this._warn(`Topic "${topic.name}"" not present in messageDefinitionsByTopic`);
+      if (initializationResult.messageDefinitions.type === "raw") {
+        if (
+          !initializationResult.providesParsedMessages &&
+          !initializationResult.messageDefinitions.messageDefinitionsByTopic[topic.name]
+        ) {
+          this._warn(`Topic "${topic.name}"" not present in messageDefinitionsByTopic`);
+        }
+      } else {
+        if (
+          !initializationResult.providesParsedMessages &&
+          !initializationResult.messageDefinitions.parsedMessageDefinitionsByTopic[topic.name]
+        ) {
+          this._warn(`Topic "${topic.name}"" not present in parsedMessageDefinitionsByTopic`);
+        }
+        if (!initializationResult.messageDefinitions.datatypes[topic.datatype]) {
+          this._warn(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
+        }
       }
     }
-    return this._initializationResult;
+    return initializationResult;
   }
 
   async getMessages(start: Time, end: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
+    if (!Number.isInteger(start.sec) || !Number.isInteger(start.nsec)) {
+      this._warn(`start time ${JSON.stringify(start)} must only contain integers`);
+    }
+    if (!Number.isInteger(end.sec) || !Number.isInteger(end.nsec)) {
+      this._warn(`end time ${JSON.stringify(end)} must only contain integers`);
+    }
     const initRes = this._initializationResult;
     if (!initRes) {
       this._warn("getMessages was called before initialize finished");

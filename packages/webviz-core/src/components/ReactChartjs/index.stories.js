@@ -108,17 +108,14 @@ function DatalabelUpdateExample({ forceDisableWorkerRendering }: { forceDisableW
 
 function DatalabelClickExample() {
   const [clickedDatalabel, setClickedDatalabel] = useState<any>(null);
-  const refFn = useCallback(
-    () => {
-      setTimeout(() => {
-        if (!clickedDatalabel) {
-          const [canvas] = document.getElementsByTagName("canvas");
-          TestUtils.Simulate.click(canvas, { clientX: 245, clientY: 419 });
-        }
-      }, 200);
-    },
-    [clickedDatalabel]
-  );
+  const refFn = useCallback(() => {
+    setTimeout(() => {
+      if (!clickedDatalabel) {
+        const [canvas] = document.getElementsByTagName("canvas");
+        TestUtils.Simulate.click(canvas, { clientX: 245, clientY: 419 });
+      }
+    }, 200);
+  }, [clickedDatalabel]);
 
   return (
     <div style={divStyle} ref={refFn}>

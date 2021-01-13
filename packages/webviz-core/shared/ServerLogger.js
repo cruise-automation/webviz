@@ -10,14 +10,13 @@ import globalEnvVars from "./globalEnvVars";
 // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 type LogSeverity = "DEFAULT" | "DEBUG" | "INFO" | "NOTICE" | "WARNING" | "ERROR" | "CRITICAL" | "ALERT" | "EMERGENCY";
 
-type LogObject = $ReadOnly<{ [key: string]: string | number }> | Error;
+type LogObject = $ReadOnly<{ [key: string]: number | string | string[] | number[] | void | {} }>;
 
-let log = (severity: LogSeverity, scope: string, message: string, moreData?: LogObject) => {
+let log = (severity: LogSeverity, scope: string, message: string, moreData?: LogObject | Error) => {
   const domain = (process.domain: any);
   const user = domain ? domain.username : "";
 
-  const parsedMoreData: $ReadOnly<{ [key: string]: string | number }> =
-    moreData instanceof Error ? { errorStack: moreData.stack } : moreData || {};
+  const parsedMoreData: LogObject = moreData instanceof Error ? { errorStack: moreData.stack } : moreData || {};
 
   if (process.env.LOG_FORMAT === "json") {
     try {
@@ -59,19 +58,19 @@ export default class ServerLogger {
     this.scope = scope;
   }
 
-  debug(message: string, moreData?: LogObject) {
+  debug(message: string, moreData?: LogObject | Error) {
     log("DEBUG", this.scope, message, moreData);
   }
 
-  info(message: string, moreData?: LogObject) {
+  info(message: string, moreData?: LogObject | Error) {
     log("INFO", this.scope, message, moreData);
   }
 
-  warn(message: string, moreData?: LogObject) {
+  warn(message: string, moreData?: LogObject | Error) {
     log("WARNING", this.scope, message, moreData);
   }
 
-  error(message: string, moreData?: LogObject) {
+  error(message: string, moreData?: LogObject | Error) {
     log("ERROR", this.scope, message, moreData);
   }
 }

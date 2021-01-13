@@ -1,12 +1,13 @@
 // @flow
 //
-//  Copyright (c) 2019-present, Cruise LLC
+//  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import LZString from "lz-string";
+import CBOR from "cbor-js";
 import { updateTree } from "react-mosaic-component";
+import zlib from "zlib";
 
 import {
   getPanelTypeFromId,
@@ -21,23 +22,17 @@ import {
   moveTabBetweenTabPanels,
   reorderTabWithinTabPanel,
   getLayoutPatch,
-  getUpdatedURLWithDecodedLayout,
   getUpdatedURLWithPatch,
   getUpdatedURLWithNewVersion,
+  stringifyParams,
+  dictForPatchCompression,
 } from "./layout";
+import { defaultPlaybackConfig } from "webviz-core/src/reducers/panels";
 
-export function setWindowURLForTest(queryString: string): void {
-  global.window = Object.create(window);
-  const url = `localhost:3000/${queryString}`;
-  Object.defineProperty(window, "location", {
-    value: { pathname: "localhost:3000/", href: url, search: queryString },
-  });
-}
-
+const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2", direction: "row" } };
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
     it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
-      const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2" } };
       const firstPlotConfig = { paths: ["/abc"] };
       const secondPlotConfig = { paths: ["/def"] };
       const configsSaved = getSaveConfigsPayloadForAddedPanel({
@@ -56,7 +51,7 @@ describe("layout", () => {
       expect(getPanelTypeFromId(newIdForSecondPlot)).toEqual("Plot");
 
       expect(configsSaved[2].config).toEqual({
-        tabs: [{ ...tabConfig, layout: { first: newIdForFirstPlot, second: newIdForSecondPlot } }],
+        tabs: [{ ...tabConfig, layout: { first: newIdForFirstPlot, second: newIdForSecondPlot, direction: "row" } }],
       });
       expect(configsSaved[2].id).toEqual("Tab!abc");
     });
@@ -94,6 +89,26 @@ describe("layout", () => {
       const { configs } = getSaveConfigsPayloadForAddedPanel({ ...originalConfig, relatedConfigs: undefined });
       expect(configs.length).toEqual(1);
       expect(originalConfig).toEqual(configs[0]);
+    });
+    it("returns configs when there are missing related configs", () => {
+      const firstPlotConfig = { paths: ["/abc"] };
+      const configsSaved = getSaveConfigsPayloadForAddedPanel({
+        id: "Tab!abc",
+        config: { tabs: [tabConfig] },
+        relatedConfigs: { "Plot!1": firstPlotConfig },
+      }).configs;
+      expect(configsSaved.length).toEqual(2);
+      const newIdForFirstPlot = configsSaved[0].id;
+      expect(configsSaved[0].config).toEqual(firstPlotConfig);
+      expect(newIdForFirstPlot).not.toEqual("Plot!1");
+      expect(getPanelTypeFromId(newIdForFirstPlot)).toEqual("Plot");
+
+      expect(configsSaved[1].id).toEqual("Tab!abc");
+      const updatedTabConfig = configsSaved[1].config.tabs[0];
+      expect(updatedTabConfig.layout.first).toEqual(newIdForFirstPlot);
+      expect(updatedTabConfig.layout.second).not.toEqual("Plot!2");
+      expect(getPanelTypeFromId(updatedTabConfig.layout.second)).toEqual("Plot");
+      expect(updatedTabConfig.layout.direction).toEqual("row");
     });
   });
 
@@ -491,6 +506,7 @@ describe("layout", () => {
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 0 })).toEqual(true);
+      expect(validateTabPanelConfig(undefined)).toEqual(false);
     });
   });
 
@@ -502,7 +518,7 @@ describe("layout", () => {
             layout: "abc",
             globalVariables: { globalVar1: 1, globalVar2: 2 },
             linkedGlobalVariables: [],
-            playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+            playbackConfig: defaultPlaybackConfig,
             userNodes: {},
             savedProps: {},
           },
@@ -510,7 +526,7 @@ describe("layout", () => {
             layout: "def",
             globalVariables: { globalVar1: 1, globalVar3: 3 },
             linkedGlobalVariables: [],
-            playbackConfig: { speed: 0.5, messageOrder: "receiveTime" },
+            playbackConfig: { ...defaultPlaybackConfig, speed: 0.5 },
             userNodes: {},
             savedProps: {},
           }
@@ -521,33 +537,39 @@ describe("layout", () => {
     });
   });
 
-  describe("getUpdatedURLWithDecodedLayout", () => {
-    const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
-    const layoutParamsDecoded = "?layout=foo@1500000000&randomKey=randomValue";
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParams))).toMatch(layoutParamsDecoded);
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParamsDecoded))).toMatch(layoutParamsDecoded);
+  describe("stringifyParams", () => {
+    it("returns stringified url query", () => {
+      const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
+      expect(stringifyParams(new URLSearchParams(layoutParams))).toMatch(layoutParams);
 
-    const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
-    const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+      const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
+      const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
+      expect(stringifyParams(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
+      expect(stringifyParams(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+    });
   });
 
   describe("getUpdatedURLWithPatch", () => {
     it("returns a new URL with the patch attached", () => {
-      const compressedPatch = LZString.compressToEncodedURIComponent("somePatch");
-      setWindowURLForTest("?layout=foo&someKey=someVal");
-      expect(getUpdatedURLWithPatch("somePatch")).toMatch(`?layout=foo&someKey=someVal&patch=${compressedPatch}`);
+      const stringifiedPatch = JSON.stringify({ somePatch: "somePatch" });
+      const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(stringifiedPatch)));
+      const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
+      const compressedPatch = zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
+      expect(getUpdatedURLWithPatch("?layout=foo&someKey=someVal", stringifiedPatch)).toMatch(
+        `?layout=foo&someKey=someVal&patch=${encodeURIComponent(compressedPatch)}`
+      );
+    });
+    it("does not change the search if the diff input is empty", async () => {
+      const search = "?layout=foo&someKey=someVal&patch=bar";
+      expect(getUpdatedURLWithPatch(search, "")).toBe(search);
     });
   });
 
   describe("getUpdatedURLWithNewVersion", () => {
-    it("returns a new URL with the patch attached", () => {
-      setWindowURLForTest("?layout=foo&patch=somePatch");
-      const timestampAndPatchHash =
-        "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce83&patch=N4IgNghgng9grgFxALgNogMwBEAEAFCAOwFMwBCAcwzgEYAzADxABpQATASwCdiBjBDjEIoQXGAHcWIOtwDOSZCAAq4mFg4BbYoVmDCEMHjAwEZDAAYAblzYYMU2XyFsR2fEVKVq9JgF8Aur5AA";
-      expect(getUpdatedURLWithNewVersion("bar", timestampAndPatchHash)).toMatch(
-        `?layout=bar@${timestampAndPatchHash}&someKey=someVal`
+    it("returns a new URL with the version attached", () => {
+      const timestampAndPatchHash = "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce8";
+      expect(getUpdatedURLWithNewVersion("?layout=foo&patch=somePatch", "bar", timestampAndPatchHash)).toMatch(
+        `?layout=bar%40${timestampAndPatchHash}`
       );
     });
   });

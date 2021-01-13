@@ -15,8 +15,11 @@ import styled from "styled-components";
 import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
 import Dropdown from "webviz-core/src/components/Dropdown";
+import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
 
 // Sort the keys of objects to make their presentation more predictable
 const PREFERRED_OBJECT_KEY_ORDER = [
@@ -60,7 +63,19 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
     full: "Show full object",
   };
 
+  const updateShowInstance = (shouldShowInstance) => {
+    setShowInstance(shouldShowInstance);
+    logEvent({
+      name: getEventNames()["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"],
+      tags: { [getEventTags().PANEL_TYPE]: Renderer.panelType },
+    });
+  };
+
   const objectToDisplay = instanceObject && showInstance ? instanceObject : object;
+  const parsedObject = React.useMemo(
+    () => (isBobject(objectToDisplay) ? deepParse(objectToDisplay) : objectToDisplay),
+    [objectToDisplay]
+  );
   return (
     <div>
       {instanceObject && (
@@ -68,12 +83,12 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
           position="below"
           value={showInstance}
           text={showInstance ? dropdownText.instance : dropdownText.full}
-          onChange={setShowInstance}>
+          onChange={updateShowInstance}>
           <span value={true}>{dropdownText.instance}</span>
           <span value={false}>{dropdownText.full}</span>
         </Dropdown>
       )}
-      <ObjectDetails interactionData={interactionData} objectToDisplay={objectToDisplay} />
+      <ObjectDetails interactionData={interactionData} objectToDisplay={parsedObject} />
     </div>
   );
 }
@@ -108,7 +123,7 @@ function ObjectDetails({ interactionData, objectToDisplay }: Props) {
     <SObjectDetails>
       <Tree
         data={sortedDataObject}
-        shouldExpandNode={false}
+        shouldExpandNode={() => false}
         invertTheme={false}
         theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
         hideRoot

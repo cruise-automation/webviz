@@ -12,7 +12,7 @@ import simpleDeepFreeze from "simple-deep-freeze";
 import type { ActionTypes } from "webviz-core/src/actions";
 import { panelEditingActions } from "webviz-core/src/actions/panels";
 import type { State } from "webviz-core/src/reducers";
-import { setStoredLayout, type PanelsState } from "webviz-core/src/reducers/panels";
+import { type PersistedState } from "webviz-core/src/reducers/index";
 import { type EditHistoryOptions } from "webviz-core/src/types/panels";
 import { pushState, redoChange, undoChange, type StateHistory } from "webviz-core/src/util/stateHistory";
 
@@ -21,7 +21,7 @@ const LAYOUT_HISTORY_SIZE = 20;
 // in the undo/redo history.
 export const NEVER_PUSH_LAYOUT_THRESHOLD_MS = 1000; // Exported for tests
 
-type UndoRedoState = { panels: PanelsState, url: string };
+type UndoRedoState = { persistedState: PersistedState, url: string };
 export type LayoutHistory = {|
   redoStates: UndoRedoState[],
   undoStates: UndoRedoState[],
@@ -40,10 +40,17 @@ export const initialLayoutHistoryState: LayoutHistory = simpleDeepFreeze({
 // Helper to encode the panels and layout history as a StateHistory object so we can do generic
 // push, undo and redo operations.
 const toStateHistory = (
-  panels: PanelsState,
+  persistedState: PersistedState,
   { redoStates, undoStates }: LayoutHistory
 ): StateHistory<UndoRedoState> => {
-  return { currentState: { panels, url: window.location.href }, redoStates, undoStates };
+  return {
+    currentState: {
+      persistedState,
+      url: window.location.href,
+    },
+    redoStates,
+    undoStates,
+  };
 };
 
 // Helper to decode a generic StateHistory object into panels and layoutHistory to store in redux.
@@ -60,34 +67,34 @@ const fromStateHistory = (
 };
 
 const redoLayoutChange = (
-  panels: PanelsState,
+  persistedState: PersistedState,
   layoutHistory: LayoutHistory
 ): {| undoRedoState: UndoRedoState, layoutHistory: LayoutHistory |} => {
-  return fromStateHistory(redoChange(toStateHistory(panels, layoutHistory)));
+  return fromStateHistory(redoChange(toStateHistory(persistedState, layoutHistory)));
 };
 
 const undoLayoutChange = (
-  panels: PanelsState,
+  persistedState: PersistedState,
   layoutHistory: LayoutHistory
 ): {| undoRedoState: UndoRedoState, layoutHistory: LayoutHistory |} => {
-  return fromStateHistory(undoChange(toStateHistory(panels, layoutHistory)));
+  return fromStateHistory(undoChange(toStateHistory(persistedState, layoutHistory)));
 };
 
 const pushLayoutChange = (
-  oldPanels: ?PanelsState,
-  newPanels: PanelsState,
+  oldPersistedState: ?PersistedState,
+  newPersistedState: PersistedState,
   layoutHistory: LayoutHistory,
   action: any
 ): LayoutHistory => {
   const time = Date.now();
   const historyOptions: ?EditHistoryOptions = action.payload?.historyOptions;
-  if (historyOptions === "SUPPRESS_HISTORY_ENTRY" || isEqual(oldPanels, newPanels)) {
+  if (historyOptions === "SUPPRESS_HISTORY_ENTRY" || isEqual(oldPersistedState, newPersistedState)) {
     return layoutHistory;
   }
-  if (oldPanels && time - layoutHistory.lastTimestamp > NEVER_PUSH_LAYOUT_THRESHOLD_MS) {
+  if (oldPersistedState && time - layoutHistory.lastTimestamp > NEVER_PUSH_LAYOUT_THRESHOLD_MS) {
     const { undoStates, redoStates } = pushState(
-      toStateHistory(oldPanels, layoutHistory),
-      { panels: newPanels, url: window.location.href },
+      toStateHistory(oldPersistedState, layoutHistory),
+      { persistedState: newPersistedState, url: window.location.href },
       LAYOUT_HISTORY_SIZE
     );
     return { redoStates, undoStates, lastTimestamp: time };
@@ -98,25 +105,23 @@ const pushLayoutChange = (
   return { ...layoutHistory, lastTimestamp: time };
 };
 
-export default function(state: State, action: ActionTypes, oldPanelsState?: PanelsState): State {
+export default function(state: State, action: ActionTypes, oldPersistedState?: ?PersistedState): State {
   switch (action.type) {
     case "UNDO_LAYOUT_CHANGE": {
-      const { undoRedoState, layoutHistory } = undoLayoutChange(state.panels, state.layoutHistory);
-      const { panels, url } = undoRedoState;
-      setStoredLayout(panels);
+      const { undoRedoState, layoutHistory } = undoLayoutChange(state.persistedState, state.layoutHistory);
+      const { persistedState, url } = undoRedoState;
       history.replaceState(null, document.title, url);
-      return { ...state, panels, layoutHistory };
+      return { ...state, persistedState, layoutHistory };
     }
     case "REDO_LAYOUT_CHANGE": {
-      const { undoRedoState, layoutHistory } = redoLayoutChange(state.panels, state.layoutHistory);
-      const { panels, url } = undoRedoState;
-      setStoredLayout(panels);
+      const { undoRedoState, layoutHistory } = redoLayoutChange(state.persistedState, state.layoutHistory);
+      const { persistedState, url } = undoRedoState;
       history.replaceState(null, document.title, url);
-      return { ...state, panels, layoutHistory };
+      return { ...state, persistedState, layoutHistory };
     }
     default:
       if (panelEditingActions.has(action.type)) {
-        const newLayoutHistory = pushLayoutChange(oldPanelsState, state.panels, state.layoutHistory, action);
+        const newLayoutHistory = pushLayoutChange(oldPersistedState, state.persistedState, state.layoutHistory, action);
         return { ...state, layoutHistory: newLayoutHistory };
       }
       return { ...state };

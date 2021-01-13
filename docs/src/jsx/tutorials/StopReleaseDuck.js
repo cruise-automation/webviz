@@ -81,15 +81,12 @@ function Example() {
   });
   const duckPosition = sphereMarker.points[count];
   // make the duck stop
-  useEffect(
-    () => {
-      const duckPositionId = sphereMarker.id + count;
-      if (!shouldStopDuck && clickedObjectIds.some(({ id, instanceIndex }) => id + instanceIndex === duckPositionId)) {
-        setShouldStopDuck(true);
-      }
-    },
-    [clickedObjectIds, shouldStopDuck, count, sphereMarker.id]
-  );
+  useEffect(() => {
+    const duckPositionId = sphereMarker.id + count;
+    if (!shouldStopDuck && clickedObjectIds.some(({ id, instanceIndex }) => id + instanceIndex === duckPositionId)) {
+      setShouldStopDuck(true);
+    }
+  }, [clickedObjectIds, shouldStopDuck, count, sphereMarker.id]);
 
   return (
     <Worldview

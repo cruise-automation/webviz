@@ -2,7 +2,7 @@
 
 .inputField {
   @include monospace;
-  padding: $control-padding;
+  padding: 8px 12px;
   border-radius: 4px;
   outline: none;
   line-height: 1.3;

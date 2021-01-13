@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
+import type { NotifyPlayerManagerData } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupWorker } from "webviz-core/src/util/RpcUtils";
-
+import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
 // The "other side" of `RpcDataProvider`. Instantiates a `DataProviderDescriptor` tree underneath,
 // in the context of wherever this is instantiated (e.g. a Web Worker, or the server side of a
 // WebSocket).
@@ -26,22 +26,26 @@ export default class RpcDataProviderRemote {
         reportMetadataCallback: (data: DataProviderMetadata) => {
           rpc.send("extensionPointCallback", { type: "reportMetadataCallback", data });
         },
+        notifyPlayerManager: (data: NotifyPlayerManagerData) =>
+          rpc.send("extensionPointCallback", { type: "notifyPlayerManager", data }),
       });
     });
     rpc.receive("getMessages", async ({ start, end, topics }) => {
       const messages = await provider.getMessages(start, end, { rosBinaryMessages: topics });
       const { parsedMessages, rosBinaryMessages, bobjects } = messages;
-      if (parsedMessages != null || bobjects != null || rosBinaryMessages == null) {
+      const messagesToSend = rosBinaryMessages ?? [];
+      if (parsedMessages != null || bobjects != null) {
         throw new Error(
           "RpcDataProvider only accepts raw messages (that still need to be parsed with ParseMessagesDataProvider)"
         );
       }
       const arrayBuffers = new Set();
-      for (const message of rosBinaryMessages) {
+      for (const message of messagesToSend) {
         arrayBuffers.add(message.message);
       }
-      return { messages: rosBinaryMessages, [Rpc.transferrables]: Array.from(arrayBuffers) };
+      return { messages: messagesToSend, [Rpc.transferrables]: Array.from(arrayBuffers) };
     });
+
     rpc.receive("close", () => provider.close());
   }
 }

@@ -1,3 +1,5 @@
+# Note: When updating this file, please also update .dockerignore
+
 # Logs
 logs
 *.log

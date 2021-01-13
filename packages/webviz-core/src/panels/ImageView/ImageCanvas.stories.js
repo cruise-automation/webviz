@@ -313,19 +313,16 @@ function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
 function ShouldCallOnRenderImage({ children }: { children: (() => () => void) => React.Node }) {
   const [callsOnStartRenderImage, setCallsOnStartRenderImage] = React.useState(false);
   const [callsOnFinishRenderImage, setCallsOnFinishRenderImage] = React.useState(false);
-  const onStartRenderImage = React.useCallback(
-    () => {
-      if (!callsOnStartRenderImage) {
-        setCallsOnStartRenderImage(true);
+  const onStartRenderImage = React.useCallback(() => {
+    if (!callsOnStartRenderImage) {
+      setCallsOnStartRenderImage(true);
+    }
+    return () => {
+      if (!callsOnFinishRenderImage) {
+        setCallsOnFinishRenderImage(true);
       }
-      return () => {
-        if (!callsOnFinishRenderImage) {
-          setCallsOnFinishRenderImage(true);
-        }
-      };
-    },
-    [callsOnStartRenderImage, callsOnFinishRenderImage, setCallsOnStartRenderImage, setCallsOnFinishRenderImage]
-  );
+    };
+  }, [callsOnStartRenderImage, callsOnFinishRenderImage, setCallsOnStartRenderImage, setCallsOnFinishRenderImage]);
 
   const hasPassed = callsOnStartRenderImage && callsOnFinishRenderImage;
   return (

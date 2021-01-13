@@ -30,9 +30,12 @@ import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
-export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+// Preloading algorithms get too slow when there are too many blocks. For very long bags, use longer
+// blocks. Adaptive block sizing is simpler than using a tree structure for immutable updates but
+// less flexible, so we may want to move away from a single-level block structure in the future.
+export const MAX_BLOCKS = 400;
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
-const READ_AHEAD_BLOCKS = Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS);
 const DEFAULT_CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
 export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
 
@@ -218,6 +221,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
   // never evict anything.
   _cacheSizeBytes: number;
 
+  _readAheadBlocks: number;
+  _memCacheBlockSizeNs: number;
+
   constructor(
     { id, unlimitedCache }: {| id: string, unlimitedCache?: boolean |},
     children: DataProviderDescriptor[],
@@ -237,10 +243,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
     const result = await this._provider.initialize({ ...extensionPoint, progressCallback: () => {} });
     this._startTime = result.start;
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
+    this._memCacheBlockSizeNs = Math.ceil(Math.max(MIN_MEM_CACHE_BLOCK_SIZE_NS, this._totalNs / MAX_BLOCKS));
+    this._readAheadBlocks = Math.ceil(READ_AHEAD_NS / this._memCacheBlockSizeNs);
     if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");
     }
-    this._blocks = new Array(Math.ceil(this._totalNs / MEM_CACHE_BLOCK_SIZE_NS));
+    this._blocks = new Array(Math.ceil(this._totalNs / this._memCacheBlockSizeNs));
     this._updateProgress();
 
     return result;
@@ -257,8 +265,8 @@ export default class MemoryCacheDataProvider implements DataProvider {
       end: toNanoSec(subtractTimes(endTime, this._startTime)) + 1, // `Range` defines `end` as exclusive.
     };
     const blockRange = {
-      start: Math.floor(timeRange.start / MEM_CACHE_BLOCK_SIZE_NS),
-      end: Math.floor((timeRange.end - 1) / MEM_CACHE_BLOCK_SIZE_NS) + 1, // `Range` defines `end` as exclusive.
+      start: Math.floor(timeRange.start / this._memCacheBlockSizeNs),
+      end: Math.floor((timeRange.end - 1) / this._memCacheBlockSizeNs) + 1, // `Range` defines `end` as exclusive.
     };
     return new Promise((resolve) => {
       this._readRequests.push({ timeRange, blockRange, topics, resolve });
@@ -352,7 +360,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
       readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
       downloadedRanges: this._getDownloadedBlockRanges(),
       lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-      cacheSize: READ_AHEAD_BLOCKS,
+      cacheSize: this._readAheadBlocks,
       fileSize: this._blocks.length,
       continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
     });
@@ -442,10 +450,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
         : currentConnection.topics;
 
       // Get messages from the underlying provider.
-      const startTime = TimeUtil.add(this._startTime, fromNanoSec(currentBlockIndex * MEM_CACHE_BLOCK_SIZE_NS));
+      const startTime = TimeUtil.add(this._startTime, fromNanoSec(currentBlockIndex * this._memCacheBlockSizeNs));
       const endTime = TimeUtil.add(
         this._startTime,
-        fromNanoSec(Math.min(this._totalNs, (currentBlockIndex + 1) * MEM_CACHE_BLOCK_SIZE_NS) - 1) // endTime is inclusive.
+        fromNanoSec(Math.min(this._totalNs, (currentBlockIndex + 1) * this._memCacheBlockSizeNs) - 1) // endTime is inclusive.
       );
       const messages = topics.length
         ? await this._provider.getMessages(startTime, endTime, { bobjects: topics })
@@ -494,7 +502,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
         }
         sendNotification(
           "Very large block found",
-          `A very large block (${Math.round(MEM_CACHE_BLOCK_SIZE_NS / 1e6)}ms) was found: ${Math.round(
+          `A very large block (${Math.round(this._memCacheBlockSizeNs / 1e6)}ms) was found: ${Math.round(
             sizeInBytes / 1e6
           )}MB. Too much data can cause performance problems and even crashes. Please fix this where the data is being generated.\n\nBreakdown of large topics:\n${sizes
             .sort()
@@ -565,7 +573,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     if (!badEvictionRange && this._lastResolvedCallbackEnd != null) {
       badEvictionRange = {
         start: this._lastResolvedCallbackEnd,
-        end: this._lastResolvedCallbackEnd + READ_AHEAD_BLOCKS,
+        end: this._lastResolvedCallbackEnd + this._readAheadBlocks,
       };
     }
 

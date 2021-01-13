@@ -19,13 +19,16 @@ describe("parsedMessageCache", () => {
   it("does some basic caching of messages", async () => {
     const file = `${__dirname}/../../public/fixtures/example.bag`;
     const provider = new BagDataProvider({ bagPath: { type: "file", file } }, []);
-    const { messageDefinitionsByTopic } = await provider.initialize({
-      progressCallback() {},
-      reportMetadataCallback() {},
+    const { messageDefinitions } = await provider.initialize({
+      progressCallback: () => {},
+      reportMetadataCallback: () => {},
+      notifyPlayerManager: async () => {},
     });
-    const tfDefinition = messageDefinitionsByTopic["/tf"];
-    // the tf definition is always a string since it comes from the bag, but we do this to satisfy flow.
-    const parsedTfDefinition = typeof tfDefinition === "string" ? parseMessageDefinition(tfDefinition) : tfDefinition;
+    if (messageDefinitions.type !== "raw") {
+      throw new Error("BagDataProvider should have raw message definitions");
+    }
+    const tfDefinition = messageDefinitions.messageDefinitionsByTopic["/tf"];
+    const parsedTfDefinition = parseMessageDefinition(tfDefinition);
     const messageReadersByTopic = {
       "/tf": new MessageReader(parsedTfDefinition),
     };

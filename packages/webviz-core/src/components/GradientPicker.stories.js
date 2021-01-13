@@ -30,33 +30,30 @@ function Story({
   const [minColor, setMinColor] = useState(initialMinColor || "");
   const [maxColor, setMaxColor] = useState(initialMaxColor || "");
 
-  useLayoutEffect(
-    () => {
-      if (!(changeMinColorAfterMount || changeMaxColorAfterMount)) {
-        return;
-      }
-      const [minTriggerEl, maxTriggerEl] = document.querySelectorAll(".rc-color-picker-trigger");
+  useLayoutEffect(() => {
+    if (!(changeMinColorAfterMount || changeMaxColorAfterMount)) {
+      return;
+    }
+    const [minTriggerEl, maxTriggerEl] = document.querySelectorAll(".rc-color-picker-trigger");
 
-      if (changeMinColorAfterMount) {
-        minTriggerEl.click();
-        setImmediate(() => {
-          const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
-          hexInput.value = "#d2ff03";
-          TestUtils.Simulate.change(hexInput);
-          TestUtils.Simulate.blur(hexInput);
-        });
-      } else {
-        maxTriggerEl.click();
-        setImmediate(() => {
-          const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
-          hexInput.value = "#c501ff";
-          TestUtils.Simulate.change(hexInput);
-          TestUtils.Simulate.blur(hexInput);
-        });
-      }
-    },
-    [changeMaxColorAfterMount, changeMinColorAfterMount]
-  );
+    if (changeMinColorAfterMount) {
+      minTriggerEl.click();
+      setImmediate(() => {
+        const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
+        hexInput.value = "#d2ff03";
+        TestUtils.Simulate.change(hexInput);
+        TestUtils.Simulate.blur(hexInput);
+      });
+    } else {
+      maxTriggerEl.click();
+      setImmediate(() => {
+        const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
+        hexInput.value = "#c501ff";
+        TestUtils.Simulate.change(hexInput);
+        TestUtils.Simulate.blur(hexInput);
+      });
+    }
+  }, [changeMaxColorAfterMount, changeMinColorAfterMount]);
 
   return (
     <div ref={containerRef} style={{ width: "400px", padding: "100px" }}>

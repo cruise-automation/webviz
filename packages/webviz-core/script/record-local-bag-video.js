@@ -51,8 +51,13 @@ program
   .option("--framerate <number>", "Framerate", parseNumber)
   .option("--width <number>", "Width", parseNumber)
   .option("--height <number>", "Height", parseNumber)
+  .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
+  .option(
+    "--experimentalFeatureSettings <string>",
+    'Stringified JSON of experimental feature settings: \'{"featureName":"alwaysOn"}\''
+  )
   .parse(process.argv);
 
 const defaultLayout = {
@@ -76,11 +81,15 @@ async function main() {
   }
 
   console.log("Recording video...");
+  const parallelCount = program.parallel || 1;
+  const parallelFrameRate = program.framerate || 30;
   const { videoFile: video } = await recordVideo({
+    parallel: parallelCount,
     bagPath: program.bag,
+    experimentalFeatureSettings: program.experimentalFeatureSettings,
     url: `${program.url}?video-recording-mode${
       program.frameless ? "&frameless" : ""
-    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${program.framerate || 30}`,
+    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${parallelFrameRate}`,
     puppeteerLaunchConfig: {
       headless: !process.env.DEBUG_CI,
       defaultViewport: { width: program.width || 1920, height: program.height || 1080 },
@@ -107,6 +116,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Video generation failed:", err);
+  const errorString = err.stack || (err.toString && err.toString()) || err.message || err;
+  console.error("Video generation failed:", errorString);
   process.exit(1);
 });

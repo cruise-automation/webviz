@@ -11,6 +11,7 @@ import * as React from "react";
 import {
   Command,
   withPose,
+  toRGBA,
   type Regl,
   type CommonCommandProps,
   nonInstancedGetChildrenForHitmap,
@@ -18,6 +19,8 @@ import {
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { LaserScan } from "webviz-core/src/types/Messages";
+
+export const DEFAULT_FLAT_COLOR = { r: 0.5, g: 0.5, b: 1, a: 1 };
 
 const laserScan = (regl: Regl) =>
   withPose({
@@ -47,6 +50,8 @@ const laserScan = (regl: Regl) =>
       angle_increment: regl.prop("angle_increment"),
       range_min: regl.prop("range_min"),
       range_max: regl.prop("range_max"),
+
+      color: (context, props) => toRGBA(props.settings?.overrideColor || DEFAULT_FLAT_COLOR),
     },
 
     attributes: {

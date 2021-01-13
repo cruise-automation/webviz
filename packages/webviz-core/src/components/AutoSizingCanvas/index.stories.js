@@ -22,19 +22,16 @@ function Example({
 }) {
   const [width, setWidth] = useState(300);
   const [pixelRatio, setPixelRatio] = useState(devicePixelRatio);
-  useEffect(
-    () => {
-      setTimeout(() => {
-        if (changeSize) {
-          setWidth(150);
-        }
-        if (changePixelRatio) {
-          setPixelRatio(2);
-        }
-      }, 10);
-    },
-    [changePixelRatio, changeSize]
-  );
+  useEffect(() => {
+    setTimeout(() => {
+      if (changeSize) {
+        setWidth(150);
+      }
+      if (changePixelRatio) {
+        setPixelRatio(2);
+      }
+    }, 10);
+  }, [changePixelRatio, changeSize]);
 
   return (
     <div style={{ width, height: 100, backgroundColor: "green" }}>

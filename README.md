@@ -75,7 +75,7 @@ To install dependencies, first run `npm run bootstrap`. This command will popula
 
 ### Docs
 
-```npm run docs```
+```npm run docs-dev```
 
 ### Storybook
 
@@ -83,7 +83,7 @@ To install dependencies, first run `npm run bootstrap`. This command will popula
 
 Useful for `regl-worldview` changes.
 
-### Full list of commands
+### Full list of scripts
 - `npm run webviz-dev` to run a webviz-only server that you can develop Webviz on.
 - `npm run bootstrap` in the root directory to install dependencies.
 - `npm run build` to run a single build or `npm run watch` to watch and build.

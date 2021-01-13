@@ -134,7 +134,7 @@
     "build-storybook": "build-storybook -c stories",
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/@cruise-automation/hooks && flow-typed install --rootDir packages/@cruise-automation/button && flow-typed install --rootDir packages/@cruise-automation/tooltip && flow-typed install --rootDir packages/regl-worldview",
-    "docs": "NODE_OPTIONS='--max-old-space-size=4096' DEV_SERVER=true webpack-dev-server",
+    "docs-dev": "NODE_OPTIONS='--max-old-space-size=4096' DEV_SERVER=true webpack-dev-server",
     "docs-deploy": "cp -r docs/public __temp_deploy__ && rm __temp_deploy__/app/index.html && cp packages/webviz-core/public/index.html __temp_deploy__/app/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
     "publish": "lerna run clean && lerna run build && lerna publish",
     "build-static-webviz": "rm -rf __static_webviz__ && cp -r docs/public/app __static_webviz__ && rm __static_webviz__/index.html && cp packages/webviz-core/public/index.html __static_webviz__/index.html && sed -i -- 's/\\/dist\\/webvizCoreBundle.js/webvizCoreBundle.js/' __static_webviz__/index.html && NODE_ENV=production STATIC_WEBVIZ=true webpack",

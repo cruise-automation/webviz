@@ -65,6 +65,7 @@ export type BaseProps = {|
 
   // Context attributes passed into canvas.getContext.
   contextAttributes?: ?{ [string]: any },
+  offscreenCanvas: HTMLCanvasElement,
 |};
 
 type State = {|
@@ -115,7 +116,9 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       defaultCameraState,
       hitmapOnMouseMove,
       disableHitmapForEvents,
+      offscreenCanvas,
     } = props;
+    this._canvas.current = offscreenCanvas;
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
@@ -197,38 +200,54 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
-    this._onMouseInteraction(e, "onDoubleClick");
+  handleOffscreenMouseEvent = (e: SyntheticMouseEvent<HTMLCanvasElement>, mouseEventName: MouseEventEnum) => {
+    if (mouseEventName === "onDoubleClick") {
+      this._onDoubleClick(e, true);
+    } else if (mouseEventName === "onMouseDown") {
+      this._onMouseDown(e, true);
+    } else if (mouseEventName === "onMouseMove") {
+      this._onMouseMove(e, true);
+    } else if (mouseEventName === "onMouseUp") {
+      this._onMouseUp(e, true);
+    }
   };
 
-  _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
+  _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onDoubleClick", !!fromOffscreenTarget);
+  };
+
+  _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
     this._dragStartPos = { x: e.clientX, y: e.clientY };
-    this._onMouseInteraction(e, "onMouseDown");
+    this._onMouseInteraction(e, "onMouseDown", !!fromOffscreenTarget);
   };
 
-  _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
-    this._onMouseInteraction(e, "onMouseMove");
+  _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onMouseMove", !!fromOffscreenTarget);
   };
 
-  _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
-    this._onMouseInteraction(e, "onMouseUp");
+  _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onMouseUp", !!fromOffscreenTarget);
     const { _dragStartPos } = this;
     if (_dragStartPos) {
       const deltaX = e.clientX - _dragStartPos.x;
       const deltaY = e.clientY - _dragStartPos.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (distance < DEFAULT_MOUSE_CLICK_RADIUS) {
-        this._onMouseInteraction(e, "onClick");
+        this._onMouseInteraction(e, "onClick", !!fromOffscreenTarget);
       }
       this._dragStartPos = null;
     }
   };
 
-  _onMouseInteraction = (e: SyntheticMouseEvent<HTMLCanvasElement>, mouseEventName: MouseEventEnum) => {
+  _onMouseInteraction = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    mouseEventName: MouseEventEnum,
+    fromOffscreenTarget: boolean
+  ) => {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 
-    if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
+    if (!fromOffscreenTarget && (!(e.target instanceof window.HTMLElement) || e.button !== 0)) {
       return;
     }
 
@@ -332,13 +351,16 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       cameraState,
       onCameraStateChange,
       resolutionScale,
+      offscreenCanvas,
     } = this.props;
     const { worldviewContext } = this.state;
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
     const canvasScale = resolutionScale || 1;
-    const canvasHtml = (
+    const canvasHtml = offscreenCanvas ? (
+      <React.Fragment />
+    ) : (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}

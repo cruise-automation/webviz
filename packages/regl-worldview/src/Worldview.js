@@ -65,7 +65,7 @@ export type BaseProps = {|
 
   // Context attributes passed into canvas.getContext.
   contextAttributes?: ?{ [string]: any },
-  offscreenCanvas: HTMLCanvasElement,
+  offscreenCanvas?: HTMLCanvasElement,
 |};
 
 type State = {|
@@ -118,7 +118,9 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       disableHitmapForEvents,
       offscreenCanvas,
     } = props;
-    this._canvas.current = offscreenCanvas;
+    if (offscreenCanvas) {
+      this._canvas.current = offscreenCanvas;
+    }
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
@@ -251,6 +253,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
+    // $FlowFixMe: Because of `fromOffscreenTarget`, target might not be an actual HTMLElement instance but still needs to implement `getBoundingClientRect`
     const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
     const { clientX, clientY } = e;
 

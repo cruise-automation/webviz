@@ -65,7 +65,7 @@ export type BaseProps = {|
 
   // Context attributes passed into canvas.getContext.
   contextAttributes?: ?{ [string]: any },
-  offscreenCanvas?: HTMLCanvasElement,
+  canvas?: HTMLCanvasElement,
 |};
 
 type State = {|
@@ -116,10 +116,10 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       defaultCameraState,
       hitmapOnMouseMove,
       disableHitmapForEvents,
-      offscreenCanvas,
+      canvas,
     } = props;
-    if (offscreenCanvas) {
-      this._canvas.current = offscreenCanvas;
+    if (canvas) {
+      this._canvas.current = canvas;
     }
     if (onCameraStateChange) {
       if (!cameraState) {
@@ -215,27 +215,27 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   };
 
   _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
-    this._onMouseInteraction(e, "onDoubleClick", !!fromOffscreenTarget);
+    this._onMouseInteraction(e, "onDoubleClick", fromOffscreenTarget);
   };
 
   _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
     this._dragStartPos = { x: e.clientX, y: e.clientY };
-    this._onMouseInteraction(e, "onMouseDown", !!fromOffscreenTarget);
+    this._onMouseInteraction(e, "onMouseDown", fromOffscreenTarget);
   };
 
   _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
-    this._onMouseInteraction(e, "onMouseMove", !!fromOffscreenTarget);
+    this._onMouseInteraction(e, "onMouseMove", fromOffscreenTarget);
   };
 
   _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
-    this._onMouseInteraction(e, "onMouseUp", !!fromOffscreenTarget);
+    this._onMouseInteraction(e, "onMouseUp", fromOffscreenTarget);
     const { _dragStartPos } = this;
     if (_dragStartPos) {
       const deltaX = e.clientX - _dragStartPos.x;
       const deltaY = e.clientY - _dragStartPos.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (distance < DEFAULT_MOUSE_CLICK_RADIUS) {
-        this._onMouseInteraction(e, "onClick", !!fromOffscreenTarget);
+        this._onMouseInteraction(e, "onClick", fromOffscreenTarget);
       }
       this._dragStartPos = null;
     }
@@ -354,16 +354,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       cameraState,
       onCameraStateChange,
       resolutionScale,
-      offscreenCanvas,
+      canvas,
     } = this.props;
     const { worldviewContext } = this.state;
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
     const canvasScale = resolutionScale || 1;
-    const canvasHtml = offscreenCanvas ? (
-      <React.Fragment />
-    ) : (
+    const canvasHtml = canvas ? null : (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}

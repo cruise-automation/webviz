@@ -249,6 +249,9 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 
+    // When working with offscreen canvases, window is not defined and the target
+    // might not be a valid HTMLElement. If so, we can asume any event coming
+    // from an offscreen canvas already has a relevant target.
     if (!fromOffscreenTarget && (!(e.target instanceof window.HTMLElement) || e.button !== 0)) {
       return;
     }

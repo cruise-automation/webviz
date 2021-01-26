@@ -24,6 +24,7 @@ export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
   shiftKeys: boolean,
+  useFrames?: boolean,
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
@@ -76,6 +77,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
+    useFrames: true,
     style: {},
   };
 
@@ -143,11 +145,15 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
 
     // queue up a paint operation on the next frame, if we haven't already
-    if (!this._tick) {
+    if (!this._tick && this.props.useFrames) {
       this._tick = requestAnimationFrame(() => {
         this._tick = undefined;
         worldviewContext.paint();
       });
+    }
+
+    if (!this.props.useFrames) {
+      worldviewContext.paint();
     }
   }
 
@@ -241,7 +247,10 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       data["heap used"] = `${((mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100).toFixed(3)}%`;
     }
 
-    Object.assign(data, pickBy(regl.stats, (val) => typeof val === "number" && val !== 0));
+    Object.assign(
+      data,
+      pickBy(regl.stats, (val) => typeof val === "number" && val !== 0)
+    );
     if (regl.stats.bufferCount > 1000) {
       throw new Error("Memory leak: Buffer count > 1000.");
     }

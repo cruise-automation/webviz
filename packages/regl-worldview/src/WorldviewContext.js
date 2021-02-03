@@ -18,6 +18,7 @@ import type {
   CompiledReglCommand,
   CameraCommand,
   Vec4,
+  Mat4,
   CameraState,
   MouseEventObject,
   GetChildrenForHitmap,
@@ -90,6 +91,10 @@ export class WorldviewContext {
     arguments: any[],
     result: Array<[MouseEventObject, Command<any>]>,
   } = undefined;
+
+  _cameraView?: Mat4;
+  _cameraProjection?: Mat4;
+
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -233,6 +238,7 @@ export class WorldviewContext {
   }
 
   _paint() {
+    const { _cameraView: cameraView, _cameraProjection: cameraProjection } = this
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {
@@ -241,7 +247,7 @@ export class WorldviewContext {
     this._cachedReadHitmapCall = null; // clear the cache every time we paint
     const { regl, camera } = this.initializedData;
     this._clearCanvas(regl);
-    camera.draw(this.cameraStore.state, () => {
+    camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
       const x = Date.now();
       this._drawInput();
       this.counters.paint = Date.now() - x;

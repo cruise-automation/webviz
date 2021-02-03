@@ -53,6 +53,11 @@ export type BaseProps = {|
   cameraState?: $Shape<CameraState>,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: $Shape<CameraState>,
+
+  // Pass in custom camera matrices
+  cameraView?: Mat4,
+  cameraProjection?: Mat4,
+
   // interactions
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -191,9 +196,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
+    const { cameraState, cameraView, cameraProjection } = this.props;
+
+    worldviewContext._cameraView = cameraView;
+    worldviewContext._cameraProjection = cameraProjection;
+
     // update internal cameraState
-    if (this.props.cameraState) {
-      worldviewContext.cameraStore.setCameraState(this.props.cameraState);
+    if (cameraState != null) {
+      worldviewContext.cameraStore.setCameraState(cameraState);
     }
 
     if (this.props.useFrames) {
@@ -207,7 +217,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
 
     if (!this.props.useFrames) {
-      worldviewContext.paint();
+      worldviewContext.paint(cameraView, cameraProjection);
     }
   }
 
@@ -286,6 +296,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       }
       return;
     }
+
+    const { cameraView, cameraProjection } = this.props;
 
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();

@@ -66,12 +66,14 @@ export default (regl: any) => {
           // because we need them for raycasting
           this.viewportWidth = viewportWidth;
           this.viewportHeight = viewportHeight;
-          this.cameraState = props;
-          return this.getProjection();
+          const { state, cameraProjection } = props
+          this.cameraState = state;
+          return cameraProjection != null ? cameraProjection : this.getProjection();
         },
 
         view(context, props) {
-          return this.getView();
+          const { cameraView } = props
+          return cameraView != null ? cameraView : this.getView();
         },
 
         // inverse of the view rotation, used for making objects always face the camera

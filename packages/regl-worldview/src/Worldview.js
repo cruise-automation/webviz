@@ -16,6 +16,7 @@ import type {
   MouseHandler,
   Dimensions,
   Vec4,
+  Mat4,
   CameraState,
   CameraKeyMap,
   MouseEventEnum,
@@ -208,6 +209,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
     if (this.props.useFrames) {
       worldviewContext.onDirty();
+    } else {
+      worldviewContext.paint();
     }
   }
 
@@ -217,7 +220,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
 
     if (!this.props.useFrames) {
-      worldviewContext.paint(cameraView, cameraProjection);
+      this.state.worldviewContext.paint();
     }
   }
 

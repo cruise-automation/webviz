@@ -10,7 +10,7 @@ import earcut from "earcut";
 import React from "react";
 
 import type { Vec3, Point, PolygonType } from "../types";
-import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { shouldConvert, pointToVec3, vec3ToPoint } from "../utils/commandUtils";
 import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import Triangles, { makeTrianglesCommand } from "./Triangles";
 
@@ -32,7 +32,7 @@ function flatten3D(points: Vec3[]): Float32Array {
   return array;
 }
 
-function getEarcutPoints(points: Vec3[]): (Vec3 | Point)[] {
+function getEarcutPoints(points: Vec3[]): Point[] {
   const flattenedPoints = flatten3D(points);
   const indices = earcut(flattenedPoints, null, 3);
   const newPoints = [];
@@ -40,7 +40,7 @@ function getEarcutPoints(points: Vec3[]): (Vec3 | Point)[] {
     const originalIndex = indices[i];
     newPoints.push(points[originalIndex]);
   }
-  return newPoints;
+  return newPoints.map(vec3ToPoint);
 }
 
 type Props = {

@@ -1,3 +1,4 @@
+//  @flow
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,

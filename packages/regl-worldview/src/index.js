@@ -17,7 +17,6 @@ export {
   CameraListener,
 } from "./camera/index";
 export * from "./utils/commandUtils";
-export * from "./utils/hitmapDefaults";
 export { default as eulerFromQuaternion } from "./utils/eulerFromQuaternion";
 export { default as fromGeometry } from "./utils/fromGeometry";
 export { default as parseGLB } from "./utils/parseGLB";

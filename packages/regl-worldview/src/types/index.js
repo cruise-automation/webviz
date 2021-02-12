@@ -42,6 +42,7 @@ export type Regl = {
   },
   prop: (string) => any,
   context: (string) => any,
+  [subcommand: string]: any => any,
 };
 
 export type CommandProps = {
@@ -117,35 +118,33 @@ export type ComponentMouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, Com
 
 export type Coordinate = [number, number];
 
-export type Point = {
+export type Point = {|
   x: number,
   y: number,
   z: number,
-};
+|};
 
 export type Position = Point;
 
-export type Orientation = {
+export type Orientation = {|
   x: number,
   y: number,
   z: number,
   w: number,
-};
+|};
 
-export type Scale = {
+export type Scale = {|
   x: number,
   y: number,
   z: number,
-};
+|};
 
-export type Color = {
+export type Color = {|
   r: number,
   g: number,
   b: number,
   a: number,
-};
-
-export type Colors = Color[];
+|};
 
 export type Pose = {
   position: Position,
@@ -155,52 +154,54 @@ export type Pose = {
 export type BaseShape = {
   pose: Pose,
   scale: Scale,
-  color?: Color | Vec4,
+  color?: Color,
 };
 
+type Points = Point[]
+
 export type Arrow = BaseShape & {
-  points?: Point[],
+  points?: Points,
   interactionData?: any,
 };
 
 export type Cube = BaseShape & {
-  colors?: (Color | Vec4)[],
-  points?: (Point | Vec3)[],
+  colors?: Color[],
+  points?: Points,
 };
 
 export type Cone = BaseShape & {
-  colors?: (Color | Vec4)[],
-  points?: (Point | Vec3)[],
+  colors?: Color[],
+  points?: Points,
 };
 
 export type Cylinder = BaseShape & {
-  colors?: (Color | Vec4)[],
-  points?: (Point | Vec3)[],
+  colors?: Color[],
+  points?: Points,
 };
 
 export type Line = BaseShape & {
-  points: (Point | Vec3)[],
+  points: Points,
   poses?: Pose[],
 };
 
 export type PointType = BaseShape & {
-  colors?: (Color | Vec4)[],
-  points: (Point | Vec3)[],
+  colors?: Color[],
+  points?: Points,
 };
 
 export type SphereList = BaseShape & {
-  points?: (Point | Vec3)[],
+  points?: Points,
 };
 
 export type TriangleList = BaseShape & {
-  points: (Point | Vec3)[],
-  colors?: (Color | Vec4)[],
+  points?: Points,
+  colors?: Color[],
   // Pass true to not render the triangles to the screen - just the hitmap.
   onlyRenderInHitmap?: boolean,
 };
 
 export type PolygonType = BaseShape & {
-  points: (Point | Vec3)[],
+  points?: Points,
 };
 
 export type MouseEventObject = {

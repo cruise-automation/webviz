@@ -92,8 +92,8 @@ export class WorldviewContext {
     result: Array<[MouseEventObject, Command<any>]>,
   } = undefined;
 
-  _cameraView?: Mat4;
-  _cameraProjection?: Mat4;
+  _cameraView: ?Mat4;
+  _cameraProjection: ?Mat4;
 
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
@@ -238,7 +238,7 @@ export class WorldviewContext {
   }
 
   _paint() {
-    const { _cameraView: cameraView, _cameraProjection: cameraProjection } = this
+    const { _cameraView: cameraView, _cameraProjection: cameraProjection } = this;
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {
@@ -294,6 +294,7 @@ export class WorldviewContext {
 
       const { regl, camera, _fbo } = this.initializedData;
       const { width, height } = this.dimension;
+      const { _cameraView: cameraView, _cameraProjection: cameraProjection } = this;
 
       const x = canvasX;
       // 0,0 corresponds to the bottom left in the webgl context, but the top left in window coordinates
@@ -313,7 +314,7 @@ export class WorldviewContext {
           const mouseEventsWithCommands = [];
           let counter = 0;
 
-          camera.draw(this.cameraStore.state, () => {
+          camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
             // Every iteration in this loop clears the framebuffer, draws the hitmap objects that have NOT already been
             // seen to the framebuffer, and then reads the pixel under the cursor to find the object on top.
             // If `enableStackedObjectEvents` is false, we only do this iteration once - we only resolve with 0 or 1

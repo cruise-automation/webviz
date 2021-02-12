@@ -1,16 +1,24 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// this type mirrors the MessageChannel api which is available on
-// instances of web-workers as well as avaiable on 'global' within a worker
-export type Channel = {
-  postMessage: (data: any, transfer?: any[]) => void,
-  onmessage?: (ev: MessageEvent) => void,
+// this type mirrors the MessageChannel and MessagePort APIs which are available on
+// instances of web-workers and shared-workers respectively, as well as avaiable on
+// 'global' within them.
+export interface Channel {
+  postMessage(data: any, transfer?: any[]): void;
+  onmessage: null | ((ev: MessageEvent) => mixed);
+}
+
+// Flow complains when some variables are declared with the above interface type, but
+// not when given this non-interface type...
+export type ChannelImpl = {
+  postMessage(data: any, transfer?: any[]): void,
+  onmessage: null | ((ev: MessageEvent) => mixed),
 };
 
 const RESPONSE = "$$RESPONSE";
@@ -18,23 +26,29 @@ const ERROR = "$$ERROR";
 
 // helper function to create linked channels for testing
 export function createLinkedChannels(): { local: Channel, remote: Channel } {
-  const local: Channel = {
-    postMessage(data: any, transfer?: Array<ArrayBuffer>) {
+  const local: ChannelImpl = {
+    onmessage: null,
+
+    postMessage(data: any, _transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       // eslint-disable-next-line no-use-before-define
       if (remote.onmessage) {
         remote.onmessage(ev); // eslint-disable-line no-use-before-define
       }
     },
+    terminate: () => {},
   };
 
-  const remote: Channel = {
-    postMessage(data: any, transfer?: Array<ArrayBuffer>) {
+  const remote: ChannelImpl = {
+    onmessage: null,
+
+    postMessage(data: any, _transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       if (local.onmessage) {
         local.onmessage(ev);
       }
     },
+    terminate: () => {},
   };
   return { local, remote };
 }
@@ -72,7 +86,7 @@ export default class Rpc {
       return;
     }
     // invoke the receive handler in a promise so if it throws synchronously we can reject
-    new Promise((resolve, reject) => {
+    new Promise((resolve) => {
       const handler = this._receivers.get(topic);
       if (!handler) {
         throw new Error(`no receiver registered for ${topic}`);
@@ -99,7 +113,9 @@ export default class Rpc {
           id,
           data: {
             [ERROR]: true,
+            name: err.name,
             message: err.message,
+            stack: err.stack,
           },
         };
         this._channel.postMessage(message);
@@ -109,13 +125,16 @@ export default class Rpc {
   // send a message across the rpc boundary to a receiver on the other side
   // this returns a promise for the receiver's response.  If there is no registered
   // receiver for the given topic, this method throws
-  send<TResult>(topic: string, data: any, transfer?: ArrayBuffer[]): Promise<TResult> {
+  send<TResult>(topic: string, data: any, transfer?: any[]): Promise<TResult> {
     const id = this._messageId++;
     const message = { topic, id, data };
     const result = new Promise((resolve, reject) => {
       this._pendingCallbacks[id] = (info) => {
         if (info.data && info.data[ERROR]) {
-          reject(new Error(info.data.message));
+          const error = new Error(info.data.message);
+          error.name = info.data.name;
+          error.stack = info.data.stack;
+          reject(error);
         } else {
           resolve(info.data);
         }

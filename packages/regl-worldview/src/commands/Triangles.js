@@ -6,7 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { TriangleList, Regl } from "../types";
+import * as React from "react";
+
+import type { Regl, TriangleList } from "../types";
 import {
   defaultBlend,
   getVertexColors,
@@ -15,8 +17,9 @@ import {
   toRGBA,
   withPose,
 } from "../utils/commandUtils";
-import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
-import { makeCommand } from "./Command";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import withRenderStateOverrides from "../utils/withRenderStateOverrides";
+import Command, { type CommonCommandProps } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
 const defaultSingleColorDepth = { enable: true, mask: false };
@@ -56,12 +59,6 @@ const singleColor = (regl) =>
           return pointToVec3Array(props.points);
         }
         return props.points;
-      },
-      color: (context, props) => {
-        if (shouldConvert(props.colors) || shouldConvert(props.color)) {
-          return getVertexColors(props);
-        }
-        return props.color || props.colors;
       },
     },
     uniforms: {
@@ -123,10 +120,13 @@ const vertexColors = (regl) =>
         return props.points;
       },
       color: (context, props) => {
-        if (shouldConvert(props.colors) || shouldConvert(props.color)) {
+        if (!props.colors || !props.colors.length) {
+          throw new Error(`Invalid empty or null prop "colors" when rendering triangles using vertex colors`);
+        }
+        if (shouldConvert(props.colors)) {
           return getVertexColors(props);
         }
-        return props.color || props.colors;
+        return props.colors;
       },
     },
 
@@ -145,17 +145,20 @@ const vertexColors = (regl) =>
 
 // command to render triangle lists optionally supporting vertex colors for each triangle
 const triangles = (regl: Regl) => {
-  const single = regl(singleColor(regl));
-  const vertex = regl(vertexColors(regl));
-  return (props: any) => {
-    const items = Array.isArray(props) ? props : [props];
+  const single = withRenderStateOverrides(singleColor)(regl);
+  const vertex = withRenderStateOverrides(vertexColors)(regl);
+  return (props: any, isHitmap: boolean) => {
+    const items: TriangleList[] = Array.isArray(props) ? props : [props];
     const singleColorItems = [];
     const vertexColorItems = [];
     items.forEach((item) => {
-      if (item.colors && item.colors.length) {
-        vertexColorItems.push(item);
-      } else {
-        singleColorItems.push(item);
+      // If the item has onlyRenderInHitmap set, only render it in the hitmap.
+      if (isHitmap || !item.onlyRenderInHitmap) {
+        if (item.colors && item.colors.length) {
+          vertexColorItems.push(item);
+        } else {
+          singleColorItems.push(item);
+        }
       }
     });
 
@@ -164,9 +167,11 @@ const triangles = (regl: Regl) => {
   };
 };
 
-const Triangles = makeCommand<TriangleList>("Triangles", triangles, {
-  getHitmapProps: getHitmapPropsForInstancedCommands,
-  getObjectFromHitmapId: getObjectForInstancedCommands,
-});
+export const makeTrianglesCommand = () => {
+  return triangles;
+};
 
-export default Triangles;
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(3);
+export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={triangles} />;
+}

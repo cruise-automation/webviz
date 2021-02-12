@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -9,14 +9,22 @@
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import * as React from "react";
 import { createPortal } from "react-dom";
+import styled from "styled-components";
 
 import styles from "./Select.module.scss";
 import Icon from "webviz-core/src/components/Icon";
+import colors from "webviz-core/src/styles/colors.module.scss";
+
+const SEmpty = styled.div`
+  padding: 8px 12px;
+  color: ${colors.textMuted};
+  font-style: italic;
+`;
 
 type Props = {
   children: React.Node,
   // specify text specifically if the value is not a string
-  text?: string,
+  text?: ?string,
   value: any,
   icon: React.Node,
   onChange: (value: any) => void,
@@ -43,6 +51,7 @@ export default class Select extends React.Component<Props, State> {
   };
 
   open = (e: SyntheticEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     this.setState({ isOpen: true });
     // let this event hit the window before adding close listener
     setImmediate(() => {
@@ -89,7 +98,7 @@ export default class Select extends React.Component<Props, State> {
     };
     return createPortal(
       <div style={style} className={styles.menu}>
-        {mappedChildren}
+        {mappedChildren && mappedChildren.length ? mappedChildren : <SEmpty>No options available</SEmpty>}
       </div>,
       body
     );

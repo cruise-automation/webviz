@@ -1,0 +1,3 @@
+!.*.js
+!.eslintrc.js
+!/webviz-core/migrations/.eslintrc.js

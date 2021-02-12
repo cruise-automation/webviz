@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -6,17 +6,27 @@
 
 @import "~webviz-core/src/styles/colors.module.scss";
 
-$spacing: 4px;
+$panelToolbarHeight: 26px;
+$panelToolbarSpacing: 4px;
 
 .iconContainer {
-  padding-top: $spacing;
+  padding-top: $panelToolbarSpacing;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  margin-left: $spacing;
+  margin-left: $panelToolbarSpacing;
   flex-direction: row;
-  min-height: 22px;
+  min-height: $panelToolbarHeight - $panelToolbarSpacing;
   padding: 2px 2px 2px 6px;
+  svg {
+    font-size: 14px;
+  }
+}
+
+.panelName {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-right: 4px;
 }
 
 .panelToolbarContainer {
@@ -24,8 +34,9 @@ $spacing: 4px;
   display: flex;
   flex: 0 0 auto;
   flex-direction: row;
-  background-color: $toolbar;
-  padding: 4px;
+  justify-content: flex-end;
+  background-color: $toolbar-fixed;
+  padding: $panelToolbarSpacing;
 
   &.floating {
     position: absolute;
@@ -33,29 +44,34 @@ $spacing: 4px;
     // leave some room for possible scrollbar
     padding-right: 8px;
     top: 0;
+    width: 100%;
     z-index: 5000;
     background-color: transparent;
     transform: translateY(-10px);
+    pointer-events: none;
     opacity: 0;
+
+    * {
+      pointer-events: auto;
+    }
 
     &.hasChildren {
       left: 0;
-      background-color: $toolbar;
+      background-color: $toolbar-fixed;
     }
 
     &:not(.hasChildren) .iconContainer {
-      background-color: $toolbar;
+      background-color: $dark3;
       border-radius: 4px;
-      box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 0, 0, 0.2);
-    }
-
-    &.containsOpen {
-      transform: translateY(0);
-      opacity: 1;
+      box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
     }
   }
 
-  :global(.mosaic-window):hover & {
+  &:not(.floating) {
+    min-height: $panelToolbarHeight + $panelToolbarSpacing;
+  }
+
+  &.floatingShow {
     transform: translateY(0);
     opacity: 1;
   }
@@ -64,7 +80,7 @@ $spacing: 4px;
 .icon,
 .dragIcon {
   font-size: 14px;
-  margin: 0 0.25em;
+  margin: 0 0.2em;
 }
 
 .dragIcon {

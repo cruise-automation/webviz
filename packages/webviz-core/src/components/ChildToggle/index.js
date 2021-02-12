@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 
 import styles from "./index.module.scss";
 import Flex from "webviz-core/src/components/Flex";
+import KeyListener from "webviz-core/src/components/KeyListener";
 
 type ContainsOpenProps = {|
   children: (containsOpen: boolean) => React.Node,
@@ -53,9 +54,10 @@ type Props = {|
   children: [React$Element<any>, React$Element<any>],
   style?: { [string]: any },
   // alignment of the content component
-  position: "above" | "below" | "left" | "right",
+  position: "above" | "below" | "left" | "right" | "bottom-left",
   // don't use a portal, e.g. if you are nesting this already in a portal
   noPortal?: boolean,
+  dataTest?: string,
 |};
 
 // a component which takes 2 child components: toggle trigger and content
@@ -122,7 +124,7 @@ export default class ChildToggle extends React.Component<Props> {
   };
 
   renderFloating() {
-    const { isOpen, children, position, noPortal } = this.props;
+    const { isOpen, children, position, noPortal, style } = this.props;
     if (!isOpen) {
       return;
     }
@@ -133,7 +135,8 @@ export default class ChildToggle extends React.Component<Props> {
     const childEl = this.el.firstElementChild.firstElementChild;
     const childRect = childEl.getBoundingClientRect();
     const padding = 10;
-    const style = {
+    const styleObj = {
+      ...style,
       top: padding,
       bottom: padding,
       left: padding,
@@ -143,17 +146,22 @@ export default class ChildToggle extends React.Component<Props> {
 
     let spacerSize;
     if (position === "left") {
-      style.top = childRect.top;
+      styleObj.top = childRect.top;
       spacerSize = window.innerWidth - childRect.left - padding;
     } else if (position === "below") {
-      style.top = childRect.top + childRect.height;
+      // Floating menu should have 4px overlap with the toggle element above it
+      styleObj.top = childRect.top + childRect.height - 4;
       spacerSize = childRect.left - padding;
+    } else if (position === "bottom-left") {
+      // Floating menu should have 4px overlap with the toggle element above it
+      styleObj.top = childRect.top + childRect.height - 4;
+      spacerSize = window.innerWidth - childRect.right - padding;
     } else if (position === "above") {
-      delete style.bottom;
-      style.height = childRect.top - padding;
+      delete styleObj.bottom;
+      styleObj.height = childRect.top - padding;
       spacerSize = childRect.left - padding;
     } else {
-      style.top = childRect.top;
+      styleObj.top = childRect.top;
       spacerSize = childRect.left + childRect.width - padding;
     }
 
@@ -166,11 +174,11 @@ export default class ChildToggle extends React.Component<Props> {
       <div ref={(el) => (this.floatingEl = el)}>
         <Flex
           row
-          reverse={position === "left"}
+          reverse={position === "left" || position === "bottom-left"}
           start={position !== "above"}
           end={position === "above"}
           className={styles.childContainer}
-          style={style}>
+          style={styleObj}>
           {/* shrinkable spacer allows child to have a default position but slide over when it would go offscreen */}
           <span style={{ flexBasis: spacerSize, flexShrink: 1 }} />
           {children[1]}
@@ -182,26 +190,48 @@ export default class ChildToggle extends React.Component<Props> {
   }
 
   render() {
-    const { style, children, onToggle, isOpen } = this.props;
+    const { style, children, onToggle, isOpen, dataTest } = this.props;
+    const keyDownHandlers = {
+      Escape: (_) => {
+        if (isOpen) {
+          onToggle();
+        }
+      },
+    };
     return (
-      <Consumer>
-        {(updateOpenNumber: (number) => void) => {
-          this._setContainsOpen = (open: boolean) => {
-            if (open !== this._lastOpen) {
-              updateOpenNumber(open ? 1 : -1);
-              this._lastOpen = open;
-            }
-          };
-          this._setContainsOpen(isOpen);
+      <>
+        <Consumer>
+          {(updateOpenNumber: (number) => void) => {
+            this._setContainsOpen = (open: boolean) => {
+              if (open !== this._lastOpen) {
+                updateOpenNumber(open ? 1 : -1);
+                this._lastOpen = open;
+              }
+            };
+            this._setContainsOpen(isOpen);
 
-          return (
-            <div ref={(el) => (this.el = el)} className={cx({ ["open"]: isOpen })} style={style}>
-              <div onClick={onToggle}>{children[0]}</div>
-              {this.renderFloating()}
-            </div>
-          );
-        }}
-      </Consumer>
+            return (
+              <div
+                ref={(el) => (this.el = el)}
+                className={cx({ ["open"]: isOpen })}
+                style={style}
+                onClick={(event) => event.stopPropagation()}>
+                <div
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    onToggle();
+                  }}
+                  data-test={dataTest}>
+                  {children[0]}
+                </div>
+                {this.renderFloating()}
+              </div>
+            );
+          }}
+        </Consumer>
+        <KeyListener global keyDownHandlers={keyDownHandlers} />
+      </>
     );
   }
 }

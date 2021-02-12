@@ -1,0 +1,41 @@
+//  Copyright (c) 2018-present, Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/components/PanelToolbar/index.module.scss";
+
+.tab {
+  position: relative;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: $panelToolbarHeight;
+  padding: 0 6px;
+  user-select: none;
+  border: 1px solid transparent;
+
+  // Shift the tab down so it's flush with the bottom of the PanelToolbar
+  top: $panelToolbarSpacing;
+  margin-top: -$panelToolbarSpacing;
+
+  .active {
+    user-select: all;
+  }
+
+  &:not(.active) + &:not(.active) {
+    // Use a before to add a separator line that doesn't span the full height of the tab
+    &:before {
+      border-left: 1px solid rgb(45, 45, 51);
+      content: "";
+      height: 16px;
+      left: 0;
+      position: absolute; // within .draggableTab
+      top: 4px;
+      z-index: 1;
+    }
+  }
+}

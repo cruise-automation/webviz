@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -35,7 +35,7 @@ export default class Tooltip extends React.Component<React.ElementConfig<typeof 
         fixed={fixed}
         delay={delay}
         offset={offset}
-        contents={<div className={styles.tooltip}>{contents}</div>}
+        contents={<div className={styles.tooltip}>{typeof contents === "function" ? contents() : contents}</div>}
         arrow={<div className={styles.arrow} />}>
         {children}
       </BaseTooltip>

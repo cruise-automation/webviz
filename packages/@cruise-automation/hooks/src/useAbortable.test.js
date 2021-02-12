@@ -27,6 +27,11 @@ function signal<T>(): ResolvablePromise<T> {
 }
 
 describe("useAbortable", () => {
+  beforeEach(() => {
+    // Suppress "test was not wrapped in act" error which is kind of hard to fix with this hook.
+    jest.spyOn(console, "error").mockReturnValue();
+  });
+
   const Test = React.forwardRef((props, ref) => {
     const { action, cleanup } = props;
     const [value, abort] = useAbortable("pending", action, cleanup || (() => {}), [action]);
@@ -122,7 +127,7 @@ describe("useAbortable", () => {
       return "done1";
     };
     const cleanup1 = jest.fn();
-    const App = ({ action, cleanup }) => <Test ref={ref} action={action} cleanup={cleanup1} />;
+    const App = ({ action }) => <Test ref={ref} action={action} cleanup={cleanup1} />;
     const el = mount(<App action={action1} />);
     expect(el.text()).toEqual("pending");
     wait1.resolve();

@@ -6,11 +6,10 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
+import Worldview, { Axes, Cubes, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
-  const getHitmapId = (shape) => shape.id || 0;
   const numberToColor = (number, max, a = 1) => {
     const i = (number * 255) / max;
     const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
@@ -21,7 +20,6 @@ function Example() {
 
   const [clickedId, setClickedId] = useState(7);
   const [cameraState, setCameraState] = useState({
-    ...DEFAULT_CAMERA_STATE,
     distance: 145,
     phi: 1.22,
     thetaOffset: 0,
@@ -139,15 +137,17 @@ function Example() {
       onCameraStateChange={(cameraState) => {
         setCameraState(cameraState);
       }}
-      onClick={(e, arg) => {
-        if (clickedId === arg.objectId) {
-          setClickedId(undefined);
-        } else {
-          setClickedId(arg.objectId);
+      onClick={(e, { objects }) => {
+        if (objects[0]) {
+          if (clickedId === objects[0].object.id) {
+            setClickedId(undefined);
+          } else {
+            setClickedId(objects[0].object.id);
+          }
         }
       }}>
-      <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
-      <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
+      <Cubes>{cubes}</Cubes>
+      <Spheres>{spheres}</Spheres>
       <Overlay
         renderItem={({ item, coordinates, dimension: { width, height } }) => {
           if (!coordinates) {

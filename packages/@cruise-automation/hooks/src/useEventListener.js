@@ -16,13 +16,10 @@ export default function useEventListener(
   handler: (any) => void,
   dependencies: any[]
 ) {
-  useEffect(
-    () => {
-      if (enable) {
-        target.addEventListener(type, handler);
-        return () => target.removeEventListener(type, handler);
-      }
-    },
-    [target, type, enable, ...dependencies]
-  );
+  useEffect(() => {
+    if (enable) {
+      target.addEventListener(type, handler);
+      return () => target.removeEventListener(type, handler);
+    }
+  }, [target, type, enable, ...dependencies]);
 }

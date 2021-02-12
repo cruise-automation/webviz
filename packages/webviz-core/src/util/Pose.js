@@ -1,12 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Pose, Orientation, Point } from "webviz-core/src/types/Messages";
+import type { MutablePose, Orientation, Point } from "webviz-core/src/types/Messages";
 
 // contains backing classes for point, orientation, and pose
 // because we create them a _lot_
@@ -16,6 +16,7 @@ class PointClass {
   z: number;
 
   static empty() {
+    // $FlowFixMe: Classes are inexact in flow.
     const point = new PointClass();
     point.x = 0;
     point.y = 0;
@@ -31,6 +32,7 @@ class OrientationClass {
   w: number;
 
   static empty() {
+    // $FlowFixMe: Classes are inexact in flow.
     const orientation = new OrientationClass();
     orientation.x = 0;
     orientation.y = 0;
@@ -46,7 +48,8 @@ class PoseClass {
 }
 
 // create a new empty pose object
-export function emptyPose(): Pose {
+export function emptyPose(): MutablePose {
+  // $FlowFixMe: Classes are inexact in flow.
   const pose = new PoseClass();
   pose.position = PointClass.empty();
   pose.orientation = OrientationClass.empty();

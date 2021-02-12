@@ -17,13 +17,16 @@ You can move the camera around using the mouse/trackpad, or by using the keyboar
 
 | Name                | Type      | Default        | Description                                                                                     |
 | ------------------- | --------- | -------------- | ----------------------------------------------------------------------------------------------- |
-| `perspective`       | `boolean` | `true`         | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
+| `perspective`       | `boolean` | `true`         | type of the camera, default to perspective (3D), pass in `false` to use orthographic (2D)       |
 | `target`            | `vec3`    | `[0, 0, 0]`    | position of the target                                                                          |
 | `targetOrientation` | `quat`    | `[0, 0, 0, 1]` | orientation of the target (only yaw angle is used to determine camera placement)                |
 | `targetOffset`      | `vec3`    | `[0, 0, 0]`    | additional offset for the camera, specified in the `target`/`targetOrientation` reference frame |
 | `distance`          | `number`  | `75`           | distance between the camera and target                                                          |
 | `phi`               | `number`  | `Math.PI/4`    | angle in radians from +z pole to -z pole, range: [0, π]. Ignored when `perspective` is false    |
 | `thetaOffset`       | `number`  | `0`            | offset azimuth angle in radians, +θ corresponds to +x→+y, range: [0, 2π]                        |
+| `fovy`              | `number`  | `Math.PI/4`    | field of view in the y direction, in radians                                                    |
+| `near`              | `number`  | `0.01`         | distance to the frustum near plane                                                              |
+| `far`               | `number`  | `5000`         | distance to the frustum far plane                                                               |
 
 <CameraState />
 

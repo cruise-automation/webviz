@@ -1,53 +1,224 @@
 <!--
-  Copyright (c) 2018-present, GM Cruise LLC
+  Copyright (c) 2018-present, Cruise LLC
 
   This source code is licensed under the Apache License, Version 2.0,
   found in the LICENSE file in the root directory of this source tree.
   You may not use this file except in compliance with the License.
 -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- THIS COMMENT IS A HOOK FOR ANALYTICS - please do not change -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,400i,700,700i" rel="stylesheet">
-    <title>webviz</title>
-    <link rel='shortcut icon' type='image/x-icon' href='favicon.ico' />
-  </head>
-  <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
-    <div id="root"></div>
-    <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
-      An error occurred:<br/>
-      <div id="topLevelErrorMessage"></div>
-      <br/>
-      Troubleshooting steps:
-      <ul style="list-style: disc inside;">
-        <li>Make sure you&rsquo;re using the latest version of <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.</li>
-        <li>Look in the Chrome <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more error details.</li>
-        <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
-      </ul>
+
+<head>
+  <script>
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+  </script>
+  <!-- CORS_AUTHORIZATION_SCRIPT -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#000000" />
+  <title>webviz</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <style>
+    @keyframes loadingLogoFadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes loadingLogoFadeInOut {
+      0%, 3%, 98%, 100% {
+        opacity: 0.3;
+        transform: scale(.8) skew(0, 0.312rad);
+      }
+      48%, 53% {
+        opacity: 0.8;
+        transform: scale(1) skew(0, 0.312rad);
+      }
+    }
+
+    #loadingLogo {
+      top: 0px;
+      left: 0px;
+      right: 0px;
+      bottom: 0px;
+      position: fixed;
+      z-index: 1000;
+      transition: opacity 0.4s ease-out;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #08080A;
+    }
+
+    html, body, #root {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 100%;
+      background: #08080A;
+      overflow: hidden;
+      line-height: 1;
+      vertical-align: baseline;
+    }
+
+    #logoFrameContainer {
+      position: relative;
+      height: 85px;
+      width: 70px;
+      margin-bottom: 10vh;
+      line-height: 0;
+      box-sizing: border-box;
+      opacity: 0;
+      animation: loadingLogoFadeIn 0.5s ease-out forwards 0.25s;
+    }
+
+    #logoFrame1,
+    #logoFrame2,
+    #logoFrame3,
+    #logoFrame1blur,
+    #logoFrame2blur,
+    #logoFrame3blur {
+      box-sizing: border-box;
+      transform: skew(0, 0.312rad);
+      transition: all 0.4s;
+      height: 85px;
+      width: 70px;
+      position: absolute;
+      animation: loadingLogoFadeInOut 1.3s ease-in-out;
+      animation-iteration-count: infinite;
+    }
+
+    #logoFrame1blur,
+    #logoFrame1 {
+      border: 5px solid #E987FF;
+      top: 0px;
+      right: 0px;
+      animation-delay: 200ms;
+    }
+
+    #logoFrame2blur,
+    #logoFrame2 {
+      border: 5px solid #20C0FF;
+      background: rgba(32, 192, 255, 0.3);
+      top: 8px;
+      right: 8px;
+      animation-delay: 100ms;
+    }
+
+    #logoFrame3blur,
+    #logoFrame3 {
+      border: 5px solid #BD10E0;
+      top: 16px;
+      right: 16px;
+      animation-delay: 0ms;
+    }
+
+    #logoFrame1blur,
+    #logoFrame2blur,
+    #logoFrame3blur {
+      filter: blur(3px);
+    }
+
+    #toolbar {
+      background: #020202;
+      position: fixed;
+      top: 0;
+      height: 40px;
+      width: 100%;
+    }
+
+    #playback-controls {
+      background: #020202;
+      position: fixed;
+      bottom: 0;
+      height: 60px;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loadingLogo">
+    <div id="toolbar"></div>
+    <div id="playback-controls"></div>
+    <div id="logoFrameContainer">
+      <div id="logoFrame1"></div>
+      <div id="logoFrame1blur"></div>
+      <div id="logoFrame2"></div>
+      <div id="logoFrame2blur"></div>
+      <div id="logoFrame3"></div>
+      <div id="logoFrame3blur"></div>
     </div>
-    <script type="text/javascript">
+  </div>
+
+  <noscript> You need to enable JavaScript to run this app. </noscript>
+  <div id="root"></div>
+  <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
+    An error occurred:<br />
+    <div id="topLevelErrorMessage"></div>
+    <br />
+    Troubleshooting steps:
+    <ul style="list-style: disc inside;">
+      <li>
+        Make sure you&rsquo;re using the latest version of
+        <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.
+      </li>
+      <li>
+        Look in the Chrome
+        <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more
+        error details.
+      </li>
+      <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
+    </ul>
+  </div>
+  <script type="text/javascript">
+    const pageLoadEpoch = Date.now();
+    const minDurationToShowLogoMs = 2000;
+    const loadingLogo = document.getElementById("loadingLogo");
+
+    window.webviz_hideLoadingLogo = () => {
+      // We always show the logo animation for a minimum amount of time
+      // so the logo doesn't flicker for a moment if the page loads quickly.
+      const hideLogoRequstedEpoch = Date.now();
+      const delayHidingLogoMs = Math.max(0, minDurationToShowLogoMs - (hideLogoRequstedEpoch - pageLoadEpoch));
+      setTimeout(() => {
+        loadingLogo.style.opacity = "0";
+        setTimeout(() => loadingLogo.remove(), 1000);
+      }, delayHidingLogoMs)
+    };
+
     /* THIS COMMENT IS A HOOK FOR INITIAL STATE - please do not change */
     // catch and display script errors from bundle.js
     window.webviz_handleTopLevelError = (event) => {
       window.webviz_caughtTopLevelError = true;
       document.getElementById("topLevelErrorMessage").innerText = event.message;
       document.getElementById("topLevelError").style.display = "block";
+      if (loadingLogo) {
+        loadingLogo.remove();
+      }
     };
     window.addEventListener("error", window.webviz_handleTopLevelError);
-    </script>
-    <script src='dist/webvizCoreBundle.js'></script>
-    <script type="text/javascript">
+  </script>
+  <script src="/dist/webvizCoreBundle.js"></script>
+  <script type="text/javascript">
     window.removeEventListener("error", window.webviz_handleTopLevelError);
     if (!window.webviz_caughtTopLevelError) {
       document.getElementById("topLevelError").remove();
     }
-    </script>
-  </body>
+  </script>
+
+</body>
 </html>

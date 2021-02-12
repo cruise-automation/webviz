@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -12,10 +12,8 @@ declare type GitInfo = {
 };
 
 declare var GIT_INFO: ?GitInfo;
-
-declare var CURRENT_VERSION: string;
-
 declare var MINIMUM_CHROME_VERSION: number;
+declare var SHOW_TEST_OUTPUT: boolean;
 
 // flow lacks definitions for abort controller
 declare type AbortSignal = any;
@@ -35,7 +33,7 @@ declare type WebvizExpectType = {
 
 /** The expect function is used every time you want to test a value */
 // redeclare this from the jest flowtype definition and include our custom matchers
-// which are defined in ./jest/setupTestFramework.js
+// which are defined in ./webviz-core/src/test/setupTestFramework.js
 declare var expect: {
   /** The object that you want to make assertions against */
   (value: any): JestExpectType & JestPromiseType & EnzymeMatchersType & WebvizExpectType,
@@ -55,3 +53,9 @@ declare var expect: {
 };
 
 declare type StyleObj = { [key: string]: string | number };
+
+declare class IDBKeyRange {
+  static lowerBound(any, open?: boolean): IDBKeyRange;
+  static upperBound(any, open?: boolean): IDBKeyRange;
+  static bound(start: any, end: any): IDBKeyRange;
+}

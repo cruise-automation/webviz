@@ -10,7 +10,7 @@ import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
 import polygonGenerator from "polygon-generator";
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import Worldview, {
   Command,
   Arrows,
@@ -24,8 +24,11 @@ import Worldview, {
   Triangles,
   Axes,
   FilledPolygons,
+  DrawPolygons,
+  PolygonBuilder,
   Overlay,
   Text,
+  GLText,
   GLTFScene,
   DEFAULT_CAMERA_STATE,
   withPose,
@@ -39,12 +42,14 @@ import styled from "styled-components";
 
 import { getHashUrlByComponentName } from "../../routes";
 import CameraStateInfo from "./CameraStateInfo";
+import cesiumManModel from "./CesiumMan.glb";
 import CodeEditor from "./CodeEditor";
-import duckModel from "./Duck.glb";
+import { inScreenshotTests } from "./codeSandboxUtils";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import LinesWithClickableInterior from "./LinesWithClickableInterior";
 import useRange from "./useRange";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // Add required packages and files for all examples to run
 const CODE_SANDBOX_CONFIG = {
@@ -58,15 +63,22 @@ const CODE_SANDBOX_CONFIG = {
     "styled-components": "latest",
   },
   files: {
+    "common/fixtures/Duck.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+      isBinary: true,
+    },
     "utils/codeSandboxStyleFix.css": {
       content: require("!!raw-loader!./codeSandboxStyleFix.css"),
     },
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
-    "utils/Duck.glb": {
-      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+    "utils/CesiumMan.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/04aB-CesiumMan.glb",
       isBinary: true,
+    },
+    "utils/LinesWithClickableInterior.js": {
+      content: require("!!raw-loader!./LinesWithClickableInterior.js"),
     },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
@@ -97,6 +109,8 @@ export const scope = {
   getCSSColor,
   useRange,
   useAnimationFrame,
+  useCallback,
+  useRef,
   useState,
   useEffect,
   Worldview,
@@ -104,6 +118,7 @@ export const scope = {
   last,
   remove,
   sample,
+  inScreenshotTests,
 
   polygonGenerator,
   styled,
@@ -125,12 +140,16 @@ export const scope = {
   Triangles,
   Axes,
   FilledPolygons,
+  DrawPolygons,
+  PolygonBuilder,
   Overlay,
   Text,
+  GLText,
   GLTFScene,
   withPose,
   getRayFromClick,
   duckModel,
+  cesiumManModel,
 };
 
 export default function WorldviewCodeEditor({
@@ -139,6 +158,7 @@ export default function WorldviewCodeEditor({
   code,
   nonEditableCode = "",
   insertCodeSandboxStyle,
+  noInline,
   ...rest
 }) {
   const hashUrl = getHashUrlByComponentName(componentName);
@@ -149,29 +169,37 @@ export default function WorldviewCodeEditor({
 ${code}
     `;
 
+  const render = noInline
+    ? ""
+    : `
+render(
+  <div className="App" style={{ width: "100vw", height: "100vh" }}>
+    <Example />
+  </div>
+);
+`;
+
   const codeSandboxCode = `
 // regl-worldview example: ${componentName}
 // docs: ${docUrl}
 
 ${insertCodeSandboxStyle ? 'import "./utils/codeSandboxStyleFix.css"; // #CODE_SANDBOX_ONLY' : ""}
 import ReactDOM from "react-dom";
-${copyCode}
+${nonEditableCode}
 
-function App() {
-  return (
-    <div className="App" style={{ width: "100vw", height: "100vh" }}>
-      <Example />
-    </div>
-  );
+function render(content) {
+  ReactDOM.render(content, document.getElementById("root"));
 }
 
-ReactDOM.render(<App />, document.getElementById("root"));
-  `;
+${code}
+${render}
+`;
 
   return (
     <CodeEditor
       scope={{ ...customScope, ...scope }}
       {...rest}
+      noInline={noInline}
       codeSandboxConfig={CODE_SANDBOX_CONFIG}
       codeSandboxCode={codeSandboxCode}
       code={code}

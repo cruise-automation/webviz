@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -33,7 +33,7 @@ const Wrapper = styled.div`
 
 type Props = {
   children: React.Node,
-  styles: Object,
+  styles: any,
   copyValue?: any,
 };
 
@@ -53,7 +53,7 @@ class CopyToClipboardComponent extends React.Component<Props> {
       <Wrapper
         style={this.props.styles}
         onClick={this.copy}
-        innerRef={(wrapper) => {
+        ref={(wrapper) => {
           this.wrapper = wrapper;
         }}>
         {this.props.children}

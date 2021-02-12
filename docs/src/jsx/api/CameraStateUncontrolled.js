@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Grid } from "regl-worldview";
 
 import InputNumber from "../utils/InputNumber";
 
@@ -17,7 +17,6 @@ function Example() {
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         distance,
       }}>
       <div

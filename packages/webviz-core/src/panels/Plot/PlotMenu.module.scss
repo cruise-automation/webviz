@@ -1,0 +1,28 @@
+//  Copyright (c) 2018-present, Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.input {
+  width: 70px;
+  height: 28px;
+  margin-top: -4px;
+  margin-bottom: -4px;
+}
+
+.inputError {
+  color: $red;
+}
+
+.lockItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lockIcon {
+  fill: currentColor;
+}

@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -7,12 +7,24 @@
 @import "./reset.scss";
 @import "./colors.module.scss";
 @import "./mixins.module.scss";
+@import "./fonts.module.scss";
+@import "~rc-color-picker/assets/index.css";
 
-@font-face {
-  font-family: "Inter UI";
-  src: url("~inter-ui/Inter UI (web)/Inter-UI.var.woff2") format("woff2-variations");
-  font-weight: 400 900;
-  font-style: oblique 0deg 10deg;
+.rc-color-picker-panel {
+  // TOOLBAR
+  background: $dark2;
+  .rc-color-picker-panel-inner {
+    box-shadow: none;
+    // DARK7
+    border: 1px solid #4b4b52;
+  }
+  .rc-color-picker-panel-ribbon,
+  .rc-color-picker-panel-alpha {
+    span {
+      // LIGHT1
+      border: 1px solid #f0f0f0;
+    }
+  }
 }
 
 /* globally apply flex to containers outside our component hierarchy */
@@ -50,7 +62,7 @@ html {
 
 #root > span,
 #root > span > span {
-  // Wrappers added by storybook-chrome-screenshot.
+  // Wrappers added by storycap.
   display: block;
   height: 100%;
 }
@@ -88,9 +100,8 @@ textarea {
   background-color: $background-control;
   border-radius: 4px;
   border: none;
-  padding: $control-padding;
+  padding: 8px 12px;
   margin: $control-margin;
-  appearance: none;
 
   &:focus {
     outline: none;
@@ -117,15 +128,15 @@ textarea {
   @include monospace;
   border: 2px solid $text-normal;
   color: $text-normal;
-  background-color: $panel-background;
+  background-color: $dark;
   &:focus {
     background-color: black;
   }
 }
 
 div::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 div::-webkit-scrollbar-track {
@@ -133,7 +144,8 @@ div::-webkit-scrollbar-track {
 }
 
 div::-webkit-scrollbar-thumb {
-  background: #666;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 a {
@@ -170,7 +182,6 @@ hr {
 }
 
 button {
-  cursor: pointer;
   text-align: center;
 
   &.is-danger {
@@ -180,7 +191,8 @@ button {
     background-color: $background-control;
   }
 
-  &:hover {
+  &:not(.disabled):not(:disabled):hover {
+    cursor: pointer;
     color: $text-control-hover;
   }
 
@@ -189,12 +201,16 @@ button {
     color: $background;
   }
   &.selected {
-    background-color: $background-control-selected;
+    background-color: $dark5;
     color: $text-normal;
   }
-  &.disabled {
-    color: $text-disabled;
+  &.disabled,
+  &:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
+  }
+  &.is-small {
+    padding: 4px 8px;
   }
 }
 
@@ -214,9 +230,19 @@ td {
   line-height: 1.3em;
 }
 
+tr {
+  svg {
+    opacity: 0.6;
+  }
+}
+
 tr:hover {
-  th,
   td {
-    background-color: $text-input;
+    background-color: $dark4;
+    cursor: pointer;
+  }
+
+  svg {
+    opacity: 0.8;
   }
 }

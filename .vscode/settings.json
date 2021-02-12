@@ -1,6 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "eslint.autoFixOnSave": true,
   "flow.useNPMPackagedFlow": true,
   "javascript.validate.enable": false,
   "typescript.validate.enable": false,
@@ -8,6 +7,7 @@
     "*.mdx": "markdown"
   },
   "editor.codeActionsOnSave": {
-    "source.organizeImports": false
+    "source.organizeImports": false,
+    "source.fixAll.eslint": true
   }
 }

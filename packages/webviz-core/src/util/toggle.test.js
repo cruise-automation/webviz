@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -26,7 +26,7 @@ describe("Array toggle", () => {
   });
 
   it("adds item if predicate returns false for everything", () => {
-    const arr = toggle(items, { foo: "bar" }, (item) => false);
+    const arr = toggle(items, { foo: "bar" }, () => false);
     expect(arr).toEqual([{ foo: "bar" }, { foo: "baz" }, { foo: "bar" }]);
     expect(items).toBe(items);
     expect(arr).not.toBe(items);

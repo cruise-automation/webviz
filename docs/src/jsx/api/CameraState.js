@@ -29,6 +29,9 @@ export default function Example() {
     target: [0, 0, 0],
     targetOrientation: [0, 0, 0, 1],
     targetOffset: [0, 0, 0],
+    fovy: Math.PI / 4,
+    near: 0.01,
+    far: 1000,
   });
 
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);

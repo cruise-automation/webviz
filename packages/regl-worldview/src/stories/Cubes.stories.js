@@ -3,9 +3,9 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
-import { intToRGB } from "../utils/commandUtils";
+import type { MouseHandler } from "../types";
 import Container from "./Container";
-import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
+import { cube, p, UNIT_QUATERNION, buildMatrix, rng, withCustomRenderStates } from "./util";
 import withRange from "./withRange";
 
 import { Cubes, DEFAULT_CAMERA_STATE } from "..";
@@ -37,7 +37,6 @@ class Wrapper extends React.Component<any> {
 }
 
 const instancedCameraState = {
-  ...DEFAULT_CAMERA_STATE,
   phi: 1.625,
   thetaOffset: 0.88,
   target: [20, 20, 100],
@@ -46,8 +45,10 @@ const instancedCameraState = {
 
 class DynamicCubes extends React.Component<any, any> {
   state = { cubeCount: 1, cubeId: -1 };
-  onContainerClick = (e, args) => {
-    this.setState({ cubeId: args.objectId || -1 });
+  onContainerClick: MouseHandler = (e, clickInfo) => {
+    if (clickInfo.objects.length && clickInfo.objects[0].object.id % 2) {
+      this.setState({ cubeId: clickInfo.objects[0].object.id || -1 });
+    }
   };
 
   render() {
@@ -67,16 +68,6 @@ class DynamicCubes extends React.Component<any, any> {
       };
     });
 
-    function getHitmapProps() {
-      const result = cubes
-        .filter((cube) => cube.id % 2)
-        .map((cube) => ({
-          ...cube,
-          color: intToRGB(cube.id),
-        }));
-      return result;
-    }
-
     return (
       <Container cameraState={DEFAULT_CAMERA_STATE} onClick={this.onContainerClick}>
         <div style={{ position: "absolute", top: 30, left: 30 }}>
@@ -84,19 +75,19 @@ class DynamicCubes extends React.Component<any, any> {
           <div>you clicked on cube: {this.state.cubeId} </div>
           <button onClick={() => this.setState({ cubeCount: cubeCount + 1 })}>Add Cube</button>
         </div>
-        <Cubes getHitmapProps={getHitmapProps}>{cubes}</Cubes>
+        <Cubes>{cubes}</Cubes>
       </Container>
     );
   }
 }
 
-storiesOf("Worldview", module)
+storiesOf("Worldview/Cubes", module)
   .add(
     "<Cubes> - single",
     withRange((range) => {
       const marker = cube(range);
       return (
-        <Container cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
+        <Container cameraState={{ perspective: true }}>
           <Wrapper cubes={[marker]} />
         </Container>
       );
@@ -149,4 +140,12 @@ storiesOf("Worldview", module)
         </Container>
       );
     })
-  );
+  )
+  .add("<Cubes> - with custom depth and blend values", () => {
+    const cubes = withCustomRenderStates([cube(0)], [cube(1)]);
+    return (
+      <Container cameraState={{ perspective: true }}>
+        <Wrapper cubes={cubes} />
+      </Container>
+    );
+  });

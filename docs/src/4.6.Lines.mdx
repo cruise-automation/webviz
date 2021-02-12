@@ -1,4 +1,4 @@
-import { LinesDemo, LinesWireframe, LinesHitmap } from "./jsx/allLiveEditors";
+import { LinesDemo, LinesWireframe, LinesHitmap, LinesPoses } from "./jsx/allLiveEditors";
 
 # Lines
 
@@ -6,9 +6,11 @@ import { LinesDemo, LinesWireframe, LinesHitmap } from "./jsx/allLiveEditors";
 
 ## Props
 
-| Name       | Type     | Default | Description                     |
-| ---------- | -------- | ------- | ------------------------------- |
-| `children` | `Line[]` | `[]`    | array of Line markers to render |
+| Name       | Type         | Default     | Description                     |
+| ---------- | ------------ | ----------- | ------------------------------- |
+| `children` | `Line[]`     | `[]`        | array of Line markers to render |
+| `depth`    | `DepthState` | `undefined` | optional depth state settings   |
+| `blend`    | `BlendState` | `undefined` | optional blend state settings   |
 
 ### Line
 
@@ -22,6 +24,13 @@ type Line = {
     position: { x: number, y: number, z: number },
     orientation: { x: number, y: number, z: number, w: number }
   }
+  // Lines can optionally include multiple poses.
+  poses: [
+    {
+      position: { x: number, y: number, z: number },
+      orientation: { x: number, y: number, z: number, w: number }
+    }
+  ],
   scale: {
     x: number,
     y: number,
@@ -44,6 +53,10 @@ type Line = {
 ## Wireframe Example
 
 <LinesWireframe />
+
+## Multi-Pose Example
+
+<LinesPoses />
 
 ## Mouse Interaction
 

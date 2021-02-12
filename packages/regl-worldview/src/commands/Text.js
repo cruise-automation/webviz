@@ -8,8 +8,8 @@
 
 import React from "react";
 
-import type { Point, CameraCommand, Dimensions, Color, Pose, Scale } from "../types";
-import { getCSSColor } from "../utils/commandUtils";
+import type { Point, CameraCommand, Dimensions, Color, Pose, Scale, Vec4 } from "../types";
+import { getCSSColor, toColor } from "../utils/commandUtils";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
@@ -19,12 +19,12 @@ const BRIGHTNESS_THRESHOLD = 128;
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0.8 };
 
-type TextMarker = {
+export type TextMarker = {
   name?: string,
   pose: Pose,
   scale: Scale,
-  color?: Color,
-  colors?: Color[],
+  color?: Color | Vec4,
+  colors?: (Color | Vec4)[],
   text: string,
 };
 
@@ -57,7 +57,7 @@ function insertGlobalCss() {
   cssHasBeenInserted = true;
 }
 
-function isColorDark({ r, g, b }: Color): boolean {
+export function isColorDark({ r, g, b }: Color): boolean {
   // ITU-R BT.709 https://en.wikipedia.org/wiki/Rec._709
   // 0.2126 * 255 * r + 0.7152 * 255 * g + 0.0722 * 255 * b
   const luma = 54.213 * r + 182.376 * g + 18.411 * b;
@@ -90,9 +90,10 @@ class TextElement {
     this.wrapper.style.transform = `translate(${left.toFixed()}px,${top.toFixed()}px)`;
     const { color, colors = [] } = marker;
     const hasBgColor = colors.length >= 2;
-    const textColor = hasBgColor ? colors[0] : color;
+    const textColor = toColor(hasBgColor ? colors[0] : color || [0, 0, 0, 1]);
 
     if (textColor) {
+      const backgroundColor = toColor(colors[1]);
       if (!isColorEqual(this._prevTextColor, textColor)) {
         this._prevTextColor = textColor;
         this.wrapper.style.color = getCSSColor(textColor);
@@ -112,10 +113,10 @@ class TextElement {
           const isTextColorDark = isColorDark(textColor);
           const hexBgColor = isTextColorDark ? BG_COLOR_LIGHT : BG_COLOR_DARK;
           this._inner.style.background = hexBgColor;
-        } else if (hasBgColor && this._prevBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
+        } else if (hasBgColor && this._prevBgColor && !isColorEqual(backgroundColor, this._prevBgColor)) {
           // update background color with colors[1] data
-          this._prevBgColor = colors[1];
-          this._inner.style.background = getCSSColor(colors[1]);
+          this._prevBgColor = backgroundColor;
+          this._inner.style.background = getCSSColor(backgroundColor);
         }
       }
     }

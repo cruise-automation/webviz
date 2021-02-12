@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,26 +14,24 @@ import styled from "styled-components";
 
 import Slider from "webviz-core/src/components/Slider";
 
-const StyledRange = styled.div.attrs({
-  style: ({ width = 0 }) => ({ width: `${width * 100}%` }),
-})`
+const StyledRange = styled.div`
   position: absolute;
   top: 40%;
   left: 0;
   background-color: #b3ecf9bd;
   height: 20%;
+  width: ${(props) => (props.width || 0) * 100}%;
   border-radius: 2px;
 `;
 
-const StyledMarker = styled.div.attrs({
-  style: ({ width = 0 }) => ({ left: `${width * 100}%` }),
-})`
+const StyledMarker = styled.div`
   background-color: white;
   position: absolute;
   height: 150%;
   border: 1px solid rgba(0, 0, 0, 0.3);
   width: 6px;
   top: -25%;
+  left: ${(props) => (props.width || 0) * 100}%;
 `;
 
 const initialState = {
@@ -56,6 +54,10 @@ storiesOf("<Slider>", module)
           <p>standard (clickable)</p>
           <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>
             <Slider min={10} max={200} onChange={(v) => onChange("value", v)} value={state.value} />
+          </div>
+          <p>disabled (not clickable)</p>
+          <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>
+            <Slider disabled min={10} max={200} onChange={(v) => onChange("value", v)} value={state.value} />
           </div>
           <p>no value</p>
           <div style={{ backgroundColor: "pink", height: 30, width: 300 }}>

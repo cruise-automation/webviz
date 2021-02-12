@@ -10,7 +10,8 @@
 | `keyMap`              | `CameraKeyMap`                                  | {}                     | override default Worldview hotkeys                                                                      |
 | `shiftKeys`           | `boolean`                                       | true                   | enable/disable shift modifier for keyboard controls                                                     |
 | `backgroundColor`     | `Vec4`                                          | `[0,0,0,1]`            | change the scene background color                                                                       |
-| `hitmapOnMouseMove`   | `boolean`                                       |                        | if enabled, the clicked objectId will be returned from the mouse event handler                          |
+| `disableHitmapForEvents`   | `[MouseEventEnum]`                         | ["onMouseMove"]    | disable rendering the hitmap for some mouse events for performance reasons. Only "onMouseMove" is disabled by default. |
+| `enableStackedObjectEvents` | `boolean`                                 |                        | if enabled, event handlers will be called with all objects the mouse cursor is on top of, not just the top-most object. Disabled by default for performance reasons. |
 | `children`            | `React.Node`                                    |                        | regl components to render inside the Worldview                                                          |
 | `style`               | `{ [styleAttribute: string]: number | string }` | {}                     | html style object for the Worldview root element                                                        |
 | `showDebug`           | `boolean`                                       |                        | show debug information                                                                                  |
@@ -19,6 +20,9 @@
 | `onMouseUp`           | `MouseHandler`                                  |                        |                                                                                                         |
 | `onMouseMove`         | `MouseHandler`                                  |                        |                                                                                                         |
 | `onClick`             | `MouseHandler`                                  |                        |                                                                                                         |
+| `hitmapOnMouseMove`   | `boolean`                                       |                        | (DEPRECATED: see `disableHitmapForEvents`) if enabled, the clicked object will be returned from the mouse event handler. Disabled by default for performance reasons. |
+| `resolutionScale`     | `number`                                        | `1`                    | if present, the `canvas` element will be scaled by the given amount, improving the final render quality.
+| `contextAttributes`     | `Object`                                        |                     | If present, the WebGL context attributes that will be passed to `canvas.getContext` when creating the canvas for Worldview.
 
 _All props are optional._
 
@@ -27,6 +31,8 @@ _All props are optional._
 See [MouseEvents](#/docs/api/mouse-events).
 
 ## Keyboard Controls
+
+The keyboard controls are only active if the `<Worldview>` HTMLElement has focus. In order to focus `<Worldview>` programatically, `<Worldview>` exposes a imperative `focus()` method, similar to `HTMLElement.focus()`.
 
 `keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.code](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
 

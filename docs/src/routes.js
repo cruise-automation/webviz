@@ -25,6 +25,9 @@ import Arrows from "./4.1.Arrows.mdx";
 import Text from "./4.10.Text.mdx";
 import Triangles from "./4.11.Triangles.mdx";
 import GLTFScene from "./4.12.GLTFScene.mdx";
+import DrawPolygons from "./4.13.DrawPolygons.mdx";
+import Grid from "./4.14.Grid.mdx";
+import GLText from "./4.15.GLText.mdx";
 import Cones from "./4.2.Cones.mdx";
 import Cubes from "./4.3.Cubes.mdx";
 import Cylinders from "./4.4.Cylinders.mdx";
@@ -33,6 +36,7 @@ import Lines from "./4.6.Lines.mdx";
 import Overlay from "./4.7.Overlay.mdx";
 import Points from "./4.8.Points.mdx";
 import Spheres from "./4.9.Spheres.mdx";
+import MigratingToVersion02x from "./5.1.MigratingToVersion0.2.x.mdx";
 
 export const componentList = {
   BasicExample,
@@ -59,11 +63,15 @@ export const componentList = {
   Points,
   Spheres,
   Text,
+  GLText,
   Triangles,
   Flow,
   GLTFScene,
+  DrawPolygons,
+  Grid,
   BrowserSupport,
   Glossary,
+  ["MigratingToVersion0.2.X"]: MigratingToVersion02x,
 };
 
 const ROUTE_CONFIG = [
@@ -93,9 +101,16 @@ const ROUTE_CONFIG = [
       "Points",
       "Spheres",
       "Text",
+      "GLText",
       "Triangles",
       "GLTFScene",
+      "DrawPolygons",
+      "Grid",
     ],
+  },
+  {
+    name: "Migration Notes",
+    subRouteNames: ["Migrating To Version 0.2.x"],
   },
 ];
 
@@ -109,8 +124,8 @@ export function getHashUrlByComponentName(name) {
     ROUTE_CONFIG.forEach(({ name, subRouteNames }) => {
       subRouteNames.forEach((subRouteName) => {
         const componentName = getComponentName(subRouteName);
-        const subRoutePath = getSubRoutePath(subRouteName);
-        nameToUrlMap[componentName] = `/docs/${name.toLowerCase()}/${subRoutePath}`;
+        const subRoutePath = getRoutePath(subRouteName);
+        nameToUrlMap[componentName] = `/docs/${getRoutePath(name)}/${subRoutePath}`;
       });
     });
   }
@@ -119,23 +134,22 @@ export function getHashUrlByComponentName(name) {
 
 // convert route names to component names, e.g. `Managing the Camera` => `ManagingTheCamera`
 function getComponentName(routeName) {
-  return routeName.replace(/(\b[a-z](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
+  return routeName.replace(/(\b[a-z.](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }
 
-function getSubRoutePath(subRouteName) {
+function getRoutePath(subRouteName) {
   return `${subRouteName.toLowerCase().replace(/\s/g, "-")}`;
 }
 
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
-  const componentName = getComponentName(name);
   return {
-    path: `/docs/${componentName.toLowerCase()}`,
-    name: componentName,
+    path: `/docs/${getRoutePath(name)}`,
+    name,
     exact: true,
     subRoutes: subRouteNames.map((subRouteName, idx) => {
       const subComponentName = getComponentName(subRouteName);
       return {
-        path: `/${getSubRoutePath(subRouteName)}`,
+        path: `/${getRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,
       };

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -8,9 +8,8 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import ErrorBoundary from "./ErrorBoundary";
 
@@ -27,14 +26,12 @@ class Broken extends React.Component<{}> {
   }
 }
 
-storiesOf("<ErrorBoundary>", module)
-  .addDecorator(withScreenshot())
-  .add("examples", () => {
-    return (
-      <DragDropContextProvider backend={HTML5Backend}>
-        <ErrorBoundary>
-          <Broken />
-        </ErrorBoundary>
-      </DragDropContextProvider>
-    );
-  });
+storiesOf("<ErrorBoundary>", module).add("examples", () => {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <ErrorBoundary>
+        <Broken />
+      </ErrorBoundary>
+    </DndProvider>
+  );
+});

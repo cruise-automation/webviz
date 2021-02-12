@@ -1,12 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
+import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
 import cx from "classnames";
 import * as React from "react";
 
@@ -19,7 +19,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 type Props = {|
   children?: React.Node,
   value?: any,
-  text?: string,
+  text?: React.Node,
   position: "above" | "below" | "left" | "right",
   disabled?: boolean,
   closeOnChange?: boolean,
@@ -27,6 +27,11 @@ type Props = {|
   toggleComponent?: React$Element<any>,
   flatEdges: boolean,
   tooltip?: string,
+  dataTest?: string,
+  noPortal?: boolean,
+  btnStyle?: StyleObj,
+  btnClassname?: string,
+  menuStyle?: StyleObj,
 |};
 
 type State = {
@@ -65,7 +70,7 @@ export default class Dropdown extends React.Component<Props, State> {
       return React.cloneElement(child, { checked, onClick });
     }
     return (
-      <Item checked={checked} onClick={onClick}>
+      <Item iconSize="xxsmall" checked={checked} onClick={onClick} isDropdown>
         {child}
       </Item>
     );
@@ -86,16 +91,21 @@ export default class Dropdown extends React.Component<Props, State> {
     if (this.props.toggleComponent) {
       return this.props.toggleComponent;
     }
-    const { text, value, disabled, tooltip } = this.props;
+    const { btnClassname, text, value, disabled, tooltip } = this.props;
+    const { isOpen } = this.state;
     const button = (
-      <button className={cx(styles.button, { disabled })}>
+      <button
+        className={cx(styles.button, btnClassname, { disabled })}
+        style={{ opacity: isOpen ? 1 : undefined, ...this.props.btnStyle }}
+        data-test={this.props.dataTest}>
         <span className={styles.title}>{text || value}</span>
         <Icon style={{ marginLeft: 4 }}>
-          <MenuDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />
+          <ChevronDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />
         </Icon>
       </button>
     );
-    if (tooltip) {
+    if (tooltip && !isOpen) {
+      // The tooltip often occludes the first item of the open menu.
       return <Tooltip contents={tooltip}>{button}</Tooltip>;
     }
     return button;
@@ -103,15 +113,23 @@ export default class Dropdown extends React.Component<Props, State> {
 
   render() {
     const { isOpen } = this.state;
-    const { position, flatEdges } = this.props;
+    const { position, flatEdges, menuStyle } = this.props;
     const style = {
       borderTopLeftRadius: flatEdges && position !== "above" ? "0" : undefined,
       borderTopRightRadius: flatEdges && position !== "above" ? "0" : undefined,
       borderBottomLeftRadius: flatEdges && position === "above" ? "0" : undefined,
       borderBottomRightRadius: flatEdges && position === "above" ? "0" : undefined,
+      ...(position === "above" ? { marginBottom: 4, borderRadius: 4 } : {}),
+      ...menuStyle,
     };
     return (
-      <ChildToggle style={{ maxWidth: "100%" }} position={position} isOpen={isOpen} onToggle={this.toggle}>
+      <ChildToggle
+        style={{ maxWidth: "100%", zIndex: 0 }}
+        position={position}
+        isOpen={isOpen}
+        onToggle={this.toggle}
+        dataTest={this.props.dataTest}
+        noPortal={this.props.noPortal}>
         {this.renderButton()}
         <Menu style={style}>{this.renderChildren()}</Menu>
       </ChildToggle>

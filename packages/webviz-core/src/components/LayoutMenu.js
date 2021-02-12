@@ -1,56 +1,42 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import CodeJsonIcon from "@mdi/svg/svg/code-json.svg";
+import React, { useState } from "react";
 
-import AppsIcon from "@mdi/svg/svg/apps.svg";
-import JsonIcon from "@mdi/svg/svg/json.svg";
-import React, { PureComponent } from "react";
-
+import LayoutIcon from "webviz-core/src/assets/layout.svg";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
-import Icon from "webviz-core/src/components/Icon";
+import Flex from "webviz-core/src/components/Flex";
+import { WrappedIcon } from "webviz-core/src/components/Icon";
+import { openLayoutModal } from "webviz-core/src/components/LayoutModal";
 import Menu, { Item } from "webviz-core/src/components/Menu";
+import { ClearBagCacheMenuItem } from "webviz-core/src/util/indexeddb/clearIndexedDb";
 
-type Props = {
-  onImportSelect: () => void,
-};
+export default function LayoutMenu() {
+  const [isOpen, setIsOpen] = useState(false);
 
-type State = {
-  isOpen: boolean,
-};
-
-export default class LayoutMenu extends PureComponent<Props, State> {
-  state = {
-    isOpen: false,
-  };
-
-  onToggle = () => {
-    this.setState({ isOpen: !this.state.isOpen });
-  };
-
-  onImportClick = () => {
-    const { onImportSelect } = this.props;
-    this.setState({ isOpen: false });
-    onImportSelect();
-  };
-
-  render() {
-    const { isOpen } = this.state;
-
-    return (
-      <ChildToggle position="below" onToggle={this.onToggle} isOpen={isOpen}>
-        <Icon medium fade active={isOpen}>
-          <AppsIcon />
-        </Icon>
-        <Menu>
-          <Item icon={<JsonIcon />} onClick={this.onImportClick}>
-            import/export layout
-          </Item>
-        </Menu>
-      </ChildToggle>
-    );
-  }
+  return (
+    <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
+      <Flex>
+        <WrappedIcon medium fade active={isOpen} tooltip="Config">
+          <LayoutIcon />
+        </WrappedIcon>
+      </Flex>
+      <Menu>
+        <Item
+          icon={<CodeJsonIcon />}
+          onClick={() => {
+            setIsOpen(false);
+            openLayoutModal();
+          }}>
+          Import/export layout
+        </Item>
+        <ClearBagCacheMenuItem />
+      </Menu>
+    </ChildToggle>
+  );
 }

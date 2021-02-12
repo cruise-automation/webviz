@@ -1,0 +1,11 @@
+0ff6b4593fe8d8c360164c15cebeeaf67bdc8b90  ./webviz-core/migrations/frozenHelpers/getPanelIdForType.js
+0ac345204bcb8845749bd69ea6ff98dfd9018b76  ./webviz-core/migrations/frozenHelpers/getPanelIdWithNewType.js
+534696ba8c013571cc2415c68f971b3e68cdb8f4  ./webviz-core/migrations/frozenHelpers/getPanelTypeFromId.js
+6c9820bd0ac1e464c9bbff0f478d8f766cbee23b  ./webviz-core/migrations/frozenHelpers/incrementVersion.js
+26510ef12123b4c7bb6e2ce09625ba32e6ff2b2e  ./webviz-core/migrations/frozenHelpers/migrateConfigFieldName.js
+9ef1379e84ccef68f08b925cfa8b1039d112e9fd  ./webviz-core/migrations/frozenHelpers/migratePanelType.js
+442bc6016fce25a1a5c2a9705084fa4fa9d11d06  ./webviz-core/migrations/frozenHelpers/replacePanelLayout.js
+2e1d12bc332d0f1c2627b9421f0d4fb3b3376e2c  ./webviz-core/migrations/frozenHelpers/replacePanelSavedProps.js
+958ebd1976e71e9d4ce912c1a9cfad0f763f03f9  ./webviz-core/migrations/frozenHelpers/replaceSavedPropsLayouts.js
+6fbede06f2f9e7f18d691d302e228d1d09aae486  ./webviz-core/migrations/frozenHelpers/validateVersions.js
+f3bbdbda8332ac0a2cc8ccd28118b0969d0d2dd4  ./webviz-core/migrations/frozenHelpers/validateVersions.test.js

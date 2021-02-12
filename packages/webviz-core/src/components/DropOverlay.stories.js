@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -8,12 +8,9 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 
-storiesOf("<DropOverlay>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return <DropOverlay>Some DropOverlay</DropOverlay>;
-  });
+storiesOf("<DropOverlay>", module).add("default", () => {
+  return <DropOverlay>Some DropOverlay</DropOverlay>;
+});

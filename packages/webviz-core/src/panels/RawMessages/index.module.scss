@@ -1,0 +1,45 @@
+//  Copyright (c) 2018-present, Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.topicInputs {
+  width: 100%;
+  line-height: 20px;
+}
+
+.container {
+  // match the padding with the default padding used in react-json-tree
+  padding-left: 0.5em;
+  @include sans-serif;
+}
+
+.iconWrapper {
+  display: inline;
+  padding-right: 40px; // To make it so the icons appear when you move the mouse somewhat close.
+}
+
+.iconBox {
+  display: inline-block;
+  white-space: nowrap;
+  width: 0px;
+  height: 0px;
+  position: relative;
+  left: 6px;
+}
+
+.icon {
+  > svg {
+    vertical-align: top;
+  }
+}
+
+.singleVal {
+  font-size: 2.5em;
+  word-wrap: break-word;
+  font-weight: bold;
+  white-space: pre-line;
+}

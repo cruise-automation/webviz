@@ -1,0 +1,239 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`printGetClassForView returns the expected code 1`] = `
+"const $offset = Symbol();
+const $deepParse = $context.deepParse;
+const $int53 = $context.int53;
+const $arrayBuffer = $view.buffer;
+const $buffer = $context.Buffer.from($arrayBuffer);
+class fake_msgs_ContainsEverything {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  first() {
+    return new std_msgs_Header(this[$offset]);
+  }
+  second() {
+    return new fake_msgs_HasComplexAndArray((this[$offset] + 20));
+  }
+  third() {
+    return new fake_msgs_HasComplexArray((this[$offset] + 48));
+  }
+  fourth() {
+    return new fake_msgs_HasConstant((this[$offset] + 56));
+  }
+  fifth() {
+    return new fake_msgs_HasByteArray((this[$offset] + 56));
+  }
+  sixth() {
+    return new fake_msgs_HasJson((this[$offset] + 64));
+  }
+  seventh() {
+    return new fake_msgs_HasInt64s((this[$offset] + 72));
+  }
+  eighth() {
+    return new fake_msgs_HasArrayOfEmpties((this[$offset] + 88));
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_ContainsEverything(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_ContainsEverything($offset) {
+  this.first = new deepParse$std_msgs_Header($offset);
+  this.second = new deepParse$fake_msgs_HasComplexAndArray(($offset + 20));
+  this.third = new deepParse$fake_msgs_HasComplexArray(($offset + 48));
+  this.fourth = new deepParse$fake_msgs_HasConstant(($offset + 56));
+  this.fifth = new deepParse$fake_msgs_HasByteArray(($offset + 56));
+  this.sixth = new deepParse$fake_msgs_HasJson(($offset + 64));
+  this.seventh = new deepParse$fake_msgs_HasInt64s(($offset + 72));
+  this.eighth = new deepParse$fake_msgs_HasArrayOfEmpties(($offset + 88));
+}
+$context.associateDatatypes(fake_msgs_ContainsEverything, [$typesByName, \\"fake_msgs/ContainsEverything\\"])
+class std_msgs_Header {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  seq() {
+    return $view.getUint32(this[$offset], true);
+  }
+  stamp() {
+    return new time((this[$offset] + 4));
+  }
+  frame_id() {
+    return $bigString.substr($view.getInt32((this[$offset] + 16), true), $view.getInt32((this[$offset] + 12), true));
+  }
+  [$deepParse]() {
+    return new deepParse$std_msgs_Header(this[$offset]);
+  }
+}
+function deepParse$std_msgs_Header($offset) {
+  this.seq = $view.getUint32($offset, true);
+  this.stamp = new deepParse$time(($offset + 4));
+  this.frame_id = $bigString.substr($view.getInt32(($offset + 16), true), $view.getInt32(($offset + 12), true));
+}
+$context.associateDatatypes(std_msgs_Header, [$typesByName, \\"std_msgs/Header\\"])
+class fake_msgs_HasComplexAndArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  header() {
+    return new std_msgs_Header(this[$offset]);
+  }
+  stringArray() {
+    const from = $view.getInt32((this[$offset] + 24), true);
+    const length = $view.getInt32((this[$offset] + 20), true);
+    return new string$Array(from, length);
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasComplexAndArray(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasComplexAndArray($offset) {
+  this.header = new deepParse$std_msgs_Header($offset);
+  const stringArray$length = $view.getInt32(($offset + 20), true);
+  const stringArray$from = $view.getInt32(($offset + 24), true);
+  const stringArray$arr = new Array(stringArray$length);
+  for (let $ptr = stringArray$from, $i = 0; $i < stringArray$length; $ptr += 8) {
+    stringArray$arr[$i++] = $bigString.substr($view.getInt32(($ptr + 4), true), $view.getInt32($ptr, true));
+  }
+  this.stringArray = stringArray$arr;
+}
+$context.associateDatatypes(fake_msgs_HasComplexAndArray, [$typesByName, \\"fake_msgs/HasComplexAndArray\\"])
+class fake_msgs_HasComplexArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  complexArray() {
+    const from = $view.getInt32((this[$offset] + 4), true);
+    const length = $view.getInt32(this[$offset], true);
+    return new fake_msgs_HasComplexAndArray$Array(from, length);
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasComplexArray(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasComplexArray($offset) {
+  const complexArray$length = $view.getInt32($offset, true);
+  const complexArray$from = $view.getInt32(($offset + 4), true);
+  const complexArray$arr = new Array(complexArray$length);
+  for (let $ptr = complexArray$from, $i = 0; $i < complexArray$length; $ptr += 28) {
+    complexArray$arr[$i++] = new deepParse$fake_msgs_HasComplexAndArray($ptr);
+  }
+  this.complexArray = complexArray$arr;
+}
+$context.associateDatatypes(fake_msgs_HasComplexArray, [$typesByName, \\"fake_msgs/HasComplexArray\\"])
+class fake_msgs_HasConstant {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  const() {
+    return 1;
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasConstant(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasConstant($offset) {
+
+}
+$context.associateDatatypes(fake_msgs_HasConstant, [$typesByName, \\"fake_msgs/HasConstant\\"])
+class fake_msgs_HasByteArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  byte_array() {
+    const from = $view.getInt32((this[$offset] + 4), true);
+    const length = $view.getInt32(this[$offset], true);
+    return new Uint8Array($arrayBuffer, from, length);
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasByteArray(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasByteArray($offset) {
+  const byte_array$length = $view.getInt32($offset, true);
+  const byte_array$from = $view.getInt32(($offset + 4), true);
+  this.byte_array = new Uint8Array($arrayBuffer, byte_array$from, byte_array$length);
+}
+$context.associateDatatypes(fake_msgs_HasByteArray, [$typesByName, \\"fake_msgs/HasByteArray\\"])
+class fake_msgs_HasJson {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  jsonField() {
+    return $context.parseJson($bigString.substr($view.getInt32((this[$offset] + 4), true), $view.getInt32(this[$offset], true)));
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasJson(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasJson($offset) {
+  this.jsonField = $context.parseJson($bigString.substr($view.getInt32(($offset + 4), true), $view.getInt32($offset, true)));
+}
+$context.associateDatatypes(fake_msgs_HasJson, [$typesByName, \\"fake_msgs/HasJson\\"])
+class fake_msgs_HasInt64s {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  i64() {
+    return $int53.readInt64LE($buffer, this[$offset]);
+  }
+  u64() {
+    return $int53.readUInt64LE($buffer, (this[$offset] + 8));
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasInt64s(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasInt64s($offset) {
+  this.i64 = $int53.readInt64LE($buffer, $offset);
+  this.u64 = $int53.readUInt64LE($buffer, ($offset + 8));
+}
+$context.associateDatatypes(fake_msgs_HasInt64s, [$typesByName, \\"fake_msgs/HasInt64s\\"])
+class fake_msgs_HasArrayOfEmpties {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  arr() {
+    const from = $view.getInt32((this[$offset] + 4), true);
+    const length = $view.getInt32(this[$offset], true);
+    return new fake_msgs_HasConstant$Array(from, length);
+  }
+  [$deepParse]() {
+    return new deepParse$fake_msgs_HasArrayOfEmpties(this[$offset]);
+  }
+}
+function deepParse$fake_msgs_HasArrayOfEmpties($offset) {
+  const arr$length = $view.getInt32($offset, true);
+  const arr$from = $view.getInt32(($offset + 4), true);
+  const arr$arr = new Array(arr$length);
+  for (let $ptr = arr$from, $i = 0; $i < arr$length; $ptr += 0) {
+    arr$arr[$i++] = new deepParse$fake_msgs_HasConstant($ptr);
+  }
+  this.arr = arr$arr;
+}
+$context.associateDatatypes(fake_msgs_HasArrayOfEmpties, [$typesByName, \\"fake_msgs/HasArrayOfEmpties\\"])
+class time {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  sec() {
+    return $view.getInt32(this[$offset], true);
+  }
+  nsec() {
+    return $view.getInt32((this[$offset] + 4), true);
+  }
+  [$deepParse]() {
+    return new deepParse$time(this[$offset]);
+  }
+}
+function deepParse$time($offset) {
+  this.sec = $view.getInt32($offset, true);
+  this.nsec = $view.getInt32(($offset + 4), true);
+}
+$context.associateDatatypes(time, [$typesByName, \\"time\\"])
+const string$Array = $context.getArrayView((offset) => $bigString.substr($view.getInt32((offset + 4), true), $view.getInt32(offset, true)), 8);
+const fake_msgs_HasComplexAndArray$Array = $context.getArrayView((offset) => new fake_msgs_HasComplexAndArray(offset), 28);
+const fake_msgs_HasConstant$Array = $context.getArrayView((offset) => new fake_msgs_HasConstant(offset), 0);
+return fake_msgs_ContainsEverything;"
+`;

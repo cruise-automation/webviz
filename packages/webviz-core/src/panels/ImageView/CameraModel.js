@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -15,26 +15,27 @@ const DISTORTION_STATE = {
 
 type DistortionState = $Values<typeof DISTORTION_STATE>;
 
-type InitializedData = {
-  D: number[],
-  K: number[],
-  P: number[],
-  R: number[],
-};
-
 // Essentially a copy of ROSPinholeCameraModel
 // but only the relevant methods, i.e.
 // fromCameraInfo() and unrectifyPoint()
 // http://docs.ros.org/diamondback/api/image_geometry/html/c++/pinhole__camera__model_8cpp_source.html
 export default class PinholeCameraModel {
   _distortionState: DistortionState = DISTORTION_STATE.NONE;
-  _transformMarkers: boolean = false;
-  initializedData: ?InitializedData = null;
+  D: $ReadOnlyArray<number> = [];
+  K: $ReadOnlyArray<number> = [];
+  P: $ReadOnlyArray<number> = [];
+  R: $ReadOnlyArray<number> = [];
 
   // Mostly copied from `fromCameraInfo`
   // http://docs.ros.org/diamondback/api/image_geometry/html/c++/pinhole__camera__model_8cpp_source.html#l00062
-  constructor(info: CameraInfo, transformMarkers: boolean) {
+  constructor(info: CameraInfo) {
     const { binning_x, binning_y, roi, distortion_model, D, K, P, R } = info;
+
+    if (distortion_model === "") {
+      // Allow CameraInfo with no model to indicate no distortion
+      this._distortionState = DISTORTION_STATE.NONE;
+      return;
+    }
 
     // Binning = 0 is considered the same as binning = 1 (no binning).
     const binningX = binning_x ? binning_x : 1;
@@ -44,52 +45,39 @@ export default class PinholeCameraModel {
     const adjustRoi = roi.x_offset !== 0 || roi.y_offset !== 0;
 
     if (adjustBinning || adjustRoi) {
-      console.warn(
+      throw new Error(
         "Failed to initialize camera model: unable to handle adjusted binning and adjusted roi camera models."
       );
-      return;
     }
 
     // See comments about Tx = 0, Ty = 0 in
     // http://docs.ros.org/melodic/api/sensor_msgs/html/msg/CameraInfo.html
     if (P[3] !== 0 || P[7] !== 0) {
-      console.warn(
+      throw new Error(
         "Failed to initialize camera model: projection matrix implies non monocular camera - cannot handle at this time."
       );
-      return;
     }
 
     // Figure out how to handle the distortion
     if (distortion_model === "plumb_bob" || distortion_model === "rational_polynomial") {
-      this._distortionState = info.D[0] === 0.0 ? DISTORTION_STATE.NONE : DISTORTION_STATE.CALIBRATED;
+      this._distortionState = D[0] === 0.0 ? DISTORTION_STATE.NONE : DISTORTION_STATE.CALIBRATED;
     } else {
-      console.warn(
+      throw new Error(
         "Failed to initialize camera model: distortion_model is unknown, only plumb_bob and rational_polynomial are supported."
       );
-      return;
     }
-    this.initializedData = { D, K, P, R };
-    this._transformMarkers = transformMarkers;
+    this.D = D;
+    this.P = P;
+    this.R = R;
+    this.K = K;
   }
 
-  maybeUnrectifyPoint({ x: rectX, y: rectY }: Point): { x: number, y: number } {
-    if (!this._transformMarkers) {
-      return { x: rectX, y: rectY };
-    }
-
-    const initializedData = this.initializedData;
-
-    if (!initializedData) {
-      throw new Error(
-        "Camera model is not initialized, check cameraModel.initializedData before calling cameraModel.maybeUnrectifyPoint."
-      );
-    }
-
+  unrectifyPoint({ x: rectX, y: rectY }: Point): { x: number, y: number } {
     if (this._distortionState === DISTORTION_STATE.NONE) {
       return { x: rectX, y: rectY };
     }
 
-    const { P, R, D, K } = initializedData;
+    const { P, R, D, K } = this;
     const fx = P[0];
     const fy = P[5];
     const cx = P[2];

@@ -9,56 +9,77 @@
 import mapValues from "lodash/mapValues";
 import pickBy from "lodash/pickBy";
 import * as React from "react";
-import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap, MouseEventEnum } from "./types";
+import Command from "./commands/Command";
+import type {
+  MouseHandler,
+  Dimensions,
+  Vec4,
+  CameraState,
+  CameraKeyMap,
+  MouseEventEnum,
+  MouseEventObject,
+} from "./types";
+import aggregate from "./utils/aggregate";
 import { getNodeEnv } from "./utils/common";
+import ContainerDimensions from "./utils/Dimensions";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
+const DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS = 100;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
   shiftKeys: boolean,
   useFrames?: boolean,
   backgroundColor?: Vec4,
-  // rendering the hitmap on mouse move is expensive, so disable it by default
+  // (Deprecated) rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
+  // Disable hitmap generation for specific mouse events
+  // For example, if you want to disable hitmap generating on drag, use: ["onMouseDown", "onMouseMove", "onMouseUp"]
+  disableHitmapForEvents?: MouseEventEnum[],
+  // getting events for objects stacked on top of each other is expensive, so disable it by default
+  enableStackedObjectEvents?: boolean,
+  // allow users to specify the max stacked object count
+  maxStackedObjectCount: number,
   showDebug?: boolean,
   children?: React.Node,
   style: { [styleAttribute: string]: number | string },
 
-  cameraState?: CameraState,
+  cameraState?: $Shape<CameraState>,
   onCameraStateChange?: (CameraState) => void,
-  defaultCameraState?: CameraState,
+  defaultCameraState?: $Shape<CameraState>,
   // interactions
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
+
+  // Used to scale the canvas resolution and provide a higher image quality
+  resolutionScale?: number,
   ...Dimensions,
+
+  // Context attributes passed into canvas.getContext.
+  contextAttributes?: ?{ [string]: any },
+  canvas?: HTMLCanvasElement,
 |};
 
 type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
-  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
-  // TODO: deprecating, remove before 1.x release
-  const args = {
-    ray,
-    objectId,
-    get clickedObjectId() {
-      console.warn('"clickedObjectId" is deprecated. Please use "objectId" instead.');
-      return objectId;
-    },
-  };
+function handleWorldviewMouseInteraction(
+  objects: MouseEventObject[],
+  ray: Ray,
+  e: SyntheticMouseEvent<HTMLCanvasElement>,
+  handler: MouseHandler
+) {
+  const args = { ray, objects };
 
   try {
     handler(e, args);
@@ -71,19 +92,37 @@ function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: Mouse
 // takes in children that declaritively define what should be rendered
 export class WorldviewBase extends React.Component<BaseProps, State> {
   _canvas: { current: HTMLCanvasElement | null } = React.createRef();
+  _cameraListener: { current: CameraListener | null } = React.createRef();
   _tick: AnimationFrameID | void;
   _dragStartPos: ?{ x: number, y: number } = null;
 
   static defaultProps = {
+    maxStackedObjectCount: DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
     useFrames: true,
     style: {},
+    resolutionScale: 1,
   };
 
   constructor(props: BaseProps) {
     super(props);
-    const { width, height, top, left, backgroundColor, onCameraStateChange, cameraState, defaultCameraState } = props;
+    const {
+      width,
+      height,
+      top,
+      left,
+      backgroundColor,
+      onCameraStateChange,
+      cameraState,
+      defaultCameraState,
+      hitmapOnMouseMove,
+      disableHitmapForEvents,
+      canvas,
+    } = props;
+    if (canvas) {
+      this._canvas.current = canvas;
+    }
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
@@ -101,6 +140,18 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       }
     }
 
+    if (hitmapOnMouseMove) {
+      if (disableHitmapForEvents) {
+        throw new Error(
+          "Property 'hitmapOnMouseMove' is deprectated and will be ignored when used along with 'disableHitmapForEvents'."
+        );
+      } else {
+        console.warn(
+          "Property 'hitmapOnMouseMove' is deprectated. Please use 'disableHitmapForEvents' property instead."
+        );
+      }
+    }
+
     this.state = {
       worldviewContext: new WorldviewContext({
         dimension: { width, height, top, left },
@@ -108,6 +159,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
         cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
+        contextAttributes: props.contextAttributes || {},
       }),
     };
   }
@@ -144,12 +196,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 
-    // queue up a paint operation on the next frame, if we haven't already
-    if (!this._tick && this.props.useFrames) {
-      this._tick = requestAnimationFrame(() => {
-        this._tick = undefined;
-        worldviewContext.paint();
-      });
+    if (this.props.useFrames) {
+      worldviewContext.onDirty();
+    }
+  }
+
+  focus() {
+    if (this._cameraListener.current) {
+      this._cameraListener.current.focus();
     }
 
     if (!this.props.useFrames) {
@@ -157,41 +211,61 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  _onDoubleClick = (e: MouseEvent) => {
-    this._onMouseInteraction(e, "onDoubleClick");
+  handleOffscreenMouseEvent = (e: SyntheticMouseEvent<HTMLCanvasElement>, mouseEventName: MouseEventEnum) => {
+    if (mouseEventName === "onDoubleClick") {
+      this._onDoubleClick(e, true);
+    } else if (mouseEventName === "onMouseDown") {
+      this._onMouseDown(e, true);
+    } else if (mouseEventName === "onMouseMove") {
+      this._onMouseMove(e, true);
+    } else if (mouseEventName === "onMouseUp") {
+      this._onMouseUp(e, true);
+    }
   };
 
-  _onMouseDown = (e: MouseEvent) => {
+  _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onDoubleClick", fromOffscreenTarget);
+  };
+
+  _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
     this._dragStartPos = { x: e.clientX, y: e.clientY };
-    this._onMouseInteraction(e, "onMouseDown");
+    this._onMouseInteraction(e, "onMouseDown", fromOffscreenTarget);
   };
 
-  _onMouseMove = (e: MouseEvent) => {
-    this._onMouseInteraction(e, "onMouseMove", this.props.hitmapOnMouseMove);
+  _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onMouseMove", fromOffscreenTarget);
   };
 
-  _onMouseUp = (e: MouseEvent) => {
-    this._onMouseInteraction(e, "onMouseUp");
+  _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+    this._onMouseInteraction(e, "onMouseUp", fromOffscreenTarget);
     const { _dragStartPos } = this;
     if (_dragStartPos) {
       const deltaX = e.clientX - _dragStartPos.x;
       const deltaY = e.clientY - _dragStartPos.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (distance < DEFAULT_MOUSE_CLICK_RADIUS) {
-        this._onMouseInteraction(e, "onClick");
+        this._onMouseInteraction(e, "onClick", fromOffscreenTarget);
       }
       this._dragStartPos = null;
     }
   };
 
-  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {
+  _onMouseInteraction = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    mouseEventName: MouseEventEnum,
+    fromOffscreenTarget: boolean
+  ) => {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 
-    if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
+    // When working with offscreen canvases, window is not defined and the target
+    // might not be a valid HTMLElement. If so, we can asume any event coming
+    // from an offscreen canvas already has a relevant target.
+    if (!fromOffscreenTarget && (!(e.target instanceof window.HTMLElement) || e.button !== 0)) {
       return;
     }
 
+    // $FlowFixMe: Because of `fromOffscreenTarget`, target might not be an actual HTMLElement instance but still needs to implement `getBoundingClientRect`
     const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
     const { clientX, clientY } = e;
 
@@ -202,19 +276,33 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    if (!readHitmap && worldviewHandler) {
-      return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
+    // Rendering the hitmap is expensive, so we should disable it for some events.
+    // If 'disableHitmapForEvents' is provided, we ignore any events contained in that property.
+    // Otherwise, we ignore 'onMouseMove' events by default unless 'hitmapOnMouseMove' is 'true'
+    const { hitmapOnMouseMove, disableHitmapForEvents = hitmapOnMouseMove ? [] : ["onMouseMove"] } = this.props;
+    if (disableHitmapForEvents.includes(mouseEventName)) {
+      if (worldviewHandler) {
+        return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
+      }
+      return;
     }
 
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY)
-      .then((objectId) => {
-        if (worldviewHandler) {
-          handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
+      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents, this.props.maxStackedObjectCount)
+      .then((mouseEventsWithCommands) => {
+        const mouseEventsByCommand: Map<Command<any>, Array<MouseEventObject>> = aggregate(mouseEventsWithCommands);
+        for (const [command, mouseEvents] of mouseEventsByCommand.entries()) {
+          command.handleMouseEvent(mouseEvents, ray, e, mouseEventName);
+          if (e.isPropagationStopped()) {
+            break;
+          }
         }
-        worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
+        if (worldviewHandler && !e.isPropagationStopped()) {
+          const mouseEvents = mouseEventsWithCommands.map(([mouseEventObject]) => mouseEventObject);
+          handleWorldviewMouseInteraction(mouseEvents, ray, e, worldviewHandler);
+        }
       })
       .catch((e) => {
         console.error(e);
@@ -271,17 +359,29 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, shiftKeys, style, cameraState, onCameraStateChange } = this.props;
+    const {
+      width,
+      height,
+      showDebug,
+      keyMap,
+      shiftKeys,
+      style,
+      cameraState,
+      onCameraStateChange,
+      resolutionScale,
+      canvas,
+    } = this.props;
     const { worldviewContext } = this.state;
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
-    const canvasHtml = (
+    const canvasScale = resolutionScale || 1;
+    const canvasHtml = canvas ? null : (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-          width={width}
-          height={height}
+          width={width * canvasScale}
+          height={height * canvasScale}
           ref={this._canvas}
           onMouseUp={this._onMouseUp}
           onMouseDown={this._onMouseDown}
@@ -298,7 +398,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         {isFixedCamera ? (
           canvasHtml
         ) : (
-          <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
+          <CameraListener
+            cameraStore={worldviewContext.cameraStore}
+            keyMap={keyMap}
+            shiftKeys={shiftKeys}
+            ref={(el) => (this._cameraListener.current = el)}>
             {canvasHtml}
           </CameraListener>
         )}
@@ -314,11 +418,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
 export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
 
-const Worldview = (props: Props) => (
+const Worldview = React.forwardRef<Props, _>((props: Props, ref) => (
   <ContainerDimensions>
-    {({ width, height, left, top }) => <WorldviewBase width={width} height={height} left={left} top={top} {...props} />}
+    {({ width, height, left, top }) => (
+      <WorldviewBase width={width} height={height} left={left} top={top} ref={ref} {...props} />
+    )}
   </ContainerDimensions>
-);
+));
 
 Worldview.displayName = "Worldview";
 

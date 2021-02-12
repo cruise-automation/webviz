@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -35,7 +35,23 @@ export function decodeYUV(yuv: Int8Array, width: number, height: number, output:
   }
 }
 
-export function decodeBGR(bgr: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeRGB8(rgb: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+  let inIdx = 0;
+  let outIdx = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const r = rgb[inIdx++];
+    const g = rgb[inIdx++];
+    const b = rgb[inIdx++];
+
+    output[outIdx++] = r;
+    output[outIdx++] = g;
+    output[outIdx++] = b;
+    output[outIdx++] = 255;
+  }
+}
+
+export function decodeBGR8(bgr: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
   let inIdx = 0;
   let outIdx = 0;
 
@@ -51,12 +67,18 @@ export function decodeBGR(bgr: Uint8Array, width: number, height: number, output
   }
 }
 
-export function decodeFloat1c(gray: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeFloat1c(
+  gray: Uint8Array,
+  width: number,
+  height: number,
+  is_bigendian: boolean,
+  output: Uint8ClampedArray
+) {
   const view = new DataView(gray.buffer, gray.byteOffset);
 
   let outIdx = 0;
   for (let i = 0; i < width * height * 4; i += 4) {
-    const val = view.getFloat32(i, true) * 255;
+    const val = view.getFloat32(i, !is_bigendian) * 255;
     output[outIdx++] = val;
     output[outIdx++] = val;
     output[outIdx++] = val;
@@ -64,7 +86,55 @@ export function decodeFloat1c(gray: Uint8Array, width: number, height: number, o
   }
 }
 
-export function decodeRGGB(rggb: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeMono8(mono8: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+  let inIdx = 0;
+  let outIdx = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const ch = mono8[inIdx++];
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
+    output[outIdx++] = 255;
+  }
+}
+
+export function decodeMono16(
+  mono16: Uint8Array,
+  width: number,
+  height: number,
+  is_bigendian: boolean,
+  output: Uint8ClampedArray
+) {
+  const view = new DataView(mono16.buffer, mono16.byteOffset);
+
+  let outIdx = 0;
+  for (let i = 0; i < width * height * 2; i += 2) {
+    let val = view.getUint16(i, !is_bigendian);
+
+    // For now, just assume values are in the range 0-10000, consistent with image_view's default.
+    // TODO: support dynamic range adjustment and/or user-selectable range
+    // References:
+    // https://github.com/ros-perception/image_pipeline/blob/42266892502427eb566a4dffa61b009346491ce7/image_view/src/nodes/image_view.cpp#L80-L88
+    // https://github.com/ros-visualization/rqt_image_view/blob/fe076acd265a05c11c04f9d04392fda951878f54/src/rqt_image_view/image_view.cpp#L582
+    // https://github.com/ros-visualization/rviz/blob/68b464fb6571b8760f91e8eca6fb933ba31190bf/src/rviz/image/ros_image_texture.cpp#L114
+    val = (val / 10000) * 255;
+
+    output[outIdx++] = val;
+    output[outIdx++] = val;
+    output[outIdx++] = val;
+    output[outIdx++] = 255;
+  }
+}
+
+// Specialize the Bayer decode function to a certain encoding. For performance reasons, we use
+// new Function() -- this is about 20% faster than a switch statement and .bind().
+function makeSpecializedDecodeBayer(
+  tl,
+  tr,
+  bl,
+  br
+): (data: Uint8Array, width: number, height: number, output: Uint8ClampedArray) => void {
   // We probably can't afford real debayering/demosaicking, so do something simpler
   // The input array look like a single-plane array of pixels.  However, each pixel represents a one particular color
   // for a group of pixels in the 2x2 region.  For 'rggb', there color representatio for the 2x2 region looks like:
@@ -79,16 +149,27 @@ export function decodeRGGB(rggb: Uint8Array, width: number, height: number, outp
   //
   // We'll do something much simpler.  For each group of 2x2, we're replicate the R and B values for all pixels.
   // For the two row, we'll replicate G0 for the green channels, and replicate G1 for the bottom row.
-
+  // eslint-disable-next-line no-new-func
+  return (new Function(
+    "data",
+    "width",
+    "height",
+    "output",
+    `
   for (let i = 0; i < height / 2; i++) {
     let inIdx = i * 2 * width;
     let outTopIdx = i * 2 * width * 4; // Addresses top row
     let outBottomIdx = (i * 2 + 1) * width * 4; // Addresses bottom row
     for (let j = 0; j < width / 2; j++) {
-      const r = rggb[inIdx++];
-      const g0 = rggb[inIdx++];
-      const g1 = rggb[inIdx + width - 2];
-      const b = rggb[inIdx + width - 1];
+      const tl = data[inIdx++];
+      const tr = data[inIdx++];
+      const bl = data[inIdx + width - 2];
+      const br = data[inIdx + width - 1];
+
+      const ${tl} = tl;
+      const ${tr} = tr;
+      const ${bl} = bl;
+      const ${br} = br;
 
       // Top row
       output[outTopIdx++] = r;
@@ -112,5 +193,11 @@ export function decodeRGGB(rggb: Uint8Array, width: number, height: number, outp
       output[outBottomIdx++] = b;
       output[outBottomIdx++] = 255;
     }
-  }
+  }`
+  ): any);
 }
+
+export const decodeBayerRGGB8 = makeSpecializedDecodeBayer("r", "g0", "g1", "b");
+export const decodeBayerBGGR8 = makeSpecializedDecodeBayer("b", "g0", "g1", "r");
+export const decodeBayerGBRG8 = makeSpecializedDecodeBayer("g0", "b", "r", "g1");
+export const decodeBayerGRBG8 = makeSpecializedDecodeBayer("g0", "r", "b", "g1");

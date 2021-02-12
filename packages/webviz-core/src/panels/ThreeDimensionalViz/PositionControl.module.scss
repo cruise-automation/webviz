@@ -1,0 +1,21 @@
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.inputField {
+  @include monospace;
+  padding: 8px 12px;
+  border-radius: 4px;
+  outline: none;
+  line-height: 1.3;
+  min-width: 180px;
+
+  &:not(:focus) b {
+    color: $text-normal;
+  }
+  &:not(:focus) .value {
+    color: $highlight;
+  }
+  &:focus {
+    color: black;
+    background-color: transparentize($text-normal, 0.2);
+  }
+}

@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+
 import type { CameraState } from "../camera/CameraStore";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
@@ -40,6 +41,7 @@ export type Regl = {
     pointSizeDims: [number, number],
   },
   prop: (string) => any,
+  context: (string) => any,
 };
 
 export type CommandProps = {
@@ -94,30 +96,24 @@ export type ArrowSize = {
   headWidth: number,
 };
 
+type ClickedObject = {
+  object: Object,
+  instanceIndex?: ?number,
+};
+
 export type ReglClickInfo = {
   ray: Ray,
-  objectId: ?number,
+  objects: Array<ClickedObject>,
 };
 
 export type ComponentReglClickInfo = {
   ray: Ray,
-  object: Object,
-  objectId: ?number,
+  objects: Array<ClickedObject>,
 };
 
-export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
+export type MouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, ReglClickInfo) => void;
 
-export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
-
-export type ReglComponentProps = {
-  commandId: string,
-  commandProps: Array<{}> | {},
-};
-
-export interface ReglComponent {
-  paint: (ReglContext) => void;
-  paintHitmap: (ReglContext) => void;
-}
+export type ComponentMouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, ComponentReglClickInfo) => void;
 
 export type Coordinate = [number, number];
 
@@ -157,42 +153,93 @@ export type Pose = {
 };
 
 export type BaseShape = {
-  id?: number, // positive integer
   pose: Pose,
   scale: Scale,
-  color: Color | Vec4,
+  color?: Color | Vec4,
 };
 
 export type Arrow = BaseShape & {
   points?: Point[],
+  interactionData?: any,
 };
 
 export type Cube = BaseShape & {
-  colors?: Color[],
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
 };
 
-export type Cylinder = BaseShape;
+export type Cone = BaseShape & {
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
+};
+
+export type Cylinder = BaseShape & {
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
+};
 
 export type Line = BaseShape & {
   points: (Point | Vec3)[],
+  poses?: Pose[],
 };
 
 export type PointType = BaseShape & {
+  colors?: (Color | Vec4)[],
   points: (Point | Vec3)[],
 };
 
 export type SphereList = BaseShape & {
-  points?: Point[],
+  points?: (Point | Vec3)[],
 };
 
 export type TriangleList = BaseShape & {
-  points: Point[],
-  colors?: Color[],
+  points: (Point | Vec3)[],
+  colors?: (Color | Vec4)[],
+  // Pass true to not render the triangles to the screen - just the hitmap.
+  onlyRenderInHitmap?: boolean,
 };
 
 export type PolygonType = BaseShape & {
   points: (Point | Vec3)[],
 };
+
+export type MouseEventObject = {
+  object: BaseShape,
+  instanceIndex: ?number,
+};
+
+export type DepthState = {
+  enable?: boolean,
+  mask?: boolean,
+};
+
+export type BlendFuncValue = string | number;
+
+export type BlendState = {
+  enable?: boolean,
+  func?:
+    | BlendFuncValue
+    | {
+        src?: BlendFuncValue,
+        dst?: BlendFuncValue,
+        srcAlpha?: BlendFuncValue,
+        srcRGB?: BlendFuncValue,
+        dstRGB?: BlendFuncValue,
+        dstAlpha?: BlendFuncValue,
+      },
+  equation?: string | { rgb: string, alpha: string },
+  color?: Vec4,
+};
+
+export type ObjectHitmapId = number;
+/*
+ * object: the object to pass to event callbacks when this object is interacted with.
+ * count: How many colors to map to the callback object. If this is greater than 1, this assigns instance indices for
+          the object.
+ * return type: an array of the colors assigned.
+ */
+export type AssignNextColorsFn = (object: Object, count: number) => Vec4[];
+export type GetChildrenForHitmap = <T>(prop: T, AssignNextColorsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

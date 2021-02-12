@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Lines } from "regl-worldview";
 
 import LinesWithClickableInterior from "../utils/LinesWithClickableInterior";
 
@@ -33,21 +33,21 @@ function Example() {
 
   return (
     <Worldview
-      onClick={(ev, { objectId }) => {
-        if (!objectId) {
+      onClick={(ev, { objects }) => {
+        if (!objects.length) {
           setMsg(defaultMsg);
         }
       }}
-      defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
+      defaultCameraState={{ distance: 10 }}>
       <Lines
-        onClick={(ev, { object, objectId }) => {
-          setMsg(`Clicked on the lines. objectId: ${objectId}`);
+        onClick={(ev, { objects }) => {
+          setMsg(`Clicked on the lines. objectId: ${objects[0].object.id}`);
         }}>
         {lines}
       </Lines>
       <LinesWithClickableInterior
-        onClick={(ev, { object, objectId }) => {
-          setMsg(`Clicked on the interior of the lines. objectId: ${objectId}`);
+        onClick={(ev, { objects }) => {
+          setMsg(`Clicked on the interior of the lines. objectId: ${objects[0].object.id}`);
         }}
         enableClickableInterior
         showBorder

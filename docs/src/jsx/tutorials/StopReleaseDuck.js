@@ -7,9 +7,9 @@
 // #BEGIN EXAMPLE
 import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState, useEffect } from "react";
-import Worldview, { Cubes, Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cubes, Spheres, Axes, GLTFScene } from "regl-worldview";
 
-import duckModel from "../utils/Duck.glb";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // #BEGIN EDITABLE
 function Example() {
@@ -64,17 +64,13 @@ function Example() {
       sphereMarker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
     });
 
-  const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
-    const pointIdx = clickedObjectId - sphereMarker.id;
-    const position = sphereMarker.points[pointIdx];
+  const obstacleMarkers = Array.from(clickedObjectIds).map(({ id, instanceIndex }, index) => {
+    const position = sphereMarker.points[instanceIndex];
     return {
-      // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
-      // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.
-      // Learn about id mapping at https://cruise-automation.github.io/webviz/worldview/#/docs/api/mouse-events
       id: sphereMarker.id + steps + index,
       // remember the original clickedObjectId so when the obstacle is clicked, we can
       // remove the obstacle quickly by updating clickedObjectIds
-      clickedObjectId,
+      clickedObjectId: id + instanceIndex,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position,
@@ -85,39 +81,40 @@ function Example() {
   });
   const duckPosition = sphereMarker.points[count];
   // make the duck stop
-  useEffect(
-    () => {
-      const duckPositionId = sphereMarker.id + count;
-      if (!shouldStopDuck && clickedObjectIds.includes(duckPositionId)) {
-        setShouldStopDuck(true);
-      }
-    },
-    [clickedObjectIds, shouldStopDuck, count, sphereMarker.id]
-  );
+  useEffect(() => {
+    const duckPositionId = sphereMarker.id + count;
+    if (!shouldStopDuck && clickedObjectIds.some(({ id, instanceIndex }) => id + instanceIndex === duckPositionId)) {
+      setShouldStopDuck(true);
+    }
+  }, [clickedObjectIds, shouldStopDuck, count, sphereMarker.id]);
 
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         distance: 160,
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
       }}>
       <Spheres
-        onClick={(ev, { objectId }) => {
-          setClickedObjectIds([...clickedObjectIds, objectId]);
+        onClick={(ev, { objects }) => {
+          setClickedObjectIds([
+            ...clickedObjectIds,
+            { id: objects[0].object.id, instanceIndex: objects[0].instanceIndex },
+          ]);
         }}>
         {[sphereMarker]}
       </Spheres>
       <Cubes
-        onClick={(ev, { object }) => {
-          const newClickedObjectIds = clickedObjectIds.filter((id) => id !== object.clickedObjectId);
+        onClick={(ev, { objects }) => {
+          const newClickedObjectIds = clickedObjectIds.filter(
+            ({ id, instanceIndex }) => id + instanceIndex !== objects[0].object.clickedObjectId
+          );
           setClickedObjectIds(newClickedObjectIds);
           setShouldStopDuck(false);
         }}>
         {obstacleMarkers}
       </Cubes>
       <Axes />
-      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/docs/src/jsx/utils/Duck.glb  */}
+      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/common/fixtures/Duck.glb  */}
       <GLTFScene model={duckModel}>
         {{
           pose: {

@@ -7,11 +7,13 @@
 //  You may not use this file except in compliance with the License.
 
 import { mat4, vec4 } from "gl-matrix";
-import React from "react";
+import memoizeWeak from "memoize-weak";
+import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
-import type { Pose, Scale, MouseHandler, Color, Vec4 } from "../types";
-import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
-import parseGLB from "../utils/parseGLB";
+import type { Pose, Scale, MouseHandler } from "../types";
+import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
+import parseGLB, { type GLBModel } from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
 
@@ -36,6 +38,18 @@ function glConstantToRegl(value: ?number): ?string {
   throw new Error(`unhandled constant value ${JSON.stringify(value)}`);
 }
 
+const getSceneToDraw = ({ json }) => {
+  if (json.scene != null) {
+    return json.scene;
+  }
+  // Draw the first scene if the scene key is missing.
+  const keys = Object.keys(json.scenes ?? {});
+  if (keys.length === 0) {
+    throw new Error("No scenes to render");
+  }
+  return keys[0];
+};
+
 const drawModel = (regl) => {
   const command = regl({
     primitive: "triangles",
@@ -53,7 +67,7 @@ const drawModel = (regl) => {
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
       hitmapColor: regl.context("hitmapColor"),
-      drawHitmap: regl.context("drawHitmap"),
+      isHitmap: regl.context("isHitmap"),
     },
     attributes: {
       position: regl.prop("positions"),
@@ -86,7 +100,7 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
-  uniform bool drawHitmap;
+  uniform bool isHitmap;
   uniform vec4 hitmapColor;
   uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
@@ -107,7 +121,7 @@ const drawModel = (regl) => {
   void main() {
     vec4 baseColor = vColor.w > 0.0 ? vColor : texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = drawHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
+    gl_FragColor = isHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
   });
@@ -120,20 +134,15 @@ const drawModel = (regl) => {
     height: 1,
   });
 
-  // Build the draw calls needed to draw the model. This only needs to happen once, since they
-  // are the same each time, with only poseMatrix changing.
-  let drawCalls;
-  function prepareDrawCallsIfNeeded(model) {
-    if (drawCalls) {
-      return;
-    }
-
+  // build the draw calls needed to draw the model. This will happen whenever the model changes.
+  const getDrawCalls = memoizeWeak((model: GLBModel) => {
     // upload textures to the GPU
+    const { accessors } = model;
     const textures =
       model.json.textures &&
       model.json.textures.map((textureInfo) => {
         const sampler = model.json.samplers[textureInfo.sampler];
-        const bitmap: ImageBitmap = model.images[textureInfo.source];
+        const bitmap = model.images && model.images[textureInfo.source];
         const texture = regl.texture({
           data: bitmap,
           min: glConstantToRegl(sampler.minFilter),
@@ -146,19 +155,22 @@ const drawModel = (regl) => {
     if (model.images) {
       model.images.forEach((bitmap: ImageBitmap) => bitmap.close());
     }
-    drawCalls = [];
 
+    const drawCalls = [];
     // helper to draw the primitives comprising a mesh
     function drawMesh(mesh, nodeMatrix) {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
+        if (!accessors) {
+          throw new Error("Error decoding GLB model: Missing `accessors` in JSON data");
+        }
         drawCalls.push({
-          indices: model.accessors[primitive.indices],
-          positions: model.accessors[primitive.attributes.POSITION],
-          normals: model.accessors[primitive.attributes.NORMAL],
+          indices: accessors[primitive.indices],
+          positions: accessors[primitive.attributes.POSITION],
+          normals: accessors[primitive.attributes.NORMAL],
           texCoords: texInfo
-            ? model.accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
+            ? accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
             : { divisor: 1, buffer: singleTexCoord },
           baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
           baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],
@@ -188,14 +200,16 @@ const drawModel = (regl) => {
       }
     }
 
-    // finally, draw each of the main scene's nodes
-    for (const nodeIdx of model.json.scenes[model.json.scene].nodes) {
+    // finally, draw each of the main scene's nodes. Use the first scene if one isn't specified
+    // explicitly.
+    for (const nodeIdx of model.json.scenes[getSceneToDraw(model)].nodes) {
       const rootTransform = mat4.create();
       mat4.rotateX(rootTransform, rootTransform, Math.PI / 2);
       mat4.rotateY(rootTransform, rootTransform, Math.PI / 2);
       drawNode(model.json.nodes[nodeIdx], rootTransform);
     }
-  }
+    return drawCalls;
+  });
 
   // create a regl command to set the context for each draw call
   const withContext = regl({
@@ -212,96 +226,90 @@ const drawModel = (regl) => {
               props.scale ? pointToVec3(props.scale) : [1, 1, 1]
             ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
-      hitmapColor: (context, props) => intToRGB(props.id),
-      drawHitmap: (context, props) => props.id != null,
+      hitmapColor: (context, props) => props.color || [0, 0, 0, 1],
+      isHitmap: (context, props) => !!props.isHitmap,
     },
   });
 
-  return (props: any) => {
-    prepareDrawCallsIfNeeded(props.model);
-    withContext(props, () => {
+  return (props, isHitmap) => {
+    const drawCalls = getDrawCalls(props.model);
+    withContext(isHitmap ? { ...props, isHitmap } : props, () => {
       command(drawCalls);
     });
   };
 };
 
 type Props = {|
-  model: string | (() => Promise<Object>),
+  model: string | (() => Promise<GLBModel>),
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
-  children: {|
-    id?: number,
+  children: {
     pose: Pose,
     scale: Scale,
-    color: Color | Vec4,
-    alpha: ?number,
-  |},
+    alpha?: ?number,
+  },
 |};
 
-export default class GLTFScene extends React.Component<Props, {| loadedModel: ?Object |}> {
-  state = {
-    loadedModel: undefined,
-  };
+function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
+  const [value, setValue] = useState<?T>();
+  useEffect(
+    useCallback(() => {
+      let unloaded = false;
+      fn().then((result) => {
+        if (!unloaded) {
+          setValue(result);
+        }
+      });
+      return () => {
+        unloaded = true;
+        setValue(undefined);
+      };
+    }, deps || [fn]),
+    deps || [fn]
+  );
+  return value;
+}
 
-  _context = undefined;
-  _drawModel = undefined;
-
-  async _loadModel(): Promise<Object> {
-    const { model } = this.props;
+function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
+  useDebugValue(model);
+  return useAsyncValue(async () => {
     if (typeof model === "function") {
       return model();
-    } else if (typeof model === "string") {
+    }
+    if (typeof model === "string") {
       const response = await fetch(model);
       if (!response.ok) {
-        throw new Error(`failed to fetch GLB: ${response.status}`);
+        throw new Error(`failed to fetch GLTF model: ${response.status}`);
       }
       return parseGLB(await response.arrayBuffer());
     }
+
     /*:: (model: empty) */
     throw new Error(`unsupported model prop: ${typeof model}`);
-  }
+  }, [model]);
+}
 
-  componentDidMount() {
-    this._drawModel = (regl: any) => drawModel(regl);
-    this._loadModel()
-      .then((loadedModel) => {
-        this.setState({ loadedModel });
-        if (this._context) {
-          this._context.onDirty();
-        }
-      })
-      .catch((err) => {
-        console.error("error loading GLB model:", err);
-      });
-  }
+export default function GLTFScene(props: Props) {
+  const { children, model, ...rest } = props;
 
-  render() {
-    const { children, ...rest } = this.props;
-    const { loadedModel } = this.state;
-    if (!loadedModel) {
-      return null;
+  const context = useContext(WorldviewReactContext);
+  const loadedModel = useModel(model);
+  useEffect(() => {
+    if (context) {
+      context.onDirty();
     }
+  }, [context, loadedModel]);
 
-    const drawHitmap = children.id != null;
-
-    return (
-      <WorldviewReactContext.Consumer>
-        {(context) => {
-          this._context = context;
-          return (
-            <Command
-              {...rest}
-              reglCommand={this._drawModel}
-              drawProps={{ ...children, id: null, model: loadedModel }}
-              hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
-              getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
-            />
-          );
-        }}
-      </WorldviewReactContext.Consumer>
-    );
+  if (!loadedModel) {
+    return null;
   }
+
+  return (
+    <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker}>
+      {{ ...children, model: loadedModel, originalMarker: children }}
+    </Command>
+  );
 }

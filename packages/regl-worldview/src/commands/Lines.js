@@ -6,13 +6,22 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Line } from "../types";
-import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import flatten from "lodash/flatten";
+import memoize from "lodash/memoize";
+import * as React from "react";
+
+import type { Line, Vec4, Color, Pose, DepthState, BlendState } from "../types";
 import {
-  getHitmapPropsForInstancedCommands as getHitmapProps,
-  getObjectForInstancedCommands as getObjectFromHitmapId,
-} from "../utils/hitmapDefaults";
-import { makeCommand } from "./Command";
+  defaultBlend,
+  withPose,
+  toRGBA,
+  shouldConvert,
+  pointToVec3,
+  defaultReglDepth,
+  defaultReglBlend,
+} from "../utils/commandUtils";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import Command, { type CommonCommandProps } from "./Command";
 import { mat4 } from 'gl-matrix'
 
 /*
@@ -89,6 +98,9 @@ attribute vec3 positionA;
 attribute vec3 positionB;
 attribute vec3 positionC;
 attribute vec3 positionD;
+// per-instance pose attributes
+attribute vec3 posePosition;
+attribute vec4 poseRotation;
 
 uniform mat4 projection, view, localTransform;
 uniform float viewportWidth;
@@ -105,6 +117,12 @@ ${Object.keys(POINT_TYPES)
   .join("\n")}
 
 #WITH_POSE
+
+vec3 applyPoseInstance(vec3 point, vec4 rotation, vec3 position) {
+  // rotate the point and then add the position of the pose
+  // this function is defined in WITH_POSE
+  return rotate(point, rotation) + position;
+}
 
 vec2 rotateCCW(vec2 v) {
   return vec2(-v.y, v.x);
@@ -152,10 +170,10 @@ void main () {
   vec4 localD = localTransform * vec4(positionD, 1);
 
   mat4 projView = projection * view;
-  vec4 projA = projView * vec4(applyPose(localA.xyz), 1);
-  vec4 projB = projView * vec4(applyPose(localB.xyz), 1);
-  vec4 projC = projView * vec4(applyPose(localC.xyz), 1);
-  vec4 projD = projView * vec4(applyPose(localD.xyz), 1);
+  vec4 projA = projView * vec4(applyPose(applyPoseInstance(localA.xyz, poseRotation, posePosition)), 1);
+  vec4 projB = projView * vec4(applyPose(applyPoseInstance(localB.xyz, poseRotation, posePosition)), 1);
+  vec4 projC = projView * vec4(applyPose(applyPoseInstance(localC.xyz, poseRotation, posePosition)), 1);
+  vec4 projD = projView * vec4(applyPose(applyPoseInstance(localD.xyz, poseRotation, posePosition)), 1);
 
   vec2 aspectVec = vec2(viewportWidth / viewportHeight, 1.0);
   vec2 screenA = projA.xy / projA.w * aspectVec;
@@ -230,7 +248,7 @@ function pointsEqual(a, b) {
   return ax === bx && ay === by && az === bz;
 }
 
-const lines = (regl: any) => {
+export const lines = (regl: any) => {
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
     type: "uint16",
@@ -247,6 +265,19 @@ const lines = (regl: any) => {
       [1, 0, 1, 1], // magenta
     ],
   });
+  // The pose position and rotation buffers contain the identity position/rotation, for use when we don't have instanced
+  // poses.
+  const defaultPosePositionBuffer = regl.buffer({
+    type: "float",
+    usage: "static",
+    data: flatten(new Array(VERTICES_PER_INSTANCE).fill([0, 0, 0])),
+  });
+  const defaultPoseRotationBuffer = regl.buffer({
+    type: "float",
+    usage: "static",
+    // Rotation array identity is [x: 0, y: 0, z: 0, w: 1]
+    data: flatten(new Array(VERTICES_PER_INSTANCE).fill([0, 0, 0, 1])),
+  });
 
   // The buffers used for input position & color data
   const colorBuffer = regl.buffer({ type: "float" });
@@ -257,6 +288,9 @@ const lines = (regl: any) => {
   // we upload the same data into two buffers and have only two attributes reading from each buffer.
   const positionBuffer1 = regl.buffer({ type: "float" });
   const positionBuffer2 = regl.buffer({ type: "float" });
+
+  const posePositionBuffer = regl.buffer({ type: "float" });
+  const poseRotationBuffer = regl.buffer({ type: "float" });
 
   const command = regl(
     withPose({
@@ -298,7 +332,7 @@ const lines = (regl: any) => {
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
-        positionC: (context, { joined, instances }) => ({
+        positionC: (context, { joined }) => ({
           buffer: positionBuffer2,
           offset: 2 * POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
@@ -310,6 +344,14 @@ const lines = (regl: any) => {
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
+        posePosition: (context, { hasInstancedPoses }) => ({
+          buffer: hasInstancedPoses ? posePositionBuffer : defaultPosePositionBuffer,
+          divisor: hasInstancedPoses ? 1 : 0,
+        }),
+        poseRotation: (context, { hasInstancedPoses }) => ({
+          buffer: hasInstancedPoses ? poseRotationBuffer : defaultPoseRotationBuffer,
+          divisor: hasInstancedPoses ? 1 : 0,
+        }),
       },
       count: VERTICES_PER_INSTANCE,
       instances: regl.prop("instances"),
@@ -317,12 +359,13 @@ const lines = (regl: any) => {
     })
   );
 
-  // array reused for colors when monochrome
-  const monochromeColors = new Array(VERTICES_PER_INSTANCE);
+  let colorArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
   let pointArray = new Float32Array(0);
   let allocatedPoints = 0;
+  let positionArray = new Float32Array(0);
+  let rotationArray = new Float32Array(0);
 
-  const fillPointArray = (points: any[], alreadyClosed: boolean, shouldClose: boolean) => {
+  function fillPointArray(points: any[], alreadyClosed: boolean, shouldClose: boolean): Float32Array {
     const numTotalPoints = points.length + (shouldClose ? 3 : 2);
     if (allocatedPoints < numTotalPoints) {
       pointArray = new Float32Array(numTotalPoints * 3);
@@ -354,20 +397,115 @@ const lines = (regl: any) => {
       pointArray.copyWithin(0, 3, 6);
       pointArray.copyWithin(n - 3, n - 6, n - 3);
     }
-  };
+    return pointArray.subarray(0, n);
+  }
+
+  function fillPoseArrays(
+    instances: number,
+    poses: Pose[]
+  ): { positionData: Float32Array, rotationData: Float32Array } {
+    if (positionArray.length < instances * 3) {
+      positionArray = new Float32Array(instances * 3);
+      rotationArray = new Float32Array(instances * 4);
+    }
+    for (let index = 0; index < poses.length; index++) {
+      const positionOffset = index * 3;
+      const rotationOffset = index * 4;
+      const { position, orientation: r } = poses[index];
+      const convertedPosition = Array.isArray(position) ? position : pointToVec3(position);
+      positionArray[positionOffset + 0] = convertedPosition[0];
+      positionArray[positionOffset + 1] = convertedPosition[1];
+      positionArray[positionOffset + 2] = convertedPosition[2];
+
+      const convertedRotation = Array.isArray(r) ? r : [r.x, r.y, r.z, r.w];
+      rotationArray[rotationOffset + 0] = convertedRotation[0];
+      rotationArray[rotationOffset + 1] = convertedRotation[1];
+      rotationArray[rotationOffset + 2] = convertedRotation[2];
+      rotationArray[rotationOffset + 3] = convertedRotation[3];
+    }
+    return {
+      positionData: positionArray.subarray(0, instances * 3),
+      rotationData: rotationArray.subarray(0, instances * 4),
+    };
+  }
+
+  function convertColors(colors: any): Vec4[] {
+    return shouldConvert(colors) ? colors.map(toRGBA) : colors;
+  }
+
+  function fillColorArray(
+    color: ?Color | ?Vec4,
+    colors: ?((Color | Vec4)[]),
+    monochrome: boolean,
+    shouldClose: boolean
+  ): Float32Array {
+    if (monochrome) {
+      if (colorArray.length < VERTICES_PER_INSTANCE * 4) {
+        colorArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
+      }
+      const monochromeColor = color || DEFAULT_MONOCHROME_COLOR;
+      const [convertedMonochromeColor] = convertColors([monochromeColor]);
+      const [r, g, b, a] = convertedMonochromeColor;
+      for (let index = 0; index < VERTICES_PER_INSTANCE; index++) {
+        const offset = index * 4;
+        colorArray[offset + 0] = r;
+        colorArray[offset + 1] = g;
+        colorArray[offset + 2] = b;
+        colorArray[offset + 3] = a;
+      }
+      return colorArray.subarray(0, VERTICES_PER_INSTANCE * 4);
+    } else if (colors) {
+      const length = shouldClose ? colors.length + 1 : colors.length;
+      if (colorArray.length < length * 4) {
+        colorArray = new Float32Array(length * 4);
+      }
+      const convertedColors = convertColors(colors);
+      for (let index = 0; index < convertedColors.length; index++) {
+        const offset = index * 4;
+        const [r, g, b, a] = convertedColors[index];
+        colorArray[offset + 0] = r;
+        colorArray[offset + 1] = g;
+        colorArray[offset + 2] = b;
+        colorArray[offset + 3] = a;
+      }
+
+      if (shouldClose) {
+        const [r, g, b, a] = convertedColors[0];
+        const lastIndex = length - 1;
+        colorArray[lastIndex * 4 + 0] = r;
+        colorArray[lastIndex * 4 + 1] = g;
+        colorArray[lastIndex * 4 + 2] = b;
+        colorArray[lastIndex * 4 + 3] = a;
+      }
+      return colorArray.subarray(0, length * 4);
+    }
+    throw new Error("Impossible: !monochrome implies !!colors.");
+  }
+
+  // Create a new render function based on rendering settings
+  // Memoization is required in order to prevent creating too many functions
+  // that use the same arguments, potentially leading to memory leaks.
+  const memoizedRender = memoize(
+    (props: { depth?: DepthState, blend?: BlendState }) => {
+      const { depth = defaultReglDepth, blend = defaultReglBlend } = props;
+      return regl({ depth, blend });
+    },
+    (...args) => JSON.stringify(args)
+  );
 
   // Disable depth for debug rendering (so lines stay visible)
-  const render = (debug, commands) => {
+  const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
+    const { debug } = props;
     if (debug) {
-      regl({ depth: { enable: false } })(commands);
+      memoizedRender({ depth: { enable: false } })(commands);
     } else {
-      commands();
+      memoizedRender(props)(commands);
     }
   };
 
   // Render one line list/strip
-  const renderLine = (props) => {
-    const { debug, primitive = "lines", scaleInvariant = false } = props;
+  function renderLine(props) {
+    const { debug, primitive = "lines", scaleInvariant = false, depth, blend } = props;
     const numInputPoints = props.points.length;
 
     if (numInputPoints < 2) {
@@ -378,57 +516,59 @@ const lines = (regl: any) => {
     // whether the first point needs to be duplicated after the last point
     const shouldClose = !alreadyClosed && props.closed;
 
-    fillPointArray(props.points, alreadyClosed, shouldClose);
-    positionBuffer1({ data: pointArray, usage: "dynamic" });
-    positionBuffer2({ data: pointArray, usage: "dynamic" });
+    const pointData = fillPointArray(props.points, alreadyClosed, shouldClose);
+    positionBuffer1({ data: pointData, usage: "dynamic" });
+    positionBuffer2({ data: pointData, usage: "dynamic" });
 
     const monochrome = !(props.colors && props.colors.length);
-    let colors;
-    if (monochrome) {
-      if (shouldConvert(props.color)) {
-        colors = monochromeColors.fill(props.color ? toRGBA(props.color) : DEFAULT_MONOCHROME_COLOR);
-      } else {
-        colors = monochromeColors.fill(props.color || DEFAULT_MONOCHROME_COLOR);
-      }
-    } else {
-      if (shouldConvert(props.colors)) {
-        colors = props.colors.map(toRGBA);
-      } else {
-        colors = props.colors.slice();
-      }
-      if (shouldClose) {
-        colors.push(colors[0]);
-      }
-    }
-    colorBuffer({ data: colors, usage: "dynamic" });
+    const colorData = fillColorArray(props.color, props.colors, monochrome, shouldClose);
+    colorBuffer({ data: colorData, usage: "dynamic" });
 
     const joined = primitive === "line strip";
     const effectiveNumPoints = numInputPoints + (shouldClose ? 1 : 0);
     const instances = joined ? effectiveNumPoints - 1 : Math.floor(effectiveNumPoints / 2);
 
-    render(debug, () => {
-      command({
-        ...props,
-        joined,
-        primitive: "triangle strip",
-        alpha: debug ? 0.2 : 1,
-        monochrome,
-        instances,
-        scaleInvariant,
-      });
-      if (debug) {
-        command({
-          ...props,
+    // fill instanced pose buffers
+    const { poses } = props;
+    const hasInstancedPoses = !!poses && poses.length > 0;
+    if (hasInstancedPoses && poses) {
+      if (instances !== poses.length) {
+        console.error(`Expected ${instances} poses but given ${poses.length} poses: will result in webgl error.`);
+        return;
+      }
+      const { positionData, rotationData } = fillPoseArrays(instances, poses);
+      posePositionBuffer({ data: positionData, usage: "dynamic" });
+      poseRotationBuffer({ data: rotationData, usage: "dynamic" });
+    }
+
+    render({ debug, depth, blend }, () => {
+      // Use Object.assign because it's actually faster than babel's object spread polyfill.
+      command(
+        Object.assign({}, props, {
           joined,
-          primitive: "line strip",
-          alpha: 1,
+          primitive: "triangle strip",
+          alpha: debug ? 0.2 : 1,
           monochrome,
           instances,
           scaleInvariant,
-        });
+          hasInstancedPoses,
+        })
+      );
+      if (debug) {
+        command(
+          Object.assign({}, props, {
+            joined,
+            primitive: "line strip",
+            alpha: 1,
+            monochrome,
+            instances,
+            scaleInvariant,
+            hasInstancedPoses,
+          })
+        );
       }
     });
-  };
+  }
 
   return (inProps: any) => {
     if (Array.isArray(inProps)) {
@@ -439,9 +579,6 @@ const lines = (regl: any) => {
   };
 };
 
-const Lines = makeCommand<Line>("Lines", lines, {
-  getHitmapProps,
-  getObjectFromHitmapId,
-});
-
-export default Lines;
+export default function Lines(props: { ...CommonCommandProps, children: Line[] }) {
+  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={lines} />;
+}

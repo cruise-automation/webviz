@@ -1,18 +1,15 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { withState } from "@dump247/storybook-state";
 import GridIcon from "@mdi/svg/svg/grid.svg";
 import MapMarkerIcon from "@mdi/svg/svg/map-marker.svg";
-import { withKnobs, boolean } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
-import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import React, { useState } from "react";
 
 import Menu from "webviz-core/src/components/Menu";
 import Tree, { type Node } from "webviz-core/src/components/Tree";
@@ -121,31 +118,27 @@ function getInitialState() {
   };
 }
 
-storiesOf("<Tree>", module)
-  .addDecorator(withScreenshot())
-  .addDecorator(withKnobs)
-  .add(
-    "standard",
-    withState(getInitialState(), (store) => {
-      const root = store.state.root;
-      const onNodeCheck = (node: Node) => {
-        node.checked = !node.checked;
-        store.set({ root });
-      };
+function Example({ hideRoot }: { hideRoot?: boolean }) {
+  const [state, setState] = useState(() => getInitialState());
+  const { root } = state;
+  const onNodeCheck = (node: Node) => {
+    node.checked = !node.checked;
+    setState({ ...state, root });
+  };
+  const onNodeExpand = (node: Node) => {
+    node.expanded = !node.expanded;
+    setState({ ...state, root });
+  };
 
-      const onNodeExpand = (node: Node) => {
-        node.expanded = !node.expanded;
-        store.set({ root });
-      };
-
-      const hideRoot = boolean("Hide root node?", true);
-
-      return (
-        <div style={{ backgroundColor: "pink", padding: 20, maxWidth: 350 }}>
-          <Menu>
-            <Tree hideRoot={hideRoot} onToggleCheck={onNodeCheck} onToggleExpand={onNodeExpand} root={root} />
-          </Menu>
-        </div>
-      );
-    })
+  return (
+    <div style={{ backgroundColor: "pink", padding: 20, maxWidth: 350 }}>
+      <Menu>
+        <Tree hideRoot={hideRoot} onToggleCheck={onNodeCheck} onToggleExpand={onNodeExpand} root={root} />
+      </Menu>
+    </div>
   );
+}
+
+storiesOf("<Tree>", module)
+  .add("standard hideRoot_true", () => <Example hideRoot />)
+  .add("standard hideRoot_false", () => <Example />);

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -18,10 +18,12 @@ type State = {
 
 type Props = {
   children: React.Node,
-  text: string,
+  text: React.Node,
   checked?: boolean,
   direction: "left" | "right",
   icon?: React.Node,
+  style?: { [string]: any },
+  dataTest?: string,
 };
 
 export default class SubMenu extends React.Component<Props, State> {
@@ -49,10 +51,16 @@ export default class SubMenu extends React.Component<Props, State> {
   }
 
   render() {
-    const { text, children, checked, direction, icon } = this.props;
+    const { text, children, checked, direction, icon, dataTest, style } = this.props;
     const { open } = this.state;
     return (
-      <ChildToggle noPortal position={direction === "left" ? "left" : "right"} onToggle={this.toggle} isOpen={open}>
+      <ChildToggle
+        noPortal
+        position={direction === "left" ? "left" : "right"}
+        onToggle={this.toggle}
+        isOpen={open}
+        style={style}
+        dataTest={dataTest}>
         <Item hasSubMenu direction={direction} checked={open || checked} icon={icon}>
           {text}
         </Item>

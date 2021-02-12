@@ -1,5 +1,5 @@
-import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
-import { MoveCamea, FollowObject, FollowObjectOrientation } from './jsx/allLiveEditors'
+import CodeSandboxEmbed from "./jsx/utils/CodeSandboxEmbed.js";
+import { MoveCamera, FollowObject, FollowObjectOrientation } from "./jsx/allLiveEditors";
 
 # Managing the Camera
 
@@ -17,7 +17,7 @@ In this step, we'll add a duck model to the center of the scene, and move the ca
 First, let's add a duck to the scene using [GLTFScene](#/docs/commands/gltfscene), and add the `Duck.glb` model file to the `src/utils` folder.
 
 ```js
-import duckModel from "../utils/Duck.glb";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // ... other existing code
 <GLTFScene model={duckModel}>
@@ -33,7 +33,7 @@ import duckModel from "../utils/Duck.glb";
 
 To move the camera, we'll use a handy [useAnimationFrame](https://github.com/cruise-automation/webviz/tree/master/packages/%40cruise-automation/hooks) hook that accepts a callback which will be called at each browser repaint. In our case, whenever the callback is called, we'll increase a `count` state by 1, and use the `count` state to adjust the camera's `phi` and `thetaOffset`.
 
-<MoveCamea />
+<MoveCamera />
 
 Now the camera is moving around the scene, giving us a 360° view of the duck model!
 

@@ -1,3 +1,5 @@
+# Note: When updating this file, please also update .dockerignore
+
 # Logs
 logs
 *.log
@@ -67,6 +69,8 @@ __screenshots__/
 
 # build files
 dist/
-!/docs/public/dist/wasm-lz4.wasm # need this symlink to stay there
 lib/
+__static_webviz__/
 
+# reg-suit generated files
+.reg/

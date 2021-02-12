@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,15 +14,15 @@ $option-font-size: $text-size;
   optionHeight: $option-height;
 }
 
-.message {
-  line-height: 1.2;
-  padding-top: 32px;
+.content {
   @include monospace;
+  flex: 1 1 auto;
+  display: flex;
+  position: relative;
 }
 
 .filtersBar {
-  align-items: right;
-  background-color: $toolbar;
+  background-color: $dark3;
   display: flex;
   flex-wrap: wrap;
   flex: 1 1 auto;
@@ -32,13 +32,23 @@ $option-font-size: $text-size;
 
 .severityFilter {
   flex: 0 1 auto;
-  min-width: 200px;
+  min-width: 120px;
   margin-left: 10px;
+  width: unset !important;
 }
 
 .nodeFilter {
   flex: 2 1 auto;
   min-width: 200px;
+  width: unset !important;
+}
+
+.itemsCountField {
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0px 8px;
 }
 
 :global {
@@ -56,7 +66,7 @@ $option-font-size: $text-size;
     }
   }
   $select-item-font-size: $option-font-size;
-  $select-input-bg: $toolbar;
+  $select-input-bg: $dark3;
   $select-input-border-color: transparent;
   $select-input-border-focus: transparent;
   $select-input-height: $option-height * 1px;
@@ -81,7 +91,10 @@ $option-font-size: $text-size;
   .VirtualizedSelectFocusedOption {
     @extend %menu-item-hover;
     // TODO(jacob): doesn't override react-virtualized-select styles for some reason
-    background-color: $menu-item-hover !important;
+    background-color: $dark4 !important;
+  }
+  .Select {
+    width: 100%;
   }
   .Select-input > input {
     color: $select-text-color;
@@ -93,15 +106,25 @@ $option-font-size: $text-size;
   .Select--multi .Select-multi-value-wrapper {
     width: 100%;
   }
+  .Select--multi .Select-arrow {
+    opacity: 0.5;
+  }
   .Select--multi .Select-value {
     color: $text-bright;
-    background-color: $background-control-selected;
-    border: 1px solid $light-purple;
+    background-color: $dark5;
+    border: 1px solid $background-control;
     margin: 2px;
   }
-
-  .Select--multi .Select-value-icon:hover {
-    background-color: $light-purple;
-    color: $background-control-selected;
+  .Select--multi .Select-value-icon {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0 0 4px;
+    opacity: 0.5;
+    border: 0;
+    &:hover {
+      color: inherit;
+      background-color: transparent;
+      opacity: 1;
+    }
   }
 }

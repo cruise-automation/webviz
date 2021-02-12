@@ -34,7 +34,7 @@ Let's also enable manual camera movement, so we can see the duck better.
 
 ```js
 // use `defaultCameraState` to turn Worldview to uncontrolled component
-<Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 160 }}>
+<Worldview defaultCameraState={{ distance: 160 }}>
 ```
 
 Next, let's add a `clickedObjectIds` state to keep track of the clicked spheres. We'll also use this `clickedObjectIds` state to generate cube obstacles.
@@ -67,20 +67,19 @@ Let's use the clicked sphere id to update the `clickedObjectIds` state, which wi
 
 ```js
 <Spheres
-  onClick={(ev, { objectId, object }) => {
+  onClick={(ev, { objects }) => {
     // click on the object to add an obstacle
-    setClickedObjectIds([...clickedObjectIds, objectId]);
+    setClickedObjectIds([...clickedObjectIds, objects[0].object.id]);
   }}
 >
   {[sphereMarker]}
 </Spheres>
 <Cubes
-  onClick={(ev, { objectId, object }) => {
-    // We can't use objectId here as it represents the original cube marker's id.
+  onClick={(ev, { objects }) => {
     // When we generate the `obstacleMarkers`, we did add an extra field `clickedObjectId`
     // to the marker so we can use it to remove obstacle id from the `clickedObjectIds`
     const newClickedObjectIds = clickedObjectIds.filter(
-      id => id !== object.clickedObjectId
+      id => id !== objects[0].object.clickedObjectId
     );
     setClickedObjectIds(newClickedObjectIds);
   }}
@@ -129,7 +128,7 @@ useEffect(
 );
 
 <Cubes
-  onClick={(ev, { object }) => {
+  onClick={(ev, { objects }) => {
     // ... other existing code
     setShouldStopDuck(false); // release the duck when any cube is clicked
   }}>

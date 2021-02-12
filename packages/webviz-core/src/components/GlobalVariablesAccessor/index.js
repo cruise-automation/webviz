@@ -1,46 +1,28 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import * as React from "react";
-import { connect } from "react-redux";
 
-import { setGlobalData, overwriteGlobalData } from "webviz-core/src/actions/panels";
+import * as React from "react";
+
+import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 
 type GlobalVariablesActions = {|
-  setGlobalData: (Object) => void,
-  overwriteGlobalData: (Object) => void,
+  setGlobalVariables: (GlobalVariables) => void,
+  overwriteGlobalVariables: (GlobalVariables) => void,
 |};
 
-type OwnProps = {|
-  children: (Object, GlobalVariablesActions) => React.Node,
+type Props = {|
+  children: (GlobalVariables, GlobalVariablesActions) => React.Node,
 |};
-type Props = {
-  ...OwnProps,
-  globalData: Object,
-  ...GlobalVariablesActions,
-};
 
-function GlobalVariablesAccessor(props: Props) {
-  return props.children(props.globalData, {
-    setGlobalData: props.setGlobalData,
-    overwriteGlobalData: props.overwriteGlobalData,
+export default function GlobalVariablesAccessor(props: Props) {
+  const { globalVariables, setGlobalVariables, overwriteGlobalVariables } = useGlobalVariables();
+  return props.children(globalVariables, {
+    setGlobalVariables,
+    overwriteGlobalVariables,
   });
 }
-
-const mapStateToProps = (state, ownProps): any => {
-  const { panels } = state;
-  const { globalData } = panels;
-
-  return {
-    globalData,
-  };
-};
-
-export default connect<Props, OwnProps, _, _, _, _>(
-  mapStateToProps,
-  { setGlobalData, overwriteGlobalData }
-)(GlobalVariablesAccessor);

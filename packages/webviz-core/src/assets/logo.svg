@@ -1,14 +1,11 @@
 <!--
-Copyright (c) 2018-present, GM Cruise LLC
+Copyright (c) 2018-present, Cruise LLC
 
 This source code is licensed under the Apache License, Version 2.0,
 found in the LICENSE file in the root directory of this source tree.
 You may not use this file except in compliance with the License.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-  <title>
-    webviz
-  </title>
   <desc>
     webviz logo
   </desc>

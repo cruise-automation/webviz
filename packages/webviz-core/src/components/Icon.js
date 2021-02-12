@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,26 +14,52 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 
 type Props = {
   children: React.Node,
+  xlarge?: boolean,
   large?: boolean,
   medium?: boolean,
+  small?: boolean,
+  xsmall?: boolean,
+  xxsmall?: boolean,
   active?: boolean,
   fade?: boolean,
   onClick?: (e: SyntheticMouseEvent<HTMLElement>) => void,
   clickable?: boolean,
   className?: string,
   style?: { [string]: any },
-  tooltip?: string,
+  tooltip?: React.Node,
   tooltipProps?: $Shape<{ ...React.ElementConfig<typeof Tooltip> }>,
+  dataTest?: string,
 };
 
 const Icon = (props: Props) => {
-  const { children, large, medium, onClick, clickable, active, fade, className, style, tooltip, tooltipProps } = props;
+  const {
+    children,
+    xlarge,
+    large,
+    medium,
+    small,
+    xsmall,
+    xxsmall,
+    onClick,
+    clickable,
+    active,
+    fade,
+    className,
+    style,
+    tooltip,
+    tooltipProps,
+    dataTest,
+  } = props;
   const classNames = cx("icon", styles.icon, className, {
     [styles.fade]: fade,
     [styles.clickable]: !!onClick || clickable == null || clickable,
     [styles.active]: active,
+    [styles.xlarge]: xlarge,
     [styles.large]: large,
     [styles.medium]: medium,
+    [styles.small]: small,
+    [styles.xsmall]: xsmall,
+    [styles.xxsmall]: xxsmall,
   });
 
   // if we have a click handler
@@ -49,7 +75,7 @@ const Icon = (props: Props) => {
 
   return (
     <Tooltip contents={tooltip || null} {...tooltipProps}>
-      <span className={classNames} onClick={clickHandler} style={style}>
+      <span className={classNames} onClick={clickHandler} style={style} data-test={dataTest}>
         {children}
       </span>
     </Tooltip>
@@ -57,5 +83,17 @@ const Icon = (props: Props) => {
 };
 
 Icon.displayName = "Icon";
+
+export const WrappedIcon = (props: Props) => {
+  return (
+    <Icon
+      {...props}
+      style={{ display: "block", padding: "10px", minHeight: "40px", minWidth: "40px", ...props.style }}
+      className={styles.wrappedIcon}
+    />
+  );
+};
+
+WrappedIcon.displayName = "Icon";
 
 export default Icon;

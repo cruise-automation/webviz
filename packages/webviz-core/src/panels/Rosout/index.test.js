@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -11,9 +11,7 @@ import { getShouldDisplayMsg } from "./index";
 describe("RosOutPanel", () => {
   describe("getShouldDisplayMsg", () => {
     const msg = {
-      op: "message",
       topic: "/some_topic",
-      datatype: "some_datatype",
       receiveTime: { sec: 123, nsec: 456 },
       message: {
         msg: "Couldn't find int 83757.",

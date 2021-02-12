@@ -1,302 +1,236 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import WavesIcon from "@mdi/svg/svg/waves.svg";
+import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import cx from "classnames";
-import { isEqual, omit } from "lodash";
+import isEqual from "lodash/isEqual";
+import omit from "lodash/omit";
+import panzoom from "panzoom";
 import React from "react";
+import OutsideClickHandler from "react-outside-click-handler";
+import ReactResizeDetector from "react-resize-detector";
+import shallowequal from "shallowequal";
+import styled from "styled-components";
+import uuid from "uuid";
 
-import CameraModel from "./CameraModel";
-import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB } from "./decodings";
 import styles from "./ImageCanvas.module.scss";
-import { type ImageViewPanelHooks } from "./index";
-import type { SaveConfig } from "./index";
-import ChildToggle from "webviz-core/src/components/ChildToggle";
+import ImageCanvasWorker from "./ImageCanvas.worker";
+import type { ImageViewPanelHooks, Config, SaveImagePanelConfig } from "./index";
+import { renderImage } from "./renderImage";
+import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
-import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import Menu, { Item } from "webviz-core/src/components/Menu";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import type { Message, Topic } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { ImageMarker, CameraInfo, Color } from "webviz-core/src/types/Messages";
-import type { Message } from "webviz-core/src/types/players";
+import type { CameraInfo } from "webviz-core/src/types/Messages";
+import { downloadFiles } from "webviz-core/src/util";
+import debouncePromise from "webviz-core/src/util/debouncePromise";
+import type Rpc from "webviz-core/src/util/Rpc";
+import sendNotification from "webviz-core/src/util/sendNotification";
+import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
+import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
-type Props = {
-  topic: string,
+type OnFinishRenderImage = () => void;
+type Props = {|
+  topic: ?Topic,
   image: ?Message,
-  cameraInfo: ?CameraInfo,
-  markers: Message[],
+  rawMarkerData: {|
+    markers: Message[],
+    scale: number,
+    transformMarkers: boolean,
+    cameraInfo: ?CameraInfo,
+  |},
   panelHooks?: ImageViewPanelHooks,
-  transformMarkers: boolean,
-  canTransformMarkers?: boolean,
-  saveConfig: SaveConfig,
-};
+  config: Config,
+  saveConfig: SaveImagePanelConfig,
+  onStartRenderImage: () => OnFinishRenderImage,
+  useMainThreadRenderingForTesting?: boolean,
+|};
 
-type State = {
-  cameraModel: ?CameraModel,
-  prevCameraInfo: ?CameraInfo,
-  prevTransformMarkers: boolean,
-};
+type State = {|
+  error: ?Error,
+  openZoomChart: boolean,
+|};
 
-function toRGBA(color: Color) {
-  const { r, g, b, a } = color;
-  return `rgba(${r}, ${g}, ${b}, ${a || 1})`;
-}
+const SErrorMessage = styled.div`
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  color: ${colors.red};
+`;
+
+const MAX_ZOOM_PERCENTAGE = 150;
+const ZOOM_STEP = 5;
+
+const webWorkerManager = new WebWorkerManager(ImageCanvasWorker, 1);
+
+type CanvasRenderer =
+  | {|
+      type: "rpc",
+      // This is nullable because we destroy the worker whenever we unmount and recreate it if we remount.
+      worker: ?Rpc,
+    |}
+  | {|
+      type: "mainThread",
+    |};
 
 export default class ImageCanvas extends React.Component<Props, State> {
   _canvasRef = React.createRef<HTMLCanvasElement>();
-  _ready: boolean = true;
-
-  static defaultProps = {
-    markers: [],
+  _divRef = React.createRef<HTMLElement>();
+  _id: string;
+  _canvasRenderer: CanvasRenderer;
+  state = {
+    error: undefined,
+    openZoomChart: false,
   };
 
-  state = { cameraModel: null, prevCameraInfo: null, prevTransformMarkers: false };
-
-  static getDerivedStateFromProps({ cameraInfo, topic, transformMarkers }: Props, prevState: State) {
-    if (!cameraInfo && prevState.prevCameraInfo) {
-      return {
-        prevCameraInfo: cameraInfo,
-        cameraModel: null,
-        transformMarkers: false,
-      };
-    }
-    // only reset the cameraModel when cameraInfo or transformMarkers change
-    if (
-      cameraInfo &&
-      (transformMarkers !== prevState.prevTransformMarkers ||
-        cameraInfo !== prevState.prevCameraInfo ||
-        (!prevState.prevCameraInfo || !isEqual(omit(cameraInfo, "header"), omit(prevState.prevCameraInfo, "header"))))
-    ) {
-      return {
-        prevTransformMarkers: transformMarkers,
-        prevCameraInfo: cameraInfo,
-        cameraModel: new CameraModel(cameraInfo, transformMarkers),
-      };
-    }
-
-    return null;
+  constructor(props: Props) {
+    super(props);
+    this._id = uuid.v4();
+    // If we support offscreen canvas, use the ImageCanvasWorker because it improves performance by moving canvas
+    // operations off of the main thread. Allow an override for testing / stories.
+    this._canvasRenderer =
+      !supportsOffscreenCanvas() || props.useMainThreadRenderingForTesting
+        ? { type: "mainThread" }
+        : { type: "rpc", worker: webWorkerManager.registerWorkerListener(this._id) };
   }
 
-  decodeMessageToBitmap = async (msg: any): Promise<?ImageBitmap> => {
-    let image: ImageData | Image | Blob | void;
-    const { data: rawData } = msg.message;
-    if (rawData instanceof Uint8Array) {
-      // Binary message processing
-      if (msg.datatype === "sensor_msgs/Image") {
-        const { width, height, encoding } = msg.message;
-        image = new ImageData(width, height);
-        // prettier-ignore
-        switch (encoding) {
-          case "yuv422": decodeYUV(rawData, width, height, image.data); break;
-          case "bgr8": decodeBGR(rawData, width, height, image.data); break;
-          case "32FC1": decodeFloat1c(rawData, width, height, image.data); break;
-          case "bayer_rggb8": decodeRGGB(rawData, width, height, image.data); break;
-          default: break;
-        }
-      } else if (msg.datatype === "sensor_msgs/CompressedImage") {
-        image = new Blob([rawData], { type: `image/${msg.message.format}` });
+  // Returns the existing RPC worker, or initializes one if it doesn't exist yet.
+  _getRpcWorker = (): Rpc => {
+    const canvasRenderer = this._canvasRenderer;
+    if (canvasRenderer.type === "rpc") {
+      // Create the worker if it hasn't been initialized yet.
+      const worker = canvasRenderer.worker || webWorkerManager.registerWorkerListener(this._id);
+      if (!canvasRenderer.worker) {
+        canvasRenderer.worker = worker;
       }
-    } else {
-      image = new Image();
-      image.src = `data:image/png;base64,${rawData}`;
-      const imageElement = image; // for flow
-      await new Promise((resolve, reject) => {
-        imageElement.onload = resolve;
-        imageElement.onerror = reject;
+      return worker;
+    }
+    throw new Error("_getRpcWorker can only be called with canvasRenderer type rpc");
+  };
+
+  _setCanvasRef = (canvas: ?HTMLCanvasElement) => {
+    if (canvas) {
+      this.loadZoomFromConfig();
+      if (this._canvasRenderer.type === "rpc") {
+        const worker = this._getRpcWorker();
+        // $FlowFixMe This is a function that is not yet in Flow.
+        const transferableCanvas = canvas.transferControlToOffscreen();
+        worker.send<void>("initialize", { id: this._id, canvas: transferableCanvas }, [transferableCanvas]);
+      }
+      this._canvasRef.current = canvas;
+    }
+  };
+
+  panZoomCanvas: any = null;
+  bitmapDimensions: Dimensions = { width: 0, height: 0 };
+
+  keepInBounds = (div: HTMLElement) => {
+    const { x, y, scale } = this.panZoomCanvas.getTransform();
+    if (isNaN(x) || isNaN(y)) {
+      sendNotification("Tried to keep canvas in bounds but encountered invalid transform values", "", "app", "warn");
+      return;
+    }
+    // When zoom is 1, the percentage is fitPercentage
+    // (fitPercent * scale) / 100) is the zoomScale for now
+    const updatedPercentage = scale * 100;
+    const rect = div.getBoundingClientRect();
+    const { width, height } = rect;
+    const offset = checkOutOfBounds(
+      x,
+      y,
+      width,
+      height,
+      // calculate the true width and height of image right now
+      (this.bitmapDimensions.width * updatedPercentage) / 100,
+      (this.bitmapDimensions.height * updatedPercentage) / 100
+    );
+    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage });
+    if (offset[0] !== x || offset[1] !== y) {
+      this.panZoomCanvas.moveTo(offset[0], offset[1]);
+    }
+  };
+
+  createPanZoom = () => {
+    const canvas = this._canvasRef.current;
+    const div = this._divRef.current;
+    if (canvas && div) {
+      this.panZoomCanvas = panzoom(canvas, {
+        maxZoom: 1.5,
+        minZoom: 0,
+        zoomSpeed: 0.05,
+        smoothScroll: false,
+        filterKey(_e, _dx, _dy, _dz) {
+          // don't let panzoom handle keyboard event
+          // because zoom in and out has the wrong offset change
+          // left right up and down is different what we use in our daily life
+          return true;
+        },
       });
-    }
-
-    if (image) {
-      return self.createImageBitmap(image);
+      this.panZoomCanvas.on("zoom", (_e) => {
+        const { scale } = this.panZoomCanvas.getTransform();
+        const minPercent = this.fitPercent() * 0.8;
+        if (scale < minPercent / 100) {
+          this.goToTargetPercentage(minPercent);
+        }
+        this.keepInBounds(div);
+      });
+      this.panZoomCanvas.on("pan", (_e) => this.keepInBounds(div));
     }
   };
 
-  clearCanvas = () => {
-    const canvas = this._canvasRef.current;
-    if (!canvas) {
+  getImageViewport = () => {
+    const div = this._divRef.current;
+
+    if (!div) {
+      throw new Error("Don't have div to get width and height");
+    }
+    return { imageViewportWidth: div.offsetWidth, imageViewportHeight: div.offsetHeight };
+  };
+
+  moveToCenter = () => {
+    if (!this.panZoomCanvas) {
+      sendNotification("Tried to center when there is no panZoomCanvas", "", "app", "error");
       return;
     }
-    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    this.panZoomCanvas.moveTo(
+      (imageViewportWidth - (width * imageViewportHeight) / height) / 2,
+      (imageViewportHeight - (height * imageViewportWidth) / width) / 2
+    );
   };
 
-  resizeCanvas = (width: number, height: number) => {
-    const canvas = this._canvasRef.current;
-    if (canvas && (canvas.width !== width || canvas.height !== height)) {
-      canvas.width = width;
-      canvas.height = height;
-    }
+  fitPercent = () => {
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    return Math.min(imageViewportWidth / width, imageViewportHeight / height) * 100;
   };
 
-  paintBitmap = (bitmap: ?ImageBitmap) => {
-    const { cameraInfo: info } = this.props;
-    const { cameraModel } = this.state;
-    const canvas = this._canvasRef.current;
-    const cameraModelWithInitializedData = cameraModel && cameraModel.initializedData ? cameraModel : null;
+  fillPercent = () => {
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    return Math.max(imageViewportWidth / width, imageViewportHeight / height) * 100;
+  };
 
-    if (!canvas) {
+  loadZoomFromConfig = () => {
+    if (this.panZoomCanvas) {
       return;
     }
-    if (!bitmap) {
-      this.clearCanvas();
-      return;
-    }
-    const ctx = canvas.getContext("2d");
-    if (info && info.width && info.height) {
-      this.resizeCanvas(info.width, info.height);
-      ctx.save();
-      ctx.scale(info.width / bitmap.width, info.height / bitmap.height);
-      ctx.drawImage(bitmap, 0, 0);
-      ctx.restore();
-      ctx.save();
-      if (cameraModelWithInitializedData) {
-        this.paintMarkers(ctx, cameraModelWithInitializedData);
-        ctx.restore();
-      }
-    } else {
-      this.resizeCanvas(bitmap.width, bitmap.height);
-      ctx.drawImage(bitmap, 0, 0);
-    }
-    bitmap.close();
+    this.createPanZoom();
+    this.applyPanZoom();
   };
-
-  paintMarkers(ctx: CanvasRenderingContext2D, cameraModel: CameraModel) {
-    const { markers } = this.props;
-    const imageViewHooks = this.props.panelHooks || getGlobalHooks().perPanelHooks().ImageView;
-
-    for (const msg of markers) {
-      ctx.save();
-      if (imageViewHooks.imageMarkerArrayDatatypes.includes(msg.datatype)) {
-        for (const marker of msg.message.markers) {
-          this.paintMarker(ctx, marker, cameraModel);
-        }
-      } else if (imageViewHooks.imageMarkerDatatypes.includes(msg.datatype)) {
-        this.paintMarker(ctx, msg.message, cameraModel);
-      } else {
-        console.warn("unrecognized image marker datatype", msg);
-      }
-      ctx.restore();
-    }
-  }
-
-  paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker, cameraModel: CameraModel) {
-    switch (marker.type) {
-      case 0: {
-        // CIRCLE
-        ctx.beginPath();
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
-        ctx.arc(x, y, marker.scale, 0, 2 * Math.PI);
-        if (marker.thickness <= 0) {
-          ctx.fillStyle = toRGBA(marker.outline_color);
-          ctx.fill();
-        } else {
-          ctx.lineWidth = marker.thickness;
-          ctx.strokeStyle = toRGBA(marker.outline_color);
-          ctx.stroke();
-        }
-        break;
-      }
-
-      // LINE_LIST
-      case 2:
-        if (marker.points.length % 2 !== 0) {
-          break;
-        }
-        ctx.strokeStyle = toRGBA(marker.outline_color);
-        ctx.lineWidth = marker.thickness;
-        for (let i = 0; i < marker.points.length; i += 2) {
-          const { x: x1, y: y1 } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
-          const { x: x2, y: y2 } = cameraModel.maybeUnrectifyPoint(marker.points[i + 1]);
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-        }
-        break;
-
-      // LINE_STRIP, POLYGON
-      case 1:
-      case 3: {
-        if (marker.points.length === 0) {
-          break;
-        }
-        ctx.beginPath();
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[0]);
-        ctx.moveTo(x, y);
-        for (let i = 1; i < marker.points.length; i++) {
-          const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
-          ctx.lineTo(x, y);
-        }
-        if (marker.type === 3) {
-          ctx.closePath();
-        }
-        if (marker.thickness <= 0) {
-          ctx.fillStyle = toRGBA(marker.outline_color);
-          ctx.fill();
-        } else {
-          ctx.strokeStyle = toRGBA(marker.outline_color);
-          ctx.lineWidth = marker.thickness;
-          ctx.stroke();
-        }
-        break;
-      }
-
-      case 4: {
-        // POINTS
-        if (marker.points.length === 0) {
-          break;
-        }
-
-        const size = marker.scale || 4;
-        if (marker.outline_colors && marker.outline_colors.length === marker.points.length) {
-          for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
-            ctx.fillStyle = toRGBA(marker.outline_colors[i]);
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-        } else {
-          ctx.beginPath();
-          for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
-            ctx.arc(x, y, size, 0, 2 * Math.PI);
-            ctx.closePath();
-          }
-          ctx.fillStyle = toRGBA(marker.fill_color);
-          ctx.fill();
-        }
-        break;
-      }
-
-      case 5: {
-        // TEXT (our own extension on visualization_msgs/Marker)
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
-
-        const fontSize = marker.scale * 12;
-        const padding = 4 * marker.scale;
-        ctx.font = `${fontSize}px sans-serif`;
-        ctx.textBaseline = "bottom";
-        if (marker.filled) {
-          const metrics = ctx.measureText(marker.text.data);
-          const height = fontSize * 1.2; // Chrome doesn't yet support height in TextMetrics
-          ctx.fillStyle = toRGBA(marker.fill_color);
-          ctx.fillRect(x, y - height, Math.ceil(metrics.width + 2 * padding), Math.ceil(height));
-        }
-        ctx.fillStyle = toRGBA(marker.outline_color);
-        ctx.fillText(marker.text.data, x + padding, y);
-        break;
-      }
-
-      default:
-        console.warn("unrecognized image marker type", marker);
-    }
-  }
 
   componentDidMount() {
     this.renderCurrentImage();
@@ -318,54 +252,53 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   componentWillUnmount() {
+    const canvasRenderer = this._canvasRenderer;
+    if (canvasRenderer.type === "rpc") {
+      // Unset the PRC worker so that we can destroy the worker if it's no longer necessary.
+      webWorkerManager.unregisterWorkerListener(this._id);
+      canvasRenderer.worker = null;
+    }
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
   }
 
-  shouldComponentUpdate(nextProps: Props) {
-    return (
-      nextProps.transformMarkers !== this.props.transformMarkers ||
-      // shallow equality to avoid comparing image data
-      nextProps.image !== this.props.image ||
-      // deep equality since camera info is re-published but never actually changes
-      !isEqual(nextProps.cameraInfo, this.props.cameraInfo) ||
-      // shallow equality because marker list may be rebuilt with the same markers
-      nextProps.markers.length !== this.props.markers.length ||
-      nextProps.markers.some((marker, i) => marker !== this.props.markers[i])
-    );
-  }
-
   componentDidUpdate(prevProps: Props) {
-    this.renderCurrentImage();
+    const imageChanged = !shallowequal(prevProps, this.props, (a, b, key) => {
+      if (key === "rawMarkerData") {
+        return shallowequal(a, b, (innerA, innerB, innerKey) => {
+          if (innerKey === "markers") {
+            return shallowequal(innerA, innerB);
+          } else if (innerKey === "cameraInfo") {
+            return isEqual(omit(innerA, "header"), omit(innerB, "header"));
+          }
+        });
+      }
+    });
+    if (imageChanged) {
+      this.renderCurrentImage();
+    }
   }
 
   downloadImage = () => {
     const { topic, image } = this.props;
     const canvas = this._canvasRef.current;
-    const { body } = document;
 
     // satisfy flow
-    if (!body || !canvas || !image) {
+    if (!canvas || !image || !topic) {
       return;
     }
 
-    // create a link element to download data
-    const link = document.createElement("a");
+    // context: https://stackoverflow.com/questions/37135417/download-canvas-as-png-in-fabric-js-giving-network-error
     // read the canvas data as an image (png)
-    link.setAttribute("href", canvas.toDataURL());
-    // name the image the same name as the topic
-    // note: the / characters in the file name will be replaced with _
-    // by the browser
-    // remove the leading / so the image name doesn't start with _
-    const topicName = topic.slice(1);
-    const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
-    const filename = `${topicName}-${stamp.sec}-${stamp.nsec}`;
-    link.setAttribute("download", filename);
-    link.style.display = "none";
-    body.appendChild(link);
-    // click the link to trigger a download
-    link.click();
-    // remove the link after triggering download
-    body.removeChild(link);
+    canvas.toBlob((blob) => {
+      // name the image the same name as the topic
+      // note: the / characters in the file name will be replaced with _
+      // by the browser
+      // remove the leading / so the image name doesn't start with _
+      const topicName = topic.name.slice(1);
+      const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
+      const fileName = `${topicName}-${stamp.sec}-${stamp.nsec}`;
+      downloadFiles([{ blob, fileName }]);
+    });
   };
 
   onCanvasRightClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
@@ -380,62 +313,233 @@ export default class ImageCanvas extends React.Component<Props, State> {
     );
   };
 
-  renderCurrentImage() {
-    if (!this._ready) {
-      console.warn("Dropped frame on image canvas");
+  clickMagnify = () => {
+    this.setState((state) => ({ openZoomChart: !state.openZoomChart }));
+  };
+  onZoomFit = () => {
+    const fitPercent = this.fitPercent();
+    this.panZoomCanvas.zoomAbs(0, 0, fitPercent / 100);
+    this.moveToCenter();
+    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent });
+  };
+
+  onZoomFill = () => {
+    const fillPercent = this.fillPercent();
+    this.panZoomCanvas.zoomAbs(0, 0, fillPercent / 100);
+    this.moveToCenter();
+    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent });
+  };
+
+  goToTargetPercentage = (targetPercentage: number) => {
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    this.panZoomCanvas.zoomAbs(imageViewportWidth / 2, imageViewportHeight / 2, targetPercentage / 100);
+  };
+
+  onZoomMinus = () => {
+    const { zoomPercentage } = this.props.config;
+    const targetPercentage = Math.max((zoomPercentage || 100) - ZOOM_STEP, this.fitPercent() * 0.8);
+    this.goToTargetPercentage(targetPercentage);
+  };
+
+  onZoomPlus = () => {
+    const { zoomPercentage } = this.props.config;
+    const targetPercentage = Math.min((zoomPercentage || 100) + ZOOM_STEP, MAX_ZOOM_PERCENTAGE);
+    this.goToTargetPercentage(targetPercentage);
+  };
+
+  renderCurrentImage = debouncePromise(async () => {
+    const { image, topic, rawMarkerData, onStartRenderImage } = this.props;
+    if (!topic) {
       return;
     }
 
-    const { image } = this.props;
-    if (!image) {
-      this.clearCanvas();
+    const onFinishImageRender = onStartRenderImage();
+    try {
+      let dimensions;
+      const canvasRenderer = this._canvasRenderer;
+      if (canvasRenderer.type === "rpc") {
+        const worker = this._getRpcWorker();
+        dimensions = await worker.send<?Dimensions>("renderImage", {
+          id: this._id,
+          imageMessage: image,
+          imageMessageDatatype: topic.datatype,
+          rawMarkerData,
+        });
+      } else {
+        dimensions = await renderImage({
+          canvas: this._canvasRef.current,
+          imageMessage: image,
+          imageMessageDatatype: topic.datatype,
+          rawMarkerData,
+        });
+      }
+
+      if (dimensions) {
+        this.bitmapDimensions = dimensions;
+        this.loadZoomFromConfig();
+      }
+      if (this.state.error) {
+        this.setState({ error: undefined });
+      }
+    } catch (error) {
+      console.error(error);
+      sendNotification(`failed to decode image on ${image?.topic || ""}:`, "", "user", "error");
+      this.setState({ error });
+    } finally {
+      onFinishImageRender();
+    }
+  });
+
+  renderZoomChart = () => {
+    return this.state.openZoomChart ? (
+      <div className={styles.zoomChart} data-zoom-menu>
+        <div className={cx(styles.menuItem, styles.notInteractive)}>Use mousewheel or buttons to zoom</div>
+        <div className={cx(styles.menuItem, styles.borderBottom)}>
+          <button className={styles.round} onClick={this.onZoomMinus} data-panel-minus-zoom>
+            -
+          </button>
+          <span>{`${(this.props.config.zoomPercentage || 100).toFixed(1)}%`}</span>
+          <button className={styles.round} onClick={this.onZoomPlus} data-panel-add-zoom>
+            +
+          </button>
+        </div>
+        <Item className={styles.borderBottom} onClick={() => this.goToTargetPercentage(100)} dataTest={"hundred-zoom"}>
+          Zoom to 100%
+        </Item>
+        <Item className={styles.borderBottom} onClick={this.onZoomFit} dataTest={"fit-zoom"}>
+          Zoom to fit
+        </Item>
+        <Item onClick={this.onZoomFill} dataTest={"fill-zoom"}>
+          Zoom to fill
+        </Item>
+      </div>
+    ) : null;
+  };
+
+  applyPanZoom = () => {
+    if (!this.panZoomCanvas) {
       return;
     }
 
-    this._ready = false;
+    const { imageViewportHeight, imageViewportWidth } = this.getImageViewport();
+    if (!imageViewportHeight || !imageViewportWidth) {
+      // While dragging, the viewport may have zero height or width, which throws off the panZoomCanvas
+      return;
+    }
 
-    this.decodeMessageToBitmap(image)
-      .then((bitmap) => {
-        this.paintBitmap(bitmap);
-        this._ready = true;
-      })
-      .catch((err) => {
-        console.warn(`failed to decode image on ${image.topic}:`, err);
-        this.clearCanvas();
-        this._ready = true;
-      });
-  }
+    const { mode, zoomPercentage, offset } = this.props.config;
+    if (!mode || mode === "fit") {
+      this.onZoomFit();
+    } else if (mode === "fill") {
+      this.onZoomFill();
+    } else if (mode === "other") {
+      // Go to prevPercentage
+      this.goToTargetPercentage(zoomPercentage || 100);
+      this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
+    }
+  };
+
+  keyDownHandlers = {
+    "=": () => {
+      this.onZoomPlus();
+    },
+    "-": () => {
+      this.onZoomMinus();
+    },
+    "1": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(10);
+      }
+    },
+    "2": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(20);
+      }
+    },
+    "3": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(30);
+      }
+    },
+    "4": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(40);
+      }
+    },
+    "5": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(50);
+      }
+    },
+    "6": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(60);
+      }
+    },
+    "7": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(70);
+      }
+    },
+    "8": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(80);
+      }
+    },
+    "9": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(90);
+      }
+    },
+    "0": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(100);
+      }
+    },
+  };
 
   render() {
-    const { saveConfig, transformMarkers, canTransformMarkers } = this.props;
-    const { cameraModel } = this.state;
-
+    const { mode, zoomPercentage, offset } = this.props.config;
+    if (zoomPercentage && (zoomPercentage > 150 || zoomPercentage < 0)) {
+      sendNotification(
+        `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and 150. It has been reset to 100.`,
+        "",
+        "user",
+        "warn"
+      );
+      this.props.saveConfig({ zoomPercentage: 100 });
+    }
+    if (offset && offset.length !== 2) {
+      sendNotification(
+        `offset for the image panel was ${JSON.stringify(
+          offset
+        )}, but should be an array of length 2. It has been reset to [0, 0].`,
+        "",
+        "user",
+        "warn"
+      );
+      this.props.saveConfig({ offset: [0, 0] });
+    }
     return (
-      <React.Fragment>
-        <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
-        {canTransformMarkers && cameraModel && cameraModel.initializedData && (
-          <ChildToggle.ContainsOpen>
-            {(containsOpen) => (
-              <div
-                className={cx(styles["bottom-bar"], {
-                  [styles.containsOpen]: inScreenshotTests ? true : containsOpen,
-                })}>
-                <Icon
-                  onClick={() => saveConfig({ transformMarkers: !transformMarkers })}
-                  tooltip={
-                    transformMarkers
-                      ? "Markers are being transformed by webviz based on the camera model. Click to turn it off."
-                      : `Markers can be transformed by webviz based on the camera model. Click to turn it on.`
-                  }
-                  fade
-                  medium>
-                  <WavesIcon style={{ color: transformMarkers ? colors.orange : colors.textBright }} />
-                </Icon>
-              </div>
-            )}
-          </ChildToggle.ContainsOpen>
-        )}
-      </React.Fragment>
+      <ReactResizeDetector handleWidth handleHeight onResize={this.applyPanZoom}>
+        <div className={styles.root} ref={this._divRef}>
+          <KeyListener keyDownHandlers={this.keyDownHandlers} />
+          <div>
+            {this.state.error && <SErrorMessage>Error: {this.state.error.message}</SErrorMessage>}
+            <canvas onContextMenu={this.onCanvasRightClick} ref={this._setCanvasRef} className={styles.canvas} />
+          </div>
+          <OutsideClickHandler
+            onOutsideClick={() => {
+              this.setState({ openZoomChart: false });
+            }}>
+            {this.renderZoomChart()}
+            <button className={styles.magnify} onClick={this.clickMagnify} data-magnify-icon>
+              <MagnifyIcon />{" "}
+              {mode === "other" ? <span>{zoomPercentage ? `${zoomPercentage.toFixed(1)}%` : "null"}</span> : null}
+            </button>
+          </OutsideClickHandler>
+        </div>
+      </ReactResizeDetector>
     );
   }
 }

@@ -11,3 +11,5 @@ _How was this change tested & verified?_
 ## Versioning impact
 
 _Does this change necessitate a [major, minor, or patch](https://semver.org/) semver update for the affected package?_
+
+<!-- Feel free to also ping us on Slack about your PR. See the README on how to join our Slack workspace. -->

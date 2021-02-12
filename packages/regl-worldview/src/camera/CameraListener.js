@@ -83,6 +83,12 @@ export default class CameraListener extends React.Component<Props> {
     _el.removeEventListener("wheel", this._onWheel, { passive: false });
   }
 
+  focus() {
+    if (this._el) {
+      this._el.focus();
+    }
+  }
+
   _getMouseOnScreen = (mouse: MouseEvent) => {
     const { clientX, clientY } = mouse;
     const { top, left, width, height } = this._rect;

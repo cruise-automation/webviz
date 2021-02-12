@@ -1,39 +1,41 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import _ from "lodash";
+import { uniq } from "lodash";
 import * as React from "react";
-import Dimensions from "react-container-dimensions";
+import { hot } from "react-hot-loader/root";
 import stringHash from "string-hash";
-import styled from "styled-components";
-import textWidth from "text-width";
+import styled, { css } from "styled-components";
 import tinycolor from "tinycolor2";
 
 import helpContent from "./index.help.md";
-import labelVisibilityMap from "./labelVisibilityMap";
 import Button from "webviz-core/src/components/Button";
-import MessageHistory, {
-  type MessageHistoryData,
-  type MessageHistoryItem,
-  type MessageHistoryTimestampMethod,
-  getTimestampForMessage,
-} from "webviz-core/src/components/MessageHistory";
+import Dimensions from "webviz-core/src/components/Dimensions";
+import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import TimeBasedChart, {
+  getTooltipItemForMessageHistoryItem,
+  type TimeBasedChartTooltipData,
+  type DataPoint,
+} from "webviz-core/src/components/TimeBasedChart";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import colors from "webviz-core/src/styles/colors.module.scss";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
+import type { PanelConfig } from "webviz-core/src/types/panels";
+import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 import { subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
 
-const transitionableRosTypes = [
+export const transitionableRosTypes = [
   "bool",
   "int8",
   "uint8",
@@ -44,14 +46,12 @@ const transitionableRosTypes = [
   "int64",
   "uint64",
   "string",
+  "json",
 ];
 
-const fontFamily = "'Inter UI', -apple-system, BlinkMacSystemFont, sans-serif";
+const fontFamily = "'Inter UI', -apple-system, sans-serif";
 const fontSize = 10;
 const fontWeight = "bold";
-function measureText(text: string): number {
-  return textWidth(text, { family: fontFamily, size: fontSize, weight: fontWeight }) + 3;
-}
 
 const SRoot = styled.div`
   display: flex;
@@ -62,15 +62,11 @@ const SRoot = styled.div`
 
 const SAddButton = styled.div`
   position: absolute;
-  top: 0;
-  right: 65px;
-  opacity: 0;
+  top: 30px;
+  right: 5px;
+  opacity: ${(props) => (props.show ? 1 : 0)};
   transition: opacity 0.1s ease-in-out;
   z-index: 1;
-
-  ${SRoot}:hover & {
-    opacity: 1;
-  }
 `;
 
 const SChartContainerOuter = styled.div`
@@ -85,10 +81,10 @@ const SChartContainerInner = styled.div`
   margin-top: 10px;
 `;
 
-const inputColor = tinycolor(colors.toolbar)
+const inputColor = tinycolor(colors.DARK3)
   .setAlpha(0.7)
   .toHexString();
-const inputColorBright = tinycolor(colors.toolbar)
+const inputColorBright = tinycolor(colors.DARK3)
   .lighten(8)
   .toHexString();
 const inputLeft = 20;
@@ -100,12 +96,20 @@ const SInputContainer = styled.div`
   height: 20px;
   padding-right: 4px;
   max-width: calc(100% - ${inputLeft}px);
+  min-width: min(100%, 150px); // Don't let it get too small.
   overflow: hidden;
   line-height: 20px;
 
   &:hover {
     background: ${inputColor};
   }
+
+  // Move over the first input on hover for the toolbar.
+  ${(props) =>
+    props.shrink &&
+    css`
+      max-width: calc(100% - 150px);
+    `}
 `;
 
 const SInputDelete = styled.div`
@@ -136,7 +140,6 @@ const yAxes = [
       fontSize: 10,
       fontColor: "#eee",
       maxRotation: 0,
-      callback: () => "",
     },
     type: "category",
     offset: true,
@@ -145,16 +148,9 @@ const yAxes = [
 
 const plugins = {
   datalabels: {
-    align: 0,
     anchor: "center",
-    rotation: 0,
-    offset: -5,
-    formatter: (value: any, context: any) => {
-      return labelVisibilityMap(context, measureText)[context.datasetIndex][context.dataIndex]
-        ? `${value.label}\n\n`
-        : "";
-    },
-    color: (context: any) => context.dataset.data[context.dataIndex].labelColor,
+    align: -45,
+    offset: 6,
     clip: true,
     font: {
       family: fontFamily,
@@ -165,17 +161,35 @@ const plugins = {
   multicolorLineYOffset: 6,
 };
 
-export type StateTransitionPath = { value: string, timestampMethod: MessageHistoryTimestampMethod };
+const scaleOptions = {
+  // Hide all y-axis ticks since each bar on the y-axis is just a separate path.
+  yAxisTicks: "hide",
+};
+
+export type StateTransitionPath = { value: string, timestampMethod: TimestampMethod };
 export type StateTransitionConfig = { paths: StateTransitionPath[] };
+
+export function openSiblingStateTransitionsPanel(
+  openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
+  topicName: string
+) {
+  openSiblingPanel("StateTransitions", (config: StateTransitionConfig) => {
+    return ({
+      ...config,
+      paths: uniq(config.paths.concat([{ value: topicName, enabled: true, timestampMethod: "receiveTime" }])),
+    }: StateTransitionConfig);
+  });
+}
 
 type Props = {
   config: StateTransitionConfig,
   saveConfig: ($Shape<StateTransitionConfig>) => void,
+  isHovered: boolean,
 };
 
 class StateTransitions extends React.PureComponent<Props> {
   static panelType = "StateTransitions";
-  static defaultConfig = getGlobalHooks().perPanelHooks().StateTransitions.defaultConfig;
+  static defaultConfig = { paths: [] };
 
   _onInputChange = (value: string, index: ?number) => {
     if (index == null) {
@@ -186,7 +200,7 @@ class StateTransitions extends React.PureComponent<Props> {
     this.props.saveConfig({ paths: newPaths });
   };
 
-  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: ?number) => {
+  _onInputTimestampMethodChange = (value: TimestampMethod, index: ?number) => {
     if (index == null) {
       throw new Error("index not set");
     }
@@ -200,12 +214,12 @@ class StateTransitions extends React.PureComponent<Props> {
     const onlyTopicsHeight = paths.length * 55;
     const heightPerTopic = onlyTopicsHeight / paths.length;
     const xAxisHeight = 30;
-    const height = onlyTopicsHeight + xAxisHeight;
+    const height = Math.max(80, onlyTopicsHeight + xAxisHeight);
 
     return (
       <SRoot>
         <PanelToolbar floating helpContent={helpContent} />
-        <SAddButton>
+        <SAddButton show={this.props.isHovered}>
           <Button
             onClick={() =>
               this.props.saveConfig({
@@ -215,8 +229,9 @@ class StateTransitions extends React.PureComponent<Props> {
             add
           </Button>
         </SAddButton>
-        <MessageHistory paths={paths.map(({ value }) => value)}>
+        <MessageHistoryDEPRECATED paths={paths.map(({ value }) => value)}>
           {({ itemsByPath, startTime }: MessageHistoryData) => {
+            const tooltips = [];
             const data = {
               yLabels: paths.map((_path, pathIndex) => pathIndex.toString()),
               datasets: paths.map(({ value: path, timestampMethod }, pathIndex) => {
@@ -242,12 +257,12 @@ class StateTransitions extends React.PureComponent<Props> {
                 ] || [grey, ...lineColors];
                 let previousValue, previousTimestamp;
                 for (let index = 0; index < itemsByPath[path].length; index++) {
-                  const item: MessageHistoryItem = itemsByPath[path][index];
+                  const item = getTooltipItemForMessageHistoryItem(itemsByPath[path][index]);
                   if (item.queriedData.length !== 1) {
                     continue;
                   }
 
-                  const timestamp = getTimestampForMessage(item.message, timestampMethod);
+                  const timestamp = timestampMethod === "headerStamp" ? item.headerStamp : item.receiveTime;
                   if (!timestamp) {
                     continue;
                   }
@@ -274,24 +289,34 @@ class StateTransitions extends React.PureComponent<Props> {
                   }
 
                   const valueForColor = typeof value === "string" ? stringHash(value) : Math.round(Number(value));
-                  const color = baseColors[valueForColor % Object.values(baseColors).length];
-                  dataItem.pointBackgroundColor.push(darkColor(color));
-                  dataItem.colors.push(color);
-                  dataItem.datalabels.display.push(previousValue === undefined || previousValue !== value);
-                  dataItem.data.push({
-                    x: toSec(subtractTimes(timestamp, startTime)),
-                    y: pathIndex.toString(),
-                    tooltip: ({
-                      item,
-                      path,
-                      value,
-                      constantName,
-                      startTime,
-                    }: TimeBasedChartTooltipData),
-                    // $FlowFixMe
-                    label: constantName ? `${constantName} (${value})` : value,
-                    labelColor: color,
-                  });
+                  const color = baseColors[positiveModulo(valueForColor, Object.values(baseColors).length)];
+                  // We add all points, colors, tooltips, etc to the *beginning* of the list, not the end. When
+                  // datalabels overlap we usually care about the later ones (further right). By putting those points
+                  // first in the list, we prioritize datalabels there when the library does its autoclipping.
+                  dataItem.pointBackgroundColor.unshift(darkColor(color));
+                  dataItem.colors.unshift(color);
+                  const label = constantName ? `${constantName} (${String(value)})` : String(value);
+                  const x = toSec(subtractTimes(timestamp, startTime));
+                  const y = pathIndex;
+                  const tooltip: TimeBasedChartTooltipData = {
+                    x,
+                    y,
+                    item,
+                    path,
+                    value,
+                    constantName,
+                    startTime,
+                  };
+                  tooltips.unshift(tooltip);
+                  const dataPoint: DataPoint = { x, y };
+                  const showDatalabel = previousValue === undefined || previousValue !== value;
+                  // Use "auto" here so that the datalabels library can clip datalabels if they overlap.
+                  dataItem.datalabels.display.unshift(showDatalabel ? "auto" : false);
+                  if (showDatalabel) {
+                    dataPoint.label = label;
+                    dataPoint.labelColor = color;
+                  }
+                  dataItem.data.unshift(dataPoint);
                   previousValue = value;
                 }
                 return dataItem;
@@ -312,12 +337,18 @@ class StateTransitions extends React.PureComponent<Props> {
                         height={height}
                         data={data}
                         type="multicolorLine"
+                        xAxisIsPlaybackTime
                         yAxes={yAxes}
                         plugins={plugins}
+                        scaleOptions={scaleOptions}
+                        tooltips={tooltips}
                       />
 
                       {paths.map(({ value: path, timestampMethod }, index) => (
-                        <SInputContainer key={index} style={{ top: index * heightPerTopic }}>
+                        <SInputContainer
+                          key={index}
+                          style={{ top: index * heightPerTopic }}
+                          shrink={index === 0 && this.props.isHovered}>
                           <SInputDelete
                             onClick={() => {
                               const newPaths = this.props.config.paths.slice();
@@ -326,7 +357,7 @@ class StateTransitions extends React.PureComponent<Props> {
                             }}>
                             ✕
                           </SInputDelete>
-                          <MessageHistory.Input
+                          <MessagePathInput
                             path={path}
                             onChange={this._onInputChange}
                             index={index}
@@ -344,10 +375,10 @@ class StateTransitions extends React.PureComponent<Props> {
               </SChartContainerOuter>
             );
           }}
-        </MessageHistory>
+        </MessageHistoryDEPRECATED>
       </SRoot>
     );
   }
 }
 
-export default Panel<StateTransitionConfig>(StateTransitions);
+export default hot(Panel<StateTransitionConfig>(StateTransitions));

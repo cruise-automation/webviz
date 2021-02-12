@@ -11,22 +11,27 @@ module.exports = {
   testMatch: ["**/*.test.js"],
   testURL: "http://localhost",
   transform: {
-    "^.+\\.(js|jsx)$": "<rootDir>/jest/jsTransform.js",
-    "^.+\\.css$": "<rootDir>/jest/cssTransform.js",
+    // We use stringified Typescript in Node Playground.
+    "^.+typescript\\/[\\/\\w\\.]+\\.ts$": "<rootDir>/jest/rawTransform.js",
+    "^.+\\.(js|jsx)$": "babel-jest",
     "^.+\\.ne$": "<rootDir>/jest/neTransform.js",
     "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/jest/fileTransform.js",
   },
   moduleDirectories: ["<rootDir>/packages", "node_modules"],
   moduleFileExtensions: ["web.js", "js", "json", "web.jsx", "jsx", "node"],
-  resetMocks: true,
+  restoreMocks: true,
   setupFiles: [
     "<rootDir>/packages/webviz-core/src/test/setup.js",
     "<rootDir>/jest/configureEnzyme.js",
     "jest-canvas-mock",
   ],
-  setupTestFrameworkScriptFile: "<rootDir>/jest/setupTestFramework.js",
+  setupTestFrameworkScriptFile: "<rootDir>/packages/webviz-core/src/test/setupTestFramework.js",
   moduleNameMapper: {
-    "worker-loader!./PngWorker.js": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
+    "worker-loader.*!.*/UserNodePlayer/.+Worker":
+      "<rootDir>/packages/webviz-core/src/players/UserNodePlayer/worker.mock.js",
+    "worker-loader.*!.*": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
+    "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",
+    "\\.css$": "<rootDir>/jest/styleMock.js",
   },
 };

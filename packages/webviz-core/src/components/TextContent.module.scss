@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -7,7 +7,7 @@
 @import "webviz-core/src/styles/colors.module.scss";
 
 .root {
-  background-color: $panel-background;
+  background-color: transparent;
   font-size: 1.1rem;
   line-height: 1.65;
 
@@ -69,5 +69,13 @@
     line-height: 1.65;
     padding: 0.5em;
     vertical-align: middle;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  pre {
+    white-space: pre-wrap;
   }
 }

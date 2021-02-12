@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -10,6 +10,8 @@ import { clamp } from "lodash";
 import * as React from "react";
 import DocumentEvents from "react-document-events";
 import styled from "styled-components";
+
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // A low level slider component.
 //
@@ -27,6 +29,7 @@ type Props = {|
   value: ?number,
   min: number,
   max: number,
+  disabled?: boolean, // Disable the mouse interactions.
   step?: number,
   draggable?: boolean,
   onChange: (number) => void,
@@ -37,13 +40,13 @@ const StyledSlider = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   border-radius: 2px;
 `;
 
-const StyledRange = styled.div.attrs({
-  style: ({ width = 0 }) => ({ width: `${width * 100}%` }),
-})`
+export const StyledRange = styled.div.attrs(({ width }) => ({
+  style: { width: `${(width || 0) * 100}%` },
+}))`
   background-color: rgba(255, 255, 255, 0.2);
   position: absolute;
   height: 100%;
@@ -96,7 +99,10 @@ export default class Slider extends React.Component<Props> {
   }
 
   _onClick = (e: SyntheticMouseEvent<HTMLDivElement>) => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     // handled in mouse up/out if draggable
     if (draggable) {
       return;
@@ -111,7 +117,10 @@ export default class Slider extends React.Component<Props> {
   };
 
   _onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>): void => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     const { mouseDown } = this;
     if (!draggable || !mouseDown) {
       return;
@@ -121,9 +130,15 @@ export default class Slider extends React.Component<Props> {
   };
 
   _onMouseDown = (e: SyntheticMouseEvent<HTMLDivElement>): void => {
-    const { draggable, onChange } = this.props;
+    const { draggable, onChange, disabled } = this.props;
+    if (disabled) {
+      return;
+    }
     if (!draggable) {
       return;
+    }
+    if (document.activeElement) {
+      document.activeElement.blur();
     }
     e.preventDefault();
     const value = this.getValueAtMouse(e);
@@ -133,19 +148,29 @@ export default class Slider extends React.Component<Props> {
   };
 
   render() {
-    const { min, max, value, renderSlider, draggable } = this.props;
+    const { min, max, value, renderSlider, draggable, disabled } = this.props;
     const { mouseDown } = this;
+
+    if (max < min) {
+      const msg = `Slider component given invalid range: ${min}, ${max}`;
+      const err = new Error(msg);
+      sendNotification(err.message, err, "app", "error");
+    }
+
     return (
-      <StyledSlider innerRef={(el) => (this.el = el)} onClick={this._onClick} onMouseDown={this._onMouseDown}>
+      <StyledSlider
+        disabled={disabled}
+        ref={(el) => (this.el = el)}
+        onClick={this._onClick}
+        onMouseDown={this._onMouseDown}>
         <DocumentEvents
           target={window}
           enabled={mouseDown && draggable}
           onMouseUp={this._onMouseUp}
           onMouseMove={this._onMouseMove}
         />
-        {/* include mouseup on window.top for storybook */}
-        <DocumentEvents target={window.top} enabled={mouseDown && draggable} onMouseUp={this._onMouseUp} />
-        {renderSlider(value != null ? (value - min) / (max - min) : undefined)}
+        <DocumentEvents target={window} enabled={mouseDown && draggable} onMouseUp={this._onMouseUp} />
+        {renderSlider(value != null && min !== max ? (value - min) / (max - min) : undefined)}
       </StyledSlider>
     );
   }

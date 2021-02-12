@@ -8,9 +8,9 @@
 import { useAnimationFrame } from "@cruise-automation/hooks";
 import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
-import Worldview, { Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Spheres, Axes, GLTFScene } from "regl-worldview";
 
-import duckModel from "../utils/Duck.glb";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // #BEGIN EDITABLE
 function Example() {
@@ -82,9 +82,6 @@ function Example() {
   return (
     <Worldview
       cameraState={{
-        // Default setting for cameraState.
-        // Learn more at https://cruise-automation.github.io/webviz/worldview/#/docs/api/camera
-        ...DEFAULT_CAMERA_STATE,
         target: [duckPosition.x, duckPosition.y, duckPosition.z],
         // This is the magic! The `targetOrientation` input will make sure the camera follows the duck's orientation
         targetOrientation: duckOrientation,
@@ -94,7 +91,7 @@ function Example() {
       }}>
       <Spheres>{[sphereMarker]}</Spheres>
       <Axes />
-      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/docs/src/jsx/utils/Duck.glb  */}
+      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/common/fixtures/Duck.glb  */}
       <GLTFScene model={duckModel}>
         {{
           pose: {

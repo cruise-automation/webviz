@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -8,6 +8,7 @@
 
 import _ from "lodash";
 import React from "react";
+import type { Time } from "rosbag";
 
 import LevelToString from "./LevelToString";
 import style from "./LogMessage.module.scss";
@@ -18,7 +19,7 @@ function PadStart(val, count) {
   return _.padStart(`${val}`, count, "0");
 }
 
-function Stamp(props) {
+function Stamp(props: { stamp: Time }) {
   const stamp = props.stamp;
   return (
     <span>
@@ -31,8 +32,7 @@ type Props = {|
   msg: { file: string, line: string, level: number, name: string, msg: string, header: Header },
 |};
 
-// $FlowFixMe - flow doesn't have a definition for React.memo
-export default React.memo(function LogMessage({ msg }: Props) {
+export default React.memo<Props>(function LogMessage({ msg }: Props) {
   const altStr = `${msg.file}:${msg.line}`;
 
   const strLevel = LevelToString(msg.level);

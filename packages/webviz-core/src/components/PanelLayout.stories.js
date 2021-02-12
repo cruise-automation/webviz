@@ -1,33 +1,80 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
+import { createMemoryHistory } from "history";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { Provider } from "react-redux";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelLayout from "./PanelLayout";
 import { changePanelLayout } from "webviz-core/src/actions/panels";
-import rootReducer from "webviz-core/src/reducers";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
+import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
+const DEFAULT_CLICK_DELAY = 100;
 storiesOf("<PanelLayout>", module)
-  .addDecorator(withScreenshot())
   .add("panel not found", () => {
-    const store = configureStore(rootReducer);
-    store.dispatch(changePanelLayout("DummyPanelType!4co6n9d"));
+    const store = configureStore(createRootReducer(createMemoryHistory));
+    store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
     return (
-      <Provider store={store}>
-        <DragDropContextProvider backend={HTML5Backend}>
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup
+          onMount={() => {
+            setTimeout(() => {
+              document.querySelectorAll("[data-test=panel-settings]")[0].click();
+            }, DEFAULT_CLICK_DELAY);
+          }}
+          fixture={{ topics: [], datatypes: {}, frame: {} }}
+          store={store}
+          omitDragAndDrop>
           <PanelLayout />
-        </DragDropContextProvider>
-      </Provider>
+        </PanelSetup>
+      </DndProvider>
+    );
+  })
+  .add("remove unknown panel", () => {
+    const store = configureStore(createRootReducer(createMemoryHistory));
+    store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
+    return (
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup
+          onMount={() => {
+            setTimeout(() => {
+              document.querySelectorAll("[data-test=panel-settings]")[0].click();
+              document.querySelectorAll("[data-test=panel-settings-remove]")[0].click();
+            }, DEFAULT_CLICK_DELAY);
+          }}
+          fixture={{ topics: [], datatypes: {}, frame: {} }}
+          store={store}
+          omitDragAndDrop>
+          <PanelLayout />
+        </PanelSetup>
+      </DndProvider>
+    );
+  })
+  .add("tab panel", () => {
+    const store = configureStore(createRootReducer(createMemoryHistory));
+    store.dispatch(
+      changePanelLayout({
+        layout: {
+          first: "Tab!1r7jeml",
+          second: "Global!45ehbhx",
+          direction: "row",
+        },
+      })
+    );
+    return (
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} store={store} omitDragAndDrop>
+          <PanelLayout />
+        </PanelSetup>
+      </DndProvider>
     );
   });

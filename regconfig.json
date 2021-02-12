@@ -1,0 +1,18 @@
+{
+  "core": {
+    "actualDir": "__screenshots__"
+  },
+  "plugins": {
+    "reg-simple-keygen-plugin": {
+      "expectedKey": "$REG_SUIT_EXPECTED_KEY",
+      "actualKey": "$CIRCLE_SHA1"
+    },
+    "reg-publish-s3-plugin": {
+      "bucketName": "open-source-webviz-ui"
+    },
+    "reg-notify-github-plugin": {
+      "clientId": "MzQzsDQzNjc30y9PTSrLrNI3MzQxNDbUTy4qzSxO1U0sLcnPTSzJzM8DAA==",
+      "setCommitStatus": false
+    }
+  }
+}

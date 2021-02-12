@@ -1,53 +1,48 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
-import React, { Component } from "react";
+import PlusCircleOutlineIcon from "@mdi/svg/svg/plus-circle-outline.svg";
+import React, { useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
+import { addPanel, type AddPanelPayload } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
-import Icon from "webviz-core/src/components/Icon";
+import { WrappedIcon } from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
-import PanelList from "webviz-core/src/panels/PanelList";
+import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
+import type { State as ReduxState } from "webviz-core/src/reducers";
+import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
 
 type Props = {|
-  onPanelSelect: (panelType: string) => void,
   defaultIsOpen?: boolean, // just for testing
 |};
 
-type State = {| isOpen: boolean |};
+function AppMenu(props: Props) {
+  const [isOpen, setIsOpen] = useState<boolean>(props.defaultIsOpen || false);
+  const onToggle = useCallback(() => setIsOpen((open) => !open), []);
+  const dispatch = useDispatch();
 
-export default class AppMenu extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { isOpen: props.defaultIsOpen || false };
-  }
+  const layout = useSelector((state: ReduxState) => state.persistedState.panels.layout);
+  const onPanelSelect = useCallback(({ type, config, relatedConfigs }: PanelSelection) => {
+    dispatch(addPanel(({ type, layout, config, relatedConfigs, tabId: null }: AddPanelPayload)));
+    logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: type } });
+  }, [dispatch, layout]);
 
-  shouldComponentUpdate(nextProps: Props, nextState: State) {
-    return nextState.isOpen !== this.state.isOpen;
-  }
-
-  onToggle = () => {
-    const { isOpen } = this.state;
-    this.setState({ isOpen: !isOpen });
-  };
-
-  render() {
-    const { isOpen } = this.state;
-    return (
-      <ChildToggle position="below" onToggle={this.onToggle} isOpen={isOpen}>
-        <Icon medium fade active={isOpen} tooltip="Add Panel">
-          <PlusBoxIcon />
-        </Icon>
-        <Menu>
-          {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
-          <PanelList onPanelSelect={this.props.onPanelSelect} />
-        </Menu>
-      </ChildToggle>
-    );
-  }
+  return (
+    <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
+      <WrappedIcon medium fade active={isOpen} tooltip="Add Panel">
+        <PlusCircleOutlineIcon />
+      </WrappedIcon>
+      <Menu style={{ overflowY: "hidden", height: "100%" }}>
+        <PanelList onPanelSelect={onPanelSelect} />
+      </Menu>
+    </ChildToggle>
+  );
 }
+
+export default AppMenu;

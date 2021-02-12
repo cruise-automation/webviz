@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,7 +14,7 @@ import TextContent from "webviz-core/src/components/TextContent";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 const SRoot = styled.div`
-  max-width: 550px; // Px value because beyond a certain absolute width the lines become harder to read.
+  max-width: 700px; // Px value because beyond a certain absolute width the lines become harder to read.
   width: calc(100vw - 30px);
   max-height: calc(100vh - 30px);
   overflow-y: auto;
@@ -32,6 +32,7 @@ type Props = {|
   children: React.Node | string,
   linkTarget?: string,
   onRequestClose: () => void,
+  rootStyle?: { [attr: string]: string | number },
 |};
 
 function Footnote() {
@@ -42,11 +43,11 @@ function Footnote() {
   return <SFootnote>{footnote}</SFootnote>;
 }
 
-export default function HelpModal(props: Props) {
+export default function HelpModal({ onRequestClose, linkTarget, rootStyle, children }: Props) {
   return (
-    <Modal onRequestClose={props.onRequestClose}>
-      <SRoot>
-        <TextContent linkTarget={props.linkTarget}>{props.children}</TextContent>
+    <Modal onRequestClose={onRequestClose}>
+      <SRoot {...(rootStyle ? { style: rootStyle } : undefined)}>
+        <TextContent linkTarget={linkTarget}>{children}</TextContent>
         <Footnote />
       </SRoot>
     </Modal>

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -49,5 +49,30 @@ describe("<ShareJsonModal />", () => {
       .simulate("click");
     expect(wrapper.find(".is-danger").exists()).toBe(true);
     done();
+  });
+
+  it("fires no error when resetting an actual layout to default", (done) => {
+    const pass = (value) => {
+      expect(value.layout).toEqual("RosOut!cuuf9u");
+      done();
+    };
+    const wrapper = mount(
+      <div data-modalcontainer="true">
+        <ShareJsonModal onRequestClose={() => {}} value={{}} onChange={pass} noun="layout" />
+      </div>
+    );
+    const newValue = btoa(
+      JSON.stringify({
+        layout: "RosOut!cuuf9u",
+        savedProps: {},
+        globalVariables: {},
+      })
+    );
+    wrapper.find(".textarea").simulate("change", { target: { value: newValue } });
+    wrapper
+      .find("Button[children='Apply']")
+      .first()
+      .simulate("click");
+    expect(wrapper.find(".is-danger").exists()).toBe(false);
   });
 });

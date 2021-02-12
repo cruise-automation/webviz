@@ -1,14 +1,17 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { throttle } from "lodash";
 import * as React from "react";
 import shallowequal from "shallowequal";
 import uuid from "uuid";
+
+import { objectValues } from "webviz-core/src/util";
 
 // Creates a new component class that tries to keep various instances
 // of itself synchronized with each other.
@@ -45,7 +48,11 @@ export default function createSyncingComponent<ComponentData, ReducerOutput>(
 
   const dataById: { [string]: ComponentData } = {};
   const componentsById: { [string]: React.Component<Props> } = {};
+  // Has the component already rendered with the most recent data available.
+  let hasRenderedIds = new Set();
   let reducedData: ReducerOutput;
+
+  const THROTTLE_TIME_MS = 500;
 
   return class SyncingComponent extends React.Component<Props> {
     static displayName = displayName;
@@ -75,23 +82,33 @@ export default function createSyncingComponent<ComponentData, ReducerOutput>(
     }
 
     _recompute() {
-      const newReducedData: ReducerOutput = reducer(Object.keys(dataById).map((id) => dataById[id]));
+      const newReducedData: ReducerOutput = reducer(objectValues(dataById));
       if (!shallowequal(reducedData, newReducedData)) {
         reducedData = newReducedData;
-
-        // Update components asynchronously because forceUpdate being called during React
-        // reconciliation may not actually cause the child to re-render.
-        setImmediate(() => {
-          Object.keys(componentsById).forEach((id) => {
-            if (id !== this._id) {
-              componentsById[id].forceUpdate();
-            }
-          });
-        });
+        hasRenderedIds = new Set();
+        this._throttledForceUpdate();
       }
     }
 
+    // This updating must be done asynchronously because forceUpdate being called during React reconciliation may not
+    // actually cause the child to re-render.
+    _throttledForceUpdate = throttle(
+      () => {
+        // Throttle updates because it's not imporant that components update immediately and calling `forceUpdate` often
+        // lead to suboptimal performance. Most of the time, synced plots will update within THROTTLE_TIME_MS anyways,
+        // making a forceUpdate unncessary.
+        Object.keys(componentsById).forEach((id) => {
+          if (id !== this._id && !hasRenderedIds.has(id)) {
+            componentsById[id].forceUpdate();
+          }
+        });
+      },
+      THROTTLE_TIME_MS,
+      { leading: false, trailing: true }
+    );
+
     render() {
+      hasRenderedIds.add(this._id);
       return this.props.children(reducedData);
     }
   };

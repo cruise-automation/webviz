@@ -1,0 +1,291 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`printClasses prints the expected function definition 1`] = `
+"const $value = Symbol();
+const $deepParse = $context.deepParse;
+const $maybeDeepParse = (o) => o && o[$deepParse]()
+const $PrimitiveArrayView = $context.PrimitiveArrayView;
+class std_msgs_Header {
+  constructor(value) {
+    this[$value] = value;
+  }
+  seq() {
+    return this[$value].seq;
+  }
+  stamp() {
+    const $fieldValue = this[$value].stamp;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new time($fieldValue);
+  }
+  frame_id() {
+    return this[$value].frame_id;
+  }
+  [$deepParse]() {
+    return {
+      seq: this[$value].seq,
+      stamp: $maybeDeepParse(this.stamp()),
+      frame_id: this[$value].frame_id,
+    };
+  }
+}
+const std_msgs_Header$Array = $context.getReverseWrapperArrayView(std_msgs_Header);
+
+class fake_msgs_HasComplexAndArray {
+  constructor(value) {
+    this[$value] = value;
+  }
+  header() {
+    const $fieldValue = this[$value].header;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new std_msgs_Header($fieldValue);
+  }
+  stringArray() {
+    const $fieldValue = this[$value].stringArray;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new $PrimitiveArrayView($fieldValue);
+  }
+  [$deepParse]() {
+    return {
+      header: $maybeDeepParse(this.header()),
+      stringArray: $maybeDeepParse(this.stringArray()),
+    };
+  }
+}
+const fake_msgs_HasComplexAndArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasComplexAndArray);
+
+class fake_msgs_HasComplexArray {
+  constructor(value) {
+    this[$value] = value;
+  }
+  complexArray() {
+    const $fieldValue = this[$value].complexArray;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasComplexAndArray$Array($fieldValue);
+  }
+  [$deepParse]() {
+    return {
+      complexArray: $maybeDeepParse(this.complexArray()),
+    };
+  }
+}
+const fake_msgs_HasComplexArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasComplexArray);
+
+class fake_msgs_HasConstant {
+  constructor(value) {
+    this[$value] = value;
+  }
+  const() {
+    return 1;
+  }
+  [$deepParse]() {
+    return {
+
+    };
+  }
+}
+const fake_msgs_HasConstant$Array = $context.getReverseWrapperArrayView(fake_msgs_HasConstant);
+
+class fake_msgs_HasByteArray {
+  constructor(value) {
+    this[$value] = value;
+  }
+  byte_array() {
+    return this[$value].byte_array;
+  }
+  [$deepParse]() {
+    return {
+      byte_array: this[$value].byte_array,
+    };
+  }
+}
+const fake_msgs_HasByteArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasByteArray);
+
+class fake_msgs_HasJson {
+  constructor(value) {
+    this[$value] = value;
+  }
+  jsonField() {
+    return this[$value].jsonField;
+  }
+  [$deepParse]() {
+    return {
+      jsonField: this[$value].jsonField,
+    };
+  }
+}
+const fake_msgs_HasJson$Array = $context.getReverseWrapperArrayView(fake_msgs_HasJson);
+
+class fake_msgs_HasInt64s {
+  constructor(value) {
+    this[$value] = value;
+  }
+  i64() {
+    return this[$value].i64;
+  }
+  u64() {
+    return this[$value].u64;
+  }
+  [$deepParse]() {
+    return {
+      i64: this[$value].i64,
+      u64: this[$value].u64,
+    };
+  }
+}
+const fake_msgs_HasInt64s$Array = $context.getReverseWrapperArrayView(fake_msgs_HasInt64s);
+
+class fake_msgs_HasArrayOfEmpties {
+  constructor(value) {
+    this[$value] = value;
+  }
+  arr() {
+    const $fieldValue = this[$value].arr;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasConstant$Array($fieldValue);
+  }
+  [$deepParse]() {
+    return {
+      arr: $maybeDeepParse(this.arr()),
+    };
+  }
+}
+const fake_msgs_HasArrayOfEmpties$Array = $context.getReverseWrapperArrayView(fake_msgs_HasArrayOfEmpties);
+
+class fake_msgs_ContainsEverything {
+  constructor(value) {
+    this[$value] = value;
+  }
+  first() {
+    const $fieldValue = this[$value].first;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new std_msgs_Header($fieldValue);
+  }
+  second() {
+    const $fieldValue = this[$value].second;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasComplexAndArray($fieldValue);
+  }
+  third() {
+    const $fieldValue = this[$value].third;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasComplexArray($fieldValue);
+  }
+  fourth() {
+    const $fieldValue = this[$value].fourth;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasConstant($fieldValue);
+  }
+  fifth() {
+    const $fieldValue = this[$value].fifth;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasByteArray($fieldValue);
+  }
+  sixth() {
+    const $fieldValue = this[$value].sixth;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasJson($fieldValue);
+  }
+  seventh() {
+    const $fieldValue = this[$value].seventh;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasInt64s($fieldValue);
+  }
+  eighth() {
+    const $fieldValue = this[$value].eighth;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasArrayOfEmpties($fieldValue);
+  }
+  [$deepParse]() {
+    return {
+      first: $maybeDeepParse(this.first()),
+      second: $maybeDeepParse(this.second()),
+      third: $maybeDeepParse(this.third()),
+      fourth: $maybeDeepParse(this.fourth()),
+      fifth: $maybeDeepParse(this.fifth()),
+      sixth: $maybeDeepParse(this.sixth()),
+      seventh: $maybeDeepParse(this.seventh()),
+      eighth: $maybeDeepParse(this.eighth()),
+    };
+  }
+}
+const fake_msgs_ContainsEverything$Array = $context.getReverseWrapperArrayView(fake_msgs_ContainsEverything);
+
+class time {
+  constructor(value) {
+    this[$value] = value;
+  }
+  sec() {
+    return this[$value].sec;
+  }
+  nsec() {
+    return this[$value].nsec;
+  }
+  [$deepParse]() {
+    return {
+      sec: this[$value].sec,
+      nsec: this[$value].nsec,
+    };
+  }
+}
+const time$Array = $context.getReverseWrapperArrayView(time);
+
+class duration {
+  constructor(value) {
+    this[$value] = value;
+  }
+  sec() {
+    return this[$value].sec;
+  }
+  nsec() {
+    return this[$value].nsec;
+  }
+  [$deepParse]() {
+    return {
+      sec: this[$value].sec,
+      nsec: this[$value].nsec,
+    };
+  }
+}
+const duration$Array = $context.getReverseWrapperArrayView(duration);
+
+
+return {
+  \\"std_msgs/Header\\": std_msgs_Header,
+  \\"fake_msgs/HasComplexAndArray\\": fake_msgs_HasComplexAndArray,
+  \\"fake_msgs/HasComplexArray\\": fake_msgs_HasComplexArray,
+  \\"fake_msgs/HasConstant\\": fake_msgs_HasConstant,
+  \\"fake_msgs/HasByteArray\\": fake_msgs_HasByteArray,
+  \\"fake_msgs/HasJson\\": fake_msgs_HasJson,
+  \\"fake_msgs/HasInt64s\\": fake_msgs_HasInt64s,
+  \\"fake_msgs/HasArrayOfEmpties\\": fake_msgs_HasArrayOfEmpties,
+  \\"fake_msgs/ContainsEverything\\": fake_msgs_ContainsEverything,
+  \\"time\\": time,
+  \\"duration\\": duration,
+};"
+`;

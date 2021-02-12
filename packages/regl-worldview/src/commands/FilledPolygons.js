@@ -9,11 +9,10 @@
 import earcut from "earcut";
 import React from "react";
 
-import type { Vec3, PolygonType } from "../types";
+import type { Vec3, Point, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
-import { getHitmapPropsForFilledPolygons, getObjectFromHitmapIdForFilledPolygons } from "../utils/hitmapDefaults";
-import type { GetHitmapProps, GetObjectFromHitmapId } from "./Command";
-import Triangles from "./Triangles";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
+import Triangles, { makeTrianglesCommand } from "./Triangles";
 
 const NO_POSE = {
   position: { x: 0, y: 0, z: 0 },
@@ -33,7 +32,7 @@ function flatten3D(points: Vec3[]): Float32Array {
   return array;
 }
 
-function getEarcutPoints(points: Vec3[]): Vec3[] {
+function getEarcutPoints(points: Vec3[]): (Vec3 | Point)[] {
   const flattenedPoints = flatten3D(points);
   const indices = earcut(flattenedPoints, null, 3);
   const newPoints = [];
@@ -46,37 +45,42 @@ function getEarcutPoints(points: Vec3[]): Vec3[] {
 
 type Props = {
   children: PolygonType[],
-  // TODO: deprecating getHitmapId, remove before 1.x release
-  getHitmapId?: (PolygonType) => number,
-  getHitmapProps: GetHitmapProps<PolygonType>,
-  getObjectFromHitmapId: GetObjectFromHitmapId<PolygonType>,
 };
 
-// command to draw a filled polygon
-function FilledPolygons({ children: polygons = [], getHitmapProps, getObjectFromHitmapId, ...rest }: Props) {
-  const triangles = [];
-  for (const poly of polygons) {
+const generateTriangles = (polygons: PolygonType[]) => {
+  return polygons.map((poly) => {
     // $FlowFixMe flow doesn't know how shouldConvert works
     const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
-    const earcutPoints: Vec3[] = getEarcutPoints(points);
-    triangles.push({
+    const earcutPoints = getEarcutPoints(points);
+    return {
       ...poly,
       points: earcutPoints,
       pose,
       scale: DEFAULT_SCALE,
-    });
-  }
+      originalMarker: poly,
+    };
+  });
+};
+
+export const makeFilledPolygonsCommand = () => (regl: any) => {
+  const trianglesCommand = makeTrianglesCommand()(regl);
+  return (props: any) => {
+    trianglesCommand(generateTriangles(props), false);
+  };
+};
+
+// command to draw a filled polygon
+function FilledPolygons({ children: polygons = [], ...rest }: Props) {
+  const triangles = generateTriangles(polygons);
+
+  // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
+  // polygon.
   return (
-    <Triangles getHitmapProps={getHitmapProps} getObjectFromHitmapId={getObjectFromHitmapId} {...rest}>
+    <Triangles getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...rest}>
       {triangles}
     </Triangles>
   );
 }
-
-FilledPolygons.defaultProps = {
-  getHitmapProps: getHitmapPropsForFilledPolygons,
-  getObjectFromHitmapId: getObjectFromHitmapIdForFilledPolygons,
-};
 
 export default FilledPolygons;

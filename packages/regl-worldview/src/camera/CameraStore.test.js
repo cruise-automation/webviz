@@ -8,7 +8,7 @@
 
 import { vec3, quat } from "gl-matrix";
 
-import CameraStore, { selectors } from "./CameraStore";
+import CameraStore, { selectors, DEFAULT_CAMERA_STATE } from "./CameraStore";
 
 class NearlyEqual {
   value: number;
@@ -127,6 +127,9 @@ describe("camera store", () => {
       targetOffset: [0, 0, 0],
       targetOrientation: [0, 0, 0, 1],
       perspective: false,
+      fovy: Math.PI / 3,
+      near: 0.2,
+      far: 1000,
     };
     let store;
 
@@ -135,6 +138,26 @@ describe("camera store", () => {
         store = new CameraStore(undefined, cameraState);
         expect(store.state).toEqual(cameraState);
       });
+
+      it("has missing properties filled in from DEFAULT_CAMERA_STATE", () => {
+        store = new CameraStore(undefined, { near: 10 });
+        expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 10 });
+      });
+    });
+
+    it("has missing properties filled in from DEFAULT_CAMERA_STATE on update", () => {
+      store = new CameraStore(undefined, cameraState);
+      store.setCameraState({ near: 10 });
+      expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 10 });
+    });
+
+    it("has null properties filled in from DEFAULT_CAMERA_STATE", () => {
+      // Null properties are not allowed according to the Flow types,
+      // but CameraStore should handle them anyway.
+      store = new CameraStore(undefined, ({ near: null, far: undefined, fovy: 0 }: any));
+      expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, fovy: 0 });
+      store.setCameraState(({ near: 0, far: null, fovy: undefined }: any));
+      expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 0 });
     });
   });
 
@@ -147,6 +170,9 @@ describe("camera store", () => {
       targetOffset: [0, 0, 0],
       targetOrientation: [0, 0, 0, 1],
       perspective: false,
+      fovy: Math.PI / 3,
+      near: 0.2,
+      far: 1000,
     };
 
     it("orientation selector returns camera orientation", () => {
@@ -183,6 +209,9 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         perspective: true,
+        fovy: Math.PI / 2,
+        near: 0.01,
+        far: 10000,
       });
 
       expect(vec3.transformMat4([0, 0, 0], [2, 0, 0], view1)).toEqual([-25, 0, -3]);
@@ -204,6 +233,9 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: quat.rotateZ([0, 0, 0, 1], [0, 0, 0, 1], Math.PI / 2),
         perspective: true,
+        fovy: Math.PI / 2,
+        near: 0.01,
+        far: 10000,
       });
       expect(vec3.transformMat4([0, 0, 0], [2, 0, 0], view2)).toEqual([-25, 0, -3]);
       expect(vec3.transformMat4([0, 0, 0], [2, 25, 0], view2)).toEqual([0, nearlyZero, -3]);
@@ -218,6 +250,9 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         perspective: true,
+        fovy: Math.PI / 2,
+        near: 0.01,
+        far: 10000,
       });
 
       expect(vec3.transformMat4([0, 0, 0], [2, 0, 0], view1)).toEqual([-25, 0, -3]);
@@ -231,6 +266,9 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: quat.rotateX([0, 0, 0, 1], [0, 0, 0, 1], Math.PI / 8),
         perspective: true,
+        fovy: Math.PI / 2,
+        near: 0.01,
+        far: 10000,
       });
       expect(vec3.transformMat4([0, 0, 0], [2, 0, 0], view2)).toEqual([-25, 0, -3]);
       expect(vec3.transformMat4([0, 0, 0], [2 + 25, 7, 0], view2)).toEqual([0, 7, -3]);

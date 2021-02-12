@@ -31,21 +31,18 @@ function ScrollTo({ component: Tag = "div", location, children, match, disableAn
     hasLink = linkStr === lastPathPartials;
   }
 
-  React.useEffect(
-    () => {
-      let disableScroll = false;
-      const urlPartials = window.location.href.split("?");
-      if (urlPartials.length > 1) {
-        const queryStr = urlPartials[1];
-        const search = new URLSearchParams(queryStr);
-        disableScroll = search.get("disableScroll");
-      }
-      if (!disableScroll && hasLink) {
-        window.scrollTo({ top: wrapperRef.current.offsetTop, behavior: "smooth" });
-      }
-    },
-    [lastPathPartials]
-  );
+  React.useEffect(() => {
+    let disableScroll = false;
+    const urlPartials = window.location.href.split("?");
+    if (urlPartials.length > 1) {
+      const queryStr = urlPartials[1];
+      const search = new URLSearchParams(queryStr);
+      disableScroll = search.get("disableScroll");
+    }
+    if (!disableScroll && hasLink) {
+      window.scrollTo({ top: wrapperRef.current.offsetTop, behavior: "smooth" });
+    }
+  }, [lastPathPartials]);
   return (
     <div ref={wrapperRef}>
       {linkStr ? (

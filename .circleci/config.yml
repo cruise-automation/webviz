@@ -21,7 +21,13 @@ jobs:
             - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
             - regl-worldview-deps-
 
-      - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.7 npm run ci
+      # Get the commit we want to compare to, and print it out for verification.
+      - run: .circleci/find-screenshots-compare-commit.sh
+      - run: echo $REG_SUIT_EXPECTED_KEY
+
+      - run:
+          command: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI -e CIRCLE_SHA1 -e REG_SUIT_EXPECTED_KEY -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION cruise/webviz-ci:0.0.10 npm run ci
+          no_output_timeout: 30m
 
       - save_cache:
           paths: ["node_modules"]

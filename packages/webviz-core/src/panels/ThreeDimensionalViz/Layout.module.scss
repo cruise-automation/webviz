@@ -1,0 +1,101 @@
+$spacing: 15px;
+@import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+// container for the entire panel
+.container {
+  display: flex;
+  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.topicSettingsEditor {
+  @extend %floating-box;
+  background-color: $dark;
+  width: 360px;
+  padding: 20px;
+
+  .closeIcon {
+    @extend %floating-box-close-icon;
+  }
+}
+
+.toolbar {
+  position: absolute;
+  top: $spacing;
+  &.left {
+    left: $spacing;
+  }
+  &.right {
+    // move the right toolbar below the floating panel controls
+    top: $spacing + 20;
+    right: $spacing;
+  }
+  padding: 0px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  // allow mouse events to pass through the empty space in this container element
+  pointer-events: none;
+}
+
+.buttons {
+  @extend %floating-box;
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+  margin-bottom: 10px;
+
+  button {
+    background-color: transparent;
+    border: none;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  span:global(.icon) {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    display: inline-block;
+  }
+}
+
+.buttonsActive {
+  span:global(.icon) {
+    color: $accent;
+  }
+}
+
+.cameraWarning {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  font-style: italic;
+  color: $text-muted;
+
+  // don't affect flex parent width
+  // https://stackoverflow.com/a/25045641/23649
+  width: 0;
+  min-width: 100%;
+}
+
+.cartographer {
+  padding: 0px;
+  button {
+    width: 31px !important;
+    height: 36px !important;
+    margin: 0px;
+  }
+}

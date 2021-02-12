@@ -20,7 +20,7 @@ const DEFAULT_CAMERA = {
   targetOrientation: [0, 0, 0, 1],
 };
 
-storiesOf("Worldview", module)
+storiesOf("Worldview/Lines", module)
   .addDecorator(withKnobs)
   .add("<Lines> does not render empty points", () => {
     const normalLine = [
@@ -51,6 +51,34 @@ storiesOf("Worldview", module)
       <Worldview defaultCameraState={DEFAULT_CAMERA}>
         <Lines>{normalLine}</Lines>
         <Lines>{emptyLine}</Lines>
+      </Worldview>
+    );
+  })
+  .add("<Lines> with custom depth and blend values", () => {
+    return (
+      <Worldview defaultCameraState={DEFAULT_CAMERA}>
+        <Lines>
+          {[
+            {
+              primitive: "line strip",
+              pose: {
+                position: { x: 0, y: 0, z: 0 },
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
+              },
+              scale: { x: 2, y: 0, z: 0 },
+              points: [[0, -4, 0], [0, 4, 0]],
+              color: [1, 1, 1, 1],
+              blend: {
+                enable: true,
+                func: {
+                  src: "constant color",
+                  dst: "one",
+                },
+                color: [1, 0, 0, 1],
+              },
+            },
+          ]}
+        </Lines>
       </Worldview>
     );
   });

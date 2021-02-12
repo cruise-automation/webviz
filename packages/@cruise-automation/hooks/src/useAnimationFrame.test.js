@@ -38,7 +38,7 @@ describe("useAnimationFrame", () => {
 
   it("calls the callback with timestamp upon each animation frame", () => {
     maxExecutionCount = 1;
-    const mockCb: (any) => void = jest.fn((x) => x);
+    const mockCb = jest.fn((x) => undefined);
     renderHook(() => useAnimationFrame(mockCb, false, []));
     expect(mockCb.mock.calls.length).toBe(1);
     expect(mockCb.mock.calls[0][0]).toBe(MOCK_TIMESTAMP);

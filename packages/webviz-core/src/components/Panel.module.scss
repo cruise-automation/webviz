@@ -1,30 +1,55 @@
 @import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/variables.scss";
 
 .root {
   z-index: 1;
-  background-color: $panel-background;
+  background-color: $dark;
   position: relative;
+
+  &:after {
+    content: "";
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    opacity: 0;
+    border: 1px solid $accent;
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.125s ease-out;
+    z-index: 100000; // highest level within panel
+  }
+
+  &.selected:after {
+    opacity: 1;
+    transition: opacity 0.05s ease-out;
+  }
 }
 
 .rootFullScreen {
   position: fixed;
+  z-index: 100;
+  border: 4px solid rgba(110, 81, 238, 0.3);
+  top: $topBarHeight;
+  left: 0;
+  right: 0;
+  bottom: $playbackControlHeight;
+}
+
+.notClickable {
+  position: fixed;
+  z-index: 100;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 100;
-
-  > .fullScreenKeyPressedOverlay {
-    cursor: unset;
-
-    &:hover {
-      background-color: unset;
-    }
-  }
+  height: $topBarHeight;
+  opacity: 0;
+  cursor: not-allowed;
 }
 
-.fullScreenKeyPressedOverlay,
-.removePanelKeyPressOverlay {
+.tabActionsOverlay,
+.quickActionsOverlay,
+.prohibitedSelection {
   cursor: pointer;
   position: absolute;
   top: 0;
@@ -32,43 +57,106 @@
   right: 0;
   bottom: 0;
   z-index: 100000; // highest level within panel
+  display: none;
 
-  > div {
+  .root:hover > &,
+  // for screenshot tests
+  &:global(.hoverForScreenshot) {
+    background-color: rgba(45, 45, 51, 1);
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
-  p {
-    display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
+  font-size: 14px;
+  padding-top: 24px;
+
+  div {
+    width: 100%;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   svg {
     margin-right: 4px;
+    width: 24px;
+    height: 24px;
+    fill: white;
+  }
+
+  button {
+    width: 72px;
+    height: 72px;
+    margin: 4px;
+    flex: none;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(110, 81, 238, 0.5);
+    svg {
+      margin: 0 0 6px;
+    }
+
+    &:not(:global(.disabled)):hover {
+      background: rgba(110, 81, 238, 0.8);
+    }
+  }
+
+  p {
+    font-size: 12px;
+    color: $text-muted;
+  }
+}
+
+.prohibitedSelection {
+  padding: 10px;
+
+  .root:hover &,
+  // for screenshot tests
+  &:global(.hoverForScreenshot) {
+    background-color: rgba(45, 45, 51, 1);
+  }
+}
+
+.tabActionsOverlay button {
+  width: 145px;
+  height: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.exitFullScreen {
+  position: fixed;
+  top: 75px;
+  right: 8px;
+  z-index: 102;
+  opacity: 1;
+  background-color: $dark3;
+  display: none;
+  .root:hover & {
+    display: block;
+  }
+  &:global(.hoverForScreenshot) {
+    display: block;
+  }
+  svg {
     width: 16px;
     height: 16px;
-    fill: none;
+    fill: white;
+    float: left;
   }
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-
-    p {
-      display: block;
-      margin: 0;
-    }
-
-    svg {
-      fill: white;
-    }
+  span {
+    float: right;
+    padding-left: 3px;
   }
-}
-
-.fullScreenKeyPressedOverlay:hover {
-  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.5) inset;
-}
-
-.removePanelKeyPressOverlay:hover {
-  box-shadow: 0 0 0 5px rgba(242, 67, 102, 0.75) inset;
 }

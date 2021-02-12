@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -47,6 +47,7 @@ $padding: 6px;
   display: flex;
   flex-direction: row;
   padding-right: $padding;
+  align-items: center;
 
   $height: 30px;
 
@@ -71,29 +72,9 @@ $padding: 6px;
     margin-right: 4px;
   }
 
-  .type-icon,
-  .type-icon-edit {
-    font-size: 14px;
-    &.disabled {
-      opacity: 0.3;
-    }
-  }
-
-  .type-icon {
+  .extraIcon {
+    opacity: 0.5;
     margin-right: 6px;
-  }
-
-  .type-icon-edit {
-    display: none;
-    color: #666;
-    margin-left: 6px;
-  }
-
-  &.canEdit .type-icon-edit {
-    display: unset;
-    &:hover {
-      color: white;
-    }
   }
 
   .expand-icon {
@@ -110,10 +91,6 @@ $padding: 6px;
 
 .hasChildren {
   color: $text-bright;
-}
-
-.filterMatch .text {
-  color: $highlight;
 }
 
 .disabled {

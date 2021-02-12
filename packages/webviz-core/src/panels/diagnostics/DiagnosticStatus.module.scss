@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -13,9 +13,10 @@
 tr.section th {
   color: $highlight;
   text-align: center;
-  font-size: 1.5em;
+  font-size: 1.2em;
   padding: 4px;
   cursor: pointer;
+  border: none;
 }
 
 tr.status-ok {
@@ -56,4 +57,23 @@ tr.status-unknown {
 td.collapsedSection {
   text-align: center;
   color: $red;
+}
+
+.plotIcon,
+.stateTransitionsIcon {
+  color: white;
+  margin-left: 4px;
+  visibility: hidden;
+
+  tr.row:hover & {
+    visibility: visible;
+  }
+}
+
+.plotIcon > svg {
+  vertical-align: -1px;
+}
+
+.stateTransitionsIcon > svg {
+  vertical-align: -2px;
 }

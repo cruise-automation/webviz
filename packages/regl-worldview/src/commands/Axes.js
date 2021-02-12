@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import type { Pose, Color, Scale, Point, Vec3 } from "../types";
+import type { Point, Vec3, Line } from "../types";
 import Lines from "./Lines";
 
 const pointToVec3 = (p: Vec3): Point => ({
@@ -45,13 +45,7 @@ const zAxis = {
   color: { r: 0.11, g: 0.51, b: 0.92, a: 1 },
 };
 
-type Axis = {
-  hitmapId?: number,
-  pose: Pose,
-  points: Point[],
-  scale: Scale,
-  color: Color,
-};
+type Axis = Line;
 
 type Props = {
   children: Axis[],

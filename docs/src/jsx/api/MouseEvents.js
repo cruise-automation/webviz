@@ -14,7 +14,8 @@ import seedrandom from "seedrandom";
 
 // #BEGIN EDITABLE
 function Example() {
-  const rng = seedrandom();
+  const SEED = 555;
+  const rng = seedrandom(SEED);
   const randomCubeFacts = [
     "A cube is a three dimensional shape",
     "A cube has 6 square faces.",
@@ -63,31 +64,31 @@ function Example() {
     };
   }
 
-  function onContainerClick(e, args) {
-    if (!args.objectId) {
+  function onContainerClick(e, { objects }) {
+    if (!objects.length) {
       setCubeDetails({});
     }
   }
 
-  function onContainerMouseMove(e, args) {
-    if (!args.objectId) {
+  function onContainerMouseMove(e, { objects }) {
+    if (!objects.length) {
       setCursor("auto");
     }
   }
 
-  function onCubeClick(e, { object }) {
-    setCubeDetails(object);
+  function onCubeClick(e, { objects }) {
+    setCubeDetails(objects[0].object);
   }
 
-  function onCubeDoubleClick(id, { object }) {
+  function onCubeDoubleClick(id, { objects }) {
     const newCubes = [...cubes];
-    remove(newCubes, (cube) => cube.id === object.id);
+    remove(newCubes, (cube) => cube.id === objects[0].object.id);
 
     setCubes(newCubes);
   }
 
-  function onCubeHover(e, { object }) {
-    setCursor(object.mouseCursor);
+  function onCubeHover(e, { objects }) {
+    setCursor(objects[0].object.mouseCursor);
   }
 
   return (
@@ -114,11 +115,7 @@ function Example() {
             Add Cube
           </button>
         </div>
-        <Cubes
-          onMouseMove={onCubeHover}
-          onClick={onCubeClick}
-          onDoubleClick={onCubeDoubleClick}
-          getHitmapId={(marker) => marker.id}>
+        <Cubes onMouseMove={onCubeHover} onClick={onCubeClick} onDoubleClick={onCubeDoubleClick}>
           {cubes}
         </Cubes>
       </Worldview>

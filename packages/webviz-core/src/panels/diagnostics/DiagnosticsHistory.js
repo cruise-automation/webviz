@@ -1,29 +1,27 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
 import { sortedIndexBy } from "lodash";
-import * as React from "react";
+import { type Node } from "react";
 
 import {
-  type DiagnosticStatusArray,
+  type DiagnosticStatusArrayMsg,
   type DiagnosticsById,
   type DiagnosticId,
-  type DiagnosticsByLevel,
-  LEVELS,
-  type Level,
   computeDiagnosticInfo,
+  getDiagnosticId,
+  trimHardwareId,
 } from "./util";
-import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
-import type { Frame } from "webviz-core/src/types/players";
-import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
+import * as PanelAPI from "webviz-core/src/PanelAPI";
+import type { Message } from "webviz-core/src/players/types";
 
 export type DiagnosticAutocompleteEntry = {|
-  name: string,
+  name: ?string, // Null for "combined hardware_id" entries for showing diagnostics with any name.
   hardware_id: string,
   id: DiagnosticId,
   displayName: string,
@@ -31,72 +29,96 @@ export type DiagnosticAutocompleteEntry = {|
 |};
 
 export type DiagnosticsBuffer = {|
-  diagnosticsById: DiagnosticsById,
+  diagnosticsByNameByTrimmedHardwareId: Map<string, DiagnosticsById>,
   sortedAutocompleteEntries: DiagnosticAutocompleteEntry[],
-  diagnosticsByLevel: DiagnosticsByLevel,
 |};
 
 type Props = {|
-  children: (DiagnosticsBuffer) => React.Node,
-  frame: Frame,
+  children: (DiagnosticsBuffer) => Node,
+  topic: string,
 |};
 
-class DiagnosticsHistory extends React.Component<Props> {
-  _buffer: DiagnosticsBuffer = {
-    diagnosticsById: new Map(),
-    sortedAutocompleteEntries: [],
-    diagnosticsByLevel: {
-      [LEVELS.OK]: new Map(),
-      [LEVELS.WARN]: new Map(),
-      [LEVELS.ERROR]: new Map(),
-      [LEVELS.STALE]: new Map(),
-    },
-  };
+// Returns whether the buffer has been modified
+function maybeAddMessageToBuffer(buffer: DiagnosticsBuffer, message: Message): boolean {
+  const { header, status: statusArray }: DiagnosticStatusArrayMsg = message.message;
+  if (statusArray.length === 0) {
+    return false;
+  }
 
-  render() {
-    for (const message of this.props.frame[DIAGNOSTIC_TOPIC] || []) {
-      const statusArray: DiagnosticStatusArray = message.message;
-      for (const status of statusArray.status) {
-        const info = computeDiagnosticInfo(status, statusArray.header.stamp);
-
-        // update diagnosticsByLevel
-        const keys: Level[] = (Object.keys(this._buffer.diagnosticsByLevel): any);
-        for (const key of keys) {
-          const diags = this._buffer.diagnosticsByLevel[key];
-
-          if (status.level !== key && diags.has(info.id)) {
-            diags.delete(info.id);
-          }
-        }
-        if (status.level in this._buffer.diagnosticsByLevel) {
-          this._buffer.diagnosticsByLevel[status.level].set(info.id, info);
-        } else {
-          console.warn("unrecognized status level", status);
-        }
-
-        // add to sortedAutocompleteEntries if we haven't seen this id before
-        if (!this._buffer.diagnosticsById.has(info.id)) {
-          const newEntry = {
-            hardware_id: info.status.hardware_id,
-            name: info.status.name,
-            id: info.id,
-            displayName: info.displayName,
-            sortKey: info.displayName.replace(/^\//, "").toLowerCase(),
-          };
-          const index = sortedIndexBy(this._buffer.sortedAutocompleteEntries, newEntry, "displayName");
-          this._buffer.sortedAutocompleteEntries.splice(index, 0, newEntry);
-        }
-
-        // update diagnosticsById
-        this._buffer.diagnosticsById.set(info.id, info);
-      }
+  for (const status of statusArray) {
+    const info = computeDiagnosticInfo(status, header.stamp);
+    let newHardwareId = false;
+    let newDiagnostic = false;
+    const trimmedHardwareId = trimHardwareId(status.hardware_id);
+    const hardwareDiagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(trimmedHardwareId);
+    if (hardwareDiagnosticsByName == null) {
+      newHardwareId = true;
+      newDiagnostic = true;
+      buffer.diagnosticsByNameByTrimmedHardwareId.set(trimmedHardwareId, new Map([[status.name, info]]));
+    } else {
+      const previousNumberOfDiagnostics = hardwareDiagnosticsByName.size;
+      hardwareDiagnosticsByName.set(status.name, info);
+      newDiagnostic = hardwareDiagnosticsByName.size > previousNumberOfDiagnostics;
     }
 
-    return this.props.children(this._buffer);
+    // add to sortedAutocompleteEntries if we haven't seen this id before
+    if (newDiagnostic) {
+      const newEntry = {
+        hardware_id: status.hardware_id,
+        name: status.name,
+        id: info.id,
+        displayName: info.displayName,
+        sortKey: info.displayName.replace(/^\//, "").toLowerCase(),
+      };
+      const index = sortedIndexBy(buffer.sortedAutocompleteEntries, newEntry, "displayName");
+      buffer.sortedAutocompleteEntries.splice(index, 0, newEntry);
+
+      if (newHardwareId) {
+        const newHardwareEntry = {
+          hardware_id: info.status.hardware_id,
+          id: getDiagnosticId(status.hardware_id),
+          name: undefined,
+          displayName: info.status.hardware_id,
+          sortKey: info.status.hardware_id.replace(/^\//, "").toLowerCase(),
+        };
+        const hardwareIdx = sortedIndexBy(buffer.sortedAutocompleteEntries, newHardwareEntry, "displayName");
+        buffer.sortedAutocompleteEntries.splice(hardwareIdx, 0, newHardwareEntry);
+      }
+    }
   }
+  return true;
 }
 
-export default FrameCompatibility(DiagnosticsHistory, {
-  topics: [DIAGNOSTIC_TOPIC],
-  historySize: 2000,
-});
+// Exported for tests
+export function addMessages(buffer: DiagnosticsBuffer, messages: $ReadOnlyArray<Message>): DiagnosticsBuffer {
+  // maybeAddMessageToBuffer mutates the buffer instead of doing an immutable update for performance
+  // reasons. There are large numbers of diagnostics messages, and often many diagnostics panels in
+  // a layout.
+  let modified = false;
+  for (const message of messages) {
+    modified = maybeAddMessageToBuffer(buffer, message) || modified;
+  }
+  // We shallow-copy the buffer when it changes to help users know when to rerender.
+  return modified ? { ...buffer } : buffer;
+}
+
+// Exported for tests
+export function defaultDiagnosticsBuffer(): DiagnosticsBuffer {
+  return {
+    diagnosticsByNameByTrimmedHardwareId: new Map(),
+    sortedAutocompleteEntries: [],
+  };
+}
+
+export function useDiagnostics(topic: string): DiagnosticsBuffer {
+  return PanelAPI.useMessageReducer<DiagnosticsBuffer>({
+    topics: [topic],
+    restore: defaultDiagnosticsBuffer,
+    addMessages,
+  });
+}
+
+export default function DiagnosticsHistory({ children, topic }: Props) {
+  const diagnostics = useDiagnostics(topic);
+  return children(diagnostics);
+}

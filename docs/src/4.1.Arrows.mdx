@@ -1,4 +1,4 @@
-import { Arrows } from './jsx/allLiveEditors'
+import { Arrows, ArrowsInteractive } from './jsx/allLiveEditors'
 
 # Arrows
 
@@ -9,6 +9,8 @@ import { Arrows } from './jsx/allLiveEditors'
 | Name       | Type                         | Default | Description                      |
 | ---------- | ---------------------------- | ------- | -------------------------------- |
 | `children` | `(PoseArrow | PointArrow)[]` | `[]`    | array of Arrow markers to render |
+| `depth`    | `DepthState` | `undefined` | optional depth state settings   |
+| `blend`    | `BlendState` | `undefined` | optional blend state settings   |
 
 ### PoseArrow
 
@@ -17,7 +19,7 @@ type PoseArrow = {
   id?: number, // positive integer
   pose: {
     position: { x: number, y: number, z: number },
-    orientation: { x: number, y: number, z: number, q: number }
+    orientation: { x: number, y: number, z: number, w: number }
   }
   scale: {
     x: number, // arrow length
@@ -69,3 +71,7 @@ type PointArrow = {
 ## Demo
 
 <Arrows />
+
+## Mouse Interaction
+
+<ArrowsInteractive />

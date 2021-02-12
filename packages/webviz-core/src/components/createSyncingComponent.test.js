@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -9,9 +9,9 @@
 import { mount } from "enzyme";
 import React from "react";
 
+import delay from "webviz-core/shared/delay";
+import tick from "webviz-core/shared/tick";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
-
-const tick = () => new Promise((resolve) => setImmediate(resolve));
 
 describe("createSyncingComponent", () => {
   const IdentitySyncingComponent = createSyncingComponent("IdentitySyncingComponent", (dataItems) => dataItems);
@@ -66,11 +66,10 @@ describe("createSyncingComponent", () => {
     await tick();
 
     wrapper1.setProps({ data: { component: 1, different: "data" } });
-    await tick();
+    await delay(1000);
 
     expect(childFn1.mock.calls).toEqual([
       [[{ component: 1 }]],
-      [[{ component: 1 }, { component: 2 }]],
       [[{ component: 1, different: "data" }, { component: 2 }]],
     ]);
     expect(childFn2.mock.calls).toEqual([

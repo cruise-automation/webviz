@@ -10,7 +10,7 @@ import React from "react";
 
 import WorldviewCodeEditor from "./utils/WorldviewCodeEditor";
 
-function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle } = {}) {
+function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle, noInline } = {}) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -23,11 +23,16 @@ function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxSty
   // eslint-disable-next-line react/display-name
   return () => (
     <WorldviewCodeEditor
-      code={code[1].trim()}
+      code={
+        // For editors with noInline=true, the render() call will only work in the live editor,
+        // not in the storybook
+        code[1].trim().replace(/\/\/ #DOCS ONLY: /g, "")
+      }
       nonEditableCode={code[0].trim()}
       componentName={componentName}
       isRowView={isRowView}
       insertCodeSandboxStyle={insertCodeSandboxStyle}
+      noInline={noInline}
     />
   );
 }
@@ -53,15 +58,18 @@ export const MouseEventsInstanced = makeCodeComponent(
 
 export const Arrows = makeCodeComponent(require("!!raw-loader!./commands/Arrows"), "Arrows");
 
+export const ArrowsInteractive = makeCodeComponent(
+  require("!!raw-loader!./commands/ArrowsInteractive"),
+  "ArrowsInteractive"
+);
+
 export const Cones = makeCodeComponent(require("!!raw-loader!./commands/Cones"), "Cones");
 
 export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"), "Cubes");
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cylinders"), "Cylinders");
 
-export const DuckScene = makeCodeComponent(require("!!raw-loader!./commands/DuckScene"), "DuckScene");
-
-export const DuckSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/DuckSceneHitmap"), "DuckSceneHitmap");
+export const DrawPolygons = makeCodeComponent(require("!!raw-loader!./commands/DrawPolygons"), "DrawPolygons");
 
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
 
@@ -70,9 +78,25 @@ export const FilledPolygonsHitmap = makeCodeComponent(
   "FilledPolygonsHitmap"
 );
 
+export const GLText = makeCodeComponent(require("!!raw-loader!./commands/GLText"), "GLText", { noInline: true });
+
+export const GLTextScaleInvariant = makeCodeComponent(
+  require("!!raw-loader!./commands/GLTextScaleInvariant"),
+  "GLTextScaleInvariant",
+  { noInline: true }
+);
+
+export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
+
+export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");
+
+export const Grid = makeCodeComponent(require("!!raw-loader!./commands/Grid"), "Grid");
+
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
 
 export const LinesHitmap = makeCodeComponent(require("!!raw-loader!./commands/LinesHitmap"), "LinesHitmap");
+
+export const LinesPoses = makeCodeComponent(require("!!raw-loader!./commands/LinesPoses"), "LinesPoses");
 
 export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./commands/LinesWireframe"), "LinesWireframe");
 
@@ -131,7 +155,7 @@ export const InstancedRendering = makeCodeComponent(
   "RenderingObjects"
 );
 
-export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");
+export const MoveCamera = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamera"), "ManagingTheCamera");
 
 export const StopReleaseDuck = makeCodeComponent(
   require("!!raw-loader!./tutorials/StopReleaseDuck"),

@@ -13,14 +13,15 @@ import * as React from "react";
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import Command from "./commands/Command";
 import type {
-  MouseHandler,
-  Dimensions,
-  Vec4,
-  Mat4,
-  CameraState,
   CameraKeyMap,
+  CameraState,
+  Dimensions,
+  Mat4,
   MouseEventEnum,
   MouseEventObject,
+  MouseHandler,
+  ReglFBOFn,
+  Vec4,
 } from "./types";
 import aggregate from "./utils/aggregate";
 import { getNodeEnv } from "./utils/common";
@@ -58,6 +59,9 @@ export type BaseProps = {|
   // Pass in custom camera matrices
   cameraView?: Mat4,
   cameraProjection?: Mat4,
+
+  // FBO passes
+  fboCommand?: ReglFBOFn,
 
   // interactions
   onDoubleClick?: MouseHandler,
@@ -197,7 +201,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
-    const { cameraState, cameraView, cameraProjection } = this.props;
+    const { cameraState, cameraView, cameraProjection, fboCommand } = this.props;
 
     worldviewContext._cameraView = cameraView;
     worldviewContext._cameraProjection = cameraProjection;
@@ -206,6 +210,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (cameraState != null) {
       worldviewContext.cameraStore.setCameraState(cameraState);
     }
+
+    worldviewContext.registerFBOCommand(fboCommand);
 
     if (this.props.useFrames) {
       worldviewContext.onDirty();

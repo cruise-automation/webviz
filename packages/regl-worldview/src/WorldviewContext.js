@@ -23,6 +23,8 @@ import type {
   MouseEventObject,
   GetChildrenForHitmap,
   AssignNextColorsFn,
+  ReglFBOFn,
+  ReglBuffer,
 } from "./types";
 import { getIdFromPixel, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -42,7 +44,8 @@ type ConstructorArgs = {
 };
 
 type InitializedData = {
-  _fbo: any,
+  _fbo: ReglBuffer,
+  renderTarget: ReglBuffer,
   regl: any,
   camera: CameraCommand,
 };
@@ -59,6 +62,7 @@ export type PaintFn = () => void;
 
 export type WorldviewContextType = {
   onMount(instance: Command<any>, command: RawCommand<any>): void,
+  registerFBOCommand(command: ?ReglFBOFn): void,
   registerDrawCall(drawInput: DrawInput): void,
   registerPaintCallback(PaintFn): void,
   unregisterPaintCallback(PaintFn): void,
@@ -94,6 +98,9 @@ export class WorldviewContext {
 
   _cameraView: ?Mat4;
   _cameraProjection: ?Mat4;
+
+  _fboCommand: ?ReglFBOFn;
+  _fboCompiledCommand: ?(number, number) => void;
 
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
@@ -145,6 +152,7 @@ export class WorldviewContext {
         profile: getNodeEnv() !== "production",
       })
     );
+
     // compile any components which mounted before regl is initialized
     this._commands.forEach((uncompiledCommand) => {
       const compiledCommand = compile(regl, uncompiledCommand);
@@ -154,16 +162,21 @@ export class WorldviewContext {
     const Camera = compile(regl, camera);
     const compiledCameraCommand = new Camera();
     // framebuffer object from regl context
-    const fbo = regl.framebuffer({
-      width: Math.round(this.dimension.width),
-      height: Math.round(this.dimension.height),
-    });
 
     this.initializedData = {
-      _fbo: fbo,
+      _fbo: regl.framebuffer({
+        width: Math.round(this.dimension.width),
+        height: Math.round(this.dimension.height),
+      }),
+      renderTarget: regl.framebuffer({
+        width: Math.round(this.dimension.width),
+        height: Math.round(this.dimension.height),
+      }),
       camera: compiledCameraCommand,
       regl,
     };
+
+    this.compileFBOCommand();
   }
 
   destroy() {
@@ -205,6 +218,21 @@ export class WorldviewContext {
     this._paintCalls.set(paintFn, paintFn);
   }
 
+  registerFBOCommand(command: ?ReglFBOFn) {
+    if (command == this._fboCommand) return;
+    this._fboCommand = command;
+    this._fboCompiledCommand = null;
+
+    this.compileFBOCommand();
+  }
+
+  compileFBOCommand() {
+    const { _fboCommand, initializedData } = this;
+    if (initializedData == null || _fboCommand == null) return;
+    const { regl, renderTarget } = initializedData;
+    this._fboCompiledCommand = _fboCommand(regl, renderTarget);
+  }
+
   setDimension(dimension: Dimensions) {
     this.dimension = dimension;
   }
@@ -238,24 +266,50 @@ export class WorldviewContext {
   }
 
   _paint() {
-    const { _cameraView: cameraView, _cameraProjection: cameraProjection } = this;
+    const { _cameraView: cameraView, _cameraProjection: cameraProjection, _fboCompiledCommand } = this;
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {
       return;
     }
     this._cachedReadHitmapCall = null; // clear the cache every time we paint
-    const { regl, camera } = this.initializedData;
-    this._clearCanvas(regl);
-    camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
-      const x = Date.now();
-      this._drawInput();
-      this.counters.paint = Date.now() - x;
-    });
 
-    this._paintCalls.forEach((paintCall) => {
-      paintCall();
-    });
+    const { regl, camera, _fbo, renderTarget } = this.initializedData;
+    const { width, height } = this.dimension;
+
+    _fbo.resize(width, height);
+    renderTarget.resize(width, height);
+
+    if (_fboCompiledCommand != null) {
+      regl({ framebuffer: renderTarget })(() => {
+        this._clearCanvas(regl);
+        camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
+          const x = Date.now();
+          this._drawInput();
+          this.counters.paint = Date.now() - x;
+        });
+
+        this._paintCalls.forEach((paintCall) => {
+          paintCall();
+        });
+      });
+
+      this._clearCanvas(regl);
+
+      _fboCompiledCommand(width, height);
+    } else {
+      this._clearCanvas(regl);
+      camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
+        const x = Date.now();
+        this._drawInput();
+        this.counters.paint = Date.now() - x;
+      });
+
+      this._paintCalls.forEach((paintCall) => {
+        paintCall();
+      });
+    }
+
     this.counters.render = Date.now() - start;
     this._frame = undefined;
   }

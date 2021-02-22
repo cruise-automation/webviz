@@ -33,6 +33,7 @@ type Command<T> = (T | T[], ...args: any[]) => void;
 
 export type RawCommand<T> = (regl: any) => {} | Command<T>;
 
+export type ReglBuffer = any;
 export type Regl = {
   // https://github.com/gajus/eslint-plugin-flowtype/issues/346
   // eslint-disable-next-line no-undef
@@ -42,8 +43,11 @@ export type Regl = {
   },
   prop: (string) => any,
   context: (string) => any,
-  [subcommand: string]: any => any,
+  buffer: (any) => ReglBuffer,
+  [subcommand: string]: (any) => any,
 };
+
+export type ReglFBOFn = (regl: Regl, buffer: ReglBuffer) => (width: number, height: number) => void;
 
 export type CommandProps = {
   [string]: any,
@@ -74,7 +78,7 @@ export type Mat4 = [
   number,
   number,
   number,
-  number,
+  number
 ];
 
 export interface CameraCommand {
@@ -157,7 +161,7 @@ export type BaseShape = {
   color?: Color,
 };
 
-type Points = Point[]
+type Points = Point[];
 
 export type Arrow = BaseShape & {
   points?: Points,

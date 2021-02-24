@@ -29,9 +29,9 @@ export type CompiledReglCommand<T> = (props: T, context: any) => void;
 
 export type ReglFn = <T>(ReglCommand) => CompiledReglCommand<T>;
 
-type Command<T> = (T | T[], ...args: any[]) => void;
+export type DrawCommand<T> = (T | T[], boolean, Vec2, ...args: any[]) => void;
 
-export type RawCommand<T> = (regl: any) => {} | Command<T>;
+export type RawCommand<T> = (regl: any) => {} | DrawCommand<T>;
 
 export type ReglBuffer = any;
 export type Regl = {
@@ -54,7 +54,7 @@ export type CommandProps = {
 };
 
 export type CommandDict = {
-  [string]: Command<any>,
+  [string]: DrawCommand<any>,
 };
 
 // [left, top, width, height]

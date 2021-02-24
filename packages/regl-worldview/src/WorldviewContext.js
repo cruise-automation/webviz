@@ -13,18 +13,19 @@ import shallowequal from "shallowequal";
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
 import type {
-  Dimensions,
-  RawCommand,
-  CompiledReglCommand,
-  CameraCommand,
-  Vec4,
-  Mat4,
-  CameraState,
-  MouseEventObject,
-  GetChildrenForHitmap,
   AssignNextColorsFn,
-  ReglFBOFn,
+  CameraCommand,
+  CameraState,
+  DrawCommand,
+  CompiledReglCommand,
+  Dimensions,
+  GetChildrenForHitmap,
+  Mat4,
+  MouseEventObject,
+  RawCommand,
   ReglBuffer,
+  ReglFBOFn,
+  Vec4,
 } from "./types";
 import { getIdFromPixel, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -75,7 +76,7 @@ export type WorldviewContextType = {
 // Compile instructions with an initialized regl context into a regl command.
 // If the instructions are a function, pass the context to the instructions and compile the result
 // of the function; otherwise, compile the instructions directly
-function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
+function compile<T>(regl: any, cmd: RawCommand<T>): DrawCommand<T> {
   const src = cmd(regl);
   return typeof src === "function" ? src : regl(src);
 }
@@ -86,7 +87,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 
 export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
-  _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
+  _compiled: Map<Function, DrawCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _frame: ?AnimationFrameID;
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
@@ -160,6 +161,7 @@ export class WorldviewContext {
     });
 
     const Camera = compile(regl, camera);
+    // $FlowFixMe It seems like we use Command and regl commands interchangeably but they're not. This is one case of that.
     const compiledCameraCommand = new Camera();
     // framebuffer object from regl context
 
@@ -280,24 +282,7 @@ export class WorldviewContext {
     _fbo.resize(width, height);
     renderTarget.resize(width, height);
 
-    if (_fboCompiledCommand != null) {
-      regl({ framebuffer: renderTarget })(() => {
-        this._clearCanvas(regl);
-        camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
-          const x = Date.now();
-          this._drawInput();
-          this.counters.paint = Date.now() - x;
-        });
-
-        this._paintCalls.forEach((paintCall) => {
-          paintCall();
-        });
-      });
-
-      this._clearCanvas(regl);
-
-      _fboCompiledCommand(width, height);
-    } else {
+    const draw = () => {
       this._clearCanvas(regl);
       camera.draw({ state: this.cameraStore.state, cameraView, cameraProjection }, () => {
         const x = Date.now();
@@ -308,6 +293,16 @@ export class WorldviewContext {
       this._paintCalls.forEach((paintCall) => {
         paintCall();
       });
+    };
+
+    if (_fboCompiledCommand != null) {
+      regl({ framebuffer: renderTarget })(() => draw());
+
+      this._clearCanvas(regl);
+
+      _fboCompiledCommand(width, height);
+    } else {
+      draw();
     }
 
     this.counters.render = Date.now() - start;
@@ -455,6 +450,8 @@ export class WorldviewContext {
       this._hitmapObjectIdManager = new HitmapObjectIdManager();
     }
 
+    const { width, height } = this.dimension;
+    const resolution = [width, height];
     const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     drawCalls.forEach((drawInput: DrawInput) => {
       const { reglCommand, children, instance, getChildrenForHitmap } = drawInput;
@@ -472,10 +469,10 @@ export class WorldviewContext {
         };
         const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
         if (hitmapProps) {
-          cmd(hitmapProps, true);
+          cmd(hitmapProps, true, resolution);
         }
       } else if (!isHitmap) {
-        cmd(children, false);
+        cmd(children, false, resolution);
       }
     });
   };

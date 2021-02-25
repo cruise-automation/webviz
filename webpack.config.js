@@ -7,6 +7,7 @@
 const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { spawnSync } = require("child_process");
+const CopyPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const path = require("path");
@@ -199,6 +200,9 @@ module.exports = {
       // available options: https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       languages: ["typescript", "javascript"],
     }),
+    new CopyPlugin([
+      { from: "packages/webviz-core/node_modules/libarchive.js/dist", to: STATIC_WEBVIZ || WEBVIZ_DEV ? "" : "/dist/" },
+    ]),
   ],
   node: {
     fs: "empty",

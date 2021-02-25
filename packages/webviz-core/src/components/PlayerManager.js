@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// CHANGED_BY_ZIPLINE: this file is pretty heavily modified to work with ITC logs.
+
 import * as React from "react";
 import { connect } from "react-redux";
 
@@ -89,19 +91,42 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
   });
 }
 
+// function getDescriptorFromFilename(file: File): DataProviderDescriptor {
+//   if (file.name.toLowerCase().endsWith(".log")) {
+//     return {
+//       name: CoreDataProviders.WorkerDataProvider,
+//       args: {},
+//       children: [
+//         {
+//           name: CoreDataProviders.ZiplineItcDataProvider,
+//           args: { bagPath: { type: "file", file } },
+//           children: [],
+//         },
+//       ],
+//     };
+//   }
+//   return getLocalBagDescriptor(file);
+// }
+
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
 
-function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
+function buildPlayerFromFiles(files: File[][]): ?PlayerDefinition {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
     return {
-      player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0])),
-      inputDescription: (
-        <>
-          Using local bag file <code>{files[0].name}</code>.
-        </>
-      ),
+      player: buildPlayerFromDescriptor({
+        name: CoreDataProviders.WorkerDataProvider,
+        args: {},
+        children: [
+          {
+            name: CoreDataProviders.ZiplineItcDataProvider,
+            args: { files: files[0] },
+            children: [],
+          },
+        ],
+      }),
+      inputDescription: <>Using one set of local files.</>,
     };
   } else if (files.length === 2) {
     return {
@@ -109,22 +134,40 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
         name: CoreDataProviders.CombinedDataProvider,
         args: {},
         children: [
-          getLocalBagDescriptor(files[0]),
+          {
+            name: CoreDataProviders.WorkerDataProvider,
+            args: {},
+            children: [
+              {
+                name: CoreDataProviders.ZiplineItcDataProvider,
+                args: { files: files[0] },
+                children: [],
+              },
+            ],
+          },
           {
             name: CoreDataProviders.RenameDataProvider,
             args: { prefix: SECOND_SOURCE_PREFIX },
-            children: [getLocalBagDescriptor(files[1])],
+            children: [
+              {
+                name: CoreDataProviders.WorkerDataProvider,
+                args: {},
+                children: [
+                  {
+                    name: CoreDataProviders.ZiplineItcDataProvider,
+                    args: { files: files[1] },
+                    children: [],
+                  },
+                ],
+              },
+            ],
           },
         ],
       }),
-      inputDescription: (
-        <>
-          Using local bag files <code>{files[0].name}</code> and <code>{files[1].name}</code>.
-        </>
-      ),
+      inputDescription: <>Using two sets of local files.</>,
     };
   }
-  throw new Error(`Unsupported number of files: ${files.length}`);
+  throw new Error(`Unsupported number of file groups: ${files.length}`);
 }
 
 async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition> {
@@ -189,7 +232,7 @@ function PlayerManager({
   setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
-  const usedFiles = React.useRef<File[]>([]);
+  const usedFiles = React.useRef<File[][]>([]);
   const globalVariablesRef = React.useRef<GlobalVariables>(globalVariables);
   const [player, setPlayerInternal] = React.useState<?OrderedStampPlayer>();
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
@@ -286,13 +329,17 @@ function PlayerManager({
   return (
     <>
       <DocumentDropListener
-        filesSelected={({ files, shiftPressed }: { files: FileList | File[], shiftPressed: boolean }) => {
-          if (shiftPressed && usedFiles.current.length === 1) {
-            usedFiles.current = [usedFiles.current[0], files[0]];
-          } else if (files.length === 2) {
-            usedFiles.current = [...files];
+        filesSelected={({ files, shiftPressed }: { files: File[], shiftPressed: boolean }) => {
+          if (shiftPressed && usedFiles.current.length > 0) {
+            usedFiles.current = [usedFiles.current[0], files];
+          } else if (
+            files.length === 2 &&
+            files[0].name.toLowerCase().endsWith(".zip") &&
+            files[1].name.toLowerCase().endsWith(".zip")
+          ) {
+            usedFiles.current = [[files[0]], [files[1]]];
           } else {
-            usedFiles.current = [files[0]];
+            usedFiles.current = [files];
           }
           setPlayer(buildPlayerFromFiles(usedFiles.current));
         }}>

@@ -12,6 +12,7 @@ import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataPr
 import IdbCacheWriterDataProvider from "webviz-core/src/dataProviders/IdbCacheWriterDataProvider";
 import MeasureDataProvider from "webviz-core/src/dataProviders/MeasureDataProvider";
 import RpcDataProviderRemote from "webviz-core/src/dataProviders/RpcDataProviderRemote";
+import ZiplineItcDataProvider from "webviz-core/src/dataProviders/ZiplineItcDataProvider";
 import Rpc from "webviz-core/src/util/Rpc";
 
 // This is the open source version. There is also an internal variant.
@@ -21,6 +22,7 @@ const getDataProvider = createGetDataProvider({
   BagDataProvider,
   MeasureDataProvider,
   IdbCacheWriterDataProvider,
+  ZiplineItcDataProvider, // CHANGED_BY_ZIPLINE
 });
 
 if (global.postMessage && !global.onmessage) {

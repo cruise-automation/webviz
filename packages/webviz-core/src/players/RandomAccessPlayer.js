@@ -69,7 +69,9 @@ const NO_WARNINGS = Object.freeze({});
 // in the last message on a topic, and then support that in `getMessages` as
 // well, so we can fetch pretty old messages without incurring the cost of
 // fetching too many.
-export const SEEK_BACK_NANOSECONDS = 299 /* ms */ * 1e6;
+
+// CHANGED_BY_ZIPLINE: increased a bit since we have some low-frequency logs.
+export const SEEK_BACK_NANOSECONDS = 1100 /* ms */ * 1e6;
 
 if (SEEK_ON_START_NS >= SEEK_BACK_NANOSECONDS) {
   throw new Error(

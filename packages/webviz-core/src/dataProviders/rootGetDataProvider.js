@@ -22,6 +22,7 @@ import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider
 import RewriteBinaryDataProvider from "webviz-core/src/dataProviders/RewriteBinaryDataProvider";
 import type { DataProviderDescriptor, DataProvider } from "webviz-core/src/dataProviders/types";
 import WorkerDataProvider from "webviz-core/src/dataProviders/WorkerDataProvider";
+import ZiplineItcDataProvider from "webviz-core/src/dataProviders/ZiplineItcDataProvider";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { MEASURE_DATA_PROVIDERS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
@@ -34,6 +35,7 @@ const getDataProviderBase = createGetDataProvider({
   MemoryCacheDataProvider,
   ParseMessagesDataProvider,
   RenameDataProvider,
+  ZiplineItcDataProvider, // CHANGED_BY_ZIPLINE
   RewriteBinaryDataProvider,
   WorkerDataProvider,
   ...getGlobalHooks().getAdditionalDataProviders(),

@@ -18,5 +18,6 @@ export const CoreDataProviders = {
   RewriteBinaryDataProvider: "RewriteBinaryDataProvider",
   RpcDataProvider: "RpcDataProvider",
   WorkerDataProvider: "WorkerDataProvider",
+  ZiplineItcDataProvider: "ZiplineItcDataProvider", // CHANGED_BY_ZIPLINE
 };
 export const MESSAGE_FORMATS = ["bobjects", "rosBinaryMessages", "parsedMessages"];

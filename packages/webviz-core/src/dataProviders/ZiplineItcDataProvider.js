@@ -9,12 +9,13 @@
 // CHANGED_BY_ZIPLINE: This whole file is custom to our build.
 
 import { Archive } from "libarchive.js/main.js";
-import { keyBy, last, sortedIndexBy, flatten } from "lodash";
-import Bag, { Time, TimeUtil } from "rosbag";
+import { keyBy, last, sortedIndexBy } from "lodash";
+import Bag, { Time, TimeUtil, MessageReader, parseMessageDefinition, MessageWriter } from "rosbag";
 import "wasm-flate";
 import wasmFlateWasm from "wasm-flate/wasm_flate_bg.wasm";
 import yaml from "js-yaml";
 
+import { rosMarkerArrayDefinition } from "webviz-core/src/dataProviders/rosMarkerArrayDefinition";
 import type {
   DataProvider,
   DataProviderDescriptor,
@@ -109,14 +110,36 @@ type TypeInfo = {|
 
 type FileData = {|
   buffer: ArrayBuffer,
-  timestamps: {| timestamp: number, index: number |}[],
-  timestamps2hz: {| timestamp: number, index: number |}[],
-  timestamps10s: {| timestamp: number, index: number |}[],
+  timestamps: {| timestamp: number, offsetBegin: number, offsetEnd: number |}[],
+  timestamps2hz: {| timestamp: number, offsetBegin: number, offsetEnd: number |}[],
+  timestamps10s: {| timestamp: number, offsetBegin: number, offsetEnd: number |}[],
 |};
 
 Archive.init({
   workerUrl: "worker-bundle.js",
 });
+
+const rosMarkerArrayWriter = new MessageWriter(parseMessageDefinition(rosMarkerArrayDefinition));
+
+function makeMarker(marker) {
+  return {
+    header: { frame_id: "map", seq: 0, stamp: { sec: 0, nsec: 0 } },
+    scale: { x: 10, y: 10, z: 10 },
+    color: { r: 0, g: 1, b: 0, a: 0.5 },
+    points: [],
+    ns: "",
+    id: 0,
+    action: 0,
+    pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 1 } },
+    lifetime: { sec: 0, nsec: 0 },
+    frame_locked: false,
+    colors: [],
+    text: "",
+    mesh_resource: "",
+    mesh_use_embedded_materials: false,
+    ...marker,
+  };
+}
 
 // Read from a ROS Bag. `bagPath` can either represent a local file, or a remote bag. See
 // `BrowserHttpReader` for how to set up a remote server to be able to directly stream from it.
@@ -129,6 +152,32 @@ export default class ZiplineItcDataProvider implements DataProvider {
   _typeInfoByType: { [string]: TypeInfo } = {};
   _filenameByTopic: { [string]: string } = {};
   _typeInfoByTopic: { [string]: TypeInfo } = {};
+
+  _historyTopicGeneratorByType = {
+    ZIPNAV: async (baseTopic: string): Promise<ArrayBuffer> => {
+      const { buffer, timestamps2hz } = await this._getFile(baseTopic);
+      const parsedDefinition = parseMessageDefinition(this._typeInfoByType.ZIPNAV.messageDefinition);
+      const reader = new MessageReader(parsedDefinition, { freeze: true });
+      const points = [];
+      for (const timestamp of timestamps2hz) {
+        const { position_ned_m } = reader.readMessage(
+          Buffer.from(buffer, timestamp.offsetBegin, timestamp.offsetEnd - timestamp.offsetBegin)
+        );
+        points.push({ x: position_ned_m[1], y: position_ned_m[0], z: -position_ned_m[2] });
+      }
+      const outputMessage = await rosMarkerArrayWriter.writeMessage({
+        markers: [
+          makeMarker({
+            type: 4, // Marker.LINE_STRIP,
+            scale: { x: 10, y: 10, z: 10 },
+            points,
+          }),
+        ],
+      });
+      return outputMessage.buffer;
+    },
+  };
+  _historyTopicMessageCache: { [baseTopic: string]: ArrayBuffer } = {};
 
   constructor(options: Options, children: DataProviderDescriptor[]) {
     if (children.length > 0) {
@@ -319,6 +368,11 @@ export default class ZiplineItcDataProvider implements DataProvider {
       augmentedMessageDefinitionsByTopic[name] = messageDefinitionsByTopic[name];
       augmentedMessageDefinitionsByTopic[`${name}/2hz`] = messageDefinitionsByTopic[name];
       augmentedMessageDefinitionsByTopic[`${name}/10s`] = messageDefinitionsByTopic[name];
+
+      if (this._historyTopicGeneratorByType[datatype]) {
+        augmentedTopicsWithDatatypes.push({ name: `${name}/3d_history`, datatype: "visualization_msgs/MarkerArray" });
+        augmentedMessageDefinitionsByTopic[`${name}/3d_history`] = rosMarkerArrayDefinition;
+      }
     }
 
     return {
@@ -342,6 +396,25 @@ export default class ZiplineItcDataProvider implements DataProvider {
     const fileData = await Promise.all(parsedTopics.map(({ baseTopic }) => this._getFile(baseTopic)));
     for (let i = 0; i < parsedTopics.length; ++i) {
       const { fullTopic, baseTopic, topicSuffix } = parsedTopics[i];
+      if (topicSuffix === "3d_history") {
+        this._historyTopicMessageCache[baseTopic] =
+          this._historyTopicMessageCache[baseTopic] ||
+          (await this._historyTopicGeneratorByType[this._typeInfoByTopic[baseTopic].messageType](baseTopic));
+
+        for (
+          let receiveTime = start;
+          TimeUtil.isGreaterThan(end, receiveTime);
+          receiveTime = TimeUtil.add(receiveTime, { sec: 0, nsec: 0.2e9 })
+        ) {
+          messages.push({
+            topic: fullTopic,
+            receiveTime,
+            message: this._historyTopicMessageCache[baseTopic].slice(0),
+          });
+        }
+        continue;
+      }
+
       const { buffer } = fileData[i];
       const timestamps =
         topicSuffix === "10s"
@@ -349,11 +422,10 @@ export default class ZiplineItcDataProvider implements DataProvider {
           : topicSuffix === "2hz"
           ? fileData[i].timestamps2hz
           : fileData[i].timestamps;
-      const { byteSize } = this._typeInfoByTopic[baseTopic];
-      const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp }, "timestamp");
-      const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 1 }, "timestamp") - 1;
+      const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp - 0.1e5 }, "timestamp");
+      const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 0.1e5 }, "timestamp") - 1;
       for (let j = startIndex; j <= endIndex; ++j) {
-        const { index, timestamp } = timestamps[j];
+        const { timestamp, offsetBegin, offsetEnd } = timestamps[j];
         const receiveTime = timestampToTime(timestamp);
         if (TimeUtil.isLessThan(receiveTime, start)) {
           continue;
@@ -362,11 +434,10 @@ export default class ZiplineItcDataProvider implements DataProvider {
           continue;
         }
 
-        const offset = (4 + byteSize) * index + 4;
         messages.push({
           topic: fullTopic,
           receiveTime,
-          message: buffer.slice(offset, offset + byteSize),
+          message: buffer.slice(offsetBegin, offsetEnd),
         });
       }
     }
@@ -377,8 +448,8 @@ export default class ZiplineItcDataProvider implements DataProvider {
 
   async close(): Promise<void> {}
 
-  async _getFile(topic: string): Promise<FileData> {
-    const filename = this._filenameByTopic[topic];
+  async _getFile(baseTopic: string): Promise<FileData> {
+    const filename = this._filenameByTopic[baseTopic];
     if (!this._dataByFilename[filename]) {
       // $FlowFixMe
       let buffer = await this._filesByName[filename].arrayBuffer();
@@ -388,7 +459,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
         buffer = decoded.buffer.slice(decoded.byteOffset, decoded.byteOffset + decoded.byteLength);
       }
       const timestamps = [];
-      const { byteSize, modifyFunc } = this._typeInfoByTopic[topic];
+      const { byteSize, modifyFunc } = this._typeInfoByTopic[baseTopic];
 
       const dataView = new DataView(buffer);
       let pos = 0;
@@ -400,7 +471,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
           throw new Error("All messages in a LOG file should have the same type");
         }
         pos += 4;
-        timestamps.push({ timestamp: modifyFunc(dataView, pos), index: timestamps.length });
+        timestamps.push({ timestamp: modifyFunc(dataView, pos), offsetBegin: pos, offsetEnd: pos + byteSize });
         pos += byteSize;
       }
       timestamps.sort((a, b) => a.timestamp - b.timestamp);

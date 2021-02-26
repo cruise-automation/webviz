@@ -59,14 +59,13 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
-  const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
     args: {},
     children: [
       {
         name: CoreDataProviders.MemoryCacheDataProvider,
-        args: { unlimitedCache },
+        args: { unlimitedCache: true },
         children: [
           {
             name: CoreDataProviders.RewriteBinaryDataProvider,
@@ -114,6 +113,13 @@ function buildPlayerFromFiles(files: File[][]): ?PlayerDefinition {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
+    if (files[0].length === 1 && files[0][0].name.toLowerCase().endsWith(".bag")) {
+      return {
+        player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0][0])),
+        inputDescription: <>Using a local bag.</>,
+      };
+    }
+
     return {
       player: buildPlayerFromDescriptor({
         name: CoreDataProviders.WorkerDataProvider,

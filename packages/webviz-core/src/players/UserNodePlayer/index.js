@@ -400,7 +400,7 @@ export default class UserNodePlayer implements Player {
     const transformWorker = this._getTransformWorker();
     const rosLib = await transformWorker.send("generateRosLib", {
       topics,
-      datatypes,
+      datatypes: { ...datatypes, ...basicDatatypes },
     });
     this._setRosLib(rosLib);
 

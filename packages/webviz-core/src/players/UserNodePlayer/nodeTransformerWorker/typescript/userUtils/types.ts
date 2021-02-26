@@ -57,17 +57,17 @@ export type Transform = {
   };
 };
 
-export type PointStyle =
-  | "circle"
-  | "cross"
-  | "crossRot"
-  | "dash"
-  | "line"
-  | "rect"
-  | "rectRounded"
-  | "rectRot"
-  | "star"
-  | "triangle";
+export type PointStyle = string;
+//  | "circle"
+//  | "cross"
+//  | "crossRot"
+//  | "dash"
+//  | "line"
+//  | "rect"
+//  | "rectRounded"
+//  | "rectRot"
+//  | "star"
+//  | "triangle";
 
 export type TwoDimensionalPlotLine = {
   order?: number;

@@ -121,16 +121,15 @@ Archive.init({
 
 const rosMarkerArrayWriter = new MessageWriter(parseMessageDefinition(rosMarkerArrayDefinition));
 
-function makeMarker(marker) {
+function makeMarker(marker: any) {
   return {
     header: { frame_id: "map", seq: 0, stamp: { sec: 0, nsec: 0 } },
     scale: { x: 10, y: 10, z: 10 },
-    color: { r: 0, g: 1, b: 0, a: 0.5 },
+    color: { r: 0, g: 1, b: 0, a: 1 },
     points: [],
     ns: "",
     id: 0,
     action: 0,
-    pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 1 } },
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: false,
     colors: [],
@@ -138,6 +137,7 @@ function makeMarker(marker) {
     mesh_resource: "",
     mesh_use_embedded_materials: false,
     ...marker,
+    pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 1 }, ...marker.pose },
   };
 }
 
@@ -152,6 +152,32 @@ export default class ZiplineItcDataProvider implements DataProvider {
   _typeInfoByType: { [string]: TypeInfo } = {};
   _filenameByTopic: { [string]: string } = {};
   _typeInfoByTopic: { [string]: TypeInfo } = {};
+
+  _3dTopicGeneratorByType = {
+    ZIPNAV: async (baseTopic: string): Promise<{| timestamp: number, buffer: ArrayBuffer |}[]> => {
+      const { buffer, timestamps2hz } = await this._getFile(baseTopic);
+      const parsedDefinition = parseMessageDefinition(this._typeInfoByType.ZIPNAV.messageDefinition);
+      const reader = new MessageReader(parsedDefinition, { freeze: true });
+      const output = [];
+      for (const timestamp of timestamps2hz) {
+        const { position_ned_m } = reader.readMessage(
+          Buffer.from(buffer, timestamp.offsetBegin, timestamp.offsetEnd - timestamp.offsetBegin)
+        );
+        const outputMessage = await rosMarkerArrayWriter.writeMessage({
+          markers: [
+            makeMarker({
+              type: 9, // Marker.TEXT_VIEW_FACING,
+              pose: { position: { x: position_ned_m[1], y: position_ned_m[0], z: -position_ned_m[2] } },
+              text: "zip",
+            }),
+          ],
+        });
+        output.push({ timestamp: timestamp.timestamp, buffer: outputMessage.buffer });
+      }
+      return output;
+    },
+  };
+  _3dTopicMessageCache: { [baseTopic: string]: {| timestamp: number, buffer: ArrayBuffer |}[] } = {};
 
   _historyTopicGeneratorByType = {
     ZIPNAV: async (baseTopic: string): Promise<ArrayBuffer> => {
@@ -369,6 +395,11 @@ export default class ZiplineItcDataProvider implements DataProvider {
       augmentedMessageDefinitionsByTopic[`${name}/2hz`] = messageDefinitionsByTopic[name];
       augmentedMessageDefinitionsByTopic[`${name}/10s`] = messageDefinitionsByTopic[name];
 
+      if (this._3dTopicGeneratorByType[datatype]) {
+        augmentedTopicsWithDatatypes.push({ name: `${name}/3d_marker`, datatype: "visualization_msgs/MarkerArray" });
+        augmentedMessageDefinitionsByTopic[`${name}/3d_marker`] = rosMarkerArrayDefinition;
+      }
+
       if (this._historyTopicGeneratorByType[datatype]) {
         augmentedTopicsWithDatatypes.push({ name: `${name}/3d_history`, datatype: "visualization_msgs/MarkerArray" });
         augmentedMessageDefinitionsByTopic[`${name}/3d_history`] = rosMarkerArrayDefinition;
@@ -396,6 +427,34 @@ export default class ZiplineItcDataProvider implements DataProvider {
     const fileData = await Promise.all(parsedTopics.map(({ baseTopic }) => this._getFile(baseTopic)));
     for (let i = 0; i < parsedTopics.length; ++i) {
       const { fullTopic, baseTopic, topicSuffix } = parsedTopics[i];
+
+      if (topicSuffix === "3d_marker") {
+        this._3dTopicMessageCache[baseTopic] =
+          this._3dTopicMessageCache[baseTopic] ||
+          (await this._3dTopicGeneratorByType[this._typeInfoByTopic[baseTopic].messageType](baseTopic));
+
+        const timestamps = this._3dTopicMessageCache[baseTopic];
+        const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp - 0.1e5 }, "timestamp");
+        const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 0.1e5 }, "timestamp") - 1;
+        for (let j = startIndex; j <= endIndex; ++j) {
+          const { timestamp, buffer } = timestamps[j];
+          const receiveTime = timestampToTime(timestamp);
+          if (TimeUtil.isLessThan(receiveTime, start)) {
+            continue;
+          }
+          if (TimeUtil.isLessThan(end, receiveTime)) {
+            continue;
+          }
+
+          messages.push({
+            topic: fullTopic,
+            receiveTime,
+            message: buffer.slice(0),
+          });
+        }
+        continue;
+      }
+
       if (topicSuffix === "3d_history") {
         this._historyTopicMessageCache[baseTopic] =
           this._historyTopicMessageCache[baseTopic] ||

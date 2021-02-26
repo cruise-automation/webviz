@@ -9,7 +9,7 @@
 // CHANGED_BY_ZIPLINE: This whole file is custom to our build.
 
 import { Archive } from "libarchive.js/main.js";
-import { keyBy, last, sortedIndexBy } from "lodash";
+import { keyBy, last, sortedIndexBy, flatten } from "lodash";
 import Bag, { Time, TimeUtil } from "rosbag";
 import "wasm-flate";
 import wasmFlateWasm from "wasm-flate/wasm_flate_bg.wasm";
@@ -107,6 +107,13 @@ type TypeInfo = {|
   modifyFunc: (dataView: DataView, offset: number) => number,
 |};
 
+type FileData = {|
+  buffer: ArrayBuffer,
+  timestamps: {| timestamp: number, index: number |}[],
+  timestamps2hz: {| timestamp: number, index: number |}[],
+  timestamps10s: {| timestamp: number, index: number |}[],
+|};
+
 Archive.init({
   workerUrl: "worker-bundle.js",
 });
@@ -118,7 +125,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
   _options: Options;
   _bag: Bag;
   _filesByName: { [string]: File };
-  _dataByFilename: { [string]: {| buffer: ArrayBuffer, timestamps: {| timestamp: number, index: number |}[] |} } = {};
+  _dataByFilename: { [string]: FileData } = {};
   _typeInfoByType: { [string]: TypeInfo } = {};
   _filenameByTopic: { [string]: string } = {};
   _typeInfoByTopic: { [string]: TypeInfo } = {};
@@ -131,7 +138,6 @@ export default class ZiplineItcDataProvider implements DataProvider {
   }
 
   async initialize(): Promise<InitializationResult> {
-    debugger;
     if (this._options.files.length === 1 && this._options.files[0].name.toLowerCase().endsWith(".zip")) {
       const archive = await Archive.open(this._options.files[0]);
       // $FlowFixMe
@@ -299,26 +305,51 @@ export default class ZiplineItcDataProvider implements DataProvider {
       startTimestamp = 0;
     }
 
+    const topicsWithDatatypes = topics.map((topic) => ({
+      name: topic,
+      datatype: this._typeInfoByTopic[topic].messageType,
+    }));
+
+    const augmentedTopicsWithDatatypes = [];
+    const augmentedMessageDefinitionsByTopic = {};
+    for (const { name, datatype } of topicsWithDatatypes) {
+      augmentedTopicsWithDatatypes.push({ name, datatype });
+      augmentedTopicsWithDatatypes.push({ name: `${name}/2hz`, datatype });
+      augmentedTopicsWithDatatypes.push({ name: `${name}/10s`, datatype });
+      augmentedMessageDefinitionsByTopic[name] = messageDefinitionsByTopic[name];
+      augmentedMessageDefinitionsByTopic[`${name}/2hz`] = messageDefinitionsByTopic[name];
+      augmentedMessageDefinitionsByTopic[`${name}/10s`] = messageDefinitionsByTopic[name];
+    }
+
     return {
       start: timestampToTime(startTimestamp),
       end: timestampToTime(endTimestamp),
-      topics: topics.map((topic) => ({ name: topic, datatype: this._typeInfoByTopic[topic].messageType })),
+      topics: augmentedTopicsWithDatatypes,
       providesParsedMessages: false,
-      messageDefinitions: { type: "raw", messageDefinitionsByTopic },
+      messageDefinitions: { type: "raw", messageDefinitionsByTopic: augmentedMessageDefinitionsByTopic },
     };
   }
 
   async getMessages(start: Time, end: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
     const startTimestamp = timeToTimestamp(start);
     const endTimestamp = timeToTimestamp(end);
-    const topics = subscriptions.rosBinaryMessages || [];
+    const parsedTopics = (subscriptions.rosBinaryMessages || []).map((topic) => {
+      const splitTopic = topic.split("/");
+      return { baseTopic: `/${splitTopic[1]}`, topicSuffix: splitTopic[2], fullTopic: topic };
+    });
     const messages = [];
 
-    const fileData = await Promise.all(topics.map((topic) => this._getFile(topic)));
-    for (let i = 0; i < topics.length; ++i) {
-      const topic = topics[i];
-      const { buffer, timestamps } = fileData[i];
-      const { byteSize } = this._typeInfoByTopic[topic];
+    const fileData = await Promise.all(parsedTopics.map(({ baseTopic }) => this._getFile(baseTopic)));
+    for (let i = 0; i < parsedTopics.length; ++i) {
+      const { fullTopic, baseTopic, topicSuffix } = parsedTopics[i];
+      const { buffer } = fileData[i];
+      const timestamps =
+        topicSuffix === "10s"
+          ? fileData[i].timestamps10s
+          : topicSuffix === "2hz"
+          ? fileData[i].timestamps2hz
+          : fileData[i].timestamps;
+      const { byteSize } = this._typeInfoByTopic[baseTopic];
       const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp }, "timestamp");
       const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 1 }, "timestamp") - 1;
       for (let j = startIndex; j <= endIndex; ++j) {
@@ -333,7 +364,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
 
         const offset = (4 + byteSize) * index + 4;
         messages.push({
-          topic,
+          topic: fullTopic,
           receiveTime,
           message: buffer.slice(offset, offset + byteSize),
         });
@@ -346,9 +377,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
 
   async close(): Promise<void> {}
 
-  async _getFile(
-    topic: string
-  ): Promise<{| buffer: ArrayBuffer, timestamps: {| timestamp: number, index: number |}[] |}> {
+  async _getFile(topic: string): Promise<FileData> {
     const filename = this._filenameByTopic[topic];
     if (!this._dataByFilename[filename]) {
       // $FlowFixMe
@@ -375,7 +404,23 @@ export default class ZiplineItcDataProvider implements DataProvider {
         pos += byteSize;
       }
       timestamps.sort((a, b) => a.timestamp - b.timestamp);
-      this._dataByFilename[filename] = { buffer, timestamps };
+
+      let lastTimestamp2hz;
+      let lastTimestamp10s;
+      const timestamps2hz = [];
+      const timestamps10s = [];
+      for (const timestamp of timestamps) {
+        if (!lastTimestamp10s || timestamp.timestamp >= lastTimestamp10s.timestamp + 10e5) {
+          timestamps10s.push(timestamp);
+          lastTimestamp10s = timestamp;
+        }
+        if (!lastTimestamp2hz || timestamp.timestamp >= lastTimestamp2hz.timestamp + 0.5e5) {
+          timestamps2hz.push(timestamp);
+          lastTimestamp2hz = timestamp;
+        }
+      }
+
+      this._dataByFilename[filename] = { buffer, timestamps, timestamps2hz, timestamps10s };
     }
     return this._dataByFilename[filename];
   }

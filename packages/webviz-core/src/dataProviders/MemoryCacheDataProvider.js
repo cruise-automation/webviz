@@ -28,16 +28,18 @@ import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges 
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
+// CHANGED_BY_ZIPLINE: we tweaked these variables a bit, to make things work better for our very long time ranges.
+
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
-export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
 // Preloading algorithms get too slow when there are too many blocks. For very long bags, use longer
 // blocks. Adaptive block sizing is simpler than using a tree structure for immutable updates but
 // less flexible, so we may want to move away from a single-level block structure in the future.
-export const MAX_BLOCKS = 400;
-const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
+export const MAX_BLOCKS = 300;
+const READ_AHEAD_NS = 30e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
 const DEFAULT_CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
-export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
+export const MAX_BLOCK_SIZE_BYTES = 500e6; // Number of bytes in a block before we show an error.
 
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.

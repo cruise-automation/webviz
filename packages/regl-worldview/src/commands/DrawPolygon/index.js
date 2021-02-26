@@ -22,9 +22,9 @@ export const ACTIVE_POLYGON_COLOR = [0.8, 0, 0.8, 1];
 export const ACTIVE_POINT_COLOR = [1, 0.2, 1, 1];
 export const LINE_STRIP = "line strip";
 const POINT_SIZE_FACTOR = 1.3;
-export const DRAW_SCALE = { x: 0.1, y: 0.1, z: 0.1 };
+export const DRAW_SCALE = { x: 7, y: 7, z: 7 };  // CHANGED_BY_ZIPLINE: thicker lines
 export const DRAW_POINT_SCALE = multiplyScale(DRAW_SCALE, POINT_SIZE_FACTOR);
-export const HITMAP_SCALE = { x: 0.5, y: 0.5, z: 0.5 };
+export const HITMAP_SCALE = { x: 10, y: 10, z: 10 };  // CHANGED_BY_ZIPLINE: thicker lines
 export const HITMAP_POINT_SCALE = multiplyScale(HITMAP_SCALE, POINT_SIZE_FACTOR);
 export const POSE = {
   position: { x: 0, y: 0, z: 0 },

@@ -13,13 +13,13 @@ type Props = {
   measurePoints: { start: ?Point, end: ?Point },
 };
 
-const sphereSize: number = 0.3;
-const lineSize: number = 0.1;
+const sphereSize: number = 10; // CHANGED_BY_ZIPLINE: thicker lines
+const lineSize: number = 7; // CHANGED_BY_ZIPLINE: thicker lines
 
 const defaultSphere: any = Object.freeze({
   type: 2,
   action: 0,
-  scale: { x: sphereSize, y: sphereSize, z: 0.1 },
+  scale: { x: sphereSize, y: sphereSize, z: 7 }, // CHANGED_BY_ZIPLINE: thicker lines
   color: { r: 1, g: 0.2, b: 0, a: 1 },
 });
 const defaultPose: any = Object.freeze({ orientation: { x: 0, y: 0, z: 0, w: 1 } });

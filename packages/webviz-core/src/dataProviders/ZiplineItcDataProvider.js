@@ -9,8 +9,8 @@
 // CHANGED_BY_ZIPLINE: This whole file is custom to our build.
 
 import { Archive } from "libarchive.js/main.js";
-import { keyBy, last, sortedIndexBy } from "lodash";
-import Bag, { Time, TimeUtil, MessageReader, parseMessageDefinition, MessageWriter } from "rosbag";
+import { keyBy, last, sortedIndexBy, uniq } from "lodash";
+import { Time, TimeUtil, MessageReader, parseMessageDefinition, MessageWriter } from "rosbag";
 import "wasm-flate";
 import wasmFlateWasm from "wasm-flate/wasm_flate_bg.wasm";
 import yaml from "js-yaml";
@@ -121,6 +121,7 @@ Archive.init({
 
 const rosMarkerArrayWriter = new MessageWriter(parseMessageDefinition(rosMarkerArrayDefinition));
 
+// Make a marker, but set some defaults.
 function makeMarker(marker: any) {
   return {
     header: { frame_id: "map", seq: 0, stamp: { sec: 0, nsec: 0 } },
@@ -141,18 +142,20 @@ function makeMarker(marker: any) {
   };
 }
 
-// Read from a ROS Bag. `bagPath` can either represent a local file, or a remote bag. See
-// `BrowserHttpReader` for how to set up a remote server to be able to directly stream from it.
-// Returns raw messages that still need to be parsed by `ParseMessagesDataProvider`.
+// Read from Zipline ITC files. The message definitionsare read from stork_messages.yaml, and the actual
+// data from the individual .LOG files. It's also okay for the .LOG files to be gzipped to .LOG.gz, and
+// for all of that to then be zipped once more in a .zip file (like when you download files from the
+// Logbook).
 export default class ZiplineItcDataProvider implements DataProvider {
   _options: Options;
-  _bag: Bag;
-  _filesByName: { [string]: File };
-  _dataByFilename: { [string]: FileData } = {};
-  _typeInfoByType: { [string]: TypeInfo } = {};
-  _filenameByTopic: { [string]: string } = {};
-  _typeInfoByTopic: { [string]: TypeInfo } = {};
+  _filesByName: { [string]: File }; // File handles indexed by filename.
+  _dataByFilename: { [string]: FileData } = {}; // Uncompressed / little-endian buffer (for ROS) + timestamps.
+  _typeInfoByType: { [string]: TypeInfo } = {}; // Various kinds of type info, indexed by type name (e.g. "ZIPNAV").
+  _filenameByTopic: { [string]: string } = {}; // Mapping from base topics to filenames.
+  _typeInfoByTopic: { [string]: TypeInfo } = {}; // Same typeinfos as above, only by base topic.
 
+  // Functions to generate ROS MarkerArray messages, for each type of message (e.g. "ZIPNAV"). Returns a bunch
+  // of objects that can be turned directly into messages (timestamp + ArrayBuffer).
   _3dTopicGeneratorByType = {
     ZIPNAV: async (baseTopic: string): Promise<{| timestamp: number, buffer: ArrayBuffer |}[]> => {
       const { buffer, timestamps2hz } = await this._getFile(baseTopic);
@@ -179,6 +182,9 @@ export default class ZiplineItcDataProvider implements DataProvider {
   };
   _3dTopicMessageCache: { [baseTopic: string]: {| timestamp: number, buffer: ArrayBuffer |}[] } = {};
 
+  // Functions to generate a single ROS MarkerArray message to show the history of some point. Again,
+  // one function per message type (e.g. "ZIPNAV"). This single message is then repeated over and over,
+  // so you see the same history shape no matter where you seek in the timeline.
   _historyTopicGeneratorByType = {
     ZIPNAV: async (baseTopic: string): Promise<ArrayBuffer> => {
       const { buffer, timestamps2hz } = await this._getFile(baseTopic);
@@ -213,6 +219,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
   }
 
   async initialize(): Promise<InitializationResult> {
+    // If we're working with a .zip file, unzip it and pretend that we just got the files that were inside.
     if (this._options.files.length === 1 && this._options.files[0].name.toLowerCase().endsWith(".zip")) {
       const archive = await Archive.open(this._options.files[0]);
       // $FlowFixMe
@@ -236,18 +243,21 @@ export default class ZiplineItcDataProvider implements DataProvider {
       // });
     }
 
+    // Load the wasmFlate library.
     await self.wasm_bindgen(wasmFlateWasm);
 
+    // Index the files by filename
     this._filesByName = keyBy(this._options.files, "name");
 
+    // Parse the stork_messages.yaml into what we need; mostly ROS message definitions.
     // $FlowFixMe
     const storkMessagesString = await this._filesByName["stork_messages.yaml"].text();
     const storkMessages = yaml.load(storkMessagesString, { json: true });
     for (const [messageType, messageData] of (Object.entries(storkMessages.messages): any)) {
-      const rosFields = [];
-      let byteSize = 0;
-      let timestampExtractionString;
-      const endiannessFixingStrings: string[] = [];
+      const rosFields = []; // The ROS fields for this message.
+      let byteSize = 0; // The total byte size for this message.
+      let timestampExtractionString; // Javascript code for getting the timestamp from the ArrayBuffer.
+      const endiannessFixingStrings: string[] = []; // A set of Javascript functions to fix the endianness (ITC=big, ROS=little).
       for (const fieldWrapper of messageData.values) {
         const [fieldName, field] = (Object.entries(fieldWrapper)[0]: any); // Weird yaml structure here..
 
@@ -263,7 +273,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
             // This will make them show up in Webviz (e.g. Raw Messages and Plot panels).
             rosFields.push(`uint8 ${enumField}=${Number(enumVal)}`);
           }
-          fieldType = "UCHAR";
+          fieldType = "UCHAR"; // Enums are always single bytes.
         }
 
         // Split up names like "filename[12]" and "format[TRACE_ENTRIES_PER_MSG]".
@@ -283,6 +293,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
           }
           const arrayPartNumber = Number(arrayPart);
 
+          // Endianness fix. See below (at the non-array case) for an explanation.
           if (ITC_BYTE_SIZES[fieldType] > 1) {
             for (let i = 0; i < arrayPartNumber; i++) {
               const offset = byteSize + ITC_BYTE_SIZES[fieldType] * i;
@@ -297,12 +308,16 @@ export default class ZiplineItcDataProvider implements DataProvider {
           byteSize += ITC_BYTE_SIZES[fieldType] * arrayPartNumber;
           arrayPart = `[${arrayPartNumber}]`;
         } else {
+          // We've encountered a field called "timestamp"; generate the code that extracts this field.
           if (nameWithoutArray === "timestamp") {
             timestampExtractionString = `return dataView.${
               ITC_TO_DATAVIEW_METHOD[fieldType]
             }(offset+${byteSize}, true);`;
           }
 
+          // If the field is more than 1 byte long, we have to convert from big (ITC) to little (ROS)
+          // endian. We do that with calls like `dataView.setUint32(offset, dataView.getUint32(offset), true);`
+          // The `true` bit makes it so we write it as little endian.
           if (ITC_BYTE_SIZES[fieldType] > 1) {
             endiannessFixingStrings.push(
               `dataView.${ITC_TO_DATAVIEW_SETTER[fieldType]}(offset+${byteSize}, dataView.${
@@ -314,6 +329,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
           byteSize += ITC_BYTE_SIZES[fieldType];
         }
 
+        // Preserve any comments. This currently doesn't show up in the UI, but can be useful for debugging.
         let comment = field.comment || "";
         if (comment) {
           comment = ` # ${comment}`;
@@ -322,6 +338,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
         rosFields.push(`${ROS_TYPES[fieldType] + arrayPart} ${nameWithoutArray}${comment}`);
       }
 
+      // If we didn't find a "timestamp" field, don't load this file.
       if (!timestampExtractionString) {
         continue;
       }
@@ -338,14 +355,16 @@ export default class ZiplineItcDataProvider implements DataProvider {
         ),
       };
 
+      // Any "duplicate" message types just get a copy of the definition.
       for (const duplicateMessageType of Object.keys(messageData.duplicates || {})) {
         this._typeInfoByType[duplicateMessageType] = this._typeInfoByType[messageType];
       }
     }
 
+    // Now we generate a bunch of derived information, like topic names.
     const topics = [];
     const messageDefinitionsByTopic = {};
-    let topicToDeriveTimesFrom;
+    let topicToDeriveTimesFrom; // The topic that we'll use for the "start" and "end" times.
     for (const filename of Object.keys(this._filesByName)) {
       if (!filename.toLowerCase().endsWith(".log") && !filename.toLowerCase().endsWith(".log.gz")) {
         continue;
@@ -361,6 +380,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
       this._typeInfoByTopic[topic] = typeInfo;
       messageDefinitionsByTopic[topic] = typeInfo.messageDefinition;
 
+      // Just use the first "ZIPNAV" topic.
       if (type === "ZIPNAV" && !topicToDeriveTimesFrom) {
         topicToDeriveTimesFrom = topic;
       }
@@ -369,12 +389,15 @@ export default class ZiplineItcDataProvider implements DataProvider {
       throw new Error("No readable files found");
     }
 
+    // If there was no "ZIPNAV" topic to derive the time from, just use the first topic.
     if (!topicToDeriveTimesFrom) {
       topicToDeriveTimesFrom = topics[0];
     }
 
+    // Generate "start" and "end" times. If the start time is almost zero, then it's probably a
+    // Peregrine run, so just start with 0 in that case.
     const fileWithTimes = await this._getFile(topicToDeriveTimesFrom);
-    const endTimestamp = last(fileWithTimes.timestamps).timestamp;
+    const endTimestamp = last(fileWithTimes.timestamps).timestamp + 30e5; // Add 30 seconds for good measure.
     let startTimestamp = fileWithTimes.timestamps[0].timestamp;
     if (startTimestamp < 200e5) {
       startTimestamp = 0;
@@ -385,6 +408,11 @@ export default class ZiplineItcDataProvider implements DataProvider {
       datatype: this._typeInfoByTopic[topic].messageType,
     }));
 
+    // Generate the specialized topics:
+    // /my_topic/2hz: downsampled to one message every 0.5 seconds.
+    // /my_topic/10s: downsampled to one message every 10 seconds.
+    // /my_topic/3d_marker: marker messages, as generated by _3dTopicGeneratorByType.
+    // /my_topic/3d_history: the same marker message over and over, as generated by _historyTopicGeneratorByType.
     const augmentedTopicsWithDatatypes = [];
     const augmentedMessageDefinitionsByTopic = {};
     for (const { name, datatype } of topicsWithDatatypes) {
@@ -415,25 +443,65 @@ export default class ZiplineItcDataProvider implements DataProvider {
     };
   }
 
+  // Handle a single request for messages. Note that `start` and `end` are both inclusive.
   async getMessages(start: Time, end: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
+    // Convert to our 32-bit integer timestamps (might want to fix this in the future to use our Time
+    // objects everywhere instead).
     const startTimestamp = timeToTimestamp(start);
     const endTimestamp = timeToTimestamp(end);
+
+    // Split each topic into its constituent parts. E.g. "/my_topic/3d_history" becomes:
+    // baseTopic: "/my_topic"
+    // topicSuffix: "3d_history"
+    // fullTopic: "/my_topic/3d_history"
     const parsedTopics = (subscriptions.rosBinaryMessages || []).map((topic) => {
       const splitTopic = topic.split("/");
       return { baseTopic: `/${splitTopic[1]}`, topicSuffix: splitTopic[2], fullTopic: topic };
     });
-    const messages = [];
 
-    const fileData = await Promise.all(parsedTopics.map(({ baseTopic }) => this._getFile(baseTopic)));
-    for (let i = 0; i < parsedTopics.length; ++i) {
-      const { fullTopic, baseTopic, topicSuffix } = parsedTopics[i];
+    const messages = []; // We'll collect the messages here.
 
+    // Get all the base files in parallel.
+    const fileDataByBaseTopic = {};
+    const fileDataPromises = [];
+    for (const baseTopic of uniq(parsedTopics.map((parsedTopic) => parsedTopic.baseTopic))) {
+      fileDataPromises.push(this._getFile(baseTopic).then((fileData) => (fileDataByBaseTopic[baseTopic] = fileData)));
+    }
+    await Promise.all(fileDataPromises);
+
+    // Iterate through all the parsed topics, and generate messages.
+    for (const { fullTopic, baseTopic, topicSuffix } of parsedTopics) {
+      // If we want 3d history, then just generate a single marker message once, cache it, and then
+      // just repeat it every few hundred milliseconds within the time range that was requested.
+      if (topicSuffix === "3d_history") {
+        this._historyTopicMessageCache[baseTopic] =
+          this._historyTopicMessageCache[baseTopic] ||
+          (await this._historyTopicGeneratorByType[this._typeInfoByTopic[baseTopic].messageType](baseTopic));
+
+        for (
+          let receiveTime = start;
+          TimeUtil.isGreaterThan(end, receiveTime);
+          receiveTime = TimeUtil.add(receiveTime, { sec: 0, nsec: 0.4e9 }) // 400ms
+        ) {
+          messages.push({
+            topic: fullTopic,
+            receiveTime,
+            message: this._historyTopicMessageCache[baseTopic].slice(0),
+          });
+        }
+        continue;
+      }
+
+      // If we want a 3d marker, then just generate all the 3d marker messages once, cache that,
+      // and then select the messages from the range that were requested.
       if (topicSuffix === "3d_marker") {
         this._3dTopicMessageCache[baseTopic] =
           this._3dTopicMessageCache[baseTopic] ||
           (await this._3dTopicGeneratorByType[this._typeInfoByTopic[baseTopic].messageType](baseTopic));
 
         const timestamps = this._3dTopicMessageCache[baseTopic];
+        // Some fudge factor + manual checking, since timestamps are 32-bit and not always accurately
+        // represented in Javascript. TODO(JP): use our Time objects instead.
         const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp - 0.1e5 }, "timestamp");
         const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 0.1e5 }, "timestamp") - 1;
         for (let j = startIndex; j <= endIndex; ++j) {
@@ -455,32 +523,17 @@ export default class ZiplineItcDataProvider implements DataProvider {
         continue;
       }
 
-      if (topicSuffix === "3d_history") {
-        this._historyTopicMessageCache[baseTopic] =
-          this._historyTopicMessageCache[baseTopic] ||
-          (await this._historyTopicGeneratorByType[this._typeInfoByTopic[baseTopic].messageType](baseTopic));
-
-        for (
-          let receiveTime = start;
-          TimeUtil.isGreaterThan(end, receiveTime);
-          receiveTime = TimeUtil.add(receiveTime, { sec: 0, nsec: 0.2e9 })
-        ) {
-          messages.push({
-            topic: fullTopic,
-            receiveTime,
-            message: this._historyTopicMessageCache[baseTopic].slice(0),
-          });
-        }
-        continue;
-      }
-
-      const { buffer } = fileData[i];
+      // Otherwise, select the appropriate timestamp frequency (raw, 2hz, or 10s), and just return
+      // the messages that were requested.
+      const { buffer } = fileDataByBaseTopic[baseTopic];
       const timestamps =
         topicSuffix === "10s"
-          ? fileData[i].timestamps10s
+          ? fileDataByBaseTopic[baseTopic].timestamps10s
           : topicSuffix === "2hz"
-          ? fileData[i].timestamps2hz
-          : fileData[i].timestamps;
+          ? fileDataByBaseTopic[baseTopic].timestamps2hz
+          : fileDataByBaseTopic[baseTopic].timestamps;
+      // Some fudge factor + manual checking, since timestamps are 32-bit and not always accurately
+      // represented in Javascript. TODO(JP): use our Time objects instead.
       const startIndex = sortedIndexBy(timestamps, { timestamp: startTimestamp - 0.1e5 }, "timestamp");
       const endIndex = sortedIndexBy(timestamps, { timestamp: endTimestamp + 0.1e5 }, "timestamp") - 1;
       for (let j = startIndex; j <= endIndex; ++j) {
@@ -501,25 +554,35 @@ export default class ZiplineItcDataProvider implements DataProvider {
       }
     }
 
+    // We're supposed to return the messages sorted.
     messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
     return { rosBinaryMessages: messages, parsedMessages: undefined, bobjects: undefined };
   }
 
   async close(): Promise<void> {}
 
+  // Read a single file and return a buffer with everything converted to little-endian (for ROS),
+  // and a few lists of timestamps.
   async _getFile(baseTopic: string): Promise<FileData> {
     const filename = this._filenameByTopic[baseTopic];
+    // Skip if we've already cached this file.
     if (!this._dataByFilename[filename]) {
       // $FlowFixMe
       let buffer = await this._filesByName[filename].arrayBuffer();
 
+      // If it's a gzipped log file, then first decompress it.
       if (filename.toLowerCase().endsWith(".log.gz")) {
         const decoded = self.wasm_bindgen.gzip_decode_raw(new Uint8Array(buffer));
         buffer = decoded.buffer.slice(decoded.byteOffset, decoded.byteOffset + decoded.byteLength);
       }
+
+      // In one go, do a few different things:
+      // 1. Make sure that all the ITC_IDs are the same, since we can't handle heterogeneous LOG
+      //    files currently.
+      // 2. Convert the messages from big (ITC) to little (ROS) endian.
+      // 3. Extract the "timestamp" fields.
       const timestamps = [];
       const { byteSize, modifyFunc } = this._typeInfoByTopic[baseTopic];
-
       const dataView = new DataView(buffer);
       let pos = 0;
       let first_itc_id;
@@ -535,6 +598,7 @@ export default class ZiplineItcDataProvider implements DataProvider {
       }
       timestamps.sort((a, b) => a.timestamp - b.timestamp);
 
+      // Generate downsampled versions of the timestamps.
       let lastTimestamp2hz;
       let lastTimestamp10s;
       const timestamps2hz = [];

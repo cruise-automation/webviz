@@ -250,6 +250,9 @@ export default class ZiplineItcDataProvider implements DataProvider {
     this._filesByName = keyBy(this._options.files, "name");
 
     // Parse the stork_messages.yaml into what we need; mostly ROS message definitions.
+    if (!this._filesByName["stork_messages.yaml"]) {
+      throw new Error("No stork_messages.yaml found!");
+    }
     // $FlowFixMe
     const storkMessagesString = await this._filesByName["stork_messages.yaml"].text();
     const storkMessages = yaml.load(storkMessagesString, { json: true });

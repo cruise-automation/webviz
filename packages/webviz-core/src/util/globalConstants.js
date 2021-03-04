@@ -38,6 +38,7 @@ export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
 export const GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE = "geometry_msgs/PolygonStamped";
 export const NAV_MSGS_OCCUPANCY_GRID_DATATYPE = "nav_msgs/OccupancyGrid";
+export const NAV_MSGS_PATH_DATATYPE = "nav_msgs/Path";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
 export const SENSOR_MSGS_LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";

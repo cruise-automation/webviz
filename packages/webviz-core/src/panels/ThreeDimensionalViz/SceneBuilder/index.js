@@ -16,6 +16,7 @@ import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/T
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
+  BinaryPath,
   BinaryMarker,
   BinaryPolygonStamped,
   BinaryPoseStamped,
@@ -46,6 +47,7 @@ import {
   VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
   POSE_STAMPED_DATATYPE,
   NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
+  NAV_MSGS_PATH_DATATYPE,
   POINT_CLOUD_DATATYPE,
   SENSOR_MSGS_LASER_SCAN_DATATYPE,
   GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
@@ -726,6 +728,7 @@ export default class SceneBuilder implements MarkerProvider {
       error.frameIds.add(drawData.header.frame_id);
       return;
     }
+    const { overrideColor } = this._settingsByKey[`t:${topic}`] || {};
 
     const mappedMessage = {
       ...drawData,
@@ -733,6 +736,7 @@ export default class SceneBuilder implements MarkerProvider {
       pose,
       interactionData: { topic, originalMessage: originalMessage ?? drawData },
     };
+    mappedMessage.color = overrideColor || mappedMessage.color;
 
     // If a decay time is available, we assign a lifetime to this message
     // Do not automatically assign a 0 (zero) decay time since that translates
@@ -796,6 +800,25 @@ export default class SceneBuilder implements MarkerProvider {
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
+      case NAV_MSGS_PATH_DATATYPE: {
+        const pathStamped = cast<BinaryPath>(message);
+        if (pathStamped.poses().length() === 0) {
+          break;
+        }
+        const newMessage = {
+          header: deepParse(pathStamped.header()),
+          // TODO(@cjds) Make this make use of the orientation of the poses in the path as well
+          points: pathStamped
+            .poses()
+            .toArray()
+            .map((pose) => deepParse(pose.pose().position())),
+          closed: false,
+          scale: { x: 0.2 },
+          color: { r: 1, g: 0, b: 0, a: 1 },
+        };
+        this._consumeNonMarkerMessage(topic, newMessage, 4 /* line strip */, message);
+        break;
+      }
       case POINT_CLOUD_DATATYPE:
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;

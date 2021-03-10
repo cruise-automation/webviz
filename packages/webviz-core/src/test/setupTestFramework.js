@@ -49,6 +49,21 @@ afterEach(() => {
   }
 });
 
+// Disable logEvent for tests (it fails if not initialized).
+// You can instead mock it by resetting it again, and then calling `initializeLogEvent`.
+beforeEach(() => {
+  const { disableLogEvent } = require("webviz-core/src/util/logEvent");
+  if (disableLogEvent) {
+    disableLogEvent();
+  }
+});
+afterEach(() => {
+  const { resetLogEventForTests } = require("webviz-core/src/util/logEvent");
+  if (resetLogEventForTests) {
+    resetLogEventForTests();
+  }
+});
+
 // this file runs once jest has injected globals so you can modify the expect matchers
 global.expect.extend({
   // expects an array to contain exactly the other elements

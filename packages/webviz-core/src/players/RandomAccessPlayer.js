@@ -32,13 +32,12 @@ import {
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import { SEEK_TO_UNIX_MS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
-  toMillis,
   clampTime,
   fromMillis,
   fromNanoSec,
@@ -47,6 +46,7 @@ import {
   SEEK_ON_START_NS,
   subtractTimes,
   toSec,
+  rosTimeToUrlTime,
   type SeekToTimeSpec,
   type TimestampMethod,
 } from "webviz-core/src/util/time";
@@ -225,7 +225,7 @@ export default class RandomAccessPlayer implements Player {
         this._start = start;
         this._currentTime = initialTime;
         this._end = end;
-        this._providerTopics = topics;
+        this._providerTopics = topics.map((t) => ({ ...t, preloadable: true }));
         this._providerDatatypes = parsedMessageDefinitions.datatypes;
         this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
         this._initializing = false;
@@ -250,8 +250,13 @@ export default class RandomAccessPlayer implements Player {
       });
   }
 
-  _emitState = debouncePromise(() => {
+  _emitState = debouncePromise((emitTriggeredAtSeekTime: ?number) => {
     if (!this._listener) {
+      return Promise.resolve();
+    }
+
+    // Don't emit the state if there's been a seek in the meantime to avoid emitting empty messages
+    if (emitTriggeredAtSeekTime != null && this._lastSeekStartTime > emitTriggeredAtSeekTime) {
       return Promise.resolve();
     }
 
@@ -285,10 +290,11 @@ export default class RandomAccessPlayer implements Player {
 
       // If paused at the start of a datasource, remove seek-to param
       if (atDataStart) {
-        params.delete(SEEK_TO_UNIX_MS_QUERY_KEY);
+        params.delete(SEEK_TO_QUERY_KEY);
       } else {
         // Otherwise, update the seek-to param
-        params.set(SEEK_TO_UNIX_MS_QUERY_KEY, `${toMillis(this._currentTime)}`);
+
+        params.set(SEEK_TO_QUERY_KEY, rosTimeToUrlTime(this._currentTime));
       }
       history.replaceState({}, window.title, `${location.pathname}${stringifyParams(params)}`);
     }
@@ -554,7 +560,7 @@ export default class RandomAccessPlayer implements Player {
         this._messages = messages;
         this._bobjects = bobjects;
         this._lastSeekEmitTime = seekTime;
-        await this._emitState();
+        await this._emitState(seekTime);
       }
     } else {
       // If we are playing, make sure we set this emit time so that consumers will know that we seeked.

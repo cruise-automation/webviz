@@ -18,6 +18,7 @@ import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
+import { SBar } from "webviz-core/src/components/HovarBar";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
@@ -121,19 +122,6 @@ const SWrapper = styled.div`
   will-change: transform;
   // "visibility" and "transform" are set by JS, but outside of React.
   visibility: hidden;
-`;
-
-const SBar = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 9px;
-  margin-left: -4px;
-  display: block;
-  border-style: solid;
-  border-color: #f7be00 transparent;
-  background: #f7be00 padding-box;
-  border-width: 4px;
 `;
 
 type Position = { x: number, y: number };
@@ -593,7 +581,7 @@ function TwoDimensionalPlot(props: Props) {
             {({ width, height }) => (
               <>
                 <HoverBar mousePosition={mousePosition}>
-                  <SBar ref={hoverBar} />
+                  <SBar xAxisIsPlaybackTime ref={hoverBar} />
                 </HoverBar>
                 <ChartComponent
                   ref={chartComponent}
@@ -630,5 +618,12 @@ function TwoDimensionalPlot(props: Props) {
 
 TwoDimensionalPlot.panelType = "TwoDimensionalPlot";
 TwoDimensionalPlot.defaultConfig = { path: { value: "" } };
-
+TwoDimensionalPlot.shortcuts = [
+  { description: "Reset", keys: ["double click"] },
+  { description: "Pan", keys: ["drag"] },
+  { description: "Zoom", keys: ["scroll horizontally"] },
+  { description: "Zoom vertically", keys: ["v" + "scroll"] },
+  { description: "Zoom both vertically and horizontally", keys: ["b" + "scroll"] },
+  { description: "Zoom to percentage (10% - 100%)", keys: ["⌘", "1|2|...|9|0"] },
+];
 export default hot(Panel<Config>(TwoDimensionalPlot));

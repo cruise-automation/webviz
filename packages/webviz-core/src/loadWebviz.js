@@ -135,8 +135,8 @@ const defaultHooks = {
     }
     window.ga("send", "pageview");
 
-    const { initializeLogEvent } = require("webviz-core/src/util/logEvent");
-    initializeLogEvent(() => undefined, {}, {});
+    const { disableLogEvent } = require("webviz-core/src/util/logEvent");
+    disableLogEvent();
   },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
@@ -168,14 +168,6 @@ const defaultHooks = {
   updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
     // Persist the layout state in URL or remote storage if needed.
     await Promise.resolve();
-  },
-  getPoseErrorScaling() {
-    const scaling = {
-      x: 1,
-      y: 1,
-    };
-
-    return { originalScaling: scaling, updatedScaling: scaling };
   },
 };
 

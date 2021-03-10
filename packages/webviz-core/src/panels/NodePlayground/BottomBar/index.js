@@ -21,15 +21,18 @@ const SHeaderItem = styled.div`
   cursor: pointer;
   padding: 4px;
   text-transform: uppercase;
+  user-select: none;
 `;
 
-type Props = {
+type Props = {|
   nodeId: ?string,
+  open: boolean,
   isSaved: boolean,
+  toggleBottomBarOpen: () => void,
   save: () => void,
   diagnostics: Diagnostic[],
   logs: UserNodeLog[],
-};
+|};
 
 type HeaderItemProps = {
   text: string,
@@ -48,10 +51,10 @@ const HeaderItem = ({ isOpen, numItems, text }: HeaderItemProps) => (
   </SHeaderItem>
 );
 
-type BottomBarDisplayState = "closed" | "diagnostics" | "logs";
+type BottomBarDisplayState = "diagnostics" | "logs";
 
-const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
-  const [bottomBarDisplay: BottomBarDisplayState, setBottomBarDisplay] = useState("closed");
+const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOpen, open }: Props) => {
+  const [bottomBarDisplay: BottomBarDisplayState, setBottomBarDisplay] = useState("diagnostics");
   const [autoScroll, setAutoScroll] = useState(true);
 
   const dispatch = useDispatch();
@@ -67,7 +70,17 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
   }, [autoScroll, logs]);
 
   return (
-    <Flex col style={{ backgroundColor: colors.DARK1, position: "absolute", bottom: 0, right: 0, left: 0 }}>
+    <Flex
+      col
+      style={{
+        backgroundColor: colors.DARK1,
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        left: 0,
+        height: "100%",
+        width: "100%",
+      }}>
       <Flex
         row
         start
@@ -80,10 +93,9 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
           style={{ flexGrow: 0, color: colors.DARK9 }}
           dataTest="np-errors"
           onClick={() => {
-            if (bottomBarDisplay !== "diagnostics") {
-              setBottomBarDisplay("diagnostics");
-            } else {
-              setBottomBarDisplay("closed");
+            setBottomBarDisplay("diagnostics");
+            if (!open || bottomBarDisplay === "diagnostics") {
+              toggleBottomBarOpen();
             }
           }}>
           <HeaderItem text="Problems" numItems={diagnostics.length} isOpen={bottomBarDisplay === "diagnostics"} />
@@ -93,10 +105,9 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
           style={{ flexGrow: 0, color: colors.DARK9 }}
           dataTest="np-logs"
           onClick={() => {
-            if (bottomBarDisplay !== "logs") {
-              setBottomBarDisplay("logs");
-            } else {
-              setBottomBarDisplay("closed");
+            setBottomBarDisplay("logs");
+            if (!open || bottomBarDisplay === "logs") {
+              toggleBottomBarOpen();
             }
           }}>
           <HeaderItem text="Logs" numItems={logs.length} isOpen={bottomBarDisplay === "logs"} />
@@ -126,8 +137,8 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
           }
         }}
         style={{
-          overflowY: bottomBarDisplay !== "closed" ? "scroll" : "auto",
-          height: bottomBarDisplay !== "closed" ? 150 : 0,
+          overflowY: "auto",
+          height: "100%",
           color: colors.DARK9,
         }}>
         {bottomBarDisplay === "diagnostics" && <DiagnosticsSection diagnostics={diagnostics} />}

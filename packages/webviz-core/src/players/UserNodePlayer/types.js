@@ -89,6 +89,7 @@ export type NodeData = {|
   sourceFile: ?any,
   typeChecker: ?any,
   rosLib: string,
+  enableSecondSource: boolean,
   // An array of globalVariable names
   globalVariables: $ReadOnlyArray<string>,
 |};

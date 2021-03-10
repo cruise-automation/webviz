@@ -12,13 +12,12 @@ import rmfr from "rmfr";
 import util from "util";
 import uuid from "uuid";
 
+import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
+import delay from "./delay";
 import globalEnvVars from "./globalEnvVars";
 import promiseTimeout from "./promiseTimeout";
 import runInBrowser from "./runInBrowser";
 import ServerLogger from "./ServerLogger";
-// ESLint is unhappy about this order in the open source repo but not in the internal one..
-// eslint-disable-next-line import-order-alphabetical/order
-import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
 
 const exec = util.promisify(child_process.exec);
 const mkdir = util.promisify(fs.mkdir);
@@ -28,6 +27,7 @@ const log = new ServerLogger(__filename);
 const perFrameTimeoutMs = 3 * 60000; // 3 minutes
 const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
+const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
 
 async function recordVideo({
   parallel,
@@ -36,14 +36,14 @@ async function recordVideo({
   puppeteerLaunchConfig,
   panelLayout,
   errorIsWhitelisted,
-  experimentalFeatureSettings,
+  experimentalFeaturesSettings,
 }: {
-  bagPath?: string,
+  bagPath?: ?string,
   url: string,
   puppeteerLaunchConfig?: any,
   panelLayout?: any,
   parallel?: number,
-  experimentalFeatureSettings?: string,
+  experimentalFeaturesSettings?: string,
   errorIsWhitelisted?: (string) => boolean,
 }): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
   if (!url.includes("video-recording-mode")) {
@@ -52,6 +52,9 @@ async function recordVideo({
 
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
+
+  // This is used primarily to ensure the map tile requests resolve before taking screenshots
+  const pendingRequestUrls = new Set();
 
   let hasFailed = false;
   try {
@@ -62,12 +65,30 @@ async function recordVideo({
       return runInBrowser({
         filePaths: bagPath ? [bagPath] : undefined,
         url: workerUrl,
-        experimentalFeatureSettings,
+        experimentalFeaturesSettings,
         puppeteerLaunchConfig,
         panelLayout,
         captureLogs: true,
         dimensions: { width: 2560, height: 1424 },
         loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
+        beforeLoad: async ({ page }) => {
+          const target = await page.target();
+          const client = await target.createCDPSession();
+          await client.send("Fetch.enable", {
+            patterns: [{ urlPattern: "*", requestStage: "Request" }, { urlPattern: "*", requestStage: "Response" }],
+          });
+          await client.on("Fetch.requestPaused", async ({ requestId, request, responseStatusCode }) => {
+            const parallelUrl = `${request.url}#${parallelIndex}`;
+            if (!responseStatusCode) {
+              pendingRequestUrls.add(parallelUrl);
+            } else {
+              pendingRequestUrls.delete(parallelUrl);
+            }
+            try {
+              await client.send("Fetch.continueRequest", { requestId });
+            } catch {}
+          });
+        },
         onLoad: async ({ page, errors }: { page: Page, errors: Array<string> }) => {
           // From this point forward, the client controls the flow. We just call
           // `window.videoRecording.can stream from before Airavata()` which returns `false` (no action for us to take),
@@ -115,6 +136,33 @@ async function recordVideo({
                   isRunning = false;
                   msPerFrame = actionObj.msPerFrame;
                 } else if (actionObj.action === "screenshot") {
+                  // Wait for xhr requests to resolve
+                  try {
+                    await promiseTimeout(
+                      new Promise(async (resolve) => {
+                        const waitForRequests = async () => {
+                          while (pendingRequestUrls.size > 0) {
+                            console.log(`Waiting for ${pendingRequestUrls.size} requests to resolve...`);
+                            await delay(pendingRequestPauseDurationMs);
+                          }
+                        };
+
+                        if (pendingRequestUrls.size > 0) {
+                          await waitForRequests();
+                          // All requests resolved, but wait a little bit longer to make sure.
+                          // This helps us catch cases where there's a brief pause between batches of requests
+                          await delay(pendingRequestPauseDurationMs);
+                          await waitForRequests();
+                        }
+                        resolve();
+                      }),
+                      30000,
+                      `Waiting for XHR Requests: ${JSON.stringify([...pendingRequestUrls])}`
+                    );
+                  } catch (e) {
+                    console.warn(e);
+                  }
+
                   // Take a screenshot, and then tell the client that we're done taking a screenshot,
                   // so it can continue executing.
                   const screenshotStartEpoch = Date.now();

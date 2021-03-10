@@ -61,7 +61,8 @@ export default class SubMenu extends React.Component<Props, State> {
         isOpen={open}
         style={style}
         dataTest={dataTest}>
-        <Item hasSubMenu direction={direction} checked={open || checked} icon={icon}>
+        {/* Respect the check prop so that the open state doesn't overwrite the check state.  */}
+        <Item hasSubMenu direction={direction} checked={checked ?? open} icon={icon}>
           {text}
         </Item>
         <Menu>{children}</Menu>

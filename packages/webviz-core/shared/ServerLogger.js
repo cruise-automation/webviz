@@ -10,7 +10,7 @@ import globalEnvVars from "./globalEnvVars";
 // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 type LogSeverity = "DEFAULT" | "DEBUG" | "INFO" | "NOTICE" | "WARNING" | "ERROR" | "CRITICAL" | "ALERT" | "EMERGENCY";
 
-type LogObject = $ReadOnly<{ [key: string]: number | string | string[] | number[] | void | {} }>;
+export type LogObject = $ReadOnly<{ [key: string]: number | string | string[] | number[] | void | {} | null }>;
 
 let log = (severity: LogSeverity, scope: string, message: string, moreData?: LogObject | Error) => {
   const domain = (process.domain: any);

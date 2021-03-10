@@ -37,6 +37,9 @@ export const definitions: RosDatatypes = {
   "fake_msgs/HasArrayOfEmpties": {
     fields: [{ type: "fake_msgs/HasConstant", name: "arr", isArray: true }],
   },
+  "fake_msgs/HasBigIntArrays": {
+    fields: [{ type: "int64", name: "i_arr", isArray: true }, { type: "uint64", name: "u_arr", isArray: true }],
+  },
   "fake_msgs/ContainsEverything": {
     fields: [
       { type: "std_msgs/Header", name: "first" },
@@ -47,6 +50,7 @@ export const definitions: RosDatatypes = {
       { type: "fake_msgs/HasJson", name: "sixth" },
       { type: "fake_msgs/HasInt64s", name: "seventh" },
       { type: "fake_msgs/HasArrayOfEmpties", name: "eighth" },
+      { type: "fake_msgs/HasBigIntArrays", name: "ninth" },
     ],
   },
 };
@@ -73,12 +77,17 @@ export type HasJson = $ReadOnly<{|
 |}>;
 
 export type HasInt64s = $ReadOnly<{|
-  i64(): number,
-  u64(): number,
+  i64(bigInt: ?true): number,
+  u64(bigInt: ?true): number,
 |}>;
 
 export type HasArrayOfEmpties = $ReadOnly<{|
   arr(): ArrayView<HasConstant>,
+|}>;
+
+export type HasBigIntArrays = $ReadOnly<{|
+  i_arr(): ArrayView<number>,
+  u_arr(): ArrayView<number>,
 |}>;
 
 export type ContainsEverything = $ReadOnly<{|
@@ -90,6 +99,7 @@ export type ContainsEverything = $ReadOnly<{|
   sixth(): HasJson,
   seventh(): HasInt64s,
   eighth(): HasArrayOfEmpties,
+  ninth(): HasBigIntArrays,
 |}>;
 
 describe("friendlyTypeName", () => {

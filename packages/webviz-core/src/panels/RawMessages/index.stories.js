@@ -41,6 +41,7 @@ const scrollToBottom = () => {
 };
 
 storiesOf("<RawMessages>", module)
+  .addParameters({ screenshot: { delay: 500 } })
   .add("folded", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
@@ -101,6 +102,20 @@ storiesOf("<RawMessages>", module)
     return (
       <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
         <RawMessages config={{ topicPath: "/baz/enum", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display big value –  single enum", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/enum.value", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display a flattened array of enum values", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/enum_array.arr[:].value", ...noDiffConfig }} />
       </PanelSetup>
     );
   })
@@ -187,6 +202,22 @@ storiesOf("<RawMessages>", module)
         <RawMessages
           config={{
             topicPath: "/foo",
+            diffMethod: PREV_MSG_METHOD,
+            diffTopicPath: "",
+            diffEnabled: true,
+            showFullMessageForDiff: true,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("empty consecutive-message diff", () => {
+    // Possibly not rendered as well as it could be, but reproduces a crash.
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={expandAll}>
+        <RawMessages
+          config={{
+            topicPath: "/foo.some_array[:3]",
             diffMethod: PREV_MSG_METHOD,
             diffTopicPath: "",
             diffEnabled: true,

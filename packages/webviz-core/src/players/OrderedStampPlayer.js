@@ -118,12 +118,13 @@ export default class OrderedStampPlayer implements Player {
         sec: activeData.currentTime.sec - BUFFER_DURATION_SECS,
         nsec: activeData.currentTime.nsec,
       };
-      const [messages, newMessageBuffer] = partition(extendedMessageBuffer, (message) =>
-        TimeUtil.isLessThan(message.message.header.stamp, thresholdTime)
+      const [messages, newMessageBuffer] = partition(
+        extendedMessageBuffer,
+        (message) => !TimeUtil.isGreaterThan(message.message.header.stamp, thresholdTime)
       );
       const [bobjects, newBobjectBuffer] = partition(extendedBobjectBuffer, (message) => {
         const stampedMessage = cast<BinaryStampedMessage>(message.message);
-        return TimeUtil.isLessThan(deepParse(stampedMessage.header().stamp()), thresholdTime);
+        return !TimeUtil.isGreaterThan(deepParse(stampedMessage.header().stamp()), thresholdTime);
       });
       this._messageBuffer = newMessageBuffer;
       this._bobjectBuffer = newBobjectBuffer;

@@ -52,7 +52,10 @@ export default class NodePlayer implements Player {
 
   _getTopics = microMemoize((availableTopics: Topic[]) => [
     ...availableTopics,
-    ...this._getFilteredNodeDefinitions(availableTopics).map((nodeDefinition) => nodeDefinition.output),
+    ...this._getFilteredNodeDefinitions(availableTopics).map((nodeDefinition) => ({
+      ...nodeDefinition.output,
+      inputTopics: nodeDefinition.inputs,
+    })),
   ]);
 
   _getDatatypes = microMemoize(

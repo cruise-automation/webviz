@@ -79,8 +79,7 @@ $option-font-size: $text-size;
   $select-arrow-color: $text-control;
 
   @import "~react-select/scss/default";
-  @import "~react-virtualized/styles";
-  // @import '~react-virtualized-select/styles';
+  @import "~react-virtualized/styles.css";
 
   .VirtualizedSelectOption {
     @extend %menu-item;

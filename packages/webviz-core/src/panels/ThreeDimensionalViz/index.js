@@ -18,13 +18,13 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
+import Layout from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
+import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import {
   useTransformedCameraState,
   getNewCameraStateOnFollowChange,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import Layout from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
-import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
@@ -204,6 +204,36 @@ const BaseRenderer = (props: Props, ref) => {
 BaseRenderer.displayName = "ThreeDimensionalViz";
 BaseRenderer.panelType = "3D Panel";
 BaseRenderer.defaultConfig = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.defaultConfig;
+BaseRenderer.shortcuts = [
+  {
+    description: "Toggle between 2D and 3D mode",
+    keys: ["3"],
+  },
+  {
+    description: "Move the camera forward / left / backward / right",
+    keys: ["w", "a", "s", "d"],
+  },
+  {
+    description: "Zoom in and out",
+    keys: ["z", "x"],
+  },
+  {
+    description: "Open topic tree",
+    keys: ["t"],
+  },
+  {
+    description: "Hold ctrl key and click on the canvas to start drawing polygons",
+    keys: ["ctrl"],
+  },
+  {
+    description: "Move the camera position parallel to the ground",
+    keys: ["left", "drag"],
+  },
+  {
+    description: "Pan and rotate the camera",
+    keys: ["right", "drag"],
+  },
+];
 
 export const Renderer = hoistNonReactStatics(React.forwardRef<Props, typeof BaseRenderer>(BaseRenderer), BaseRenderer);
 

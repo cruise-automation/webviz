@@ -101,6 +101,24 @@ export type BinaryInstancedMarker = $ReadOnly<{|
   closed(): boolean,
 |}>;
 
+export type BinaryIconMarker = $ReadOnly<{|
+  header(): BinaryHeader,
+  ns(): string,
+  id(): number,
+  type(): number,
+  action(): 0 | 1 | 2 | 3,
+  pose(): BinaryPose,
+  scale(): BinaryPoint,
+  color(): BinaryColorRgba,
+  // Reverse-wrapped "markers" created in the 3D panel sometimes have no lifetimes :(((
+  lifetime(): ?BinaryTime,
+  frame_locked(): boolean,
+  points(): ArrayView<BinaryPoint>,
+  colors(): ArrayView<BinaryColorRgba>,
+  text(): string,
+  icon_type(): ?string | number,
+  metadata(): ?any,
+|}>;
 export type BinaryMarkerArray = $ReadOnly<{|
   markers(): ArrayView<BinaryMarker>,
 |}>;

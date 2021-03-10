@@ -119,11 +119,6 @@ class ChartComponent extends React.PureComponent<Props> {
 
   componentDidMount() {
     const { type, data, options, scaleOptions, width, height } = this.props;
-    // $FlowFixMe
-    if (!this.canvas.transferControlToOffscreen) {
-      // TODO add fallback.
-      throw new Error("ReactChartJS currently only works with browsers with offscreen canvas support");
-    }
 
     this._setupPanAndPinchHandlers();
 

@@ -20,7 +20,7 @@ import { useDecodeMessagePathsForMessagesByTopic } from "webviz-core/src/compone
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
+import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart/utils";
 import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
@@ -196,7 +196,7 @@ function Plot(props: Props) {
     messagesByTopic,
   ]);
 
-  const { blocks } = useBlocksByTopic(subscribeTopics);
+  const blocks = useBlocksByTopic(subscribeTopics);
   const blockItemsByPath = useMemo(
     () => (showSingleCurrentMessage ? {} : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks)),
     [showSingleCurrentMessage, decodeMessagePathsForMessagesByTopic, blocks]
@@ -204,9 +204,13 @@ function Plot(props: Props) {
   const { startTime } = useDataSourceInfo();
 
   // If every streaming key is in the blocks, just use the blocks object for a stable identity.
-  const mergedItems = Object.keys(streamedItemsByPath).every((path) => blockItemsByPath[path] != null)
-    ? blockItemsByPath
-    : { ...streamedItemsByPath, ...blockItemsByPath };
+  const mergedItems = useMemo(
+    () =>
+      Object.keys(streamedItemsByPath).every((path) => blockItemsByPath[path] != null)
+        ? blockItemsByPath
+        : { ...streamedItemsByPath, ...blockItemsByPath },
+    [streamedItemsByPath, blockItemsByPath]
+  );
 
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
@@ -239,15 +243,18 @@ function Plot(props: Props) {
   const preloadingDisplayTime = timeToXValueForPreloading(currentTime);
   const preloadingStartTime = timeToXValueForPreloading(startTime); // zero or undefined
   const preloadingEndTime = timeToXValueForPreloading(endTime);
-  let defaultView;
-  if (preloadingDisplayTime != null) {
-    if (followingViewWidth != null && parseFloat(followingViewWidth) > 0) {
-      // Will be ignored in TimeBasedChart for non-preloading plots and non-timestamp plots.
-      defaultView = { type: "following", width: parseFloat(followingViewWidth) };
-    } else if (preloadingStartTime != null && preloadingEndTime != null) {
-      defaultView = { type: "fixed", minXValue: preloadingStartTime, maxXValue: preloadingEndTime };
+  const hasPreloadingDisplayTime = preloadingDisplayTime != null;
+  const defaultView = useMemo(() => {
+    if (hasPreloadingDisplayTime) {
+      if (followingViewWidth != null && parseFloat(followingViewWidth) > 0) {
+        // Will be ignored in TimeBasedChart for non-preloading plots and non-timestamp plots.
+        return { type: "following", width: parseFloat(followingViewWidth) };
+      } else if (preloadingStartTime != null && preloadingEndTime != null) {
+        return { type: "fixed", minXValue: preloadingStartTime, maxXValue: preloadingEndTime };
+      }
     }
-  }
+    return undefined;
+  }, [followingViewWidth, hasPreloadingDisplayTime, preloadingEndTime, preloadingStartTime]);
 
   const onClick = useCallback((_, __, { X_AXIS_ID: seekSeconds }) => {
     if (!startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
@@ -308,5 +315,13 @@ Plot.defaultConfig = {
   showLegend: true,
   xAxisVal: "timestamp",
 };
+Plot.shortcuts = [
+  { description: "Reset", keys: ["double click"] },
+  { description: "Pan", keys: ["drag"] },
+  { description: "Zoom", keys: ["scroll horizontally"] },
+  { description: "Zoom vertically", keys: ["v" + "scroll"] },
+  { description: "Zoom both vertically and horizontally", keys: ["b" + "scroll"] },
+  { description: "Zoom to percentage (10% - 100%)", keys: ["⌘", "1|2|...|9|0"] },
+];
 
 export default hot(Panel<PlotConfig>(Plot));

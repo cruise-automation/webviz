@@ -111,9 +111,40 @@ export type TableInstance<HookInstances, HookState> = {|
   prepareRow(row: Row): void,
   flatRows: Row[],
   totalColumnsWidth: number,
-  toggleHideColumn(columnId: string, value: ?boolean): void,
-  setHiddenColumns(columnIds: string[]): void,
+  toggleHideColumn(accessorPath: string, value: ?boolean): void,
+  setHiddenColumns(accessorPaths: string[]): void,
   toggleHideAllColumns(val: ?boolean): void,
   getToggleHideAllColumnsProps(userProps: any): any,
   ...HookInstances,
+|};
+export type ConditionalFormat = $ReadOnly<{
+  comparator: string,
+  primitive: number | string | boolean,
+  color: string,
+}>;
+
+export type ConditionalFormats = $ReadOnly<{
+  [id: ?string]: ConditionalFormat,
+}>;
+
+export type RowConfig = $ReadOnly<{| isExpanded?: boolean |}>;
+export type CellSortBy = $ReadOnlyArray<{| id: string, desc?: boolean |}>;
+
+export type CellConfig = $ReadOnly<{|
+  isExpanded?: boolean,
+  sortBy: CellSortBy,
+  rowConfigs?: $ReadOnlyArray<RowConfig>,
+|}>;
+
+export type CellConfigs = $ReadOnly<{ [accessorPath: string]: CellConfig }>;
+
+export type ColumnConfigs = $ReadOnly<{
+  [accessorPath: ?string]: {|
+    conditionalFormats?: ConditionalFormats,
+  |},
+}>;
+export type Config = {|
+  topicPath: string,
+  cellConfigs?: CellConfigs,
+  columnConfigs?: ColumnConfigs,
 |};

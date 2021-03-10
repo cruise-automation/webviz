@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { isEqual, groupBy, partition } from "lodash";
+import { isEqual, groupBy, partition, flatten } from "lodash";
 import microMemoize from "micro-memoize";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
@@ -39,6 +39,7 @@ import {
   type RegistrationOutput,
   Sources,
   type UserNodeLog,
+  type NodeData,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import { hasTransformerErrors } from "webviz-core/src/players/UserNodePlayer/utils";
 import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
@@ -46,9 +47,10 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcMainThreadUtils";
+import { addTopicPrefix, joinTopics } from "webviz-core/src/util/topicUtils";
 
 type UserNodeActions = {|
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -136,7 +138,7 @@ export default class UserNodePlayer implements Player {
     },
     { isEqual }
   );
-  _getNodeRegistration = microMemoize(this._createNodeRegistration, {
+  _getNodeRegistration = microMemoize(this._createMultiSourceNodeRegistration, {
     isEqual,
     isPromise: true,
     maxSize: Infinity, // We prune the cache anytime the userNodes change, so it's not *actually* Infinite
@@ -154,6 +156,7 @@ export default class UserNodePlayer implements Player {
     ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
       const parsedMessagesPromises = [];
       const bobjectPromises = [];
+
       for (const message of bobjects) {
         // BobjectRpc is currently not re-entrant: It has per-topic state, so we can't currently run multiple messages
         // concurrently. This also helps us provide an ordering guarantee for stateful nodes.
@@ -215,8 +218,7 @@ export default class UserNodePlayer implements Player {
     });
   }
 
-  // Defines the inputs/outputs and worker interface of a user node.
-  async _createNodeRegistration(nodeId: string, userNode: UserNode): Promise<NodeRegistration> {
+  async _compileNodeData(userNode: UserNode): Promise<NodeData> {
     // Pass all the nodes a set of basic datatypes that we know how to render.
     // These could be overwritten later by bag datatypes, but these datatype definitions should be very stable.
     const { topics = [], datatypes = {} } = this._lastPlayerStateActiveData || {};
@@ -226,7 +228,11 @@ export default class UserNodePlayer implements Player {
     const { name, sourceCode } = userNode;
     const transformMessage = { name, sourceCode, topics, rosLib, datatypes: nodeDatatypes };
     const transformWorker = this._getTransformWorker();
-    const nodeData = await transformWorker.send("transform", transformMessage);
+    return transformWorker.send("transform", transformMessage);
+  }
+
+  // Defines the inputs/outputs and worker interface of a user node.
+  _createNodeRegistrationFromNodeData(nodeId: string, nodeData: NodeData): NodeRegistration {
     const { inputTopics, outputTopic, transpiledCode, projectCode, outputDatatype } = nodeData;
 
     let bobjectSender;
@@ -237,7 +243,7 @@ export default class UserNodePlayer implements Player {
       nodeData,
       inputs: inputTopics,
       output: { name: outputTopic, datatype: outputDatatype },
-      processMessage: async (message: Message) => {
+      processMessage: async (message: Message, globalVariables: GlobalVariables) => {
         // We allow _resetWorkers to "cancel" the processing by creating a new signal every time we process a message
         terminateSignal = signal<void>();
 
@@ -265,7 +271,7 @@ export default class UserNodePlayer implements Player {
         }
 
         const result = await Promise.race([
-          bobjectSender.send<ProcessMessageOutput>("processMessage", message, this._globalVariables),
+          bobjectSender.send<ProcessMessageOutput>("processMessage", message, globalVariables),
           terminateSignal,
         ]);
         if (!result) {
@@ -305,6 +311,33 @@ export default class UserNodePlayer implements Player {
         }
       },
     };
+  }
+
+  async _createMultiSourceNodeRegistration(nodeId: string, userNode: UserNode): Promise<NodeRegistration[]> {
+    const nodeData = await this._compileNodeData(userNode);
+    const nodeRegistration = this._createNodeRegistrationFromNodeData(nodeId, nodeData);
+    const allNodeRegistrations = [nodeRegistration];
+
+    // If the input doesn't use any source two input topics, automatically support source two
+    if (nodeData.enableSecondSource) {
+      const outputTopic = joinTopics(SECOND_SOURCE_PREFIX, nodeData.outputTopic);
+      const inputTopics = addTopicPrefix(nodeData.inputTopics, SECOND_SOURCE_PREFIX);
+      const nodeDataSourceTwo = { ...nodeData, inputTopics, outputTopic };
+      const nodeRegistrationTwoRaw = this._createNodeRegistrationFromNodeData(nodeId, nodeDataSourceTwo);
+
+      // Pre and post-process the node's messages so the topics are correct
+      const nodeRegistrationTwo = {
+        ...nodeRegistrationTwoRaw,
+        processMessage: async (message: Message, globalVariables: GlobalVariables) => {
+          const inputMessage = { ...message, topic: message.topic.replace(SECOND_SOURCE_PREFIX, "") };
+          const originalMessage = await nodeRegistrationTwoRaw.processMessage(inputMessage, globalVariables);
+          return originalMessage ? { ...originalMessage, topic: outputTopic } : undefined;
+        },
+      };
+      allNodeRegistrations.push(nodeRegistrationTwo);
+    }
+
+    return allNodeRegistrations;
   }
 
   _getTransformWorker(): Rpc {
@@ -352,9 +385,9 @@ export default class UserNodePlayer implements Player {
     );
 
     // Filter out nodes with compilation errors
-    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(({ nodeData, nodeId }) => {
+    const nodeRegistrations: Array<NodeRegistration> = flatten(allNodeRegistrations).filter(({ nodeData, nodeId }) => {
       const hasError = hasTransformerErrors(nodeData);
-      if (hasError) {
+      if (nodeData.diagnostics.length > 0) {
         this._setUserNodeDiagnostics(nodeId, nodeData.diagnostics);
       }
       return !hasError;
@@ -444,7 +477,13 @@ export default class UserNodePlayer implements Player {
           ...activeData,
           messages: parsedMessages,
           bobjects: augmentedBobjects,
-          topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
+          topics: this._getTopics(
+            topics,
+            this._nodeRegistrations.map((nodeRegistration) => ({
+              ...nodeRegistration.output,
+              inputTopics: nodeRegistration.inputs,
+            }))
+          ),
           datatypes: allDatatypes,
         },
       };
@@ -462,7 +501,10 @@ export default class UserNodePlayer implements Player {
     const nodeSubscriptions: SubscribePayload[] = [];
     for (const subscription of subscriptions) {
       // For performance, only check topics that start with DEFAULT_WEBVIZ_NODE_PREFIX.
-      if (!subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
+      if (
+        !subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX) &&
+        !subscription.topic.startsWith(`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
+      ) {
         realTopicSubscriptions.push(subscription);
         continue;
       }
@@ -495,7 +537,6 @@ export default class UserNodePlayer implements Player {
       subscribedFormatByTopic[topic].add(format);
     }
     this._subscribedFormatByTopic = subscribedFormatByTopic;
-
     this._player.setSubscriptions(realTopicSubscriptions);
   }
 

@@ -99,7 +99,7 @@ const maybeShallowParse = (obj: mixed): mixed => {
   const ret = {};
   // $FlowFixMe: We've checked obj is a bobject above.
   fieldNames(obj).forEach((field) => {
-    ret[field] = getField(obj, field);
+    ret[field] = getField(obj, field, true);
   });
   return ret;
 };
@@ -137,8 +137,11 @@ function RawMessages(props: Props) {
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([topicPath]);
   const prevTickMsg = consecutiveMsgs[consecutiveMsgs.length - 2];
   const [prevTickObj, currTickObj] = [
-    prevTickMsg && { message: prevTickMsg, queriedData: cachedGetMessagePathDataItems(topicPath, prevTickMsg) || [] },
-    useLatestMessageDataItem(topicPath, "bobjects"),
+    prevTickMsg && {
+      message: prevTickMsg,
+      queriedData: cachedGetMessagePathDataItems(topicPath, prevTickMsg, true) || [],
+    },
+    useLatestMessageDataItem(topicPath, "bobjects", true),
   ];
 
   const otherSourceTopic = topicName.startsWith(SECOND_SOURCE_PREFIX)
@@ -147,7 +150,8 @@ function RawMessages(props: Props) {
   const inOtherSourceDiffMode = diffEnabled && diffMethod === OTHER_SOURCE_METHOD;
   const diffTopicObj = useLatestMessageDataItem(
     diffEnabled ? (inOtherSourceDiffMode ? otherSourceTopic : diffTopicPath) : "",
-    "parsedMessages"
+    "parsedMessages",
+    true
   );
 
   const inTimetickDiffMode = diffEnabled && diffMethod === PREV_MSG_METHOD;
@@ -203,6 +207,8 @@ function RawMessages(props: Props) {
             valueAction = getValueActionForValue(data[lastKeyPath], structureItem, keyPath.slice(0, -1).reverse());
           }
 
+          // Find enum name. When the message-path items are messages, we have enough datatype
+          // information to associate nested fields with specific enums using structureItem.
           let constantName: ?string;
           if (structureItem) {
             const childStructureItem = getStructureItemForPath(
@@ -222,6 +228,17 @@ function RawMessages(props: Props) {
                 }
               }
             }
+          }
+          // When the message-path items are primitives, the datatype info (uint8, etc) isn't
+          // sufficient to deduce names based on values. In this case we use the constants
+          // associated with the values returned by the message path algorithm.
+          if (
+            constantName == null &&
+            keyPath.length === 1 &&
+            typeof keyPath[0] === "number" &&
+            itemValue === queriedData[keyPath[0]].value // just in case
+          ) {
+            constantName = queriedData[keyPath[0]].constantName;
           }
           const basePath: string = queriedData[lastKeyPath] && queriedData[lastKeyPath].path;
           let itemLabel = label;
@@ -301,7 +318,12 @@ function RawMessages(props: Props) {
     const shouldDisplaySingleVal =
       (data !== undefined && typeof data !== "object") ||
       (isSingleElemArray(data) && getIndex(data, 0) != null && typeof getIndex(data, 0) !== "object");
-    const singleVal = isSingleElemArray(data) ? getIndex(data, 0) : data;
+    let singleVal = String(isSingleElemArray(data) ? getIndex(data, 0) : data);
+    if (baseItem.queriedData.length && baseItem.queriedData[0].constantName) {
+      // Handles the message path algorithm returning a single-element array (e.g. [enum]), but not nested arrays (e.g. [[enum]]) - arrays of enums are uncommon.
+      // Handle queriedData.length==0, which happens sometimes when diff-mode is enabled.
+      singleVal += ` (${baseItem.queriedData[0].constantName})`;
+    }
 
     const diffData = diffItem && dataWithoutWrappingArray(diffItem.queriedData.map(({ value }) => (value: any)));
     const diff = diffEnabled && getDiff(maybeDeepParse(data), maybeDeepParse(diffData), null, showFullMessageForDiff);
@@ -320,7 +342,7 @@ function RawMessages(props: Props) {
         />
         {shouldDisplaySingleVal ? (
           <div className={styles.singleVal}>
-            <MaybeCollapsedValue itemLabel={String(singleVal)} />
+            <MaybeCollapsedValue itemLabel={singleVal} />
           </div>
         ) : diffEnabled && isEqual({}, diff) ? (
           <EmptyState>No difference found</EmptyState>
@@ -342,6 +364,11 @@ function RawMessages(props: Props) {
               hideRoot
               invertTheme={false}
               getItemString={diffEnabled ? getItemStringForDiff : getItemString}
+              isCustomNode={(value) => {
+                // Tree otherwise renders these as "<BigInt>"
+                // eslint-disable-next-line valid-typeof
+                return typeof value === "bigint";
+              }}
               valueRenderer={(...args) => {
                 if (diffEnabled) {
                   return valueRenderer(null, diff, diff, ...args);

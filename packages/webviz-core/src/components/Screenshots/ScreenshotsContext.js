@@ -10,13 +10,14 @@ import domToImage from "dom-to-image-more-scroll-fix";
 import React, { createContext, useCallback, useState, useRef } from "react";
 
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import { PANEL_LAYOUT_ROOT_ID } from "webviz-core/src/util/globalConstants";
 import Logger from "webviz-core/src/util/Logger";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const log = new Logger(__filename);
 
 export const ScreenshotsContext = createContext<{|
-  takeScreenshot: (element: HTMLElement) => Promise<?Blob>,
+  takeScreenshot: () => Promise<?Blob>,
   isTakingScreenshot: boolean,
 |}>({
   takeScreenshot: () => {
@@ -35,9 +36,14 @@ export function ScreenshotsProvider({ children }: { children: React$Node }) {
   const isTakingScreenshotRef = useRef(isTakingScreenshot);
   isTakingScreenshotRef.current = isTakingScreenshot;
 
-  const takeScreenshot = useCallback(async (element: HTMLElement): Promise<?Blob> => {
+  const takeScreenshot = useCallback(async (): Promise<?Blob> => {
     if (isTakingScreenshotRef.current) {
       return;
+    }
+    const selector = `#${PANEL_LAYOUT_ROOT_ID}`;
+    const element = document.querySelector(selector);
+    if (!element) {
+      throw new Error(`Tried to take screenshot for comments but could not find element with selector ${selector}`);
     }
 
     // We always pause playback when taking the screenshot.

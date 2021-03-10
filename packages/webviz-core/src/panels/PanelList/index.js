@@ -19,6 +19,7 @@ import { dropPanel } from "webviz-core/src/actions/panels";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import { Item } from "webviz-core/src/components/Menu";
+import { type PanelComponentType } from "webviz-core/src/components/Panel";
 import TextHighlight from "webviz-core/src/components/TextHighlight";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TabPanelConfig } from "webviz-core/src/types/layouts";
@@ -75,16 +76,20 @@ const SEmptyState = styled.div`
   opacity: 0.4;
 `;
 
-type PresetSettings =
+export type PresetSettings =
   | { config: TabPanelConfig, relatedConfigs: SavedProps }
   | {| config: PanelConfig, relatedConfigs: typeof undefined |};
-export type PanelListItem = {| title: string, component: React.ComponentType<any>, presetSettings?: PresetSettings |};
+export type PanelListItem<Config> = {|
+  title: string,
+  component: PanelComponentType<Config>,
+  presetSettings?: PresetSettings,
+|};
 
 // getPanelsByCategory() and getPanelsByType() are functions rather than top-level constants
 // in order to avoid issues with circular imports, such as
 // FooPanel -> PanelToolbar -> PanelList -> getGlobalHooks().panelsByCategory() -> FooPanel.
 let gPanelsByCategory;
-function getPanelsByCategory(): { [category: string]: PanelListItem[] } {
+function getPanelsByCategory(): { [category: string]: PanelListItem<any>[] } {
   if (!gPanelsByCategory) {
     gPanelsByCategory = getGlobalHooks().panelsByCategory();
 
@@ -96,14 +101,13 @@ function getPanelsByCategory(): { [category: string]: PanelListItem[] } {
 }
 
 let gPanelsByType;
-export function getPanelsByType(): { [type: string]: PanelListItem } {
+export function getPanelsByType(): { [type: string]: PanelListItem<any> } {
   if (!gPanelsByType) {
     gPanelsByType = {};
     const panelsByCategory = getPanelsByCategory();
     for (const category in panelsByCategory) {
       const nonPresetPanels = panelsByCategory[category].filter((panel) => panel && !panel.presetSettings);
       for (const item of nonPresetPanels) {
-        // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
         const panelType = item.component.panelType;
         console.assert(panelType && !(panelType in gPanelsByType));
         gPanelsByType[panelType] = item;
@@ -203,7 +207,6 @@ function verifyPanels() {
   const panelsByCategory = getPanelsByCategory();
   for (const category in panelsByCategory) {
     for (const { component, presetSettings } of panelsByCategory[category]) {
-      // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
       const { name, displayName, panelType } = component;
       if (!panelType) {
         throw new Error(
@@ -387,7 +390,6 @@ function PanelList(props: Props) {
 PanelList.getComponentForType = (type: string): any | void => {
   const panelsByCategory = getPanelsByCategory();
   const allPanels = flatten(objectValues(panelsByCategory));
-  // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
   const panel = allPanels.find((item) => item.component.panelType === type);
   return panel?.component;
 };

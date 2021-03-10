@@ -32,7 +32,7 @@ import { defaultPlaybackConfig } from "webviz-core/src/reducers/panels";
 const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2", direction: "row" } };
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
-    it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
+    it("properly maps template panel IDs to new IDs when adding a Tab panel", () => {
       const firstPlotConfig = { paths: ["/abc"] };
       const secondPlotConfig = { paths: ["/def"] };
       const configsSaved = getSaveConfigsPayloadForAddedPanel({
@@ -55,6 +55,7 @@ describe("layout", () => {
       });
       expect(configsSaved[2].id).toEqual("Tab!abc");
     });
+
     it("works with single panel tab layouts", () => {
       const inputConfig = {
         id: "Tab!7arq0e",
@@ -73,6 +74,33 @@ describe("layout", () => {
       expect(getPanelTypeFromId(inputLayout)).toEqual(getPanelTypeFromId(outputLayout));
       expect(inputLayout).not.toEqual(outputLayout);
     });
+
+    it("works with nested tab panel layouts", () => {
+      const plotConfig = { paths: ["/abc"] };
+      const inputConfig = {
+        id: "Tab!1",
+        config: {
+          activeTabIdx: 0,
+          tabs: [{ title: "1", layout: "Tab!2" }],
+        },
+        relatedConfigs: {
+          "Tab!2": { activeTabIdx: 0, tabs: [tabConfig] },
+          "Plot!1": plotConfig,
+          "Plot!2": plotConfig,
+        },
+      };
+      const { configs } = getSaveConfigsPayloadForAddedPanel(inputConfig);
+      const tabPanelTabs = configs[0].config.tabs[0];
+      const nestedTabPanelTabs = configs[3].config.tabs[0];
+      const plot1Id = configs[1].id;
+      const plot2Id = configs[2].id;
+
+      expect(configs.length).toEqual(4);
+      expect(tabPanelTabs.layout.first).toEqual(plot1Id);
+      expect(tabPanelTabs.layout.second).toEqual(plot2Id);
+      expect(nestedTabPanelTabs.layout).toEqual(configs[0].id);
+    });
+
     it("works with null tab layouts", () => {
       const originalConfig = {
         id: "Tab!abc",
@@ -81,6 +109,7 @@ describe("layout", () => {
       const { configs } = getSaveConfigsPayloadForAddedPanel({ ...originalConfig, relatedConfigs: {} });
       expect(originalConfig).toEqual(configs[0]);
     });
+
     it("returns config when there are no related configs", () => {
       const originalConfig = {
         id: "Tab!abc",
@@ -90,6 +119,7 @@ describe("layout", () => {
       expect(configs.length).toEqual(1);
       expect(originalConfig).toEqual(configs[0]);
     });
+
     it("returns configs when there are missing related configs", () => {
       const firstPlotConfig = { paths: ["/abc"] };
       const configsSaved = getSaveConfigsPayloadForAddedPanel({

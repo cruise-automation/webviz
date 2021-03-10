@@ -60,7 +60,8 @@ export type TreeTopicNode = {|
 export type TreeNode = TreeGroupNode | TreeTopicNode;
 
 export type UseSceneBuilderAndTransformsDataInput = {|
-  sceneBuilder: SceneBuilder,
+  playerId: string,
+  sceneBuilder: ?SceneBuilder,
   staticallyAvailableNamespacesByTopic: NamespacesByTopic,
   transforms: Transforms,
 |};

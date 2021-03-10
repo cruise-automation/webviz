@@ -9,8 +9,13 @@
 import React from "react";
 import { Lines, Spheres, type Point } from "regl-worldview";
 
+export type MeasurePoints = {|
+  start: ?Point,
+  end: ?Point,
+|};
+
 type Props = {
-  measurePoints: { start: ?Point, end: ?Point },
+  measurePoints: MeasurePoints,
 };
 
 const sphereSize: number = 0.3;

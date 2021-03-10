@@ -86,7 +86,7 @@ function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
             {key === "thetaOffset" && (
               <Button
                 onClick={onAlignXYAxis}
-                tooltip="Align XY axis by reseting thetaOffset to 0. Will no longer follow orientation.">
+                tooltip="Align XY axis by resetting thetaOffset to 0. Will no longer follow orientation.">
                 RESET
               </Button>
             )}

@@ -18,7 +18,7 @@ type Dataset = $ReadOnly<{ label: string, color?: string, borderDash?: $ReadOnly
 type Props = {
   canToggleLines?: boolean,
   datasets: $ReadOnlyArray<Dataset>,
-  linesToHide: { [string]: boolean },
+  linesToHide: ?{ [string]: boolean },
   toggleLine: (datasetId: string | typeof undefined, lineToHide: string) => void,
   datasetId?: string,
 };
@@ -32,7 +32,8 @@ export default class TimeBasedChartLegend extends React.PureComponent<Props> {
   };
 
   render() {
-    const { canToggleLines, linesToHide } = this.props;
+    const { canToggleLines } = this.props;
+    const linesToHide = this.props.linesToHide || {};
     return (
       <div>
         {this.props.datasets.map((dataset, i) => {

@@ -17,7 +17,7 @@ import MockUserNodePlayerWorker from "webviz-core/src/players/UserNodePlayer/wor
 import { wrapMessages } from "webviz-core/src/test/datatypes";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
@@ -291,9 +291,7 @@ describe("UserNodePlayer", () => {
         ...defaultUserNodeActions,
         setUserNodeDiagnostics: mockSetNodeDiagnostics,
       });
-
       userNodePlayer.setUserNodes({ nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode } });
-
       const [done] = setListenerHelper(userNodePlayer);
 
       fakePlayer.emit({
@@ -337,7 +335,7 @@ describe("UserNodePlayer", () => {
       const { topics: firstTopics, datatypes: firstDatatypes } = await done1;
       expect(firstTopics).toEqual([
         { name: "/np_input", datatype: "/np_input_datatype" },
-        { name: "/webviz_node/1", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` },
+        { name: "/webviz_node/1", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, inputTopics: ["/np_input"] },
       ]);
       expect(firstDatatypes).toEqual({
         foo: { fields: [] },
@@ -590,7 +588,6 @@ describe("UserNodePlayer", () => {
       });
 
       const { messages } = await done;
-
       expect(messages).toEqual([
         {
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
@@ -684,7 +681,11 @@ describe("UserNodePlayer", () => {
       expect(messages).toHaveLength(1);
       expect(topics).toEqual([
         { name: "/np_input", datatype: "std_msgs/Header" },
-        { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` },
+        {
+          name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          inputTopics: ["/np_input"],
+        },
       ]);
       expect(mockSetNodeDiagnostics).toHaveBeenCalledWith({
         [`${DEFAULT_WEBVIZ_NODE_PREFIX}1`]: { diagnostics: [] },
@@ -1146,7 +1147,11 @@ describe("UserNodePlayer", () => {
         const { topics } = await done;
         expect(topics).toEqual([
           { name: "/np_input", datatype: "std_msgs/Header" },
-          { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}state` },
+          {
+            name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`,
+            datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`,
+            inputTopics: ["/np_input"],
+          },
         ]);
       });
       it("uses dynamically generated type definitions", async () => {
@@ -1183,7 +1188,7 @@ describe("UserNodePlayer", () => {
         const { topics } = await done;
         expect(topics).toEqual([
           { name: "/np_input", datatype: "std_msgs/Header" },
-          { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: "std_msgs/Header" },
+          { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: "std_msgs/Header", inputTopics: ["/np_input"] },
         ]);
       });
     });
@@ -1228,6 +1233,166 @@ describe("UserNodePlayer", () => {
             topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
             receiveTime: upstreamMessages[0].receiveTime,
             message: { custom_np_field: "bbb", value: "bbb" },
+          },
+        ]);
+      });
+    });
+
+    describe("source two support", () => {
+      const upstreamMessagesWithSourceTwo = wrapMessages([
+        {
+          topic: "/np_input",
+          receiveTime: { sec: 0, nsec: 1 },
+          message: { payload: "bar" },
+        },
+        {
+          topic: `${SECOND_SOURCE_PREFIX}/np_input`,
+          receiveTime: { sec: 0, nsec: 1 },
+          message: { payload: "bar2" },
+        },
+      ]);
+
+      const nodeUserCodeWithSourceTwoInputs = `
+        export const inputs = ["/np_input", "${SECOND_SOURCE_PREFIX}/np_input"];
+        export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+        let lastStamp, lastReceiveTime;
+        export default (message: { message: { payload: string } }): { custom_np_field: string, value: string } => {
+          return { custom_np_field: "abc", value: message.message.payload };
+        };
+      `;
+
+      it("does not support source two if the node uses any source two topics", async () => {
+        const fakePlayer = new FakePlayer();
+        const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
+        const [done] = setListenerHelper(userNodePlayer);
+
+        userNodePlayer.setSubscriptions([
+          { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+        ]);
+        await userNodePlayer.setUserNodes({
+          [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCodeWithSourceTwoInputs },
+        });
+
+        fakePlayer.emit({
+          ...basicPlayerState,
+          bobjects: upstreamMessagesWithSourceTwo,
+          messageOrder: "receiveTime",
+          currentTime: upstreamMessages[0].receiveTime,
+          topics: [
+            { name: "/np_input", datatype: "std_msgs/Header" },
+            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+          ],
+          datatypes: { foo: { fields: [] } },
+        });
+
+        const { messages } = await done;
+        // Expect no messages starting with SECOND_SOURCE_PREFIX
+        expect(messages).toEqual([
+          {
+            topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            receiveTime: upstreamMessages[0].receiveTime,
+            message: { custom_np_field: "abc", value: "bar" },
+          },
+          {
+            topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            receiveTime: upstreamMessages[0].receiveTime,
+            message: { custom_np_field: "abc", value: "bar2" },
+          },
+        ]);
+      });
+
+      it("warns if there are topics from source_1 that don't exist in source_2", async () => {
+        const fakePlayer = new FakePlayer();
+        const mockSetNodeDiagnostics = jest.fn();
+        const userNodePlayer = new UserNodePlayer(fakePlayer, {
+          ...defaultUserNodeActions,
+          setUserNodeDiagnostics: mockSetNodeDiagnostics,
+        });
+        const [done] = setListenerHelper(userNodePlayer);
+
+        userNodePlayer.setSubscriptions([
+          { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+        ]);
+
+        await userNodePlayer.setUserNodes({
+          [nodeId]: {
+            name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            sourceCode: `
+              export const inputs = ["/np_input", "/another_np_input"];
+              export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+              export default (message: { message: { payload: string } }): { custom_np_field: string, value: string } => {
+                return { custom_np_field: "abc", value: message.message.payload };
+              };
+            `,
+          },
+        });
+
+        fakePlayer.emit({
+          ...basicPlayerState,
+          bobjects: upstreamMessagesWithSourceTwo,
+          messageOrder: "receiveTime",
+          currentTime: upstreamMessages[0].receiveTime,
+          topics: [
+            { name: "/np_input", datatype: "std_msgs/Header" },
+            { name: "/another_np_input", datatype: "std_msgs/Header" },
+            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+          ],
+          datatypes: { foo: { fields: [] } },
+        });
+
+        await done;
+        expect(mockSetNodeDiagnostics).toHaveBeenCalledWith({
+          nodeId: {
+            diagnostics: [
+              {
+                severity: DiagnosticSeverity.Warning,
+                message: `Input "${SECOND_SOURCE_PREFIX}/another_np_input" is not yet available.`,
+                source: Sources.InputTopicsChecker,
+                code: ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL,
+              },
+            ],
+          },
+        });
+      });
+
+      it("produces messages for multiple sources", async () => {
+        const fakePlayer = new FakePlayer();
+        const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
+        const [done] = setListenerHelper(userNodePlayer);
+
+        userNodePlayer.setSubscriptions([
+          { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+        ]);
+        await userNodePlayer.setUserNodes({
+          [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
+        });
+
+        fakePlayer.emit({
+          ...basicPlayerState,
+          bobjects: upstreamMessagesWithSourceTwo,
+          messageOrder: "receiveTime",
+          currentTime: upstreamMessages[0].receiveTime,
+          topics: [
+            { name: "/np_input", datatype: "std_msgs/Header" },
+            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+          ],
+          datatypes: { foo: { fields: [] } },
+        });
+
+        const { messages } = await done;
+        expect(messages).toEqual([
+          {
+            topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            receiveTime: upstreamMessages[0].receiveTime,
+            message: { custom_np_field: "abc", value: "bar" },
+          },
+          {
+            topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            receiveTime: upstreamMessages[0].receiveTime,
+            message: { custom_np_field: "abc", value: "bar2" },
           },
         ]);
       });

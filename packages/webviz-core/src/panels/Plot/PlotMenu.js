@@ -13,7 +13,7 @@ import styled from "styled-components";
 import styles from "./PlotMenu.module.scss";
 import { PanelToolbarInput } from "webviz-core/shared/panelToolbarStyles";
 import Item from "webviz-core/src/components/Menu/Item";
-import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart/utils";
 import type { PlotConfig, PlotXAxisVal } from "webviz-core/src/panels/Plot";
 import { type DataSet, type PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
 import { downloadFiles } from "webviz-core/src/util";

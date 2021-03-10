@@ -14,7 +14,7 @@ import { deepParseSymbol } from "webviz-core/src/util/binaryObjects/messageDefin
 type GetArrayElement<T> = (offset: number) => T;
 
 export interface ArrayView<T> {
-  +get: (index: number) => T;
+  +get: (index: number, bigInt: ?true) => T;
   +length: () => number;
   +toArray: () => T[];
   +find: (predicate: (item: T, index: number, collection: T[]) => boolean) => ?T;
@@ -23,7 +23,11 @@ export interface ArrayView<T> {
 
 // Class is inside a closure to make instance construction cheaper (only two fields to set). The
 // getElement and elementSize fields are common to many instances.
-export const getArrayView = <T>(getElement: GetArrayElement<T>, elementSize: number) =>
+export const getArrayView = <T>(
+  getElement: GetArrayElement<T>,
+  elementSize: number,
+  getBigIntElement: ?GetArrayElement<T>
+) =>
   class BinaryArrayView implements ArrayView<T> {
     _begin: number;
     _length: number;
@@ -33,7 +37,10 @@ export const getArrayView = <T>(getElement: GetArrayElement<T>, elementSize: num
     }
 
     // Unfortunately we can't override the [] operator without a proxy, which is very slow.
-    get(index: number): T {
+    get(index: number, bigInt: ?true): T {
+      if (bigInt && getBigIntElement) {
+        return getBigIntElement(this._begin + index * elementSize);
+      }
       return getElement(this._begin + index * elementSize);
     }
 

@@ -21,7 +21,7 @@ If no WebSocket is found, you can instead drag and drop a bag into the page. You
 
 ## Remote bag
 
-To stream in a bag, use the `?remote-bag-url=…` parameter, [like this](?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag). To stream in a second bag (similar to the SHIFT-drag from above), use `?remote-bag-url-2=…`. To navigate to a particular point in the bag on load, add in `&seek-to=12345` (in milliseconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)).
+To stream in a bag, use the `?remote-bag-url=…` parameter, [like this](?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag). To stream in a second bag (similar to the SHIFT-drag from above), use `?remote-bag-url-2=…`. To navigate to a particular point in the bag on load, add in `&seek-to=12345` (in milliseconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)) or `&seek-to=12345.000006789` where 12345 is the ROS second and 6789 is the ROS nanosecond.
 
 ## Layouts
 

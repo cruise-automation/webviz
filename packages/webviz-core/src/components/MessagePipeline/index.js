@@ -349,9 +349,9 @@ export function MockMessagePipelineProvider(props: {|
   const flattenedSubscriptions: SubscribePayload[] = useMemo(() => flatten(objectValues(allSubscriptions)), [
     allSubscriptions,
   ]);
-  const setSubscriptions = useCallback((id, subs) => setAllSubscriptions((s) => ({ ...s, [id]: subs })), [
-    setAllSubscriptions,
-  ]);
+  const setSubscriptions = useCallback((id, subs) => {
+    setAllSubscriptions((s) => ({ ...s, [id]: subs }));
+  }, [setAllSubscriptions]);
 
   const requestBackfill = useMemo(() => props.requestBackfill || (() => {}), [props.requestBackfill]);
 

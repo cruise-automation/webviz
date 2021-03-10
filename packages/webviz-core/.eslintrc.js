@@ -56,4 +56,5 @@ module.exports = {
     "no-console": "off",
     "no-unused-vars": ["error", { vars: "all", args: "after-used", varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
   },
+  globals: { BigInt: true },
 };

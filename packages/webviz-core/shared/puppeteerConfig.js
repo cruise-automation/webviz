@@ -18,7 +18,7 @@ if (process.env.WEBVIZ_IN_DOCKER) {
         "--disable-dev-shm-usage",
         "--headless",
         "--mute-audio",
-        "--user-agent=PuppeteerTestingChrome/79.",
+        "--user-agent=PuppeteerTestingChrome/88.",
         "--disable-gpu", // In CI we don't have GPUs anyway, and on desktops this makes it more stable.
       ],
     },

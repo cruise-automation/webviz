@@ -37,7 +37,7 @@ export default function MessageOrderControls() {
         onChange={setMessageOrder}
         tooltip={tooltip}
         menuStyle={{ width: "125px" }}
-        btnStyle={{ marginRight: "8px", height: "28px" }}>
+        btnStyle={{ marginLeft: 0, marginRight: "8px", height: "28px" }}>
         <span value={"receiveTime"}>{messageOrderLabel.receiveTime}</span>
         <span value={"headerStamp"}>{messageOrderLabel.headerStamp}</span>
       </Dropdown>

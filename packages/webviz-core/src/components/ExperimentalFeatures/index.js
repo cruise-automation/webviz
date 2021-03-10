@@ -12,28 +12,16 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import { noop } from "lodash";
 import * as React from "react";
 
+import type { FeatureDescriptions, FeatureValue, FeatureStorage, FeatureSettings } from "./types";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import Radio from "webviz-core/src/components/Radio";
 import TextContent from "webviz-core/src/components/TextContent";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import logEvent, { getEventNames } from "webviz-core/src/util/logEvent";
+import { getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 import Storage from "webviz-core/src/util/Storage";
 
-// All these are exported for tests; please don't use them directly in your code.
-export type FeatureDescriptions = {
-  [id: string]: {|
-    name: string,
-    description: string | React.Node,
-    developmentDefault: boolean,
-    productionDefault: boolean,
-  |},
-};
-
-export type FeatureValue = "default" | "alwaysOn" | "alwaysOff";
-export type FeatureStorage = { [id: string]: "alwaysOn" | "alwaysOff" };
-export type FeatureSettings = { [id: string]: { enabled: boolean, manuallySet: boolean } };
 export const EXPERIMENTAL_FEATURES_STORAGE_KEY = "experimentalFeaturesSettings";
 
 function getExperimentalFeaturesList(): FeatureDescriptions {
@@ -44,10 +32,14 @@ function getDefaultKey(): "productionDefault" | "developmentDefault" {
   return process.env.NODE_ENV === "production" ? "productionDefault" : "developmentDefault";
 }
 
+export function getExperimentalFeatureFromLocalStorage() {
+  return new Storage().getItem<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
+}
+
 function getExperimentalFeatureSettings(): FeatureSettings {
   const experimentalFeaturesList = getExperimentalFeaturesList();
   const settings: FeatureSettings = {};
-  const featureStorage = new Storage().getItem<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
+  const featureStorage = getExperimentalFeatureFromLocalStorage();
   for (const id in experimentalFeaturesList) {
     if (["alwaysOn", "alwaysOff"].includes(featureStorage[id])) {
       settings[id] = { enabled: featureStorage[id] === "alwaysOn", manuallySet: true };
@@ -60,7 +52,8 @@ function getExperimentalFeatureSettings(): FeatureSettings {
 
 let subscribedComponents: (() => void)[] = [];
 
-function useAllExperimentalFeatures(): FeatureSettings {
+// Just exported for 3D panel worker context. Use not recommended.
+export function useAllExperimentalFeatures(): FeatureSettings {
   const [settings, setSettings] = React.useState<FeatureSettings>(() => getExperimentalFeatureSettings());
   React.useEffect(() => {
     function update() {
@@ -94,11 +87,15 @@ export function getExperimentalFeature(id: string): boolean {
   return settings[id].enabled;
 }
 
+export function setExperimentalFeatures(features: FeatureStorage): void {
+  Object.keys(features).forEach((key) => setExperimentalFeature(key, features[key]));
+}
+
 export function setExperimentalFeature(id: string, value: FeatureValue): void {
   const storage = new Storage();
   const newSettings = { ...storage.getItem(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
 
-  logEvent({ name: getEventNames().CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
+  logEventAction(getEventInfos().CHANGE_EXPERIMENTAL_FEATURE, { feature: id, value });
 
   if (value === "default") {
     delete newSettings[id];

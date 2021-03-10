@@ -55,21 +55,10 @@ program
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
   .option(
-    "--experimentalFeatureSettings <string>",
+    "--experimentalFeaturesSettings <string>",
     'Stringified JSON of experimental feature settings: \'{"featureName":"alwaysOn"}\''
   )
   .parse(process.argv);
-
-const defaultLayout = {
-  layout: "ImageViewPanel!3fewms6",
-  savedProps: {
-    "ImageViewPanel!3fewms6": {
-      cameraTopic: "/camera_front_medium/compressed",
-      scale: 1,
-      enabledMarkerNames: ["visual_detection_markers"],
-    },
-  },
-};
 
 async function main() {
   try {
@@ -80,21 +69,26 @@ async function main() {
     );
   }
 
+  const originUrlBase = "http://localhost:3000/";
+  const urlObject = new URL(program.url || originUrlBase, originUrlBase);
+  urlObject.searchParams.set("video-recording-mode", "1");
+  urlObject.searchParams.set("video-recording-speed", program.speed || 1);
+  urlObject.searchParams.set("video-recording-framerate", `${program.framerate || 30}`);
+  if (program.frameless) {
+    urlObject.searchParams.set("frameless", "1");
+  }
+
   console.log("Recording video...");
-  const parallelCount = program.parallel || 1;
-  const parallelFrameRate = program.framerate || 30;
   const { videoFile: video } = await recordVideo({
-    parallel: parallelCount,
+    parallel: program.parallel || 1,
     bagPath: program.bag,
-    experimentalFeatureSettings: program.experimentalFeatureSettings,
-    url: `${program.url}?video-recording-mode${
-      program.frameless ? "&frameless" : ""
-    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${parallelFrameRate}`,
+    experimentalFeaturesSettings: program.experimentalFeaturesSettings,
+    url: urlObject.toString(),
     puppeteerLaunchConfig: {
       headless: !process.env.DEBUG_CI,
       defaultViewport: { width: program.width || 1920, height: program.height || 1080 },
     },
-    panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : defaultLayout,
+    panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : null,
   });
 
   console.log("Saving video...");

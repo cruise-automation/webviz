@@ -10,6 +10,7 @@ import { difference, keyBy, uniq, mapValues, xor, isEqual, flatten, omit } from 
 import { useMemo, useCallback, useRef, createContext } from "react";
 import { useDebounce } from "use-debounce";
 
+import generateNodeKey from "./generateNodeKey";
 import type { TreeNode, TopicTreeConfig, UseTreeInput, UseTreeOutput, DerivedCustomSettingsByKey } from "./types";
 import filterMap from "webviz-core/src/filterMap";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
@@ -17,40 +18,6 @@ import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 
 const DEFAULT_TOPICS_COUNT_BY_KEY = {};
-// TODO(Audrey): opaque type for node keys: https://flow.org/en/docs/types/opaque-types/
-export function generateNodeKey({
-  topicName,
-  name,
-  namespace,
-  isFeatureColumn,
-}: {|
-  topicName?: ?string,
-  name?: ?string,
-  namespace?: ?string,
-  isFeatureColumn?: boolean,
-|}): string {
-  const prefixedTopicName = topicName
-    ? isFeatureColumn
-      ? `${SECOND_SOURCE_PREFIX}${topicName}`
-      : topicName
-    : undefined;
-  if (namespace) {
-    if (prefixedTopicName) {
-      return `ns:${prefixedTopicName}:${namespace}`;
-    }
-    throw new Error(
-      "Incorrect input for generating the node key. If a namespace is present, then the topicName must be present"
-    );
-  }
-  if (prefixedTopicName) {
-    return `t:${prefixedTopicName}`;
-  }
-  if (name) {
-    return isFeatureColumn ? `name_2:${name}` : `name:${name}`;
-  }
-
-  throw new Error(`Incorrect input for generating the node key. Either topicName or name must be present.`);
-}
 
 // Recursive function to generate the tree nodes from config data.
 export function generateTreeNode(

@@ -11,34 +11,23 @@ import ArrowUpIcon from "@mdi/svg/svg/chevron-up.svg";
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import SearchIcon from "@mdi/svg/svg/magnify.svg";
 import { vec3 } from "gl-matrix";
-import { range, throttle } from "lodash";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { isEqual, range } from "lodash";
+import memoizeOne from "memoize-one";
+import React, { useState, useRef, useCallback } from "react";
 import { type CameraState, cameraStateSelectors } from "regl-worldview";
 
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
-import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import { type WorldSearchTextProps } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import type { TextMarker, Color } from "webviz-core/src/types/Messages";
-import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
-
-export const YELLOW = { r: 1, b: 0, g: 1, a: 1 };
-export const ORANGE = { r: 0.97, g: 0.58, b: 0.02, a: 1 };
 
 // $FlowFixMe - Can't figure this one out.
 export type GLTextMarker = TextMarker & {
   highlightedIndices?: number[],
   highlightColor?: Color,
 };
-
-export type WorldSearchTextProps = {|
-  searchTextOpen: boolean,
-  searchText: string,
-  setSearchTextMatches: (markers: GLTextMarker[]) => void,
-  searchTextMatches: GLTextMarker[],
-  selectedMatchIndex: number,
-|};
 
 export type SearchTextProps = {|
   ...WorldSearchTextProps,
@@ -65,67 +54,6 @@ export const getHighlightedIndices = (text?: string, searchText: string): number
   return highlightedIndices;
 };
 
-export const useGLText = ({
-  text,
-  searchText,
-  searchTextOpen,
-  selectedMatchIndex,
-  setSearchTextMatches,
-  searchTextMatches,
-}: {|
-  ...WorldSearchTextProps,
-  text: Interactive<TextMarker>[],
-|}): Interactive<GLTextMarker>[] => {
-  const glText: Interactive<GLTextMarker>[] = React.useMemo(() => {
-    let numMatches = 0;
-    return text.map((marker) => {
-      const scale = {
-        // RViz ignores scale.x/y for text and only uses z
-        x: marker.scale.z,
-        y: marker.scale.z,
-        z: marker.scale.z,
-      };
-
-      if (!searchText || !searchTextOpen) {
-        return { ...marker, scale };
-      }
-
-      const highlightedIndices = getHighlightedIndices(marker.text, searchText);
-
-      if (highlightedIndices.length) {
-        numMatches += 1;
-        const highlightedMarker = {
-          ...marker,
-          scale,
-          highlightColor: selectedMatchIndex + 1 === numMatches ? ORANGE : YELLOW,
-          highlightedIndices,
-        };
-        return highlightedMarker;
-      }
-
-      return { ...marker, scale };
-    });
-  }, [searchText, searchTextOpen, selectedMatchIndex, text]);
-
-  const throttledSetSearchTextMatches = useCallback(throttle(setSearchTextMatches, 200, { trailing: true }), [
-    setSearchTextMatches,
-  ]);
-
-  useEffect(() => {
-    if (!searchTextOpen && !searchTextMatches.length) {
-      return;
-    }
-    const matches = glText.filter((marker) => marker.highlightedIndices && marker.highlightedIndices.length);
-    if (matches.length) {
-      throttledSetSearchTextMatches(matches);
-    } else if (!matches.length && searchTextMatches.length) {
-      throttledSetSearchTextMatches([]);
-    }
-  }, [throttledSetSearchTextMatches, glText, searchText, searchTextMatches.length, searchTextOpen]);
-
-  return glText;
-};
-
 export const useSearchText = (): SearchTextProps => {
   const [searchTextOpen, toggleSearchTextOpen] = useState<boolean>(false);
   const [searchText, setSearchText] = useState<string>("");
@@ -145,60 +73,50 @@ export const useSearchText = (): SearchTextProps => {
     searchInputRef,
   };
 };
-type SearchTextComponentProps = {
-  onCameraStateChange: (CameraState) => void,
-  onFollowChange: (newFollowTf?: string | false, newFollowOrientation?: boolean) => void,
-  cameraState: CameraState,
-  rootTf: ?string,
-  transforms: Transforms,
-  ...SearchTextProps,
-};
 
 // Exported for tests.
-export const useSearchMatches = ({
-  cameraState,
-  currentMatch,
-  onCameraStateChange,
-  rootTf,
-  searchTextOpen,
-  transforms,
-}: {
-  cameraState: CameraState,
-  currentMatch: GLTextMarker,
-  onCameraStateChange: (CameraState) => void,
-  rootTf: ?string,
-  searchTextOpen: boolean,
-  transforms: Transforms,
-}) => {
-  const hasCurrentMatchChanged = useDeepChangeDetector([currentMatch], true);
-  React.useEffect(() => {
-    if (!currentMatch || !searchTextOpen || !rootTf || !hasCurrentMatchChanged) {
-      return;
+export class SearchCameraHandler {
+  _previousMatch: ?GLTextMarker = undefined;
+
+  focusOnSearch = memoizeOne(
+    (
+      cameraState: CameraState,
+      onCameraStateChange: (CameraState) => void,
+      rootTf: ?string,
+      transforms: Transforms,
+      searchTextOpen: boolean,
+      currentMatch: ?GLTextMarker
+    ) => {
+      const hasCurrentMatchChanged = !isEqual(currentMatch, this._previousMatch);
+      this._previousMatch = currentMatch;
+      if (!currentMatch || !searchTextOpen || !rootTf || !hasCurrentMatchChanged) {
+        return;
+      }
+
+      const { header, pose } = currentMatch;
+
+      const output = transforms.apply(
+        { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
+        pose,
+        header.frame_id,
+        rootTf
+      );
+      if (!output) {
+        return;
+      }
+      const {
+        position: { x, y, z },
+      } = output;
+
+      const targetHeading = cameraStateSelectors.targetHeading(cameraState);
+      const targetOffset = [0, 0, 0];
+      vec3.rotateZ(targetOffset, vec3.subtract(targetOffset, [x, y, z], cameraState.target), [0, 0, 0], targetHeading);
+      onCameraStateChange({ ...cameraState, targetOffset });
     }
+  );
+}
 
-    const { header, pose } = currentMatch;
-
-    const output = transforms.apply(
-      { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
-      pose,
-      header.frame_id,
-      rootTf
-    );
-    if (!output) {
-      return;
-    }
-    const {
-      position: { x, y, z },
-    } = output;
-
-    const targetHeading = cameraStateSelectors.targetHeading(cameraState);
-    const targetOffset = [0, 0, 0];
-    vec3.rotateZ(targetOffset, vec3.subtract(targetOffset, [x, y, z], cameraState.target), [0, 0, 0], targetHeading);
-    onCameraStateChange({ ...cameraState, targetOffset });
-  }, [cameraState, currentMatch, hasCurrentMatchChanged, onCameraStateChange, rootTf, searchTextOpen, transforms]);
-};
-
-const SearchText = React.memo<SearchTextComponentProps>(
+const SearchText = React.memo<SearchTextProps>(
   ({
     searchTextOpen,
     toggleSearchTextOpen,
@@ -208,12 +126,7 @@ const SearchText = React.memo<SearchTextComponentProps>(
     setSelectedMatchIndex,
     selectedMatchIndex,
     searchTextMatches,
-    onCameraStateChange,
-    cameraState,
-    transforms,
-    rootTf,
-  }: SearchTextComponentProps) => {
-    const currentMatch = searchTextMatches[selectedMatchIndex];
+  }: SearchTextProps) => {
     const iterateCurrentIndex = useCallback((iterator: number) => {
       const newIndex = selectedMatchIndex + iterator;
       if (newIndex >= searchTextMatches.length) {
@@ -230,15 +143,6 @@ const SearchText = React.memo<SearchTextComponentProps>(
         setSelectedMatchIndex(0);
       }
     }, [searchTextMatches.length, setSelectedMatchIndex]);
-
-    useSearchMatches({
-      cameraState,
-      currentMatch,
-      onCameraStateChange,
-      rootTf,
-      searchTextOpen,
-      transforms,
-    });
 
     if (!searchTextOpen) {
       return (

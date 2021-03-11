@@ -14,7 +14,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { PrimitiveArrayView, getReverseWrapperArrayView } from "webviz-core/src/util/binaryObjects/ArrayViews";
 import {
   addTimeTypes,
-  associateDatatypes,
+  associateSourceData,
   deepParseSymbol,
   friendlyTypeName,
   isComplex,
@@ -112,14 +112,14 @@ ${indent(classExpressions.join("\n"), 2)}
 };
 
 const getJsWrapperClasses = memoize(
-  (typesByName: RosDatatypes): { [typeName: string]: any } => {
+  (datatypes: RosDatatypes): { [typeName: string]: any } => {
     const context = { deepParse: deepParseSymbol, PrimitiveArrayView, getReverseWrapperArrayView };
     /* eslint-disable no-new-func */
     // $FlowFixMe
-    const classes = Function("$context", printClasses(typesByName))(context);
+    const classes = Function("$context", printClasses(datatypes))(context);
     /* eslint-enable no-new-func */
-    Object.keys(classes).forEach((name) => {
-      associateDatatypes(classes[name], [typesByName, name]);
+    Object.keys(classes).forEach((datatype) => {
+      associateSourceData(classes[datatype], { datatypes, datatype });
     });
     return classes;
   }

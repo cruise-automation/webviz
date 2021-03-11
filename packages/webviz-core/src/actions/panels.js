@@ -55,6 +55,8 @@ export const PANELS_ACTION_TYPES = {
   SET_FETCH_LAYOUT_FAILED: "SET_FETCH_LAYOUT_FAILED",
   LOAD_LAYOUT: "LOAD_LAYOUT",
   CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT: "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT",
+  SET_FULL_SCREEN_PANEL: "SET_FULL_SCREEN_PANEL",
+  CLEAR_FULL_SCREEN_PANEL: "CLEAR_FULL_SCREEN_PANEL",
 };
 const jsondiffpatch = require("jsondiffpatch").create({});
 
@@ -300,6 +302,29 @@ export const endDrag = (payload: EndDragPayload): END_DRAG => ({
   payload,
 });
 
+export type SET_FULL_SCREEN_PANEL = $ReadOnly<{|
+  type: "SET_FULL_SCREEN_PANEL",
+  payload: $ReadOnly<{| panelId: string, locked: boolean |}>,
+|}>;
+
+export const setFullScreenPanel = (panelId: string, locked: boolean): SET_FULL_SCREEN_PANEL => ({
+  type: "SET_FULL_SCREEN_PANEL",
+  payload: { panelId, locked },
+});
+
+export type CLEAR_FULL_SCREEN_PANEL = $ReadOnly<{|
+  type: "CLEAR_FULL_SCREEN_PANEL",
+  // Provide panelId so panels don't clear each other's state by mistake. If we ever want to clear
+  // the fullscreen state regardless of who set it, we could make the id optional, or make a new
+  // action.
+  payload: $ReadOnly<{| panelId: string |}>,
+|}>;
+
+export const clearFullScreenPanel = (panelId: string): CLEAR_FULL_SCREEN_PANEL => ({
+  type: "CLEAR_FULL_SCREEN_PANEL",
+  payload: { panelId },
+});
+
 export type PanelsActions =
   | CHANGE_PANEL_LAYOUT
   | IMPORT_PANEL_LAYOUT
@@ -322,7 +347,9 @@ export type PanelsActions =
   | SET_FETCHED_LAYOUT
   | SET_FETCH_LAYOUT_FAILED
   | LOAD_LAYOUT
-  | CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT;
+  | CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT
+  | SET_FULL_SCREEN_PANEL
+  | CLEAR_FULL_SCREEN_PANEL;
 
 type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
 export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

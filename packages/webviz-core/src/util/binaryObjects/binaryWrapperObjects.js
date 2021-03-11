@@ -43,15 +43,21 @@ export class PointerExpression {
 export const printSingularExpression = (
   typesByName: RosDatatypes,
   type: string,
-  pointer: PointerExpression
+  pointer: PointerExpression,
+  inFieldDefinitionBody: ?true
 ): string => {
   if (typesByName[type] || type === "time" || type === "duration") {
     return `new ${friendlyTypeName(type)}(${pointer.toString()})`;
   }
-  return printPrimitiveSingularExpression(type, pointer);
+  if (inFieldDefinitionBody && (type === "int64" || type === "uint64")) {
+    const floatExpression = printPrimitiveSingularExpression(type, pointer, false);
+    const bigIntExpression = printPrimitiveSingularExpression(type, pointer, true);
+    return `(bigInt ? ${bigIntExpression}: ${floatExpression})`;
+  }
+  return printPrimitiveSingularExpression(type, pointer, false);
 };
 
-function printPrimitiveSingularExpression(type: string, pointer: PointerExpression) {
+function printPrimitiveSingularExpression(type: string, pointer: PointerExpression, bigInts: boolean) {
   switch (type) {
     case "json":
     case "string": {
@@ -78,10 +84,18 @@ function printPrimitiveSingularExpression(type: string, pointer: PointerExpressi
       return `$view.getFloat32(${pointer.toString()}, true)`;
     case "float64":
       return `$view.getFloat64(${pointer.toString()}, true)`;
-    case "int64":
+    case "int64": {
+      if (bigInts) {
+        return `$view.getBigInt64(${pointer.toString()}, true)`;
+      }
       return `$int53.readInt64LE($buffer, ${pointer.toString()})`;
-    case "uint64":
+    }
+    case "uint64": {
+      if (bigInts) {
+        return `$view.getBigUint64(${pointer.toString()}, true)`;
+      }
       return `$int53.readUInt64LE($buffer, ${pointer.toString()})`;
+    }
   }
   throw new Error(`unknown type "${type}"`);
 }
@@ -110,7 +124,7 @@ const printFieldDefinitionBody = (
     const arrayType = arrayTypeName(field.type);
     return [from, length, `return new ${arrayType}(from, length);`].join("\n");
   }
-  return `return ${printSingularExpression(typesByName, field.type, pointer)};`;
+  return `return ${printSingularExpression(typesByName, field.type, pointer, true)};`;
 };
 
 // Exported for tests
@@ -120,7 +134,9 @@ export const printFieldDefinition = (
   pointer: PointerExpression
 ): string => {
   const body = printFieldDefinitionBody(typesByName, field, pointer);
-  return [`${field.name}() {`, indent(body, 2), "}"].join("\n");
+  // 64-bit integer getters have an optional bigInt argument to control the return type.
+  const args = ["int64", "uint64"].includes(field.type) ? "bigInt" : "";
+  return [`${field.name}(${args}) {`, indent(body, 2), "}"].join("\n");
 };
 
 // We deep-parse many messages in full, so it needs to be as efficient as possible. We avoid the
@@ -148,7 +164,7 @@ const printDeepParseField = (
         ret.push(`  ${name}$arr[$i++] = new deepParse$${friendlyTypeName(type)}($ptr);`);
       } else {
         const loopPointer = new PointerExpression("$ptr");
-        ret.push(`  ${name}$arr[$i++] = ${printPrimitiveSingularExpression(type, loopPointer)};`);
+        ret.push(`  ${name}$arr[$i++] = ${printPrimitiveSingularExpression(type, loopPointer, false)};`);
       }
       ret.push("}");
       ret.push(`this.${name} = ${name}$arr;`);
@@ -158,7 +174,7 @@ const printDeepParseField = (
   if (isComplex(type) || type === "time" || type === "duration") {
     return `this.${name} = new deepParse$${friendlyTypeName(type)}(${pointer.toString()});`;
   }
-  return `this.${name} = ${printPrimitiveSingularExpression(type, pointer)};`;
+  return `this.${name} = ${printPrimitiveSingularExpression(type, pointer, false)};`;
 };
 
 const printDeepParseFunction = (typesByName: RosDatatypes, typeName: string): string => {
@@ -205,7 +221,9 @@ ${fieldDefinitions.join("\n")}
 ${indent(printDeepParseMethod(typeName), 2)}
 }
 ${printDeepParseFunction(typesByName, typeName)}
-$context.associateDatatypes(${friendlyTypeName(typeName)}, [$typesByName, ${JSON.stringify(typeName)}])`;
+$context.associateSourceData(${friendlyTypeName(typeName)}, { datatypes: $typesByName, datatype: ${JSON.stringify(
+    typeName
+  )}, buffer: $arrayBuffer, bigString: $bigString })`;
 };
 
 // Things we need to include in the source:
@@ -256,11 +274,14 @@ export const printGetClassForView = (inputTypesByName: RosDatatypes, topLevelTyp
   const classDefinitions = [...classes].map((typeName) => printClassDefinition(typesByName, typeName));
   const arrays = [...arrayTypes].map((typeName) => {
     const className = arrayTypeName(typeName);
-    const getElement = printSingularExpression(typesByName, typeName, new PointerExpression("offset"));
     const size = typeSize(typesByName, typeName);
-    return `const ${className} = $context.getArrayView((offset) => ${getElement}, ${size});`;
+    const getElement = printSingularExpression(typesByName, typeName, new PointerExpression("offset"));
+    const getBigIntElement = ["int64", "uint64"].includes(typeName)
+      ? `, (offset) => ${printPrimitiveSingularExpression(typeName, new PointerExpression("offset"), true)}`
+      : "";
+    return `const ${className} = $context.getArrayView((offset) => ${getElement}, ${size}${getBigIntElement});`;
   });
-  return `const $offset = Symbol();
+  return `const $offset = $context.offsetSymbol;
 const $deepParse = $context.deepParse;
 const $int53 = $context.int53;
 const $arrayBuffer = $view.buffer;

@@ -13,12 +13,11 @@ import { type CameraState } from "regl-worldview";
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import {
   type GLTextMarker,
-  useGLText,
-  ORANGE,
   getHighlightedIndices,
-  useSearchMatches,
+  SearchCameraHandler,
 } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import { TextHighlighter, ORANGE } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import type { TextMarker } from "webviz-core/src/types/Messages";
 import { MARKER_MSG_TYPES } from "webviz-core/src/util/globalConstants";
 
@@ -61,31 +60,20 @@ const createMarker = (text: string): Interactive<TextMarker> | Interactive<GLTex
   });
 };
 
-const runUseGLTextTest = async (
+const highlightText = (
   text: Interactive<TextMarker>[],
   searchText: string,
   searchTextMatches: Interactive<GLTextMarker>[],
   setSearchTextMatches: (marker: Interactive<GLTextMarker>[]) => void = jest.fn(),
   selectedMatchIndex: number = 0
-) => {
-  const originalMarkers: Interactive<TextMarker>[] = text;
-  let glTextMarkers = [];
-  const Wrapper = () => {
-    glTextMarkers = useGLText({
-      text: originalMarkers,
-      searchText,
-      searchTextOpen: true,
-      selectedMatchIndex,
-      setSearchTextMatches,
-      searchTextMatches,
-    });
-    return null;
-  };
-  const root = await mount(<Wrapper />);
-  root.update();
-  root.unmount();
-  return glTextMarkers;
-};
+) =>
+  new TextHighlighter(setSearchTextMatches).highlightText({
+    text,
+    searchText,
+    searchTextOpen: true,
+    selectedMatchIndex,
+    searchTextMatches,
+  });
 
 describe("<SearchText />", () => {
   describe("getHighlightedIndices", () => {
@@ -96,17 +84,17 @@ describe("<SearchText />", () => {
       expect(getHighlightedIndices("car", "Car")).toEqual([0, 1, 2]);
     });
   });
-  describe("useGLText", () => {
+  describe("TextHighlighter", () => {
     it("updates the text markers to include highlighted indices", async () => {
       const setSearchTextMatches = jest.fn();
-      const glTextMarkers = await runUseGLTextTest([createMarker("hello")], "hello", [], setSearchTextMatches);
+      const glTextMarkers = highlightText([createMarker("hello")], "hello", [], setSearchTextMatches);
       expect(glTextMarkers.length).toEqual(1);
       expect(glTextMarkers[0].highlightedIndices).toEqual([0, 1, 2, 3, 4]);
       expect(setSearchTextMatches).toHaveBeenCalledWith(glTextMarkers);
     });
     it("works with empy text markers", async () => {
       const setSearchTextMatches = jest.fn();
-      const glTextMarkers = await runUseGLTextTest([createMarker("")], "hello", [], setSearchTextMatches);
+      const glTextMarkers = highlightText([createMarker("")], "hello", [], setSearchTextMatches);
       expect(glTextMarkers.length).toEqual(1);
       expect(glTextMarkers[0].highlightedIndices).toEqual(undefined);
       expect(setSearchTextMatches).not.toHaveBeenCalled();
@@ -114,7 +102,7 @@ describe("<SearchText />", () => {
     it("updates matches to empty", async () => {
       const setSearchTextMatches = jest.fn();
       const marker = createMarker("hello");
-      const glTextMarkers = await runUseGLTextTest([marker], "bye", [(marker: any)], setSearchTextMatches);
+      const glTextMarkers = highlightText([marker], "bye", [(marker: any)], setSearchTextMatches);
       expect(glTextMarkers.length).toEqual(1);
       expect(glTextMarkers[0].highlightedIndices).toEqual(undefined);
       expect(setSearchTextMatches).toHaveBeenCalledWith([]);
@@ -122,7 +110,7 @@ describe("<SearchText />", () => {
     it("sets a custom highlight color to the correct index", async () => {
       const setSearchTextMatches = jest.fn();
       const markers = [createMarker("hello webviz"), createMarker("hello cruies"), createMarker("hello future")];
-      const glTextMarkers = await runUseGLTextTest(markers, "hello", [], setSearchTextMatches, 2);
+      const glTextMarkers = highlightText(markers, "hello", [], setSearchTextMatches, 2);
       expect(glTextMarkers.length).toEqual(3);
       expect(glTextMarkers[2].highlightColor).toEqual(ORANGE);
     });
@@ -131,12 +119,12 @@ describe("<SearchText />", () => {
       const originalMarkers: Interactive<TextMarker>[] = [marker];
       let glTextMarkers = [];
       const Wrapper = ({ searchText }: { searchText: string }) => {
-        glTextMarkers = useGLText({
+        const highlighter = React.useMemo(() => new TextHighlighter(jest.fn()), []);
+        glTextMarkers = highlighter.highlightText({
           text: originalMarkers,
           searchText,
           searchTextOpen: true,
           selectedMatchIndex: 0,
-          setSearchTextMatches: jest.fn(),
           searchTextMatches: [],
         });
         return <span>{searchText}</span>;
@@ -154,12 +142,12 @@ describe("<SearchText />", () => {
       const originalMarkers: Interactive<TextMarker>[] = [marker];
       let glTextMarkers = [];
       const Wrapper = ({ randomNum }: { randomNum: number }) => {
-        glTextMarkers = useGLText({
+        const highlighter = React.useMemo(() => new TextHighlighter(jest.fn()), []);
+        glTextMarkers = highlighter.highlightText({
           text: originalMarkers,
           searchText: "hello",
           searchTextOpen: true,
           selectedMatchIndex: 0,
-          setSearchTextMatches: jest.fn(),
           searchTextMatches: [],
         });
         return <span>{randomNum}</span>;
@@ -205,14 +193,8 @@ describe("<SearchText />", () => {
       const [currentMatch, updateCurrentMatch] = React.useState<GLTextMarker>(initialMatch);
       const onCameraStateChange = React.useCallback(jest.fn(updateCameraState), []);
 
-      useSearchMatches({
-        cameraState,
-        onCameraStateChange,
-        currentMatch,
-        rootTf: ROOT_FRAME_ID,
-        searchTextOpen: true,
-        transforms,
-      });
+      const cameraHandler = React.useMemo(() => new SearchCameraHandler(), []);
+      cameraHandler.focusOnSearch(cameraState, onCameraStateChange, ROOT_FRAME_ID, transforms, true, currentMatch);
       return { cameraState, updateCurrentMatch, onCameraStateChange };
     };
 

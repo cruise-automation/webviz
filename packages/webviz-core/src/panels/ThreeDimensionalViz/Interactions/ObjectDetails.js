@@ -19,7 +19,7 @@ import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
-import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
+import { logEventAction, getEventInfos, getEventTags } from "webviz-core/src/util/logEvent";
 
 // Sort the keys of objects to make their presentation more predictable
 const PREFERRED_OBJECT_KEY_ORDER = [
@@ -65,9 +65,8 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
 
   const updateShowInstance = (shouldShowInstance) => {
     setShowInstance(shouldShowInstance);
-    logEvent({
-      name: getEventNames()["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"],
-      tags: { [getEventTags().PANEL_TYPE]: Renderer.panelType },
+    logEventAction(getEventInfos()["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"], {
+      [getEventTags().PANEL_TYPE]: Renderer.panelType,
     });
   };
 
@@ -88,12 +87,12 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
           <span value={false}>{dropdownText.full}</span>
         </Dropdown>
       )}
-      <ObjectDetails interactionData={interactionData} objectToDisplay={parsedObject} />
+      <ObjectDetailsBase interactionData={interactionData} objectToDisplay={parsedObject} />
     </div>
   );
 }
 
-function ObjectDetails({ interactionData, objectToDisplay }: Props) {
+export function ObjectDetailsBase({ interactionData, objectToDisplay }: Props) {
   const topic = interactionData?.topic ?? "";
   const originalObject = omit(objectToDisplay, "interactionData");
 

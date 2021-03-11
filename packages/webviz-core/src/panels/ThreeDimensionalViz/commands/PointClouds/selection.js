@@ -10,11 +10,7 @@ import { omit, difference, isEmpty, isNil } from "lodash";
 import { type MouseEventObject, toRGBA, type Color } from "regl-worldview";
 
 import { getVertexValues, getVertexValue, getFieldOffsetsAndReaders, getVertexCount } from "./buffers";
-import {
-  DEFAULT_FLAT_COLOR,
-  DEFAULT_MIN_COLOR,
-  DEFAULT_MAX_COLOR,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import { DEFAULT_FLAT_COLOR, DEFAULT_MIN_COLOR, DEFAULT_MAX_COLOR } from "./types";
 import type { PointCloud2, PointField } from "webviz-core/src/types/Messages";
 import { lerp } from "webviz-core/src/util";
 

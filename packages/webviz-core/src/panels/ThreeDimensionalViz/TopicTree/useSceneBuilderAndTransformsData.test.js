@@ -49,12 +49,15 @@ function getMockProps({
   showTransforms,
   showErrors,
   mockTfIds,
+  playerId,
 }: {
   showNamespaces?: boolean,
   showTransforms?: boolean,
   showErrors?: boolean,
   mockTfIds?: string[],
+  playerId?: string,
 }): {|
+  playerId: string,
   sceneBuilder: MockTransform,
   transforms: MockSceneBuilder,
 |} {
@@ -66,6 +69,7 @@ function getMockProps({
   }
 
   return {
+    playerId: playerId || "",
     // $FlowFixMe mocked implementation
     sceneBuilder: new MockSceneBuilder({
       namespaces: showNamespaces ? [{ topic: "/foo", name: "ns1" }, { topic: "/foo", name: "ns2" }] : [],
@@ -148,7 +152,9 @@ describe("useSceneBuilderAndTransformsData", () => {
         [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2"],
       });
 
-      root.setProps({ ...getMockProps({}), messagePipelineProps: { playerId: "somePlayerId" } });
+      root.setProps({
+        ...getMockProps({ playerId: "somePlayerId" }),
+      });
       expect(Test.result.mock.calls[1][0].availableNamespacesByTopic).toEqual({});
     });
   });

@@ -38,7 +38,8 @@ import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
-import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
+import { getPanelTypeFromId } from "webviz-core/src/util/layout";
+import { logEventAction, getEventInfos, getEventTags } from "webviz-core/src/util/logEvent";
 
 type Props = {|
   children?: React.Node,
@@ -70,7 +71,7 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
   ]);
 
   const close = useCallback(() => {
-    logEvent({ name: getEventNames().PANEL_REMOVE, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
+    logEventAction(getEventInfos().PANEL_REMOVE, { [getEventTags().PANEL_TYPE]: getPanelType() });
     actions.closePanel({ tabId, root: mosaicActions.getRoot(), path: mosaicWindowActions.getPath() });
   }, [actions, getPanelType, mosaicActions, mosaicWindowActions, tabId]);
 
@@ -79,7 +80,7 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
     if (!id || !type) {
       throw new Error("Trying to split unknown panel!");
     }
-    logEvent({ name: getEventNames().PANEL_SPLIT, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
+    logEventAction(getEventInfos().PANEL_SPLIT, { [getEventTags().PANEL_TYPE]: getPanelType() });
 
     const config = savedProps[id];
     actions.splitPanel({
@@ -103,7 +104,10 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
         config,
         relatedConfigs,
       });
-      logEvent({ name: getEventNames().PANEL_SWAP, tags: { [getEventTags().PANEL_TYPE]: type } });
+      logEventAction(getEventInfos().PANEL_SWAP, {
+        [getEventTags().PANEL_TYPE]: type,
+        ...(id ? { previous_panel_type: getPanelTypeFromId(id) } : {}),
+      });
     },
     [actions, mosaicActions, mosaicWindowActions, tabId]
   );
@@ -141,7 +145,7 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
                 <>
                   <Item
                     icon={<FullscreenIcon />}
-                    onClick={panelContext?.enterFullscreen}
+                    onClick={panelContext?.enterFullScreen}
                     dataTest="panel-settings-fullscreen"
                     tooltip="(shortcut: ` or ~)">
                     Fullscreen

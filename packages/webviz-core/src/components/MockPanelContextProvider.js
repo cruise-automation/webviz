@@ -18,7 +18,7 @@ const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   saveConfig: () => {},
   updatePanelConfig: () => {},
   openSiblingPanel: () => {},
-  enterFullscreen: () => {},
+  enterFullScreen: () => {},
   isHovered: false,
   isFocused: false,
 };

@@ -148,7 +148,7 @@ export default function PanelToolbarMenu({
             tooltip="Automatically apply dark/light background color to text."
             icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
             onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
-            Auto Text Background
+            Auto text background
           </Item>
           <SubMenu checked={false} text="Sync settings" icon={<SyncIcon />}>
             <Item

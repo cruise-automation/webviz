@@ -16,8 +16,8 @@ import { toDate, fromDate } from "./time";
 
 momentDurationFormatSetup(moment);
 
-export function format(stamp: Time) {
-  return `${formatDate(stamp)} ${formatTime(stamp)}`;
+export function format(stamp: Time, timezone?: ?string) {
+  return `${formatDate(stamp, timezone)} at ${formatTime(stamp, timezone)}`;
 }
 
 export function formatDate(stamp: Time, timezone?: ?string) {

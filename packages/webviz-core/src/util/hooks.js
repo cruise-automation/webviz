@@ -36,6 +36,27 @@ export function useForceUpdate() {
   return update;
 }
 
+// Logs when shallow equals fails. Useful for debugging memoization. Please do not use in production.
+export function DEBUGShallowEquals(name: string, item: {}) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Cannot use DEBUGShallowEquals in production");
+  }
+  const previous = usePreviousValue(item);
+  let hasBeenTriggered = false;
+  Object.keys(item).forEach((key) => {
+    if (previous && item[key] !== previous[key]) {
+      if (!hasBeenTriggered) {
+        console.log(`shallowequals on ${name} failed.`);
+        hasBeenTriggered = true;
+      }
+      console.log(`${key} value changed. isEqual: ${String(isEqual(previous[key], item[key]))}`, {
+        previous: previous[key],
+        new: item[key],
+      });
+    }
+  });
+}
+
 // Return initiallyTrue the first time, and again if any of the given deps have changed.
 export function useChangeDetector(deps: any[], initiallyTrue: boolean) {
   const ref = useRef(initiallyTrue ? undefined : deps);

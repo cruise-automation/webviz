@@ -23,6 +23,13 @@ declare class AbortController {
   signal: AbortSignal;
 }
 
+declare class FinalizationRegistry {
+  constructor(finalizer: (any) => void): FinalizationRegistry;
+  register(obj: any, heldItem: any): void;
+}
+
+declare function BigInt(arg: string | numer): typeof BigInt;
+
 declare type WebvizExpectType = {
   toContainOnly(arr: Array<any>): void,
   // FIXME(jacob): this doesn't actually make Flow happy with expect(x).not.toContainOnly in tests :(

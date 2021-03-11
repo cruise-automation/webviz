@@ -206,9 +206,18 @@ export default publisher;
 
 Note the union return type in the `publisher` definition. We've indicated to Typescript that this function can return `undefined`, and we do so within the conditional block (In Typescript, if you `return` without a value, it will implicitly return `undefined`). When this code path is hit, we don't publish any message.
 
+> Does Node Playground work with multiple sources?
+
+Yes, Node Playground will automatically run your code for topics starting with `/webviz_source_2`, as long as the node doesn't read directly from any `source_2` topics. For example, a node with the following inputs/outputs would run for the input topic, `/webviz_source_2/topic_a` and output to the topic `/webviz_source_2/webviz_node/example`:
+
+```typescript
+export const inputs = ["/topic_a"];
+export const output = "/webviz_node/example";
+```
+
 > Can I return arbitrary JSON data in a message?
 
-Yes! Node Playground supports the `json` type. You can import it from the "ros" module:
+Yes, Node Playground supports the `json` type. You can import it from the "ros" module:
 
 ```typescript
 import { Input, json } from "ros";

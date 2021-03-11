@@ -18,6 +18,14 @@ const sendNotificationAny: any = sendNotification;
 jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
 jest.mock("webviz-core/src/util/inAutomatedRunMode", () => jest.fn(() => false));
 
+const eventInfos = {
+  PAUSE_FRAME_TIMEOUT: {
+    category: "Error",
+    humanReadableName: "pauseFrameForPromise timed out",
+    eventName: "pause_frame_timeout",
+  },
+};
+
 describe("pauseFrameForPromise", () => {
   afterEach(() => {
     // $FlowFixMe
@@ -26,7 +34,9 @@ describe("pauseFrameForPromise", () => {
 
   it("sends the paused frame panel types to amplitude", async () => {
     const logger = jest.fn();
-    initializeLogEvent(logger, { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" }, { PANEL_TYPES: "panel_types" });
+    resetLogEventForTests();
+    // $FlowFixMe
+    initializeLogEvent({ logEventError: logger }, eventInfos, {});
 
     pauseFrameForPromises([
       { promise: signal(), name: "foo" },
@@ -36,7 +46,11 @@ describe("pauseFrameForPromise", () => {
     ]);
     await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
 
-    expect(logger).toHaveBeenCalledWith({ name: "pause_frame_timeout", tags: { panel_types: ["bar", "foo", "zoo"] } });
+    expect(logger).toHaveBeenCalledWith(eventInfos.PAUSE_FRAME_TIMEOUT, "/", {}, "", {
+      panel_types: "bar,foo,zoo",
+      git_sha: "unknown",
+      node_env: "test",
+    });
     resetLogEventForTests();
   });
 

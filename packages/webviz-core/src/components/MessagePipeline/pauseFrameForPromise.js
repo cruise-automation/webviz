@@ -10,7 +10,7 @@ import { sortBy, sortedUniq } from "lodash";
 
 import promiseTimeout from "webviz-core/shared/promiseTimeout";
 import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
-import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
+import { logEventError, getEventInfos } from "webviz-core/src/util/logEvent";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 export type FramePromise = {| name: string, promise: Promise<void> |};
@@ -30,10 +30,7 @@ export async function pauseFrameForPromises(promises: FramePromise[]) {
     }
 
     // Log the panelTypes so we can track which panels timeout regularly.
-    const sortedUniquePanelTypes = sortedUniq(sortBy(promises.map(({ name }) => name)));
-    logEvent({
-      name: getEventNames().PAUSE_FRAME_TIMEOUT,
-      tags: { [getEventTags().PANEL_TYPES]: sortedUniquePanelTypes },
-    });
+    const sortedUniquePanelTypes = sortedUniq(sortBy(promises.map(({ name }) => name))).join(",");
+    logEventError(getEventInfos().PAUSE_FRAME_TIMEOUT, { panel_types: sortedUniquePanelTypes });
   }
 }

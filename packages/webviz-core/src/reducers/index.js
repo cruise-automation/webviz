@@ -60,7 +60,12 @@ export type State = {
   userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
-  commenting: { fetchedCommentsBase: Comment[], fetchedCommentsFeature: Comment[] },
+  commenting: {
+    fetchedCommentsBase: Comment[],
+    fetchedCommentsFeature: Comment[],
+    isSidebarOpen: boolean,
+    isEditorOpen: boolean,
+  },
 };
 
 export type Store = { dispatch: Dispatch, getState: () => State };
@@ -77,7 +82,13 @@ export default function createRootReducer(history: any, args?: { testAuth?: any 
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,
-    commenting: { fetchedCommentsBase: [], fetchedCommentsFeature: [], sourceToShow: "Both" },
+    commenting: {
+      fetchedCommentsBase: [],
+      fetchedCommentsFeature: [],
+      sourceToShow: "Both",
+      isSidebarOpen: false,
+      isEditorOpen: false,
+    },
   };
   return (state: State, action: ActionTypes): State => {
     const oldPersistedState: ?PersistedState = state?.persistedState;

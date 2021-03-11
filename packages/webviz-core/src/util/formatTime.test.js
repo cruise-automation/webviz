@@ -8,6 +8,16 @@
 
 import * as formatTime from "./formatTime";
 
+describe("formatTime.format", () => {
+  it("formats date and time based on provided timezone", () => {
+    expect(formatTime.format({ sec: 1, nsec: 0 }, "Asia/Bangkok")).toBe("1970-01-01 at 7:00:01.000 AM +07");
+    expect(formatTime.format({ sec: 1, nsec: 1 }, "Australia/Currie")).toBe("1970-01-01 at 10:00:01.000 AM AEST");
+    expect(formatTime.format({ sec: 1000000, nsec: 0 }, "Pacific/Midway")).toBe("1970-01-12 at 2:46:40.000 AM SST");
+    expect(formatTime.format({ sec: 1100000, nsec: 1000000000 }, "America/Los_Angeles")).toBe(
+      "1970-01-13 at 9:33:21.000 AM PST"
+    );
+  });
+});
 describe("formatTime.formatDate", () => {
   it("formats date based on provided timezone", () => {
     expect(formatTime.formatDate({ sec: 1, nsec: 0 }, "Asia/Bangkok")).toBe("1970-01-01");

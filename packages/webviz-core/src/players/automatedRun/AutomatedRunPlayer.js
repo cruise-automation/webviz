@@ -66,6 +66,7 @@ export default class AutomatedRunPlayer implements Player {
   _isPlaying: boolean = false;
   _provider: DataProvider;
   _providerResult: InitializationResult;
+  _providerTopics: Topic[] = [];
   _progress: Progress;
   _bobjectTopics: Set<string> = new Set();
   _parsedTopics: Set<string> = new Set();
@@ -124,8 +125,8 @@ export default class AutomatedRunPlayer implements Player {
     start: Time,
     end: Time
   ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> {
-    const parsedTopics = getSanitizedTopics(this._parsedTopics, this._providerResult.topics);
-    const bobjectTopics = getSanitizedTopics(this._bobjectTopics, this._providerResult.topics);
+    const parsedTopics = getSanitizedTopics(this._parsedTopics, this._providerTopics);
+    const bobjectTopics = getSanitizedTopics(this._bobjectTopics, this._providerTopics);
     if (parsedTopics.length === 0 && bobjectTopics.length === 0) {
       return { parsedMessages: [], bobjects: [] };
     }
@@ -145,7 +146,7 @@ export default class AutomatedRunPlayer implements Player {
 
     const filterMessages = (msgs) =>
       msgs.map((message) => {
-        const topic: ?Topic = this._providerResult.topics.find((t) => t.name === message.topic);
+        const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
         if (!topic) {
           throw new Error(`Could not find topic for message ${message.topic}`);
         }
@@ -193,7 +194,7 @@ export default class AutomatedRunPlayer implements Player {
           speed: this._speed,
           messageOrder: "receiveTime",
           lastSeekTime: 0,
-          topics: this._providerResult.topics,
+          topics: this._providerTopics,
           datatypes: initializationResult.messageDefinitions.datatypes,
           parsedMessageDefinitionsByTopic: initializationResult.messageDefinitions.parsedMessageDefinitionsByTopic,
           playerWarnings: NO_WARNINGS,
@@ -253,6 +254,7 @@ export default class AutomatedRunPlayer implements Player {
       },
       notifyPlayerManager: async () => {},
     });
+    this._providerTopics = this._providerResult.topics.map((t) => ({ ...t, preloadable: true }));
 
     await this._start();
   }
@@ -375,16 +377,16 @@ export default class AutomatedRunPlayer implements Player {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
 
-  async close() {
-    throw new Error(`Unsupported in AutomatedRunPlayer`);
+  close() {
+    console.warn(`close: Unsupported in AutomatedRunPlayer`);
   }
 
   startPlayback() {
-    throw new Error(`Unsupported in AutomatedRunPlayer`);
+    console.warn(`startPlayback: Unsupported in AutomatedRunPlayer`);
   }
 
   pausePlayback() {
-    throw new Error(`Unsupported in AutomatedRunPlayer`);
+    console.warn(`pausePlayback: Unsupported in AutomatedRunPlayer`);
   }
 
   setPlaybackSpeed(_speed: number, _backfillDuration: ?Time) {
@@ -392,11 +394,11 @@ export default class AutomatedRunPlayer implements Player {
   }
 
   seekPlayback(_time: Time) {
-    throw new Error(`Unsupported in AutomatedRunPlayer`);
+    console.warn(`seekPlayback: Unsupported in AutomatedRunPlayer`);
   }
 
   requestBackfill() {}
   setGlobalVariables() {
-    throw new Error(`Unsupported in AutomatedRunPlayer`);
+    console.warn(`setGlobalVariables: Unsupported in AutomatedRunPlayer`);
   }
 }

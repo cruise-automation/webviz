@@ -36,7 +36,7 @@ import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import { getPanelTypeFromId } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
-const CURRENT_LAYOUT_VERSION = 16;
+const CURRENT_LAYOUT_VERSION = 17;
 const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
 const storage = new Storage();
 

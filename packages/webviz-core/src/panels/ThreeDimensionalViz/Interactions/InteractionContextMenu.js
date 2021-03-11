@@ -11,9 +11,9 @@ import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
 import type { SelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
+import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { getInteractionData, getObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SInteractionContextMenu = styled.div`

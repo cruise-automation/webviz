@@ -15,7 +15,7 @@ import { useDataSourceInfo } from "webviz-core/src/PanelAPI";
 import { PlayerCapabilities } from "webviz-core/src/players/types";
 import { ndash } from "webviz-core/src/util/entities";
 
-const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1", "2", "3", "5"];
+export const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1", "2", "3", "5"];
 
 export default function PlaybackSpeedControls() {
   const configSpeed = useSelector((state) => state.persistedState.panels.playbackConfig.speed);
@@ -55,7 +55,7 @@ export default function PlaybackSpeedControls() {
       text={speedText}
       onChange={setSpeed}
       menuStyle={{ width: "75px" }}
-      btnStyle={{ marginRight: "16px", height: "28px" }}
+      btnStyle={{ marginLeft: 0, marginRight: "16px", height: "28px" }}
       dataTest="PlaybackSpeedControls-Dropdown">
       {SPEEDS.map((eachSpeed: string) => (
         <span key={eachSpeed} value={parseFloat(eachSpeed)}>

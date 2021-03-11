@@ -18,7 +18,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Menu from "webviz-core/src/components/Menu";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import cssColors from "webviz-core/src/styles/colors.module.scss";
-import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
+import { logEventAction, getEventInfos, getEventTags } from "webviz-core/src/util/logEvent";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SDropTarget = styled.div`
@@ -74,7 +74,7 @@ export const EmptyDropTarget = ({ mosaicId, tabId }: Props) => {
 
   const onPanelSelect = useCallback(({ type, config, relatedConfigs }: PanelSelection) => {
     dispatch(addPanel({ tabId, type, layout: null, config, relatedConfigs }));
-    logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: type } });
+    logEventAction(getEventInfos().PANEL_ADD, { [getEventTags().PANEL_TYPE]: type });
   }, [dispatch, tabId]);
 
   return (

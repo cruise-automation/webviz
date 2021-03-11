@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { groupBy } from "lodash";
+import { groupBy, isEqual } from "lodash";
 import React, { type Node, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   Worldview,
@@ -16,14 +16,19 @@ import {
   type ReglClickInfo,
   type MouseEventObject,
   type Polygon,
+  CameraListener,
+  DEFAULT_CAMERA_STATE,
+  CameraStore,
+  Ray,
 } from "regl-worldview";
 import { type Time } from "rosbag";
 import { useDebouncedCallback } from "use-debounce";
 
-import useTopicTree, { TopicTreeContext } from "./useTopicTree";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import Flex from "webviz-core/src/components/Flex";
 import KeyListener from "webviz-core/src/components/KeyListener";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Modal from "webviz-core/src/components/Modal";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
@@ -35,13 +40,19 @@ import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/s
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
-import { InteractionContextMenu, OBJECT_TAB_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import IconOverlay from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
+import {
+  InteractionContextMenu,
+  OBJECT_TAB_TYPE,
+  type Interactive,
+} from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
+import { LayoutWorkerDataSender } from "webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
 import PanelToolbarMenu from "webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
-import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
+import { SearchCameraHandler, useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import {
   type MarkerMatcher,
   ThreeDimensionalVizContext,
@@ -57,23 +68,37 @@ import TopicSettingsModal from "webviz-core/src/panels/ThreeDimensionalViz/Topic
 import TopicTree from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
+import useTopicTree, { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
+import WorldContext from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import type { Color } from "webviz-core/src/types/Messages";
+import type { Color, OverlayIconMarker } from "webviz-core/src/types/Messages";
 import { getField } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
+import Rpc from "webviz-core/src/util/Rpc";
+import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
-const { sceneBuilderHooks } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+const {
+  sceneBuilderHooks,
+  getLayoutWorker,
+  useWorldContextValue,
+} = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+const VIDEO_RECORDING_STYLE = { visibility: inVideoRecordingMode() ? "hidden" : "visible" };
+const DEFAULT_SELECTION_STATE = {
+  clickedObjects: [],
+  clickedPosition: { clientX: 0, clientY: 0 },
+  selectedObject: null,
+};
 
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
-export type ClickedPosition = { clientX: number, clientY: number };
+export type ClickedPosition = {| clientX: number, clientY: number |};
 
 export type LayoutToolbarSharedProps = {|
   cameraState: $Shape<CameraState>,
@@ -165,6 +190,8 @@ export default function Layout({
     disableAutoOpenClickedObject,
   },
 }: Props) {
+  const useWorkerIn3DPanel = useExperimentalFeature("useWorkerIn3DPanel");
+
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
   const containerRef = useRef<?HTMLDivElement>();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
@@ -182,19 +209,59 @@ export default function Layout({
     namespaceColor: ?string,
   }>();
 
+  const rootTf = useMemo(
+    () =>
+      frame &&
+      transforms.rootOfTransform(followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame)
+        .id,
+    [frame, transforms, followTf]
+  );
+
+  const [workerAvailableNamespacesByTopic, setWorkerAvailableNamespacesByTopic] = useState({});
+  const [workerErrorsByTopicFromWorker, setWorkerErrorsByTopic] = useState({});
+
+  const updateWorkerAvailableNamespacesByTopic = useCallback((newAvailableNamespacesByTopic) => {
+    setWorkerAvailableNamespacesByTopic((oldAvailableNamespacesByTopic) =>
+      isEqual(oldAvailableNamespacesByTopic, newAvailableNamespacesByTopic)
+        ? oldAvailableNamespacesByTopic
+        : newAvailableNamespacesByTopic
+    );
+  }, [setWorkerAvailableNamespacesByTopic]);
+
+  const updateWorkerErrorsByTopic = useCallback((newErrorsByTopic) => {
+    setWorkerErrorsByTopic((oldErrorsByTopic) =>
+      isEqual(oldErrorsByTopic, newErrorsByTopic) ? oldErrorsByTopic : newErrorsByTopic
+    );
+  }, [setWorkerErrorsByTopic]);
+
   const searchTextProps = useSearchText();
   const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
+  const searchCameraHandler = useMemo(() => new SearchCameraHandler(), []);
+  searchCameraHandler.focusOnSearch(
+    cameraState,
+    onCameraStateChange,
+    rootTf,
+    transforms,
+    searchTextOpen,
+    searchTextMatches[selectedMatchIndex]
+  );
+  const updateSearchTextMatches = useCallback((newSearchMatches) => {
+    // In order to avoid re-renders, we make sure the new search matches are
+    // different than the existing ones. Also, use the functional type state
+    // setter to avoid `updateSearchTextMatches` to change if the search
+    // matches change.
+    setSearchTextMatches((oldSearchMatches) =>
+      isEqual(oldSearchMatches, newSearchMatches) ? oldSearchMatches : newSearchMatches
+    );
+  }, [setSearchTextMatches]);
+
   // used for updating DrawPolygon during mouse move and scenebuilder namespace change.
-  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
+  const [forcedUpdate, forceUpdate] = useReducer((x) => x + 1, 0);
   const measuringElRef = useRef<?MeasuringTool>(null);
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
   const [interactionsTabType, setInteractionsTabType] = useState<?DrawingTabType>(undefined);
 
-  const [selectionState, setSelectionState] = useState<UserSelectionState>({
-    clickedObjects: [],
-    clickedPosition: { clientX: 0, clientY: 0 },
-    selectedObject: null,
-  });
+  const [selectionState, setSelectionState] = useState<UserSelectionState>(DEFAULT_SELECTION_STATE);
   const { selectedObject, clickedObjects, clickedPosition } = selectionState;
 
   // Since the highlightedMarkerMatchers are updated by mouse events, we wait
@@ -210,15 +277,17 @@ export default function Layout({
   // initialize the SceneBuilder and TransformsBuilder
   const { sceneBuilder, transformsBuilder } = useMemo(
     () => ({
-      sceneBuilder: new SceneBuilder(sceneBuilderHooks),
+      sceneBuilder: useWorkerIn3DPanel ? null : new SceneBuilder(sceneBuilderHooks),
       transformsBuilder: new TransformsBuilder(),
     }),
-    []
+    [useWorkerIn3DPanel]
   );
 
   // Ensure that we show new namespaces and errors any time scenebuilder adds them.
   useMemo(() => {
-    sceneBuilder.setOnForceUpdate(forceUpdate);
+    if (sceneBuilder) {
+      sceneBuilder.setOnForceUpdate(forceUpdate);
+    }
   }, [sceneBuilder, forceUpdate]);
 
   const {
@@ -248,11 +317,23 @@ export default function Layout({
     []
   );
 
-  const { availableNamespacesByTopic, sceneErrorsByKey: sceneErrorsByTopicKey } = useSceneBuilderAndTransformsData({
+  const { playerId } = useDataSourceInfo();
+
+  const {
+    availableNamespacesByTopic: nonWorkerAvailableNamespacesByTopic,
+    sceneErrorsByKey: nonWorkerSceneErrorsByKey,
+  } = useSceneBuilderAndTransformsData({
+    playerId,
     sceneBuilder,
     staticallyAvailableNamespacesByTopic,
     transforms,
   });
+
+  const availableNamespacesByTopic = useWorkerIn3DPanel
+    ? workerAvailableNamespacesByTopic
+    : nonWorkerAvailableNamespacesByTopic;
+
+  const sceneErrorsByTopicKey = useWorkerIn3DPanel ? workerErrorsByTopicFromWorker : nonWorkerSceneErrorsByKey;
 
   // Use deep compare so that we only regenerate rootTreeNode when topics change.
   const memoizedTopics = useShallowMemo(topics);
@@ -298,7 +379,6 @@ export default function Layout({
   } = topicTreeData;
 
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
-  const { playerId } = useDataSourceInfo();
 
   // If a user selects a marker or hovers over a TopicPicker row, highlight relevant markers
   const highlightMarkerMatchers = useMemo(() => {
@@ -360,15 +440,11 @@ export default function Layout({
     }, []);
   }, [colorOverrideBySourceIdxByVariable, globalVariables, linkedGlobalVariables]);
 
-  const rootTf = useMemo(
-    () =>
-      frame &&
-      transforms.rootOfTransform(followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame)
-        .id,
-    [frame, transforms, followTf]
-  );
-
   useMemo(() => {
+    if (!sceneBuilder) {
+      return;
+    }
+
     // TODO(Audrey): add tests for the clearing behavior
     if (cleared) {
       sceneBuilder.clear();
@@ -397,14 +473,14 @@ export default function Layout({
     transformsBuilder.setTransforms(transforms, rootTf);
     transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
   }, [
+    sceneBuilder,
     cleared,
     frame,
+    rootTf,
     topics,
     selectedTopicNames,
-    sceneBuilder,
     playerId,
     transforms,
-    rootTf,
     flattenMarkers,
     selectedNamespacesByTopic,
     settingsByKey,
@@ -495,6 +571,7 @@ export default function Layout({
 
   const {
     onClick,
+    onIconClick,
     onControlsOverlayClick,
     onDoubleClick,
     onExitTopicTreeFocus,
@@ -522,6 +599,23 @@ export default function Layout({
           clickedPosition: newClickedPosition,
         });
         selectObject(newSelectedObject);
+      },
+      onIconClick: (iconMarker: Interactive<OverlayIconMarker>, newClickedPosition: ClickedPosition) => {
+        if (callbackInputsRef.current.isDrawing) {
+          return;
+        }
+        const object = { object: iconMarker, instanceIndex: undefined };
+        if (selectedObject && object.object.id != null && object.object.id === selectedObject.object.id) {
+          // Unselect the object when clicked the same object.
+          setSelectionState(DEFAULT_SELECTION_STATE);
+          return;
+        }
+        setSelectionState({
+          selectedObject: object,
+          clickedObjects: [object],
+          clickedPosition: newClickedPosition,
+        });
+        selectObject(object);
       },
       onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
         if (!containerRef.current) {
@@ -562,7 +656,7 @@ export default function Layout({
         }
       },
     };
-  }, [handleEvent, selectObject, selectedNamespacesByTopic, toggleNamespaceChecked]);
+  }, [handleEvent, selectObject, selectedNamespacesByTopic, selectedObject, toggleNamespaceChecked]);
 
   // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
   const worldRef = useRef<?typeof Worldview>(null);
@@ -617,15 +711,8 @@ export default function Layout({
   const isHidden = isDemoMode && !isHovered;
   const DemoModeComponent = getGlobalHooks().getDemoModeComponent();
 
-  const { MapComponent, videoRecordingStyle } = useMemo(
-    () => ({
-      MapComponent: getGlobalHooks().perPanelHooks().ThreeDimensionalViz.MapComponent,
-      videoRecordingStyle: { visibility: inVideoRecordingMode() ? "hidden" : "visible" },
-    }),
-    []
-  );
-
-  const memoizedScene = useShallowMemo(sceneBuilder.getScene());
+  const { MapComponent } = sceneBuilderHooks;
+  const memoizedScene = useShallowMemo(sceneBuilder ? sceneBuilder.getScene() : null);
   const mapNamespaces = useShallowMemo(selectedNamespacesByTopic["/metadata"] || []);
   const mapElement = useMemo(
     () =>
@@ -651,6 +738,192 @@ export default function Layout({
     [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable, setHoveredMarkerMatchersDebounced]
   );
 
+  // TODO(steel/hernan): Keep context updated in 3D panel worker.
+  const worldContextValue = useWorldContextValue();
+
+  const rpc = useMemo(() => {
+    if (!useWorkerIn3DPanel) {
+      return null;
+    }
+    const WorkerType = getLayoutWorker();
+    const ret = new Rpc(new WorkerType());
+    setupMainThreadRpc(ret);
+    ret.receive("onAvailableNsAndErrors", async (props) => {
+      const { availableNamespacesByTopic: newAvailableNamespacesByTopic, errorsByTopic } = props;
+      updateWorkerAvailableNamespacesByTopic(newAvailableNamespacesByTopic);
+      updateWorkerErrorsByTopic(errorsByTopic);
+    });
+    return ret;
+  }, [updateWorkerAvailableNamespacesByTopic, updateWorkerErrorsByTopic, useWorkerIn3DPanel]);
+
+  // TODO (useWorkerIn3DPanel): Move worker releated objects and functions to a different file to reduce the complexity of this one.
+  const workerDataSender = useMemo(() => {
+    return rpc ? new LayoutWorkerDataSender(rpc) : null;
+  }, [rpc]);
+
+  const canvasRef = useRef();
+  const [initialized, setInitialized] = useState(false);
+
+  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+
+  useMemo(async () => {
+    if (workerDataSender && canvasRef.current && initialized) {
+      const canvas = canvasRef.current;
+      // This process is async, so we must use message pipeline to pause/resume playback
+      if (!frame || !rootTf) {
+        return;
+      }
+      const resumeFrame = pauseFrame("3DPanel/Layout");
+      const { width, height } = canvas.getBoundingClientRect();
+      const topicsByTopicName = getTopicsByTopicName(topics);
+      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
+      const { searchTextMatches: newSearchMatches } = await workerDataSender.renderFrame({
+        cleared,
+        frame,
+        playerId,
+        rootTf,
+        flattenMarkers: !!flattenMarkers,
+        selectedNamespacesByTopic,
+        settingsByKey,
+        selectedTopics,
+        globalVariables,
+        linkedGlobalVariables,
+        highlightMarkerMatchers,
+        colorOverrideMarkerMatchers,
+        currentTime,
+        width,
+        height,
+        autoTextBackgroundColor: !!autoTextBackgroundColor,
+        cameraState,
+        isPlaying: !!isPlaying,
+        isDemoMode,
+        diffModeEnabled: hasFeatureColumn && diffModeEnabled,
+        searchTextOpen,
+        searchText,
+        selectedMatchIndex,
+        showCrosshair,
+        polygons: polygonBuilder.polygons,
+        forcedUpdate,
+        measurePoints: measureInfo.measurePoints,
+        worldContextValue,
+      });
+      updateSearchTextMatches(newSearchMatches);
+      resumeFrame();
+    }
+  }, [
+    workerDataSender,
+    initialized,
+    pauseFrame,
+    cleared,
+    frame,
+    rootTf,
+    topics,
+    selectedTopicNames,
+    playerId,
+    flattenMarkers,
+    selectedNamespacesByTopic,
+    settingsByKey,
+    globalVariables,
+    linkedGlobalVariables,
+    highlightMarkerMatchers,
+    colorOverrideMarkerMatchers,
+    currentTime,
+    autoTextBackgroundColor,
+    cameraState,
+    isPlaying,
+    isDemoMode,
+    hasFeatureColumn,
+    diffModeEnabled,
+    searchTextOpen,
+    searchText,
+    selectedMatchIndex,
+    showCrosshair,
+    polygonBuilder.polygons,
+    forcedUpdate,
+    measureInfo.measurePoints,
+    updateSearchTextMatches,
+    worldContextValue,
+  ]);
+
+  const setCanvasRef = useCallback((canvas) => {
+    if (canvas && !initialized && rpc) {
+      // $FlowFixMe: flow does not recognize `transferControlToOffscreen`
+      const transferableCanvas = canvas.transferControlToOffscreen();
+      rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]);
+      setInitialized(true);
+    } else {
+      // TODO: handle unmount with `canvas === undefined`
+    }
+    canvasRef.current = canvas;
+  }, [rpc, initialized, setInitialized]);
+
+  const mouseEventHandlers = useShallowMemo({
+    onMouseDown,
+    onMouseMove,
+    onMouseUp,
+    onClick,
+    onDoubleClick,
+  });
+
+  const sendMouseEvent = useCallback((e, mouseEventName) => {
+    if (!rpc) {
+      return;
+    }
+
+    if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
+      return;
+    }
+
+    const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
+    const { clientX, clientY, button, ctrlKey } = e;
+    rpc
+      .send<void>("onMouseEvent", {
+        e: { button, clientX, clientY, clientTop, clientLeft, ctrlKey },
+        mouseEventName,
+      })
+      .then((props: any) => {
+        const { eventName, ev, args } = props;
+        if (args.ray) {
+          const {
+            ray: { dir, origin, point },
+          } = args;
+          // The `ray` member returned in the mause event response is a POJO, but event handlers
+          // need an actual Ray instance (i.e. polygon drawing requires a Ray to compute
+          // plane intersections).
+          args.ray = new Ray(origin, dir, point);
+        }
+        // `ev` is not an actual mouse event when returned from the worker
+        // so we need to decorate it with empty functions in order to prevent
+        // crashes later.
+        ev.preventDefault = () => {};
+        ev.stopPropagation = () => {};
+
+        // There's a chance the received response corresponds to a different event than the
+        // one that was originally sent (see comments in mouse event handlers in LayoutWorker.js).
+        mouseEventHandlers[eventName](ev, args);
+        if (eventName === "onClick") {
+          // Worker will send an "onClick" event if the mouse didn't move but in that
+          // case we will never get the "onMouseUp" one because of how promisses are handled.
+          // Therefore, we need to send the "onMouseUp" event manually.
+          mouseEventHandlers.onMouseUp(ev, args);
+        }
+      });
+  }, [mouseEventHandlers, rpc]);
+
+  const sendMouseUp = useCallback((e) => sendMouseEvent(e, "onMouseUp"), [sendMouseEvent]);
+  const sendMouseDown = useCallback((e) => sendMouseEvent(e, "onMouseDown"), [sendMouseEvent]);
+  const sendMouseMove = useCallback((e) => sendMouseEvent(e, "onMouseMove"), [sendMouseEvent]);
+  const sendDoubleClick = useCallback((e) => sendMouseEvent(e, "onDoubleClick"), [sendMouseEvent]);
+
+  const cameraListener = useRef();
+  const cameraStore = useMemo(() => {
+    return new CameraStore((newCameraState) => {
+      if (onCameraStateChange) {
+        onCameraStateChange(newCameraState);
+      }
+    }, cameraState || DEFAULT_CAMERA_STATE);
+  }, [cameraState, onCameraStateChange]);
+
   return (
     <ThreeDimensionalVizContext.Provider value={threeDimensionalVizContextValue}>
       <TopicTreeContext.Provider value={topicTreeData}>
@@ -672,7 +945,7 @@ export default function Layout({
           />
           <div style={{ position: "absolute", width: "100%", height: "100%" }}>
             {isDemoMode && DemoModeComponent && <DemoModeComponent />}
-            <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
+            <div style={{ ...VIDEO_RECORDING_STYLE, position: "relative", width: "100%", height: "100%" }}>
               {(!isDemoMode || (isDemoMode && isHovered)) && (
                 <Dimensions>
                   {({ width: containerWidth, height: containerHeight }) => (
@@ -715,6 +988,7 @@ export default function Layout({
                   hasFeatureColumn={hasFeatureColumn}
                   setCurrentEditingTopic={setCurrentEditingTopic}
                   sceneBuilderMessage={
+                    sceneBuilder &&
                     sceneBuilder.collectors[currentEditingTopic.name] &&
                     sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
                   }
@@ -742,69 +1016,143 @@ export default function Layout({
             </div>
           </div>
           <div className={styles.world}>
-            <World
-              key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
-              autoTextBackgroundColor={!!autoTextBackgroundColor}
-              cameraState={cameraState}
-              isPlaying={!!isPlaying}
-              isDemoMode={isDemoMode}
-              markerProviders={markerProviders}
-              onCameraStateChange={onCameraStateChange}
-              diffModeEnabled={hasFeatureColumn && diffModeEnabled}
-              onClick={onClick}
-              onDoubleClick={onDoubleClick}
-              onMouseDown={onMouseDown}
-              onMouseMove={onMouseMove}
-              onMouseUp={onMouseUp}
-              searchTextOpen={searchTextOpen}
-              searchText={searchText}
-              setSearchTextMatches={setSearchTextMatches}
-              searchTextMatches={searchTextMatches}
-              selectedMatchIndex={selectedMatchIndex}>
-              {mapElement}
-              {children}
-              <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
-              <div style={videoRecordingStyle}>
-                <LayoutToolbar
+            {useWorkerIn3DPanel && rpc ? (
+              <Dimensions>
+                {({ width, height }) => (
+                  <Flex col style={{ position: "relative" }}>
+                    <>
+                      <CameraListener cameraStore={cameraStore} shiftKeys={true} ref={cameraListener}>
+                        <canvas
+                          id="sceneViewerCanvas"
+                          ref={setCanvasRef}
+                          style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
+                          width={width}
+                          height={height}
+                          onMouseUp={sendMouseUp}
+                          onMouseDown={sendMouseDown}
+                          onDoubleClick={sendDoubleClick}
+                          onMouseMove={sendMouseMove}
+                        />
+                      </CameraListener>
+                      {children}
+                      <IconOverlay
+                        onIconClick={onIconClick}
+                        rpc={rpc}
+                        cameraDistance={cameraState.distance || DEFAULT_CAMERA_STATE.distance}
+                      />
+                      <div style={VIDEO_RECORDING_STYLE}>
+                        <LayoutToolbar
+                          cameraState={cameraState}
+                          interactionsTabType={interactionsTabType}
+                          setInteractionsTabType={setInteractionsTabType}
+                          debug={debug}
+                          followOrientation={followOrientation}
+                          followTf={followTf}
+                          isPlaying={isPlaying}
+                          measureInfo={measureInfo}
+                          measuringElRef={measuringElRef}
+                          onAlignXYAxis={onAlignXYAxis}
+                          onCameraStateChange={onCameraStateChange}
+                          autoSyncCameraState={!!autoSyncCameraState}
+                          onFollowChange={onFollowChange}
+                          onSetDrawingTabType={setDrawingTabType}
+                          onSetPolygons={onSetPolygons}
+                          onToggleCameraMode={toggleCameraMode}
+                          onToggleDebug={toggleDebug}
+                          polygonBuilder={polygonBuilder}
+                          saveConfig={saveConfig}
+                          selectedObject={selectedObject}
+                          selectedPolygonEditFormat={selectedPolygonEditFormat}
+                          setMeasureInfo={setMeasureInfo}
+                          showCrosshair={showCrosshair}
+                          targetPose={targetPose}
+                          transforms={transforms}
+                          isHidden={isHidden}
+                          {...searchTextProps}
+                        />
+                      </div>
+                      {clickedObjects.length > 1 && !selectedObject && (
+                        <InteractionContextMenu
+                          clickedPosition={clickedPosition}
+                          clickedObjects={clickedObjects}
+                          selectObject={selectObject}
+                        />
+                      )}
+                      {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+                    </>
+                  </Flex>
+                )}
+              </Dimensions>
+            ) : (
+              <WorldContext.Provider value={worldContextValue}>
+                <World
+                  key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
+                  autoTextBackgroundColor={!!autoTextBackgroundColor}
                   cameraState={cameraState}
-                  interactionsTabType={interactionsTabType}
-                  setInteractionsTabType={setInteractionsTabType}
-                  debug={debug}
-                  followOrientation={followOrientation}
-                  followTf={followTf}
-                  isPlaying={isPlaying}
-                  measureInfo={measureInfo}
-                  measuringElRef={measuringElRef}
-                  onAlignXYAxis={onAlignXYAxis}
+                  isPlaying={!!isPlaying}
+                  isDemoMode={isDemoMode}
+                  markerProviders={markerProviders}
                   onCameraStateChange={onCameraStateChange}
-                  autoSyncCameraState={!!autoSyncCameraState}
-                  onFollowChange={onFollowChange}
-                  onSetDrawingTabType={setDrawingTabType}
-                  onSetPolygons={onSetPolygons}
-                  onToggleCameraMode={toggleCameraMode}
-                  onToggleDebug={toggleDebug}
-                  polygonBuilder={polygonBuilder}
-                  saveConfig={saveConfig}
-                  selectedObject={selectedObject}
-                  selectedPolygonEditFormat={selectedPolygonEditFormat}
-                  setMeasureInfo={setMeasureInfo}
+                  diffModeEnabled={hasFeatureColumn && diffModeEnabled}
+                  onClick={onClick}
+                  onIconClick={onIconClick}
+                  onDoubleClick={onDoubleClick}
+                  onMouseDown={onMouseDown}
+                  onMouseMove={onMouseMove}
+                  onMouseUp={onMouseUp}
+                  hooks={sceneBuilderHooks}
+                  searchTextOpen={searchTextOpen}
+                  searchText={searchText}
+                  setSearchTextMatches={setSearchTextMatches}
+                  searchTextMatches={searchTextMatches}
+                  selectedMatchIndex={selectedMatchIndex}
                   showCrosshair={showCrosshair}
-                  targetPose={targetPose}
-                  transforms={transforms}
-                  rootTf={rootTf}
-                  isHidden={isHidden}
-                  {...searchTextProps}
-                />
-              </div>
-              {clickedObjects.length > 1 && !selectedObject && (
-                <InteractionContextMenu
-                  clickedPosition={clickedPosition}
-                  clickedObjects={clickedObjects}
-                  selectObject={selectObject}
-                />
-              )}
-              {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
-            </World>
+                  measurePoints={measureInfo.measurePoints}>
+                  {mapElement}
+                  {children}
+                  <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
+                  <div style={VIDEO_RECORDING_STYLE}>
+                    <LayoutToolbar
+                      cameraState={cameraState}
+                      interactionsTabType={interactionsTabType}
+                      setInteractionsTabType={setInteractionsTabType}
+                      debug={debug}
+                      followOrientation={followOrientation}
+                      followTf={followTf}
+                      isPlaying={isPlaying}
+                      measureInfo={measureInfo}
+                      measuringElRef={measuringElRef}
+                      onAlignXYAxis={onAlignXYAxis}
+                      onCameraStateChange={onCameraStateChange}
+                      autoSyncCameraState={!!autoSyncCameraState}
+                      onFollowChange={onFollowChange}
+                      onSetDrawingTabType={setDrawingTabType}
+                      onSetPolygons={onSetPolygons}
+                      onToggleCameraMode={toggleCameraMode}
+                      onToggleDebug={toggleDebug}
+                      polygonBuilder={polygonBuilder}
+                      saveConfig={saveConfig}
+                      selectedObject={selectedObject}
+                      selectedPolygonEditFormat={selectedPolygonEditFormat}
+                      setMeasureInfo={setMeasureInfo}
+                      showCrosshair={showCrosshair}
+                      targetPose={targetPose}
+                      transforms={transforms}
+                      isHidden={isHidden}
+                      {...searchTextProps}
+                    />
+                  </div>
+                  {clickedObjects.length > 1 && !selectedObject && (
+                    <InteractionContextMenu
+                      clickedPosition={clickedPosition}
+                      clickedObjects={clickedObjects}
+                      selectObject={selectObject}
+                    />
+                  )}
+                  {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+                </World>
+              </WorldContext.Provider>
+            )}
           </div>
         </div>
       </TopicTreeContext.Provider>

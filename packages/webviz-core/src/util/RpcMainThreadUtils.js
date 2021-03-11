@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import Rpc from "./Rpc";
-import logEvent from "webviz-core/src/util/logEvent";
+import { logEventForRpc } from "webviz-core/src/util/logEvent";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 // This function should be called inside the parent thread; it sets up receiving a message from the worker thread and
@@ -19,8 +19,8 @@ export function setupReceiveReportErrorHandler(rpc: Rpc) {
 }
 
 export function setupReceiveLogEventHandler(rpc: Rpc) {
-  rpc.receive("logEvent", (arg) => {
-    logEvent(arg);
+  rpc.receive("logEvent", ({ type, params }) => {
+    logEventForRpc(type, params);
   });
 }
 

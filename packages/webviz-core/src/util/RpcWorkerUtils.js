@@ -30,8 +30,19 @@ export function setupSendReportNotificationHandler(rpc: Rpc) {
 }
 
 export function setupLogEventHandler(rpc: Rpc) {
-  initializeLogEvent((param) => {
-    rpc.send("logEvent", param);
+  initializeLogEvent({
+    logEventAction: (...params) => {
+      rpc.send("logEvent", { type: "logEventAction", params });
+    },
+    logEventPerformance: (...params) => {
+      rpc.send("logEvent", { type: "logEventPerformance", params });
+    },
+    logEventNavigation: (...params) => {
+      rpc.send("logEvent", { type: "logEventNavigation", params });
+    },
+    logEventError: (...params) => {
+      rpc.send("logEvent", { type: "logEventError", params });
+    },
   });
 }
 

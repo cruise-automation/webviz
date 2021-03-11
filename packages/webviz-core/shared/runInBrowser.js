@@ -19,7 +19,7 @@ import ServerLogger from "./ServerLogger";
 const log = new ServerLogger(__filename);
 
 type PageOptions = { captureLogs?: boolean, onLog: (string) => void, onError: (string) => void };
-type LayoutOptions = { panelLayout: ?MosaicNode, experimentalFeatureSettings?: ?string, filePaths: ?(string[]) };
+type LayoutOptions = { panelLayout: ?MosaicNode, experimentalFeaturesSettings?: ?string, filePaths: ?(string[]) };
 
 // Starts a puppeteer browser pointing at the URL. Sets the panel layout, dimensions, and drops in the bag if specified.
 // Takes an `onLoad` function that runs once the browser has initialized.
@@ -29,7 +29,7 @@ export default async function runInBrowser<T>({
   url,
   puppeteerLaunchConfig,
   panelLayout,
-  experimentalFeatureSettings,
+  experimentalFeaturesSettings,
   dimensions,
   loadBrowserTimeout,
   onLoad,
@@ -40,7 +40,7 @@ export default async function runInBrowser<T>({
   url: string,
   puppeteerLaunchConfig: any,
   panelLayout: ?MosaicNode,
-  experimentalFeatureSettings?: ?string, // JSON
+  experimentalFeaturesSettings?: ?string, // JSON
   dimensions: { width: number, height: number },
   loadBrowserTimeout: number,
   beforeLoad?: ({| page: Page |}) => Promise<void>,
@@ -67,7 +67,7 @@ export default async function runInBrowser<T>({
             browser,
             beforeLoad,
             pageLoadTimeout: loadBrowserTimeout,
-            layoutOptions: { panelLayout, filePaths, experimentalFeatureSettings },
+            layoutOptions: { panelLayout, filePaths, experimentalFeaturesSettings },
             pageOptions: { onLog, onError, captureLogs },
             url,
           }
@@ -236,20 +236,22 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
 
 // Sets the layout, experimental features, and triggers the bag drag-and-drop behavior
 export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
-  const { panelLayout, experimentalFeatureSettings, filePaths } = options;
+  const { panelLayout, experimentalFeaturesSettings, filePaths } = options;
 
   // Make sure the page is ready before proceeding.
   await page.waitForSelector(".app-container");
 
-  if (experimentalFeatureSettings) {
-    await page.evaluate(
-      (settings: any) => localStorage.setItem("experimentalFeaturesSettings", (settings: string)),
-      experimentalFeatureSettings
-    );
+  if (experimentalFeaturesSettings) {
+    try {
+      const experimentalFeatures = JSON.parse(experimentalFeaturesSettings);
+      await page.evaluate((features) => window.setExperimentalFeatures(features), experimentalFeatures);
+    } catch (error) {
+      console.error("Failed to parse experimentalFeaturesSettings JSON", error);
+    }
   }
 
   if (panelLayout) {
-    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
+    await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
   }
 
   if (filePaths && filePaths.length) {

@@ -9,110 +9,209 @@
 import type { Time } from "rosbag";
 
 import type { Message } from "webviz-core/src/players/types";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { deepParse, getBinaryData, getObjects, wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { getDatatypes } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
+import {
+  bobjectFieldNames,
+  deepParse,
+  getBinaryOffset,
+  getObjects,
+  isBobject,
+  wrapJsObject,
+} from "webviz-core/src/util/binaryObjects";
+import { getSourceData, type BobjectSourceData } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import Rpc from "webviz-core/src/util/Rpc";
 
-type CommonTransferData = $ReadOnly<{|
+type MessageDescriptorCommon = $ReadOnly<{|
+  datatype: string,
+  datatypesIndex: number,
+|}>;
+
+type BinaryMessageDescriptor = $ReadOnly<{|
+  ...MessageDescriptorCommon,
+  binaryDataIndex: number,
+  offset: number,
+|}>;
+
+type ParsedMessageDescriptor = $ReadOnly<{|
+  ...MessageDescriptorCommon,
+  message: any, // For deep-parsed fields
+  // Complex fields are for nested bobjects that contain binary data, either directly or at some
+  // deeper nesting level.
+  complexFields: { name: string, descriptor: BinaryMessageDescriptor | ParsedMessageDescriptor }[],
+|}>;
+type MessageDescriptor = BinaryMessageDescriptor | ParsedMessageDescriptor;
+
+type TransferData = $ReadOnly<{|
   action: string,
   topic: string,
   receiveTime: Time,
-  datatype: string,
-  datatypesIndex: number,
   additionalTransferables: any,
+  data: MessageDescriptor,
 |}>;
 
-type BinaryTransferData = $ReadOnly<{|
-  ...CommonTransferData,
-  offset: number,
-  type: "binary",
-|}>;
+// For a given topic, this tree contains paths through the data where mixed parsed/binary messages
+// have been seen. (Completely binary messages and completely parsed reverse-wrapped messages are
+// not specified.)
+// The current strategy is to search the first message seen in a topic for a given
+// BobjectRpcSender, and to stop searching when we see arrays or binary messages.
+type PartialBinaryDataLocations = { [field: string]: PartialBinaryDataLocations };
+type BinaryClassification = PartialBinaryDataLocations | "all_binary" | "all_parsed";
 
-type ParsedTransferData = $ReadOnly<{|
-  ...CommonTransferData,
-  message: any,
-  type: "parsed",
-|}>;
+function findBinaryDataLocationsImpl(bobject: any, sourceData: BobjectSourceData): BinaryClassification {
+  if (sourceData.buffer) {
+    return "all_binary";
+  }
+  const ret = {};
+  let containsBinary;
+  // Parsed message. Explore children.
+  for (const fieldName of bobjectFieldNames(bobject)) {
+    const fieldValue = bobject[fieldName]();
+    const fieldSourceData = fieldValue && getSourceData(Object.getPrototypeOf(fieldValue).constructor);
+    if (fieldSourceData) {
+      const childLocations = findBinaryDataLocationsImpl(fieldValue, fieldSourceData);
+      if (childLocations !== "all_parsed") {
+        containsBinary = true;
+        if (childLocations !== "all_binary") {
+          ret[fieldName] = childLocations;
+        }
+      }
+    }
+  }
+  return containsBinary ? ret : "all_parsed";
+}
 
-type TransferData = BinaryTransferData | ParsedTransferData;
+// Exported for tests
+export function findBinaryDataLocations(bobject: any): { value: ?PartialBinaryDataLocations } {
+  const sourceData = getSourceData(Object.getPrototypeOf(bobject).constructor);
+  const classification = sourceData ? findBinaryDataLocationsImpl(bobject, sourceData) : "all_parsed";
+  return { value: classification === "all_parsed" || classification === "all_binary" ? null : classification };
+}
 
-export class BobjectRpcSender {
+// The policy of this sender is to delete things from the receiving worker when they're garbage
+// collected in the sending thread. We might want to try some LRU scheme instead if this causes
+// issues later.
+class GarbageCollectedSender {
+  _map: WeakMap<any, number> = new WeakMap();
+  _registry: FinalizationRegistry;
   _rpc: Rpc;
-  // TODO(steel): Consider using WeakRefs so we can clean up datatypes in the Receiver when these
-  // values get garbage collected.
-  _datatypesIndices: WeakMap<RosDatatypes, number> = new WeakMap();
-  _numberOfDatatypesSent: number = 0;
-  // Note: We only keep a single "current" buffer/bigString per topic for simplicity. Normally it
-  // should be fast because we just send messages in time-order, and should be memory-efficient.
-  // We could do the same WeakRef strategy considered for datatypes to properly signal garbage
-  // collection, though.
-  _buffersByTopic: { [topic: string]: ArrayBuffer } = {};
 
   constructor(rpc: Rpc) {
     this._rpc = rpc;
+    this._registry = new FinalizationRegistry((index) => {
+      this._rpc.send<void>("$$remove_gc_item", { index });
+    });
+  }
+
+  // Sometimes we want to "put" an item that doesn't have a stable identity, but one of its children
+  // does. So let the user specify that child if they want.
+  async getIndex(item: any, identityItem: ?any = item): Promise<number> {
+    const storedIndex = this._map.get(identityItem);
+    if (storedIndex != null) {
+      return storedIndex;
+    }
+    const { index } = await this._rpc.send<{ index: number }>("$$add_gc_item", { item });
+    this._map.set(identityItem, index);
+    this._registry.register(identityItem, index);
+    return index;
+  }
+}
+
+class GarbageCollectedReceiver {
+  _storage: any[] = [];
+
+  constructor(rpc: Rpc) {
+    rpc.receive("$$add_gc_item", ({ item }) => {
+      this._storage.push(item);
+      return { index: this._storage.length - 1 };
+    });
+    rpc.receive("$$remove_gc_item", ({ index }) => {
+      this._storage[index] = null;
+    });
+  }
+
+  getItem(index: number) {
+    return this._storage[index];
+  }
+}
+
+export class BobjectRpcSender {
+  _rpc: Rpc;
+  _gcDataSender: GarbageCollectedSender;
+  _binaryStructureByTopic: { [topic: string]: { value: ?PartialBinaryDataLocations } } = {};
+
+  constructor(rpc: Rpc) {
+    this._rpc = rpc;
+    this._gcDataSender = new GarbageCollectedSender(rpc);
   }
 
   async send<T>(action: string, { topic, receiveTime, message }: Message, additionalTransferables: any): Promise<T> {
-    const messageDatatypeInfo = getDatatypes(Object.getPrototypeOf(message).constructor);
-    if (messageDatatypeInfo == null) {
+    const messageSourceData = getSourceData(Object.getPrototypeOf(message).constructor);
+    if (messageSourceData == null) {
       throw new Error("Missing datatypes for message. Likely not a bobject.");
     }
-    const [datatypes, datatype] = messageDatatypeInfo;
-    let datatypesIndex = this._datatypesIndices.get(datatypes);
-    if (datatypesIndex == null) {
-      datatypesIndex = this._numberOfDatatypesSent;
-      this._datatypesIndices.set(datatypes, datatypesIndex);
-      this._numberOfDatatypesSent += 1;
-      await this._rpc.send("$$transferDatatypes", datatypes);
-    }
-    const binaryData = getBinaryData(message);
-    if (binaryData == null) {
-      // Reverse-wrapped bobject. Deep parse to transfer.
-      const data = {
-        action,
-        topic,
-        receiveTime,
-        message: deepParse(message),
-        datatype,
-        datatypesIndex,
-        additionalTransferables,
-        type: "parsed",
-      };
-      return this._rpc.send<T>("$$transferBobject", data);
-    }
-    if (this._buffersByTopic[topic] !== binaryData.buffer) {
-      await this._rpc.send("$$transferBuffer", { buffer: binaryData.buffer, bigString: binaryData.bigString, topic });
-      this._buffersByTopic[topic] = binaryData.buffer;
-    }
-    const data = {
+    const binaryStructure = this._getBinaryStructure(topic, message).value;
+    const data: TransferData = {
       action,
       topic,
       receiveTime,
-      datatype,
-      datatypesIndex,
-      offset: binaryData.offset,
+      data: await this._getTransferData(message, binaryStructure, messageSourceData),
       additionalTransferables,
-      type: "binary",
     };
     return this._rpc.send<T>("$$transferBobject", data);
+  }
+
+  _getBinaryStructure(topic: string, message: any) {
+    const structure = this._binaryStructureByTopic[topic];
+    if (structure != null) {
+      return structure;
+    }
+    return (this._binaryStructureByTopic[topic] = findBinaryDataLocations(message));
+  }
+
+  async _getTransferData(
+    inputMessage: any,
+    binaryStructure: ?PartialBinaryDataLocations,
+    messageSourceData: BobjectSourceData
+  ) {
+    const { datatypes, datatype } = messageSourceData;
+    const datatypesIndex = await this._gcDataSender.getIndex(datatypes);
+    if (binaryStructure == null) {
+      // Fully binary or fully parsed. Need to check which one dynamically to be safe.
+      if (messageSourceData.buffer) {
+        const binaryDataIndex = await this._gcDataSender.getIndex(
+          { buffer: messageSourceData.buffer, bigString: messageSourceData.bigString },
+          messageSourceData.buffer
+        );
+        return { datatype, datatypesIndex, binaryDataIndex, offset: getBinaryOffset(inputMessage) };
+      }
+      return { datatype, datatypesIndex, message: deepParse(inputMessage), complexFields: [] };
+    }
+    // Mixed binary/parsed
+    const complexFields = [];
+    const message = {};
+    for (const fieldName of bobjectFieldNames(inputMessage)) {
+      const fieldValue = inputMessage[fieldName]();
+      const sourceData = fieldValue && getSourceData(Object.getPrototypeOf(fieldValue).constructor);
+      if (sourceData) {
+        complexFields.push({
+          name: fieldName,
+          descriptor: await this._getTransferData(fieldValue, binaryStructure[fieldName], sourceData),
+        });
+      } else {
+        message[fieldName] = isBobject(fieldValue) ? deepParse(fieldValue) : fieldValue;
+      }
+    }
+    return { datatype, datatypesIndex, message, complexFields };
   }
 }
 
 export class BobjectRpcReceiver {
   _rpc: Rpc;
-  _datatypes: RosDatatypes[] = [];
-  _buffersByTopic: { [topic: string]: $ReadOnly<{| buffer: ArrayBuffer, bigString: string |}> } = {};
   _receiveFunctions: { [action: string]: (TransferData) => Promise<any> } = {};
+  _gcDataReceiver: GarbageCollectedReceiver;
 
   constructor(rpc: Rpc) {
     this._rpc = rpc;
-    rpc.receive("$$transferDatatypes", async (datatypes) => {
-      this._datatypes.push(datatypes);
-    });
-    rpc.receive("$$transferBuffer", async ({ topic, buffer, bigString }) => {
-      this._buffersByTopic[topic] = { buffer, bigString };
-    });
+    this._gcDataReceiver = new GarbageCollectedReceiver(rpc);
     rpc.receive("$$transferBobject", async (transferData: TransferData) => {
       const receiveFunction = this._receiveFunctions[transferData.action];
       if (receiveFunction == null) {
@@ -128,7 +227,7 @@ export class BobjectRpcReceiver {
   // allows for more efficient parsed->parsed transfers, with no need to wrap/deepParse.
   receive(action: string, format: "parsed" | "bobject", callback: (Message, any) => Promise<any>) {
     this._receiveFunctions[action] = async (transferData) => {
-      const message = this._formatMessage(format, transferData);
+      const message = this._formatMessage(format, transferData.data);
       return callback(
         { topic: transferData.topic, receiveTime: transferData.receiveTime, message },
         transferData.additionalTransferables
@@ -136,22 +235,37 @@ export class BobjectRpcReceiver {
     };
   }
 
-  _formatMessage(format: "parsed" | "bobject", transferData: TransferData) {
-    if (format === "parsed" && transferData.type === "parsed") {
-      return transferData.message;
+  _decodeBinaryBobject(data: BinaryMessageDescriptor) {
+    const { datatypesIndex, datatype } = data;
+    const datatypes = this._gcDataReceiver.getItem(datatypesIndex);
+    const { buffer, bigString } = this._gcDataReceiver.getItem(data.binaryDataIndex);
+    return getObjects(datatypes, datatype, buffer, bigString, [data.offset])[0];
+  }
+
+  _decodeParsedBobject(data: ParsedMessageDescriptor) {
+    const { complexFields, datatypesIndex, datatype } = data;
+    const message = { ...data.message };
+    complexFields.forEach((field) => {
+      message[field.name] = this._decodeBobject(field.descriptor);
+    });
+    const datatypes = this._gcDataReceiver.getItem(datatypesIndex);
+    return wrapJsObject(datatypes, datatype, message);
+  }
+
+  _decodeBobject(data: MessageDescriptor) {
+    if (data.complexFields) {
+      return this._decodeParsedBobject(data);
     }
-    // Need to make a bobject.
-    const { datatypesIndex, datatype, topic } = transferData;
-    const bobject =
-      transferData.type === "parsed"
-        ? wrapJsObject(this._datatypes[datatypesIndex], datatype, transferData.message)
-        : getObjects(
-            this._datatypes[datatypesIndex],
-            datatype,
-            this._buffersByTopic[topic].buffer,
-            this._buffersByTopic[topic].bigString,
-            [transferData.offset]
-          )[0];
+    return this._decodeBinaryBobject(data);
+  }
+
+  _formatMessage(format: "parsed" | "bobject", descriptor: MessageDescriptor) {
+    if (format === "parsed" && descriptor.complexFields && descriptor.complexFields.length === 0) {
+      // Optimization: For pure-parsed bobjects that we want in parsed form, there's no need to wrap
+      // them.
+      return descriptor.message;
+    }
+    const bobject = this._decodeBobject(descriptor);
     return format === "parsed" ? deepParse(bobject) : bobject;
   }
 }

@@ -19,11 +19,11 @@ import styled from "styled-components";
 import uuid from "uuid";
 
 import styles from "./index.module.scss";
-import PlaybackBarHoverTicks from "./PlaybackBarHoverTicks";
 import { ProgressPlot } from "./ProgressPlot";
 import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
+import PlaybackBarHoverTicks from "webviz-core/src/components/HovarBar/PlaybackBarHoverTicks";
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";

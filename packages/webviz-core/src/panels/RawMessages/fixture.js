@@ -189,8 +189,9 @@ export const enumFixture = {
         { type: "uint8", name: "value", isArray: false },
       ],
     },
+    "baz/EnumArray": { fields: [{ type: "baz/enum", name: "arr", isArray: true }] },
   },
-  topics: [{ name: "/baz/enum", datatype: "baz/enum" }],
+  topics: [{ name: "/baz/enum", datatype: "baz/enum" }, { name: "/baz/enum_array", datatype: "baz/EnumArray" }],
   frame: {
     "/baz/enum": [
       {
@@ -198,6 +199,15 @@ export const enumFixture = {
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
           value: 2,
+        },
+      },
+    ],
+    "/baz/enum_array": [
+      {
+        topic: "/baz/enum_array",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          arr: [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }],
         },
       },
     ],

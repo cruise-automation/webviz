@@ -26,7 +26,7 @@ import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import GlobalVariables from "webviz-core/src/panels/GlobalVariables";
 import helpContent from "webviz-core/src/panels/GlobalVariables/index.help.md";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import logEvent, { getEventTags, getEventNames } from "webviz-core/src/util/logEvent";
+import { getEventTags, getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STitleBar = styled.div`
@@ -92,7 +92,7 @@ function GlobalVariablesMenu(props: Props) {
     setIsOpen((open) => !open);
     dispatch(addPanel(({ type: GlobalVariables.panelType, layout, tabId: null }: AddPanelPayload)));
 
-    logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: GlobalVariables.panelType } });
+    logEventAction(getEventInfos().PANEL_ADD, { [getEventTags().PANEL_TYPE]: GlobalVariables.panelType });
   }, [dispatch, layout]);
 
   const { globalVariables } = useGlobalVariables();

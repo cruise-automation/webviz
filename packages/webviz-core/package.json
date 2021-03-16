@@ -7,7 +7,9 @@
     "node": ">=10.22.0 <12"
   },
   "dependencies": {
+    "@cruise-automation/button": "0.0.7",
     "@cruise-automation/hooks": "0.0.1",
+    "@cruise-automation/tooltip": "0.0.7",
     "@mdi/svg": "5.7.55",
     "@sentry/browser": "5.11.0",
     "async-retry": "1.2.3",

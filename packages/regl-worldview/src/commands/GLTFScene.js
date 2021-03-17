@@ -40,12 +40,12 @@ function glConstantToRegl(value: ?number): ?string {
 
 // Default sampler set based on GLTF recommendations:
 // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#texture
-const DEFAULT_SAMPLER = {
+const getDefaultSampler = () => ({
   minFilter: WebGLRenderingContext.NEAREST_MIPMAP_LINEAR,
   magFilter: WebGLRenderingContext.LINEAR,
   wrapS: WebGLRenderingContext.REPEAT,
   wrapT: WebGLRenderingContext.REPEAT,
-};
+});
 
 const getSceneToDraw = ({ json }) => {
   if (json.scene != null) {
@@ -141,7 +141,7 @@ const drawModel = (regl) => {
     const textures =
       model.json.textures &&
       model.json.textures.map((textureInfo) => {
-        const sampler = textureInfo.sampler ? model.json.samplers[textureInfo.sampler] : DEFAULT_SAMPLER;
+        const sampler = textureInfo.sampler ? model.json.samplers[textureInfo.sampler] : getDefaultSampler();
         const bitmap = model.images && model.images[textureInfo.source];
         const texture = regl.texture({
           data: bitmap,

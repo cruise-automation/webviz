@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Topic, Message } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -99,7 +100,7 @@ export type NodeRegistration = {|
   nodeData: NodeData,
   inputs: $ReadOnlyArray<string>,
   output: Topic,
-  processMessage: (Message, GlobalVariables) => Promise<?Message>,
+  processMessages: (Message[], GlobalVariables) => Promise<Message[]>,
   terminate: () => void,
 |};
 
@@ -120,8 +121,13 @@ export type RegistrationOutput = {
 };
 
 export type ProcessMessageOutput = {
-  message: ?{},
+  message: ?Message,
   error: null | string,
   userNodeLogs: UserNodeLog[],
-  userNodeDiagnostics: Diagnostic[],
+};
+
+export type ProcessMessagesOutput = {
+  messages: Message[],
+  error: null | string,
+  userNodeLogs: UserNodeLog[],
 };

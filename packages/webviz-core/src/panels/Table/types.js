@@ -67,13 +67,14 @@ type ColumnInstance = {
   render(props: any): React.Element<any>,
   totalLeft: number,
   totalWidth: number,
-  getHeaderProps(props: {}): {},
+  getHeaderProps(): {},
   toggleHidden(hidden: boolean): void,
   getToggleHiddenProps(userProps: {}): {},
   // useSortBy properties.
   isSorted?: boolean,
   isSortedDesc?: boolean,
   getSortByToggleProps(): {},
+  getResizerProps(): {},
 };
 
 export type ColumnOptions = {|
@@ -133,6 +134,7 @@ export type CellSortBy = $ReadOnlyArray<{| id: string, desc?: boolean |}>;
 export type CellConfig = $ReadOnly<{|
   isExpanded?: boolean,
   sortBy: CellSortBy,
+  columnWidths?: { [id: string]: number },
   rowConfigs?: $ReadOnlyArray<RowConfig>,
 |}>;
 
@@ -148,3 +150,5 @@ export type Config = {|
   cellConfigs?: CellConfigs,
   columnConfigs?: ColumnConfigs,
 |};
+
+export type MutableColumnConfigs = $RecursiveMutable<ColumnConfigs>;

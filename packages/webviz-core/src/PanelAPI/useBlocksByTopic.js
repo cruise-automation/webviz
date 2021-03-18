@@ -62,8 +62,8 @@ const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
   const [id] = useState(() => uuid.v4());
   const { type: panelType = undefined } = useContext(PanelContext) || {};
 
-  const setSubscriptions = useMessagePipeline(
-    useCallback(({ setSubscriptions: pipelineSetSubscriptions }) => pipelineSetSubscriptions, [])
+  const { setSubscriptions } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ setSubscriptions: messagePipeline.setSubscriptions }), [])
   );
   const subscriptions: SubscribePayload[] = useMemo(() => {
     const requester = panelType ? { type: "panel", name: panelType } : undefined;
@@ -73,8 +73,8 @@ const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
   useCleanup(() => setSubscriptions(id, []));
 };
 
-function getBlocksFromPlayerState({ playerState }): ?$ReadOnlyArray<?MemoryCacheBlock> {
-  return playerState.progress.messageCache?.blocks;
+function getBlocksFromPlayerState({ playerState }): { allBlocks: ?$ReadOnlyArray<?MemoryCacheBlock> } {
+  return { allBlocks: playerState.progress.messageCache?.blocks };
 }
 
 // A note: for the moment,
@@ -90,7 +90,7 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
   useSubscribeToTopicsForBlocks(requestedTopics);
 
   // Get blocks for the topics
-  const allBlocks = useMessagePipeline<?$ReadOnlyArray<?MemoryCacheBlock>>(getBlocksFromPlayerState);
+  const { allBlocks } = useMessagePipeline<{ allBlocks: ?$ReadOnlyArray<?MemoryCacheBlock> }>(getBlocksFromPlayerState);
 
   return useMemo(() => {
     if (!allBlocks) {

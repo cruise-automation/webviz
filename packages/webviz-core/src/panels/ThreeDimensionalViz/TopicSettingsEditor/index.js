@@ -28,6 +28,9 @@ import {
   SENSOR_MSGS_LASER_SCAN_DATATYPE,
   WEBVIZ_MARKER_DATATYPE,
   WEBVIZ_3D_ICON_ARRAY_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
 } from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
@@ -126,8 +129,9 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
     [SENSOR_MSGS_LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
     [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
-    "visualization_msgs/Marker": MarkerSettingsEditor,
-    "visualization_msgs/MarkerArray": MarkerSettingsEditor,
+    [WEBVIZ_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS_MARKER_DATATYPE]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
     [WEBVIZ_3D_ICON_ARRAY_DATATYPE]: IconMarkerSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,
   };

@@ -101,10 +101,12 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
 function Internals(): React.Node {
   const { topics } = PanelAPI.useDataSourceInfo();
   const topicsByName = React.useMemo(() => getTopicsByTopicName(topics), [topics]);
-  const subscriptions = useMessagePipeline(
-    useCallback(({ subscriptions: pipelineSubscriptions }) => pipelineSubscriptions, [])
+  const { subscriptions, publishers } = useMessagePipeline(
+    useCallback(
+      (messagePipeline) => ({ subscriptions: messagePipeline.subscriptions, publishers: messagePipeline.publishers }),
+      []
+    )
   );
-  const publishers = useMessagePipeline(useCallback(({ publishers: pipelinePublishers }) => pipelinePublishers, []));
 
   const [groupedSubscriptions, subscriptionGroups] = React.useMemo(() => {
     const grouped = groupBy(subscriptions, getSubscriptionGroup);

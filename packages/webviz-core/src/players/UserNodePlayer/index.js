@@ -35,7 +35,7 @@ import {
   DiagnosticSeverity,
   ErrorCodes,
   type NodeRegistration,
-  type ProcessMessageOutput,
+  type ProcessMessagesOutput,
   type RegistrationOutput,
   Sources,
   type UserNodeLog,
@@ -64,22 +64,6 @@ const rpcFromNewSharedWorker = (worker) => {
   const rpc = new Rpc(port);
   setupReceiveReportErrorHandler(rpc);
   return rpc;
-};
-
-const getBobjectMessage = async (
-  datatypes: RosDatatypes,
-  datatype: string,
-  messagePromise: Promise<?Message>
-): Promise<?BobjectMessage> => {
-  const msg = await messagePromise;
-  if (!msg) {
-    return null;
-  }
-  return {
-    topic: msg.topic,
-    receiveTime: msg.receiveTime,
-    message: wrapJsObject(datatypes, datatype, msg.message),
-  };
 };
 
 // TODO: FUTURE - Performance tests
@@ -154,36 +138,41 @@ export default class UserNodePlayer implements Player {
       globalVariables: GlobalVariables,
       nodeRegistrations: NodeRegistration[]
     ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
-      const parsedMessagesPromises = [];
-      const bobjectPromises = [];
-
+      const nodesToRun = new Map<NodeRegistration, Message[]>();
       for (const message of bobjects) {
-        // BobjectRpc is currently not re-entrant: It has per-topic state, so we can't currently run multiple messages
-        // concurrently. This also helps us provide an ordering guarantee for stateful nodes.
-        // We run all nodes in parallel, but run all messages in series.
-        const messagePromises = [];
         for (const nodeRegistration of nodeRegistrations) {
           const subscriptions = this._subscribedFormatByTopic[nodeRegistration.output.name];
           if (subscriptions && nodeRegistration.inputs.includes(message.topic)) {
-            const messagePromise = nodeRegistration.processMessage(message, globalVariables);
-            messagePromises.push(messagePromise);
-            // There should be at most 2 subscriptions.
-            for (const format of subscriptions.values()) {
-              if (format === "parsedMessages") {
-                parsedMessagesPromises.push(messagePromise);
-              } else {
-                bobjectPromises.push(getBobjectMessage(datatypes, nodeRegistration.output.datatype, messagePromise));
-              }
-            }
+            const nodeInputMessages = nodesToRun.get(nodeRegistration) ?? [];
+            nodeInputMessages.push(message);
+            nodesToRun.set(nodeRegistration, nodeInputMessages);
           }
         }
-        await Promise.all(messagePromises);
       }
-      const [nodeParsedMessages, nodeBobjects] = await Promise.all([
-        (await Promise.all(parsedMessagesPromises)).filter(Boolean),
-        (await Promise.all(bobjectPromises)).filter(Boolean),
-      ]);
-
+      const nodeParsedMessages = [];
+      const nodeBobjects = [];
+      await Promise.all(
+        [...nodesToRun].map(async ([node, nodeInputMessages]) => {
+          const nodeMessages = await node.processMessages(nodeInputMessages, globalVariables);
+          // There should be at most 2 subscriptions -- parsed and/or bobject.
+          const subscriptions = this._subscribedFormatByTopic[node.output.name];
+          for (const format of subscriptions.values()) {
+            if (format === "parsedMessages") {
+              nodeMessages.forEach((msg) => {
+                nodeParsedMessages.push(msg);
+              });
+            } else {
+              nodeMessages.forEach((msg) => {
+                nodeBobjects.push({
+                  topic: msg.topic,
+                  receiveTime: msg.receiveTime,
+                  message: wrapJsObject(datatypes, node.output.datatype, msg.message),
+                });
+              });
+            }
+          }
+        })
+      );
       return {
         parsedMessages: parsedMessages
           .concat(nodeParsedMessages)
@@ -243,7 +232,7 @@ export default class UserNodePlayer implements Player {
       nodeData,
       inputs: inputTopics,
       output: { name: outputTopic, datatype: outputDatatype },
-      processMessage: async (message: Message, globalVariables: GlobalVariables) => {
+      processMessages: async (messages: Message[], globalVariables: GlobalVariables) => {
         // We allow _resetWorkers to "cancel" the processing by creating a new signal every time we process a message
         terminateSignal = signal<void>();
 
@@ -265,43 +254,39 @@ export default class UserNodePlayer implements Player {
                 code: ErrorCodes.RUNTIME,
               },
             ]);
-            return;
+            return [];
           }
           this._addUserNodeLogs(nodeId, userNodeLogs);
         }
 
-        const result = await Promise.race([
-          bobjectSender.send<ProcessMessageOutput>("processMessage", message, globalVariables),
+        for (const message of messages) {
+          // We send messages to workers in series to provide an ordering guarantee for stateful
+          // nodes.
+          const addMessageResult = await Promise.race([bobjectSender.send("addMessage", message), terminateSignal]);
+          if (!addMessageResult) {
+            return []; // reset
+          }
+        }
+        // TODO: FUTURE - surface runtime errors / infinite loop errors
+        const processMessagesResult = await Promise.race([
+          rpc.send<ProcessMessagesOutput>("processMessages", { globalVariables, outputTopic }),
           terminateSignal,
         ]);
-        if (!result) {
-          return;
+        if (!processMessagesResult) {
+          return []; // reset
         }
-
-        const diagnostics = result.error
-          ? [
-              {
-                source: Sources.Runtime,
-                severity: DiagnosticSeverity.Error,
-                message: result.error,
-                code: ErrorCodes.RUNTIME,
-              },
-            ]
-          : [];
-        if (diagnostics.length > 0) {
-          this._setUserNodeDiagnostics(nodeId, diagnostics);
+        if (processMessagesResult.error) {
+          this._setUserNodeDiagnostics(nodeId, [
+            {
+              source: Sources.Runtime,
+              severity: DiagnosticSeverity.Error,
+              message: processMessagesResult.error,
+              code: ErrorCodes.RUNTIME,
+            },
+          ]);
         }
-        this._addUserNodeLogs(nodeId, result.userNodeLogs);
-
-        // TODO: FUTURE - surface runtime errors / infinite loop errors
-        if (!result.message) {
-          return;
-        }
-        return {
-          topic: outputTopic,
-          receiveTime: message.receiveTime,
-          message: result.message,
-        };
+        this._addUserNodeLogs(nodeId, processMessagesResult.userNodeLogs);
+        return processMessagesResult.messages;
       },
       terminate: () => {
         terminateSignal.resolve();
@@ -328,10 +313,13 @@ export default class UserNodePlayer implements Player {
       // Pre and post-process the node's messages so the topics are correct
       const nodeRegistrationTwo = {
         ...nodeRegistrationTwoRaw,
-        processMessage: async (message: Message, globalVariables: GlobalVariables) => {
-          const inputMessage = { ...message, topic: message.topic.replace(SECOND_SOURCE_PREFIX, "") };
-          const originalMessage = await nodeRegistrationTwoRaw.processMessage(inputMessage, globalVariables);
-          return originalMessage ? { ...originalMessage, topic: outputTopic } : undefined;
+        processMessages: async (messages: Message[], globalVariables: GlobalVariables) => {
+          const inputMessages = messages.map((m) => ({
+            ...m,
+            topic: m.topic.replace(SECOND_SOURCE_PREFIX, ""),
+          }));
+          const originalMessages = await nodeRegistrationTwoRaw.processMessages(inputMessages, globalVariables);
+          return originalMessages.map((m) => ({ ...m, topic: outputTopic }));
         },
       };
       allNodeRegistrations.push(nodeRegistrationTwo);

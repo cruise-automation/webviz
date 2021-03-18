@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import BinaryMessageWriter from "webviz-core/src/util/binaryObjects/binaryTranslation";
-import { definitions } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils.test";
+import { definitions } from "webviz-core/src/util/binaryObjects/testUtils";
 
 // C++ module will output missing fields and types to the console
 // but the tests will fail in that case (and we don't always want that);

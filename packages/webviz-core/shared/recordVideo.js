@@ -24,16 +24,23 @@ const mkdir = util.promisify(fs.mkdir);
 const readFile = util.promisify(fs.readFile);
 const log = new ServerLogger(__filename);
 
+const baseUrlObject = new URL("http://localhost:3000/");
 const perFrameTimeoutMs = 3 * 60000; // 3 minutes
 const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
 
 async function recordVideo({
-  parallel,
+  speed = 1,
+  framerate = 30,
+  frameless = false,
+  dimensions = { width: 1920, height: 1080 },
+  crop,
+  parallel = 2,
   bagPath,
   url,
   puppeteerLaunchConfig,
+  layout,
   panelLayout,
   errorIsWhitelisted,
   experimentalFeaturesSettings,
@@ -41,15 +48,17 @@ async function recordVideo({
   bagPath?: ?string,
   url: string,
   puppeteerLaunchConfig?: any,
-  panelLayout?: any,
+  layout?: string, // A named layout to look up
+  panelLayout?: string, // A JSON string of the layout
   parallel?: number,
+  speed?: number,
+  framerate?: number,
+  frameless?: boolean,
   experimentalFeaturesSettings?: string,
+  dimensions?: { width: number, height: number },
+  crop?: { width: number, height: number, top: number, left: number },
   errorIsWhitelisted?: (string) => boolean,
 }): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
-  if (!url.includes("video-recording-mode")) {
-    throw new Error("`url` must contain video-recording-mode for `recordVideo` to work.");
-  }
-
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
 
@@ -59,17 +68,32 @@ async function recordVideo({
   let hasFailed = false;
   try {
     let msPerFrame;
-    const parallelTotal = parallel || 2;
-    const promises = new Array(parallelTotal).fill().map(async (_, parallelIndex) => {
-      const workerUrl = `${url}&video-recording-worker=${parallelIndex}/${parallelTotal}`;
+    const promises = new Array(parallel).fill().map(async (_, parallelIndex) => {
+      const urlObject = url ? new URL(url) : baseUrlObject;
+      // Update the base url to point to localhost if it's set to something else.
+      // We don't *always* set the host in order to allow urls using other local ports.
+      if (urlObject.hostname !== "localhost") {
+        Object.assign(urlObject, { host: baseUrlObject.host, protocol: baseUrlObject.protocol });
+      }
+      urlObject.searchParams.set("video-recording-mode", "1");
+      urlObject.searchParams.set("video-recording-speed", `${speed}`);
+      urlObject.searchParams.set("video-recording-framerate", `${framerate}`);
+      urlObject.searchParams.set("video-recording-worker", `${parallelIndex}/${parallel}`);
+      if (layout) {
+        urlObject.searchParams.set("layout", layout);
+      }
+      if (frameless) {
+        urlObject.searchParams.set("frameless", "1");
+      }
+
       return runInBrowser({
         filePaths: bagPath ? [bagPath] : undefined,
-        url: workerUrl,
+        url: urlObject.toString(),
         experimentalFeaturesSettings,
         puppeteerLaunchConfig,
         panelLayout,
         captureLogs: true,
-        dimensions: { width: 2560, height: 1424 },
+        dimensions: dimensions || { width: 1920, height: 1080 },
         loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
         beforeLoad: async ({ page }) => {
           const target = await page.target();
@@ -166,14 +190,14 @@ async function recordVideo({
                   // Take a screenshot, and then tell the client that we're done taking a screenshot,
                   // so it can continue executing.
                   const screenshotStartEpoch = Date.now();
-                  const screenshotIndex = i * parallelTotal + parallelIndex;
+                  const screenshotIndex = i * parallel + parallelIndex;
                   await page.screenshot({
                     path: `${screenshotsDir}/${screenshotIndex}.jpg`,
                     quality: 85,
                   });
                   await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
                   log.info(
-                    `[${parallelIndex}/${parallelTotal}] Screenshot ${screenshotIndex} took ${Date.now() -
+                    `[${parallelIndex}/${parallel}] Screenshot ${screenshotIndex} took ${Date.now() -
                       screenshotStartEpoch}ms`
                   );
                   i++;
@@ -196,18 +220,27 @@ async function recordVideo({
     }
     const imageCount = fs.readdirSync(screenshotsDir).length;
     const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.jpg`);
+    const outputFilename = "out.mp4";
 
     // Once we're finished, we're going to stitch all the individual screenshots together
     // into a video, with the framerate specified by the client (via `msPerFrame`).
-    const framerate = 1000 / msPerFrame;
     log.info(`Creating video with framerate ${framerate}fps (${msPerFrame}ms per frame)`);
     await exec(
-      `ffmpeg -y -framerate ${framerate} -i %d.jpg -c:v libx264 -preset faster -r ${framerate} -pix_fmt yuv420p out.mp4`,
+      [
+        `ffmpeg -y`,
+        `-framerate ${framerate}`,
+        `-i %d.jpg`,
+        crop ? `-vf "crop=${crop.width}:${crop.height}:${crop.left}:${crop.top}"` : "",
+        `-c:v libx264`,
+        `-preset faster`,
+        `-r ${framerate}`,
+        outputFilename,
+      ].join(" "),
       {
         cwd: screenshotsDir,
       }
     );
-    const videoPath = `${screenshotsDir}/out.mp4`;
+    const videoPath = `${screenshotsDir}/${outputFilename}`;
     log.info(`Video saved at ${videoPath}`);
 
     const videoFile = await readFile(videoPath);

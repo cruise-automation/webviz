@@ -32,7 +32,7 @@ import sendNotification, {
   detailsToString,
   setNotificationHandler,
 } from "webviz-core/src/util/sendNotification";
-import { clampTime, subtractTimes, toMillis } from "webviz-core/src/util/time";
+import { getSeekTimeFromSpec, clampTime, subtractTimes, toMillis, getSeekToTime } from "webviz-core/src/util/time";
 
 export interface AutomatedRunClient {
   speed: number;
@@ -65,6 +65,7 @@ export default class AutomatedRunPlayer implements Player {
   static className = "AutomatedRunPlayer";
   _isPlaying: boolean = false;
   _provider: DataProvider;
+  _startTime: Time;
   _providerResult: InitializationResult;
   _providerTopics: Topic[] = [];
   _progress: Progress;
@@ -255,16 +256,13 @@ export default class AutomatedRunPlayer implements Player {
       notifyPlayerManager: async () => {},
     });
     this._providerTopics = this._providerResult.topics.map((t) => ({ ...t, preloadable: true }));
-
+    this._startTime = getSeekTimeFromSpec(getSeekToTime(), this._providerResult.start, this._providerResult.end);
     await this._start();
   }
 
   async _start() {
     // Call _getMessages to start data loading and rendering for the first frame.
-    const { parsedMessages, bobjects } = await this._getMessages(
-      this._providerResult.start,
-      this._providerResult.start
-    );
+    const { parsedMessages, bobjects } = await this._getMessages(this._startTime, this._startTime);
     await this._emitState(parsedMessages, bobjects, this._providerResult.start);
     if (!this._startCalled) {
       this._client.markPreloadStart();
@@ -277,7 +275,7 @@ export default class AutomatedRunPlayer implements Player {
   async _onUpdateProgress() {
     if (this._client.shouldLoadDataBeforePlaying && this._providerResult != null) {
       // Update the view and do preloading calculations. Not necessary if we're already playing.
-      this._emitState([], [], this._providerResult.start);
+      this._emitState([], [], this._startTime);
     }
     this._maybeStartPlayback();
   }
@@ -311,13 +309,10 @@ export default class AutomatedRunPlayer implements Player {
     this._isPlaying = true;
     this._client.markPreloadEnd();
     console.log("AutomatedRunPlayer._run()");
-    await this._emitState([], [], this._providerResult.start);
 
-    let currentTime = this._providerResult.start;
-    const workerIndex = this._client.workerIndex ?? 0;
-    const workerCount = this._client.workerTotal ?? 1;
+    await this._emitState([], [], this._startTime);
 
-    const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._providerResult.start));
+    const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._startTime));
     this._client.start({ bagLengthMs });
 
     const startEpoch = Date.now();
@@ -325,7 +320,11 @@ export default class AutomatedRunPlayer implements Player {
 
     // We split up the frames between the workers,
     // so we need to advance time based on the number of workers
+    const workerIndex = this._client.workerIndex ?? 0;
+    const workerCount = this._client.workerTotal ?? 1;
     const nsFrameTimePerWorker = nsBagTimePerFrame * workerCount;
+
+    let currentTime = this._startTime;
     currentTime = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
 
     let frameCount = 0;
@@ -345,7 +344,7 @@ export default class AutomatedRunPlayer implements Player {
       this._client.markTotalFrameEnd();
       const frameRenderDurationMs = this._client.markFrameRenderEnd();
 
-      const bagTimeSinceStartMs = toMillis(subtractTimes(currentTime, this._providerResult.start));
+      const bagTimeSinceStartMs = toMillis(subtractTimes(currentTime, this._startTime));
       const percentComplete = bagTimeSinceStartMs / bagLengthMs;
       const msPerPercent = (Date.now() - startEpoch) / percentComplete;
       const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);

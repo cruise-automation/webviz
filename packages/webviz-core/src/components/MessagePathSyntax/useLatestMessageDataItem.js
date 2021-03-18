@@ -54,8 +54,8 @@ export function useLatestMessageDataItem(path: string, format: MessageFormat, bi
 
   // A backfill is not automatically requested when the above callbacks' identities change, so we
   // need to do that manually.
-  const requestBackfill = useMessagePipeline(
-    useCallback(({ requestBackfill: pipelineRequestBackfill }) => pipelineRequestBackfill, [])
+  const { requestBackfill } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ requestBackfill: messagePipeline.requestBackfill }), [])
   );
   if (useChangeDetector([cachedGetMessagePathDataItems, path], false)) {
     requestBackfill();

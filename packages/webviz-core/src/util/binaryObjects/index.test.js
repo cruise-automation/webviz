@@ -31,7 +31,7 @@ import {
   type HasConstant,
   type HasJson,
   type HasInt64s,
-} from "./messageDefinitionUtils.test";
+} from "./testUtils";
 import { cast } from "webviz-core/src/players/types";
 import type { BinaryHeader, BinaryTime } from "webviz-core/src/types/BinaryMessages";
 

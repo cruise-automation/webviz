@@ -616,12 +616,14 @@ export default class SceneBuilder implements MarkerProvider {
       if (message.icon_type != null) {
         marker.icon_type = message.icon_type();
       }
-      if (message.metadata != null) {
-        marker.metadata = message.metadata();
-        if (iconTextTemplate) {
-          // Replace the text field with parsed icon text.
-          marker.text = parseStringTemplate(iconTextTemplate, marker.metadata);
-        }
+    }
+
+    // TODO(Matt): show the original message upon marker click instead of parsing metadata upfront.
+    if (message.metadata != null) {
+      marker.metadata = message.metadata();
+      if (iconTextTemplate) {
+        // Replace the text field with parsed icon text.
+        marker.text = parseStringTemplate(iconTextTemplate, marker.metadata);
       }
     }
 

@@ -98,6 +98,14 @@ export function getBaseKey(key: string): string {
   return key.replace(SECOND_SOURCE_PREFIX, "").replace("name_2:", "name:");
 }
 
+const parseNamespaceKey = (key: string): { topicName: string, namespace: string } => {
+  const [ns, topicName, ...namespaceParts] = key.split(":");
+  if (ns !== "ns") {
+    throw new Error(`${JSON.stringify(key)} is not a namespace key`);
+  }
+  return { topicName, namespace: namespaceParts.join(":") };
+};
+
 export default function useTree({
   availableNamespacesByTopic,
   checkedKeys,
@@ -204,7 +212,7 @@ export default function useTree({
       if (!key.startsWith("ns:")) {
         return;
       }
-      const [_, topicName, namespace] = key.split(":");
+      const { topicName, namespace } = parseNamespaceKey(key);
       if (!topicName || !namespace) {
         throw new Error(`Incorrect checkedNode in panelConfig: ${key}`);
       }
@@ -348,8 +356,7 @@ export default function useTree({
   const checkedNamespacesByTopicName = useMemo(() => {
     const checkedNamespaces = filterMap(checkedKeys, (item) => {
       if (item.startsWith("ns:")) {
-        const [_, topicName, namespace] = item.split(":");
-        return { topicName, namespace };
+        return parseNamespaceKey(item);
       }
     });
     return keyBy(checkedNamespaces, "topicName");
@@ -456,7 +463,7 @@ export default function useTree({
       if (!modifiedNamespaceTopics.includes(prefixedTopicName)) {
         newModififiedNamespaceTopics = [...modifiedNamespaceTopics, prefixedTopicName];
       }
-      const namespace = nodeKey.split(":").pop();
+      const { namespace } = parseNamespaceKey(nodeKey);
       keyWithPrefix = generateNodeKey({ topicName: namespaceParentTopicName, namespace, isFeatureColumn });
     }
 

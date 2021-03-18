@@ -491,7 +491,9 @@ function ImageView(props: Props) {
   // Improve perf by hiding the ImageCanvas while seeking, instead of unmounting and remounting it.
   const imageMessageToRender = imageMessage || lastImageMessageRef.current;
 
-  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+  const { pauseFrame } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
+  );
   const onStartRenderImage = useCallback(() => {
     const resumeFrame = pauseFrame("ImageView");
     const onFinishRenderImage = () => {

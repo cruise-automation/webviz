@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
@@ -17,10 +17,16 @@ import { ndash } from "webviz-core/src/util/entities";
 
 export const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1", "2", "3", "5"];
 
-export default function PlaybackSpeedControls() {
+export default memo<{}>(function PlaybackSpeedControls() {
   const configSpeed = useSelector((state) => state.persistedState.panels.playbackConfig.speed);
-  const speed = useMessagePipeline(
-    useCallback(({ playerState }) => playerState.activeData && playerState.activeData.speed, [])
+  const { speed, setPlaybackSpeed } = useMessagePipeline(
+    useCallback(
+      ({ playerState, setPlaybackSpeed: pipelineSetPlaybackSpeed }) => ({
+        speed: playerState.activeData && playerState.activeData.speed,
+        setPlaybackSpeed: pipelineSetPlaybackSpeed,
+      }),
+      []
+    )
   );
   const { capabilities } = useDataSourceInfo();
   const canSetSpeed = capabilities.includes(PlayerCapabilities.setSpeed);
@@ -28,9 +34,6 @@ export default function PlaybackSpeedControls() {
   // TODO(JP): Might be nice to move all this logic a bit deeper down. It's a bit weird to be doing
   // all this in what's otherwise just a view component.
   const dispatch = useDispatch();
-  const setPlaybackSpeed = useMessagePipeline(
-    useCallback(({ setPlaybackSpeed: pipelineSetPlaybackSpeed }) => pipelineSetPlaybackSpeed, [])
-  );
   const setSpeed = useCallback((newSpeed) => {
     dispatch(setPlaybackConfig({ speed: newSpeed }));
     if (canSetSpeed) {
@@ -64,4 +67,4 @@ export default function PlaybackSpeedControls() {
       ))}
     </Dropdown>
   );
-}
+});

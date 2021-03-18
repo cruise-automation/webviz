@@ -1634,7 +1634,8 @@ describe("UserNodePlayer", () => {
 
       // We'll still call registerNode and processMessage for every emit()
       expect(callCount("registerNode")).toBe(5);
-      expect(callCount("processMessage")).toBe(5);
+      expect(callCount("addMessage")).toBe(5);
+      expect(callCount("processMessages")).toBe(5);
     });
   });
 });

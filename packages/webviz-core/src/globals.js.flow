@@ -6,6 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// A deep-recursive version of $ReadOnly<T>
+declare function makeReadonlyRecursive<O: {}>(O): $RecursiveReadOnly<O>;
+type $RecursiveReadOnly<O: { [key: string]: any }> = $ReadOnly<$ObjMap<O, typeof makeReadonlyRecursive>>;
+
+// A deep-recursive helper to make an object mutable using { ...T }
+declare function makeMutableRecursive<O: {}>(O): $RecursiveMutable<O>;
+type $RecursiveMutable<O: $ReadOnly<{}>> = { ...$ObjMap<O, typeof makeMutableRecursive> };
+
 declare type GitInfo = {
   hash: string,
   dirty: ?boolean,

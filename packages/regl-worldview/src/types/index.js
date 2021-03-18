@@ -47,7 +47,11 @@ export type Regl = {
   [subcommand: string]: (any) => any,
 };
 
-export type ReglFBOFn = (regl: Regl, buffer: ReglBuffer) => (width: number, height: number) => void;
+export type ReglFBOFn = (
+  regl: Regl,
+  source: ReglBuffer,
+  destination: ?ReglBuffer
+) => (width: number, height: number) => void;
 
 export type CommandProps = {
   [string]: any,

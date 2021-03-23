@@ -16,6 +16,7 @@ import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/T
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
+  BinaryPath,
   BinaryMarker,
   BinaryIconMarker,
   BinaryPolygonStamped,
@@ -45,6 +46,7 @@ import {
   VISUALIZATION_MSGS_MARKER_DATATYPE,
   VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
   POSE_STAMPED_DATATYPE,
+  NAV_MSGS_PATH_DATATYPE,
   NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
   POINT_CLOUD_DATATYPE,
   SENSOR_MSGS_LASER_SCAN_DATATYPE,
@@ -699,8 +701,10 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
 
+    const { overrideColor } = this._settingsByKey[`t:${topic}`] || {};
     const mappedMessage = {
       ...drawData,
+      ...(overrideColor ? { color: overrideColor } : undefined),
       type,
       pose,
       interactionData: { topic, originalMessage: originalMessage ?? drawData },
@@ -769,6 +773,25 @@ export default class SceneBuilder implements MarkerProvider {
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
+      case NAV_MSGS_PATH_DATATYPE: {
+        const pathStamped = cast<BinaryPath>(message);
+        if (pathStamped.poses().length() === 0) {
+          break;
+        }
+        const newMessage = {
+          header: deepParse(pathStamped.header()),
+          // Could convert to using arrow for pose later if needed.
+          points: pathStamped
+            .poses()
+            .toArray()
+            .map((pose) => deepParse(pose.pose().position())),
+          closed: false,
+          scale: { x: 0.2 },
+          color: { r: 1, g: 0, b: 0, a: 1 },
+        };
+        this._consumeNonMarkerMessage(topic, newMessage, MARKER_MSG_TYPES.LINE_STRIP, message);
+        break;
+      }
       case POINT_CLOUD_DATATYPE:
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;
@@ -789,7 +812,7 @@ export default class SceneBuilder implements MarkerProvider {
           scale: { x: 0.2 },
           color: { r: 0, g: 1, b: 0, a: 1 },
         };
-        this._consumeNonMarkerMessage(topic, newMessage, 4 /* line strip */, message);
+        this._consumeNonMarkerMessage(topic, newMessage, MARKER_MSG_TYPES.LINE_STRIP, message);
         break;
       }
       default: {

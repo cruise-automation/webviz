@@ -44,7 +44,7 @@ function usePlaybackMessage<T>(topic: string): ?T {
   return lastMessage.current;
 }
 
-export default function useBlockMessageByTopicWithFallback<T>(topic: string): ?T {
+export default function useArbitraryTopicMessage<T>(topic: string): ?T {
   const blocks = PanelAPI.useBlocksByTopic([topic]);
 
   const binaryBlocksMessage = useMemo(() => {

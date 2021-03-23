@@ -740,6 +740,13 @@ export default function Layout({
 
   // TODO(steel/hernan): Keep context updated in 3D panel worker.
   const worldContextValue = useWorldContextValue();
+  const stillMounted = useRef<boolean>(true); // To avoid late async updates.
+  useEffect(
+    () => () => {
+      stillMounted.current = false;
+    },
+    []
+  );
 
   const rpc = useMemo(() => {
     if (!useWorkerIn3DPanel) {
@@ -749,9 +756,11 @@ export default function Layout({
     const ret = new Rpc(new WorkerType());
     setupMainThreadRpc(ret);
     ret.receive("onAvailableNsAndErrors", async (props) => {
-      const { availableNamespacesByTopic: newAvailableNamespacesByTopic, errorsByTopic } = props;
-      updateWorkerAvailableNamespacesByTopic(newAvailableNamespacesByTopic);
-      updateWorkerErrorsByTopic(errorsByTopic);
+      if (stillMounted.current) {
+        const { availableNamespacesByTopic: newAvailableNamespacesByTopic, errorsByTopic } = props;
+        updateWorkerAvailableNamespacesByTopic(newAvailableNamespacesByTopic);
+        updateWorkerErrorsByTopic(errorsByTopic);
+      }
     });
     return ret;
   }, [updateWorkerAvailableNamespacesByTopic, updateWorkerErrorsByTopic, useWorkerIn3DPanel]);
@@ -814,7 +823,9 @@ export default function Layout({
         measurePoints: measureInfo.measurePoints,
         worldContextValue,
       });
-      updateSearchTextMatches(newSearchMatches);
+      if (stillMounted.current) {
+        updateSearchTextMatches(newSearchMatches);
+      }
       resumeFrame();
     }
   }, [
@@ -857,8 +868,11 @@ export default function Layout({
     if (canvas && !initialized && rpc) {
       // $FlowFixMe: flow does not recognize `transferControlToOffscreen`
       const transferableCanvas = canvas.transferControlToOffscreen();
-      rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]);
-      setInitialized(true);
+      rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]).then(() => {
+        if (stillMounted.current) {
+          setInitialized(true);
+        }
+      });
     } else {
       // TODO: handle unmount with `canvas === undefined`
     }
@@ -874,7 +888,7 @@ export default function Layout({
   });
 
   const sendMouseEvent = useCallback((e, mouseEventName) => {
-    if (!rpc) {
+    if (!rpc || !initialized) {
       return;
     }
 
@@ -890,6 +904,9 @@ export default function Layout({
         mouseEventName,
       })
       .then((props: any) => {
+        if (!props) {
+          return;
+        }
         const { eventName, ev, args } = props;
         if (args.ray) {
           const {
@@ -916,7 +933,7 @@ export default function Layout({
           mouseEventHandlers.onMouseUp(ev, args);
         }
       });
-  }, [mouseEventHandlers, rpc]);
+  }, [initialized, mouseEventHandlers, rpc]);
 
   const sendMouseUp = useCallback((e) => sendMouseEvent(e, "onMouseUp"), [sendMouseEvent]);
   const sendMouseDown = useCallback((e) => sendMouseEvent(e, "onMouseDown"), [sendMouseEvent]);

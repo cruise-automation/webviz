@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import React, { useCallback } from "react";
+import React, { useCallback, memo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
@@ -18,7 +18,7 @@ const messageOrderLabel = {
   headerStamp: "Header stamp",
 };
 
-export default function MessageOrderControls() {
+export default memo<{}>(function MessageOrderControls() {
   const messageOrder = useSelector((state) => state.persistedState.panels.playbackConfig.messageOrder);
   const dispatch = useDispatch();
   const setMessageOrder = useCallback((newMessageOrder) => {
@@ -44,4 +44,4 @@ export default function MessageOrderControls() {
       {noHeaderTopicsButton}
     </>
   );
-}
+});

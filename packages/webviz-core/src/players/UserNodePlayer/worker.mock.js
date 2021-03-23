@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isPlainObject } from "lodash";
+import { flatten, isPlainObject } from "lodash";
 
 import { processMessage, registerNode } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
@@ -49,9 +49,22 @@ export default class MockUserNodePlayerWorker {
     receiveAndLog("generateRosLib", generateRosLib);
     receiveAndLog("transform", transform);
     receiveAndLog("registerNode", registerNode);
-    new BobjectRpcReceiver(receiver).receive("processMessage", "parsed", async (message, globalVariables) => {
-      this.messageSpy("processMessage");
-      return processMessage({ message, globalVariables });
+    let messagesToProcess = [];
+    new BobjectRpcReceiver(receiver).receive("addMessage", "parsed", async (message) => {
+      this.messageSpy("addMessage");
+      messagesToProcess.push(message);
+      return true;
+    });
+    receiveAndLog("processMessages", ({ globalVariables, outputTopic }) => {
+      const results = messagesToProcess.map((message) => processMessage({ message, globalVariables, outputTopic }));
+      const lastError = results
+        .map(({ error }) => error)
+        .filter(Boolean)
+        .pop();
+      const logs = flatten(results.map(({ userNodeLogs }) => userNodeLogs));
+      const messages = results.map(({ message }) => message).filter(Boolean);
+      messagesToProcess = [];
+      return { error: lastError, userNodeLogs: logs, messages };
     });
   }
 

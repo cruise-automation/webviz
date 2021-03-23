@@ -5,7 +5,10 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { flatten } from "lodash";
+
 import { registerNode, processMessage } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
+import type { ProcessMessagesOutput } from "webviz-core/src/players/UserNodePlayer/types";
 import { BobjectRpcReceiver } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import Rpc from "webviz-core/src/util/Rpc";
 import { enforceFetchIsBlocked, inSharedWorker } from "webviz-core/src/util/workers";
@@ -25,8 +28,24 @@ global.onconnect = (e) => {
   const rpc = new Rpc(port);
   // Just check fetch is blocked on registration, don't slow down message processing.
   rpc.receive("registerNode", enforceFetchIsBlocked(registerNode));
-  new BobjectRpcReceiver(rpc).receive("processMessage", "parsed", async (message, globalVariables) =>
-    processMessage({ message, globalVariables })
+  let messagesToProcess = [];
+  new BobjectRpcReceiver(rpc).receive("addMessage", "parsed", async (message) => {
+    messagesToProcess.push(message);
+    return true;
+  });
+  rpc.receive(
+    "processMessages",
+    ({ globalVariables, outputTopic }): ProcessMessagesOutput => {
+      const results = messagesToProcess.map((message) => processMessage({ message, globalVariables, outputTopic }));
+      const lastError = results
+        .map(({ error }) => error)
+        .filter(Boolean)
+        .pop();
+      const logs = flatten(results.map(({ userNodeLogs }) => userNodeLogs));
+      const messages = results.map(({ message }) => message).filter(Boolean);
+      messagesToProcess = [];
+      return { error: lastError, userNodeLogs: logs, messages };
+    }
   );
   port.start();
 };

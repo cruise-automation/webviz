@@ -1374,7 +1374,6 @@ describe("RandomAccessPlayer", () => {
       [{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, { parsedMessages: ["/foo/bar"], bobjects: [] }],
     ]);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "hidden",
@@ -1390,7 +1389,6 @@ describe("RandomAccessPlayer", () => {
 
     store.reset(1);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "visible",

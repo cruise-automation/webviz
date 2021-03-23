@@ -69,6 +69,8 @@ export type Props = {
   transforms: Transforms,
 };
 
+const DEFAULT_TIME = { sec: 0, nsec: 0 };
+
 const BaseRenderer = (props: Props, ref) => {
   const {
     cleared,
@@ -82,11 +84,14 @@ const BaseRenderer = (props: Props, ref) => {
   } = props;
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
 
-  const currentTime = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => (activeData && activeData.currentTime) || { sec: 0, nsec: 0 }, [])
-  );
-  const isPlaying = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => !!(activeData && activeData.isPlaying), [])
+  const { currentTime, isPlaying } = useMessagePipeline(
+    useCallback(
+      ({ playerState: { activeData } }) => ({
+        currentTime: (activeData && activeData.currentTime) || DEFAULT_TIME,
+        isPlaying: !!(activeData && activeData.isPlaying),
+      }),
+      []
+    )
   );
 
   // We use useState to store the cameraState instead of using config directly in order to

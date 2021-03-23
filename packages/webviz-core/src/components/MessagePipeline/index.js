@@ -66,8 +66,10 @@ export type MessagePipelineContext = {|
 
 const Context = createSelectableContext<MessagePipelineContext>();
 
+const options = { enableShallowMemo: true };
+// Note that this selector always uses shallow memo to test whether its results are equal.
 export function useMessagePipeline<T>(selector: (MessagePipelineContext) => T | BailoutToken): T {
-  return useContextSelector(Context, selector);
+  return useContextSelector(Context, selector, options);
 }
 
 function defaultPlayerState(): PlayerState {

@@ -764,17 +764,24 @@ export default function Layout({
   const canvasRef = useRef();
   const [initialized, setInitialized] = useState(false);
 
-  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const updateViewport = useCallback((newViewport) => {
+    setViewport((oldViewport) => (isEqual(oldViewport, newViewport) ? oldViewport : newViewport));
+  }, [setViewport]);
+
+  const { pauseFrame } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
+  );
 
   useMemo(async () => {
     if (workerDataSender && canvasRef.current && initialized) {
-      const canvas = canvasRef.current;
       // This process is async, so we must use message pipeline to pause/resume playback
       if (!frame || !rootTf) {
         return;
       }
+
       const resumeFrame = pauseFrame("3DPanel/Layout");
-      const { width, height } = canvas.getBoundingClientRect();
+      const { width, height } = viewport;
       const topicsByTopicName = getTopicsByTopicName(topics);
       const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
       const { searchTextMatches: newSearchMatches } = await workerDataSender.renderFrame({
@@ -813,12 +820,13 @@ export default function Layout({
   }, [
     workerDataSender,
     initialized,
-    pauseFrame,
-    cleared,
     frame,
     rootTf,
+    pauseFrame,
+    viewport,
     topics,
     selectedTopicNames,
+    cleared,
     playerId,
     flattenMarkers,
     selectedNamespacesByTopic,
@@ -841,8 +849,8 @@ export default function Layout({
     polygonBuilder.polygons,
     forcedUpdate,
     measureInfo.measurePoints,
-    updateSearchTextMatches,
     worldContextValue,
+    updateSearchTextMatches,
   ]);
 
   const setCanvasRef = useCallback((canvas) => {
@@ -1021,6 +1029,7 @@ export default function Layout({
                 {({ width, height }) => (
                   <Flex col style={{ position: "relative" }}>
                     <>
+                      {updateViewport({ width, height })}
                       <CameraListener cameraStore={cameraStore} shiftKeys={true} ref={cameraListener}>
                         <canvas
                           id="sceneViewerCanvas"

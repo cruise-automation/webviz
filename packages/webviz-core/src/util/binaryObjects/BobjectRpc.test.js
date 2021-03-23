@@ -15,7 +15,7 @@ import {
   findBinaryDataLocations,
 } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import { getSourceData } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
-import { definitions, type HasComplexAndArray } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils.test";
+import { definitions, type HasComplexAndArray } from "webviz-core/src/util/binaryObjects/testUtils";
 import Rpc, { createLinkedChannels } from "webviz-core/src/util/Rpc";
 
 const datatype = "fake_msgs/HasComplexAndArray";

@@ -512,7 +512,7 @@ export default class RandomAccessPlayer implements Player {
     // clear out last tick millis so we don't read a huge chunk when we unpause
     this._lastTickMillis = undefined;
     this._isPlaying = false;
-    this._emitState(true);
+    this._emitState();
   }
 
   setPlaybackSpeed(speed: number): void {

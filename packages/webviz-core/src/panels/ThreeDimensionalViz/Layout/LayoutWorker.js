@@ -392,6 +392,9 @@ class LayoutWorker {
 
     this.canvas.width = width;
     this.canvas.height = height;
+    this.canvas.clientWidth = width;
+    this.canvas.clientHeight = height;
+
     this.rendererCallbacks.setState({
       cameraState,
       cleared,

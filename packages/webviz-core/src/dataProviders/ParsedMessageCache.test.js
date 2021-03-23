@@ -13,7 +13,7 @@ import ParsedMessageCache, { CACHE_SIZE_BYTES } from "webviz-core/src/dataProvid
 import { cast } from "webviz-core/src/players/types";
 import type { BinaryHeader } from "webviz-core/src/types/BinaryMessages";
 import { getObject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { definitions } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils.test";
+import { definitions } from "webviz-core/src/util/binaryObjects/testUtils";
 
 describe("parsedMessageCache", () => {
   it("does some basic caching of messages", async () => {

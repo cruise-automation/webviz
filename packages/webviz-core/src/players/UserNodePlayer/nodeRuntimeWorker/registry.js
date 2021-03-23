@@ -8,6 +8,7 @@
 import path from "path";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { Message } from "webviz-core/src/players/types";
 import type { ProcessMessageOutput, RegistrationOutput } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
@@ -114,12 +115,13 @@ export const registerNode = ({
 export const processMessage = ({
   message,
   globalVariables,
+  outputTopic,
 }: {
-  message: {},
+  message: Message,
   globalVariables: GlobalVariables,
+  outputTopic: string,
 }): ProcessMessageOutput => {
   const userNodeLogs = [];
-  const userNodeDiagnostics = [];
   self.log = function(...args) {
     // recursively check that args do not contain a function declaration
     if (containsFuncDeclaration(args)) {
@@ -130,7 +132,11 @@ export const processMessage = ({
   };
   try {
     const newMessage = nodeCallback(message, globalVariables);
-    return { message: newMessage, error: null, userNodeLogs, userNodeDiagnostics };
+    return {
+      message: newMessage && { message: newMessage, receiveTime: message.receiveTime, topic: outputTopic },
+      error: null,
+      userNodeLogs,
+    };
   } catch (e) {
     // TODO: Be able to map line numbers from errors.
     const error = e.toString();
@@ -138,7 +144,6 @@ export const processMessage = ({
       message: null,
       error: error.length ? error : "Unknown error encountered running this node.",
       userNodeLogs,
-      userNodeDiagnostics,
     };
   }
 };

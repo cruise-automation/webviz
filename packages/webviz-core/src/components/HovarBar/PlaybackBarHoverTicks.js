@@ -49,7 +49,7 @@ type Props = {|
   componentId: string,
 |};
 
-export default React.memo<Props>(({ componentId }: Props) => {
+export default React.memo<Props>(function PlaybackBarHoverTicks({ componentId }: Props) {
   const { startTime, endTime } = useMessagePipeline(getStartAndEndTime);
   const [width, setWidth] = useState<?number>();
   const [height, setHeight] = useState<?number>();

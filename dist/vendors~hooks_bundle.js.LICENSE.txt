@@ -1134,6 +1134,8 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/RawMessagesIcons.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatus.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/GlobalVariableDropdown/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/Plot/PlotLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/IconTextMenu.js (referenced with cjs require) */

@@ -908,6 +908,8 @@ and limitations under the License.
 
 /*! uuid */
 
+/*! webviz-core/shared/signal */
+
 /*! webviz-core/src/dataProviders/MemoryCacheDataProvider */
 
 /*! webviz-core/src/filterMap */
@@ -1186,6 +1188,10 @@ and limitations under the License.
 
 /*!***********************************************!*\
   !*** ./node_modules/quickhull3d/dist/Face.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./packages/webviz-core/shared/signal.js ***!
   \***********************************************/
 
 /*!***********************************************!*\

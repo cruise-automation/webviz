@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { ConditionalFormat } from "webviz-core/src/panels/Table/types";
-import { updateConditionalFormat, evaluateCondition } from "webviz-core/src/panels/Table/utils";
+import { updateConditionalFormat, evaluateCondition, getLastAccessor } from "webviz-core/src/panels/Table/utils";
 
 describe("utils", () => {
   const basicConditionalFormat: ConditionalFormat = {
@@ -227,6 +227,18 @@ describe("utils", () => {
           },
         },
       });
+    });
+  });
+  describe("getLastAccessor", () => {
+    it("works for dot separated accessor paths", () => {
+      expect(getLastAccessor("a")).toEqual("a");
+      expect(getLastAccessor("col.a")).toEqual("a");
+      expect(getLastAccessor("col.col.a")).toEqual("a");
+    });
+    it("works for array indices", () => {
+      expect(getLastAccessor("a[0]")).toEqual("[0]");
+      expect(getLastAccessor("col[0]")).toEqual("[0]");
+      expect(getLastAccessor("col[0].col[0]")).toEqual("[0]");
     });
   });
 });

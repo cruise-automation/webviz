@@ -11,6 +11,7 @@ import AutomatedRunPlayer, { type AutomatedRunClient, AUTOMATED_RUN_START_DELAY 
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import { type Progress } from "webviz-core/src/players/types";
+import { SEEK_ON_START_NS } from "webviz-core/src/util/time";
 
 class TestRunClient implements AutomatedRunClient {
   speed = 1;
@@ -138,12 +139,12 @@ describe("AutomatedRunPlayer", () => {
       await delay(1);
     }
     expect(frames).toEqual([
-      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 10, nsec: 0 } },
-      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 30, nsec: 0 } },
-      { startTime: { sec: 30, nsec: 1 }, endTime: { sec: 50, nsec: 1 } },
-      { startTime: { sec: 50, nsec: 2 }, endTime: { sec: 70, nsec: 2 } },
-      { startTime: { sec: 70, nsec: 3 }, endTime: { sec: 90, nsec: 3 } },
-      { startTime: { sec: 90, nsec: 4 }, endTime: { sec: 100, nsec: 0 } },
+      { startTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS }, endTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS } },
+      { startTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS }, endTime: { sec: 30, nsec: 0 + SEEK_ON_START_NS } },
+      { startTime: { sec: 30, nsec: 1 + SEEK_ON_START_NS }, endTime: { sec: 50, nsec: 1 + SEEK_ON_START_NS } },
+      { startTime: { sec: 50, nsec: 2 + SEEK_ON_START_NS }, endTime: { sec: 70, nsec: 2 + SEEK_ON_START_NS } },
+      { startTime: { sec: 70, nsec: 3 + SEEK_ON_START_NS }, endTime: { sec: 90, nsec: 3 + SEEK_ON_START_NS } },
+      { startTime: { sec: 90, nsec: 4 + SEEK_ON_START_NS }, endTime: { sec: 100, nsec: 0 } },
     ]);
   });
 

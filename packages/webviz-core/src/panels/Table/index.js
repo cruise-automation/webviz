@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import DownArrow from "@mdi/svg/svg/arrow-down.svg";
+import UpArrow from "@mdi/svg/svg/arrow-up.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import MenuRightIcon from "@mdi/svg/svg/menu-right.svg";
 import MinusIcon from "@mdi/svg/svg/minus-box-outline.svg";
@@ -13,7 +15,7 @@ import PlusIcon from "@mdi/svg/svg/plus-box-outline.svg";
 import _ from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import { useTable, usePagination, useSortBy } from "react-table";
+import { useTable, usePagination, useSortBy, useBlockLayout, useFlexLayout, useResizeColumns } from "react-table";
 import styled from "styled-components";
 
 import helpContent from "./index.help.md";
@@ -37,60 +39,92 @@ import type {
   RowConfig,
   CellConfig,
 } from "webviz-core/src/panels/Table/types";
-import { getFormattedColor } from "webviz-core/src/panels/Table/utils";
+import { getFormattedColor, getLastAccessor } from "webviz-core/src/panels/Table/utils";
 import type { RosObject } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { createSelectableContext, useChangeDetector, useContextSelector } from "webviz-core/src/util/hooks";
-import { ROBOTO_MONO } from "webviz-core/src/util/sharedStyleConstants";
+import { ROBOTO_MONO, colors } from "webviz-core/src/util/sharedStyleConstants";
 import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
-export const STable = styled.table`
+const STable = styled.div`
   border: none;
   width: 100%;
+  font-size: 12px;
+  display: inline-block;
 `;
 
-export const STableRow = styled.tr`
-  background-color: ${({ index }: { index: number }) => (index % 2 === 0 ? "inherit" : toolsColorScheme.base.dark)};
+const STableRow = styled.div`
+  border-bottom: 1px solid ${colors.DARK3};
+  &:hover {
+    background-color: ${colors.DARK1};
+  }
 `;
 
-type STableHeaderProps = {|
-  id: string,
-  isSortedAsc: boolean,
-  isSortedDesc: boolean,
-|};
-
-export const STableHeader = styled.th`
-  border-bottom: ${({ isSortedAsc }: STableHeaderProps) =>
-    isSortedAsc ? `solid 3px ${toolsColorScheme.blue.medium}` : "none"};
-  border-top: ${({ isSortedDesc }: STableHeaderProps) =>
-    isSortedDesc ? `solid 3px ${toolsColorScheme.blue.medium}` : "none"}
+const STableHeader = styled.div`
+  background-color: ${toolsColorScheme.base.dark};
   border-left: none;
   border-right: none;
-  font-weight: bold;
-  cursor: pointer;
-  width: ${({ id }: STableHeaderProps) => (id === "expander" ? "25px" : "auto")};
   text-align: left;
+  padding: 4px 0 4px 8px;
+  position: relative;
+  height: 22px;
+  vertical-align: middle;
 `;
 
-export const STableData = styled.td`
-  padding: 4px;
-  white-space: nowrap;
+const SCell = styled.span`
+  padding: 4px 0 4px 8px;
+  display: block;
+  width: 100%;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const SPrimitiveCell = styled(SCell)`
+  font-family: ${({ value }: { value: string | number }) => (typeof value === "number" ? ROBOTO_MONO : "inherit")};
+`;
+
+const SObjectCell = styled(SCell)`
+  font-style: italic;
+  cursor: pointer;
 `;
 
 const STableContainer = styled.div`
   overflow: auto;
-  display: flex;
-  flex-direction: column;
-  font-family: ${ROBOTO_MONO};
+`;
+
+const SNavigation = styled.div`
+  margin: 4px 0 0;
+
+  button,
+  select {
+    padding: 4px 8px;
+  }
+`;
+
+const STableHeaderBorder = styled.div`
+  position: absolute;
+  right: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 10px;
+  &:after {
+    content: "";
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    width: 2px;
+    background-color: ${colors.TEXT_MUTED};
+  }
 `;
 
 // Accessor paths are a little like message paths. The accessor path for /foo.bar[0].baz.quux[1] is
 // "bar[0].baz[0].quux[1]". Note the strange "[0]" after ".baz" -- nested objects make single-row
 // tables.
-function sanitizeAccessorPath(accessorPath) {
+const sanitizeAccessorPath = (accessorPath) => {
   return accessorPath.replace(/\./g, "-").replace(/[[\]]/g, "");
-}
+};
 
 const ALL_INDICES = /\[\d+\]/g;
 const accessorPathToGenericPath = (path: string) => path.replace(ALL_INDICES, "");
@@ -100,8 +134,9 @@ const NO_SORT = [];
 
 const ConfigContext = createSelectableContext<Config>();
 
-const DEFAULT_CELL: CellConfig = { sortBy: [] };
+const DEFAULT_CELL: CellConfig = { sortBy: [], columnWidths: {} };
 const DEFAULT_ROW: RowConfig = Object.freeze({});
+const DEFAULT_COLUMN_WIDTHS = Object.freeze({});
 const updateCell = (config: Config, accessorPath: string, newCellConfig: $Shape<CellConfig>) => {
   const newCell = { ...DEFAULT_CELL, ...config.cellConfigs?.[accessorPath], ...newCellConfig };
   return { ...config, cellConfigs: { ...config.cellConfigs, [accessorPath]: newCell } };
@@ -121,7 +156,12 @@ const useIsRowExpanded = (accessorPath, rowIndex) =>
     ])
   );
 
-function getColumnsFromObject(obj: RosObject, accessorPath: string, updateConfig: UpdateConfig): ColumnOptions[] {
+function getColumnsFromObject(
+  obj: RosObject,
+  accessorPath: string,
+  updateConfig: UpdateConfig,
+  columnWidths: { [id: string]: number }
+): ColumnOptions[] {
   const isTopLevelTable = !accessorPath;
   const columns = [
     ...Object.keys(obj).map((accessor) => {
@@ -130,15 +170,20 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string, updateConfig
         Header: accessor,
         accessor,
         id,
+        minWidth: 30,
+        width: columnWidths[getLastAccessor(id)] ?? 100,
         // eslint-disable-next-line react/display-name
         Cell: ({ value, row }) => {
-          const conditonalFormats = useContextSelector(ConfigContext, (config) => {
-            const columnConfigs = config?.columnConfigs;
-            return columnConfigs ? columnConfigs[accessorPathToGenericPath(id)]?.conditionalFormats : null;
-          });
+          const conditonalFormats = useContextSelector(
+            ConfigContext,
+            React.useCallback((config) => {
+              const columnConfigs = config?.columnConfigs;
+              return columnConfigs ? columnConfigs[accessorPathToGenericPath(id)]?.conditionalFormats : null;
+            }, [])
+          );
 
           if (Array.isArray(value) && typeof value[0] !== "object") {
-            return JSON.stringify(value);
+            return <SCell>{JSON.stringify(value)}</SCell>;
           }
 
           if (typeof value === "object" && value !== null) {
@@ -148,7 +193,7 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string, updateConfig
 
           const color = getFormattedColor(value, conditonalFormats);
           // In case the value is null.
-          return <span style={{ color }}>{`${value}`}</span>;
+          return <SPrimitiveCell style={{ color }}>{`${value}`}</SPrimitiveCell>;
         },
       };
     }),
@@ -156,6 +201,8 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string, updateConfig
   if (isTopLevelTable) {
     columns.unshift({
       id: "expander",
+      maxWidth: 30,
+      minWidth: 30,
       // eslint-disable-next-line react/display-name
       Cell: ({ row }) => {
         const isExpanded = useIsRowExpanded(accessorPath, row.index);
@@ -175,9 +222,54 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string, updateConfig
   return columns;
 }
 
+const HeaderCell = ({
+  column,
+  updateConfig,
+  tableAccessorPath,
+}: {|
+  column: any,
+  updateConfig: UpdateConfig,
+  tableAccessorPath: string,
+|}) => {
+  const sanitizedId = sanitizeAccessorPath(column.id);
+
+  if (useChangeDetector([column.isResizing], false) && !column.isResizing) {
+    updateConfig((config) => {
+      return updateCell(config, tableAccessorPath, {
+        columnWidths: {
+          ...config.cellConfigs?.[tableAccessorPath]?.columnWidths,
+          [getLastAccessor(column.id)]: column.width,
+        },
+      });
+    });
+  }
+
+  return (
+    <STableHeader
+      className="th"
+      key={column.id}
+      data-test={`column-header-${sanitizedId}`}
+      {...column.getHeaderProps()}>
+      <span style={{ cursor: "pointer" }} {...column.getSortByToggleProps()} data-test={`sort-${sanitizedId}`}>
+        {column.render("Header")}
+      </span>
+      {column.isSorted ? <Icon>{column.isSortedDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
+      <STableHeaderBorder {...column.getResizerProps()} />
+    </STableHeader>
+  );
+};
+
 const Table = React.memo(
   ({ value, accessorPath, updateConfig }: {| value: mixed, accessorPath: string, updateConfig: UpdateConfig |}) => {
     const isNested = !!accessorPath;
+
+    const columnWidths = useContextSelector(
+      ConfigContext,
+      React.useCallback((config) => {
+        return config.cellConfigs?.[accessorPathToGenericPath(accessorPath)]?.columnWidths ?? DEFAULT_COLUMN_WIDTHS;
+      }, [accessorPath])
+    );
+
     const columns = React.useMemo(() => {
       if (
         value === null ||
@@ -190,33 +282,33 @@ const Table = React.memo(
       const rosObject: RosObject = ((Array.isArray(value) ? value[0] || {} : value): any);
 
       // Strong assumption about structure of data.
-      return getColumnsFromObject(rosObject, accessorPath, updateConfig);
-    }, [accessorPath, updateConfig, value]);
+      return getColumnsFromObject(rosObject, accessorPath, updateConfig, columnWidths);
+    }, [accessorPath, columnWidths, updateConfig, value]);
 
     const data = React.useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
 
-    // The table manages its own sort state. We just provide an initial value, and update the config
-    // when the table sort changes.
-    const renderCount = React.useRef(0);
     const initialSort = useContextSelector(
       ConfigContext,
       React.useCallback((config) => {
-        if (renderCount.current !== 0) {
-          return useContextSelector.BAILOUT;
-        }
-        renderCount.current = renderCount.current + 1;
         return config.cellConfigs?.[accessorPath]?.sortBy ?? NO_SORT;
       }, [accessorPath])
     );
+
     const tableInstance: TableInstance<PaginationProps, PaginationState> = useTable(
       {
         columns,
         data,
-        initialState: { pageSize: 30, sortBy: initialSort },
+        initialState: {
+          pageSize: 30,
+          sortBy: initialSort,
+        },
       },
       useSortBy,
+      useResizeColumns,
+      isNested ? useFlexLayout : useBlockLayout,
       !isNested ? usePagination : _.noop
     );
+
     // $FlowFixMe: useSortBy above adds the sortBy prop, but flow doesn't know.
     const { sortBy }: { sortBy: SortBy } = tableInstance.state;
     if (useChangeDetector([sortBy], false)) {
@@ -253,50 +345,44 @@ const Table = React.memo(
 
     return (
       <>
-        <STable {...getTableProps()}>
-          <thead>
+        <STable className="table" {...getTableProps()}>
+          <div className="thead">
             {headerGroups.map((headerGroup, i) => {
               return (
-                <STableRow
-                  index={0 /* For properly coloring background */}
-                  key={i}
-                  {...headerGroup.getHeaderGroupProps()}>
+                <STableRow className="tr" key={i} {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => {
                     return (
-                      <STableHeader
-                        isSortedAsc={column.isSorted && !column.isSortedDesc}
-                        isSortedDesc={column.isSorted && column.isSortedDesc}
-                        id={column.id}
+                      <HeaderCell
+                        tableAccessorPath={accessorPathToGenericPath(accessorPath)}
+                        column={column}
                         key={column.id}
-                        data-test={`column-header-${sanitizeAccessorPath(column.id)}`}
-                        {...column.getHeaderProps(column.getSortByToggleProps())}>
-                        {column.render("Header")}
-                      </STableHeader>
+                        updateConfig={updateConfig}
+                      />
                     );
                   })}
                 </STableRow>
               );
             })}
-          </thead>
-          <tbody {...getTableBodyProps()}>
+          </div>
+          <div className="tbody" {...getTableBodyProps()}>
             {(!isNested ? page : rows).map((row) => {
               prepareRow(row);
               return (
                 <STableRow {...row.getRowProps()} key={row.index} index={row.index}>
                   {row.cells.map((cell, i) => {
                     return (
-                      <STableData key={i} {...cell.getCellProps()}>
+                      <div className="td" key={i} {...cell.getCellProps()}>
                         {cell.render("Cell")}
-                      </STableData>
+                      </div>
                     );
                   })}
                 </STableRow>
               );
             })}
-          </tbody>
+          </div>
         </STable>
         {!isNested && (
-          <div style={{ margin: "4px auto 0" }}>
+          <SNavigation>
             <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
               {"<<"}
             </button>{" "}
@@ -326,17 +412,12 @@ const Table = React.memo(
                 </option>
               ))}
             </select>
-          </div>
+          </SNavigation>
         )}
       </>
     );
   }
 );
-
-const SObjectCell = styled.span`
-  font-style: italic;
-  cursor: pointer;
-`;
 
 const TableCell = React.memo(
   ({
@@ -362,9 +443,9 @@ const TableCell = React.memo(
     }, [accessorPath, cellIsExpanded, updateConfig]);
 
     return rowIsExpanded || cellIsExpanded ? (
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative", overflow: "hidden" }}>
         {cellIsExpanded && (
-          <Icon style={{ position: "absolute", top: "2px", right: "2px" }} onClick={toggleIsExpanded}>
+          <Icon style={{ position: "absolute", right: "2px", top: "2px", zIndex: 1 }} onClick={toggleIsExpanded}>
             <MinusIcon />
           </Icon>
         )}
@@ -382,7 +463,8 @@ type Props = { config: Config, saveConfig: SaveConfig<Config> };
 function TablePanel({ config, saveConfig }: Props) {
   const { topicPath } = config;
   const onTopicPathChange = React.useCallback((newTopicPath: string) => {
-    saveConfig({ topicPath: newTopicPath });
+    // We don't want any config settings persisting for completely different topics.
+    saveConfig({ topicPath: newTopicPath, cellConfigs: {} });
   }, [saveConfig]);
   const [isExpanded, setIsExpanded] = React.useState(false);
   const toggleIsExpanded = React.useCallback(() => setIsExpanded((expanded) => !expanded), [setIsExpanded]);

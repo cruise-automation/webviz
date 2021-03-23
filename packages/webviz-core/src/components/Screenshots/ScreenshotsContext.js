@@ -30,7 +30,9 @@ export const ScreenshotsContext = createContext<{|
 export function ScreenshotsProvider({ children }: { children: React$Node }) {
   const [isTakingScreenshot, setIsTakingScreenshot] = useState(false);
 
-  const pausePlayback = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pausePlayback, []));
+  const { pausePlayback } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pausePlayback: messagePipeline.pausePlayback }), [])
+  );
 
   // Use an additional ref here because we never want these callbacks to change.
   const isTakingScreenshotRef = useRef(isTakingScreenshot);

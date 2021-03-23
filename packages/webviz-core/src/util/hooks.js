@@ -206,7 +206,13 @@ function isBailout(value: mixed): boolean %checks {
 //
 // `useContextSelector.BAILOUT` can be returned from the selector as a special sentinel that indicates
 // no update should occur. (Returning BAILOUT from the first call to selector is not allowed.)
-export function useContextSelector<T, U>(context: SelectableContext<T>, selector: (T) => U | BailoutToken): U {
+export function useContextSelector<T, U>(
+  context: SelectableContext<T>,
+  selector: (T) => U | BailoutToken,
+  options?: ?{| enableShallowMemo: boolean |}
+): U {
+  const enableShallowMemo = options?.enableShallowMemo || false;
+
   // eslint-disable-next-line no-underscore-dangle
   const handle = useContext(context._ctx);
   if (!handle) {
@@ -242,7 +248,10 @@ export function useContextSelector<T, U>(context: SelectableContext<T>, selector
       if (isBailout(newSelectedValue)) {
         return;
       }
-      if (newSelectedValue !== latestSelectedValue.current) {
+      const newValueMatchesPrevious = enableShallowMemo
+        ? shallowequal(newSelectedValue, latestSelectedValue.current)
+        : newSelectedValue === latestSelectedValue.current;
+      if (!newValueMatchesPrevious) {
         // Because newSelectedValue might be a function, we have to always use the reducer form of setState.
         setSelectedValue(() => newSelectedValue);
       }
@@ -251,7 +260,7 @@ export function useContextSelector<T, U>(context: SelectableContext<T>, selector
     return () => {
       handle.removeSubscriber(sub);
     };
-  }, [handle, selector]);
+  }, [enableShallowMemo, handle, selector]);
 
   return selectedValue;
 }

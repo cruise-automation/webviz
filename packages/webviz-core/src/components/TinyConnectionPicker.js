@@ -32,7 +32,9 @@ export function TinyConnectionPicker({
   inputDescription: React.Node,
   defaultIsOpen?: boolean,
 |}) {
-  const showSpinner = useMessagePipeline(React.useCallback(({ playerState }) => playerState.showSpinner, []));
+  const { showSpinner } = useMessagePipeline(
+    React.useCallback(({ playerState }) => ({ showSpinner: playerState.showSpinner }), [])
+  );
   const [isOpen, setIsOpen] = React.useState<boolean>(defaultIsOpen);
 
   const onToggle = React.useCallback(() => setIsOpen((open) => !open), []);

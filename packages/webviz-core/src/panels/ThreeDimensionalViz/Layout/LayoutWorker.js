@@ -6,12 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { type CameraState, type Polygon, DrawPolygons } from "regl-worldview";
 import type { Time } from "rosbag";
 import shallowequal from "shallowequal";
 
 import type { RenderResult } from "./types";
+import signal, { type Signal } from "webviz-core/shared/signal";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getIconName } from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
@@ -54,6 +55,7 @@ type WorldRendererState = $ReadOnly<{|
   highlightMarkerMatchers: any,
   linkedGlobalVariables: LinkedGlobalVariables,
   playerId: string,
+  renderSignal: Signal<void>,
   rootTf: string,
   searchTextOpen: boolean,
   searchText: string,
@@ -83,6 +85,7 @@ type WorldInterfaceProps = $ReadOnly<{|
   onMouseDown: any,
   onMouseMove: any,
   onMouseUp: any,
+  resolveRenderSignal: (Signal<void>) => void,
   setOverlayIcons: any,
   setSearchTextMatches: any,
   setAvailableNsAndErrors: any,
@@ -95,7 +98,10 @@ function ReactWorldInterface(props: WorldInterfaceProps) {
   const onMouseEvent = React.useCallback(({ e, mouseEventName }: { e: any, mouseEventName: string }) => {
     const world = worldRef.current;
     if (!world) {
-      return Promise.reject("Not initialized");
+      // The initial render is async, and sometimes an event gets sent before it's fully done.
+      // We could tell the main thread not to send events until everything is done, but easier to
+      // just ignore events until we're ready.
+      return Promise.resolve();
     }
 
     return new Promise((resolve) => {
@@ -119,7 +125,7 @@ function ReactWorldInterface(props: WorldInterfaceProps) {
     });
   }, [props.canvas]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     props.registerCallbacks({ setState, onMouseEvent });
   }, [props.registerCallbacks, setState, onMouseEvent, props]);
 
@@ -173,7 +179,11 @@ function WorldRenderer(props: WorldRendererProps) {
     rootTf,
     frame,
     setAvailableNsAndErrors,
+    renderSignal,
+    resolveRenderSignal,
   } = props;
+
+  useEffect(() => resolveRenderSignal(renderSignal));
 
   const { sceneBuilder, transformsBuilder } = useMemo(
     () => ({
@@ -268,6 +278,7 @@ class LayoutWorker {
   rendererCallbacks: WorldRendererCallbacks;
   searchTextMatches: GLTextMarker[];
   availableTfs: any[];
+  _renderSignals: Signal<void>[] = [];
 
   constructor(canvas, hooks, rpc) {
     this.canvas = canvas;
@@ -290,6 +301,7 @@ class LayoutWorker {
         onMouseDown={this._mouseEventHandler("onMouseDown")}
         onMouseMove={this._mouseEventHandler("onMouseMove")}
         onMouseUp={this._mouseEventHandler("onMouseUp")}
+        resolveRenderSignal={this.resolveRenderSignal}
         setOverlayIcons={({ renderItems, sceneBuilderDrawables }) => {
           iconDrawables = sceneBuilderDrawables;
           return rpc.send<void>("updateOverlayIcons", renderItems);
@@ -314,6 +326,17 @@ class LayoutWorker {
     });
   }
 
+  resolveRenderSignal = (renderSignal: Signal<void>) => {
+    // React may combine state updates. Resolve renders that have been superseded.
+    while (this._renderSignals.length > 0) {
+      const queuedSignal = this._renderSignals.shift();
+      queuedSignal.resolve();
+      if (queuedSignal === renderSignal) {
+        break;
+      }
+    }
+  };
+
   setSearchTextMatches = (markers: GLTextMarker[]) => {
     this.searchTextMatches = markers;
   };
@@ -322,7 +345,7 @@ class LayoutWorker {
     return this.rendererCallbacks.onMouseEvent(props);
   };
 
-  renderFrame = ({
+  renderFrame = async ({
     cleared,
     rootTf,
     playerId,
@@ -378,7 +401,7 @@ class LayoutWorker {
     polygons: Polygon[],
     measurePoints: MeasurePoints,
     worldContextValue: WorldContextType,
-  }>): RenderResult => {
+  }>): Promise<RenderResult> => {
     this.hasChangedPlayerId = !shallowequal(this.playerId, playerId);
     this.playerId = playerId;
 
@@ -392,6 +415,11 @@ class LayoutWorker {
 
     this.canvas.width = width;
     this.canvas.height = height;
+    this.canvas.clientWidth = width;
+    this.canvas.clientHeight = height;
+    const renderSignal = signal<void>();
+    this._renderSignals.push(renderSignal);
+
     this.rendererCallbacks.setState({
       cameraState,
       cleared,
@@ -407,6 +435,7 @@ class LayoutWorker {
       autoTextBackgroundColor,
       diffModeEnabled,
       playerId,
+      renderSignal,
       rootTf,
       searchTextOpen,
       searchText,
@@ -421,6 +450,7 @@ class LayoutWorker {
       measurePoints,
       worldContextValue,
     });
+    await renderSignal;
 
     return {
       searchTextMatches: this.searchTextMatches,

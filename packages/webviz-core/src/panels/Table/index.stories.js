@@ -10,6 +10,7 @@ import { storiesOf } from "@storybook/react";
 import { isEqual } from "lodash";
 import React from "react";
 
+import tick from "webviz-core/shared/tick";
 import Table from "webviz-core/src/panels/Table";
 import type { Config } from "webviz-core/src/panels/Table/types";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
@@ -198,8 +199,8 @@ storiesOf("<Table>", module)
   })
   .add("sorting", () => {
     const expectedConfigs = [
-      { "": { sortBy: [{ id: "val", desc: false }] } },
-      { "": { sortBy: [{ id: "val", desc: true }] } },
+      { "": { sortBy: [{ id: "val", desc: false }], columnWidths: {} } },
+      { "": { sortBy: [{ id: "val", desc: true }], columnWidths: {} } },
     ];
     const saveConfig: SaveConfig<Config> = ({ cellConfigs }) => {
       const expectedConfig = expectedConfigs.shift();
@@ -212,8 +213,8 @@ storiesOf("<Table>", module)
         fixture={fixture}
         onMount={() => {
           setImmediate(() => {
-            document.querySelectorAll("[data-test=column-header-val]")[0].click();
-            document.querySelectorAll("[data-test=column-header-val]")[0].click();
+            document.querySelectorAll("[data-test=sort-val]")[0].click();
+            document.querySelectorAll("[data-test=sort-val]")[0].click();
           });
         }}>
         <Table config={{ topicPath: "/my_arr.array", cellConfigs: {} }} saveConfig={saveConfig} />
@@ -274,8 +275,8 @@ storiesOf("<Table>", module)
       <PanelSetup
         fixture={fixture}
         onMount={() => {
-          setImmediate(() => {
-            // TODO: fix
+          setImmediate(async () => {
+            await tick();
             document.querySelectorAll("[data-test=expand-settings]")[0].click();
           });
         }}>
@@ -321,11 +322,61 @@ storiesOf("<Table>", module)
       <PanelSetup
         fixture={fixture}
         onMount={() => {
-          setImmediate(() => {
-            // TODO: fix
+          setImmediate(async () => {
+            await tick();
             document.querySelectorAll("[data-test=expand-settings]")[0].click();
           });
         }}>
+        <Table config={config} saveConfig={() => {}} />
+      </PanelSetup>
+    );
+  })
+  .add("column widths", () => {
+    const config = {
+      topicPath: "/my_arr.array",
+      cellConfigs: {
+        "": {
+          sortBy: [],
+          columnWidths: {
+            val: 30,
+            bool: 40,
+            str: 50,
+            n: 60,
+            obj: 70,
+            arr: 80,
+            primitiveArray: 90,
+          },
+        },
+      },
+    };
+    return (
+      <PanelSetup fixture={fixture}>
+        <Table config={config} saveConfig={() => {}} />
+      </PanelSetup>
+    );
+  })
+  .add("nested column widths", () => {
+    const config = {
+      topicPath: "/my_arr.array",
+      cellConfigs: {
+        "": {
+          rowConfigs: [{ isExpanded: true }, { isExpanded: true }],
+          sortBy: [],
+          columnWidths: {
+            obj: 200,
+          },
+        },
+        obj: {
+          sortBy: [],
+          columnWidths: {
+            date: 50,
+          },
+        },
+      },
+    };
+
+    return (
+      <PanelSetup fixture={fixture}>
         <Table config={config} saveConfig={() => {}} />
       </PanelSetup>
     );

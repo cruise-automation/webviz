@@ -19,8 +19,10 @@ import type { ConditionalFormat, Config } from "webviz-core/src/panels/Table/typ
 import { updateConditionalFormat, COMPARATOR_LIST } from "webviz-core/src/panels/Table/utils";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
 const STableSettings = styled.div`
+  background-color: ${toolsColorScheme.base.dark};
   overflow: auto;
   align-items: flex-start;
   padding: 16px;

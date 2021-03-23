@@ -1,0 +1,284 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`printSerializationCode returns the expected code 1`] = `
+"const $functions = {};
+
+let $view, $storage;
+function $alloc(size) {
+  const { view, storage, offset } = $writer.alloc(size);
+  $view = view;
+  $storage = storage;
+  return offset;
+}
+$alloc(0);
+
+function $write$std_msgs_Header($v, $o) {
+  const v$seq = $v.seq;
+  $view.setUint32($o, v$seq, true);
+  const v$stamp = $v.stamp;
+  if (v$stamp == null) {
+    $storage.fill(0, ($o + 4), ($o + 12));
+  } else {
+    $write$time(v$stamp, ($o + 4));
+  }
+  const v$frame_id = $v.frame_id;
+  const v$frame_id$str = v$frame_id || \\"\\";
+  $view.setInt32(($o + 12), v$frame_id$str.length, true);
+  $view.setInt32(($o + 16), $writer.string(v$frame_id$str), true);
+}
+$functions[\\"std_msgs/Header\\"] = (message) => {
+  const $ret = $alloc(20);
+  $write$std_msgs_Header(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasComplexAndArray($v, $o) {
+  const v$header = $v.header;
+  if (v$header == null) {
+    $storage.fill(0, $o, ($o + 20));
+  } else {
+    $write$std_msgs_Header(v$header, $o);
+  }
+  const v$stringArray = $v.stringArray;
+  if (v$stringArray == null) {
+    $view.setFloat64(($o + 20), 0, true);
+  } else {
+    const v$stringArray$l = v$stringArray.length;
+    let v$stringArray$o = $alloc(v$stringArray$l * 8);
+    $view.setInt32(($o + 20), v$stringArray$l, true);
+    $view.setInt32(($o + 24), v$stringArray$o, true);
+    for (let v$stringArray$i = 0; v$stringArray$i < v$stringArray$l; ++v$stringArray$i) {
+      const v$stringArray$e = v$stringArray[v$stringArray$i];
+      const v$stringArray$e$str = v$stringArray$e || \\"\\";
+      $view.setInt32(v$stringArray$o, v$stringArray$e$str.length, true);
+      $view.setInt32((v$stringArray$o + 4), $writer.string(v$stringArray$e$str), true);
+      v$stringArray$o += 8;
+    }
+  }
+}
+$functions[\\"fake_msgs/HasComplexAndArray\\"] = (message) => {
+  const $ret = $alloc(28);
+  $write$fake_msgs_HasComplexAndArray(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasComplexArray($v, $o) {
+  const v$complexArray = $v.complexArray;
+  if (v$complexArray == null) {
+    $view.setFloat64($o, 0, true);
+  } else {
+    const v$complexArray$l = v$complexArray.length;
+    let v$complexArray$o = $alloc(v$complexArray$l * 28);
+    $view.setInt32($o, v$complexArray$l, true);
+    $view.setInt32(($o + 4), v$complexArray$o, true);
+    for (let v$complexArray$i = 0; v$complexArray$i < v$complexArray$l; ++v$complexArray$i) {
+      const v$complexArray$e = v$complexArray[v$complexArray$i];
+      if (v$complexArray$e == null) {
+        $storage.fill(0, v$complexArray$o, (v$complexArray$o + 28));
+      } else {
+        $write$fake_msgs_HasComplexAndArray(v$complexArray$e, v$complexArray$o);
+      }
+      v$complexArray$o += 28;
+    }
+  }
+}
+$functions[\\"fake_msgs/HasComplexArray\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$fake_msgs_HasComplexArray(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasConstant($v, $o) {
+
+}
+$functions[\\"fake_msgs/HasConstant\\"] = (message) => {
+  const $ret = $alloc(0);
+  $write$fake_msgs_HasConstant(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasByteArray($v, $o) {
+  const v$byte_array = $v.byte_array;
+  if (v$byte_array == null) {
+    $view.setFloat64($o, 0, true);
+  } else {
+    const v$byte_array$l = v$byte_array.length;
+    let v$byte_array$o = $alloc(v$byte_array$l * 1);
+    $view.setInt32($o, v$byte_array$l, true);
+    $view.setInt32(($o + 4), v$byte_array$o, true);
+    for (let v$byte_array$i = 0; v$byte_array$i < v$byte_array$l; ++v$byte_array$i) {
+      const v$byte_array$e = v$byte_array[v$byte_array$i];
+      $view.setUint8(v$byte_array$o, v$byte_array$e);
+      v$byte_array$o += 1;
+    }
+  }
+}
+$functions[\\"fake_msgs/HasByteArray\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$fake_msgs_HasByteArray(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasJson($v, $o) {
+  const v$jsonField = $v.jsonField;
+  const v$jsonField$str = JSON.stringify(v$jsonField === undefined ? null : v$jsonField);
+  $view.setInt32($o, v$jsonField$str.length, true);
+  $view.setInt32(($o + 4), $writer.string(v$jsonField$str), true);
+}
+$functions[\\"fake_msgs/HasJson\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$fake_msgs_HasJson(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasInt64s($v, $o) {
+  const v$i64 = $v.i64;
+  $view.setBigInt64($o, BigInt(v$i64 || 0), true);
+  const v$u64 = $v.u64;
+  $view.setBigUint64(($o + 8), BigInt(v$u64 || 0), true);
+}
+$functions[\\"fake_msgs/HasInt64s\\"] = (message) => {
+  const $ret = $alloc(16);
+  $write$fake_msgs_HasInt64s(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasArrayOfEmpties($v, $o) {
+  const v$arr = $v.arr;
+  if (v$arr == null) {
+    $view.setFloat64($o, 0, true);
+  } else {
+    const v$arr$l = v$arr.length;
+    let v$arr$o = $alloc(v$arr$l * 0);
+    $view.setInt32($o, v$arr$l, true);
+    $view.setInt32(($o + 4), v$arr$o, true);
+    for (let v$arr$i = 0; v$arr$i < v$arr$l; ++v$arr$i) {
+      const v$arr$e = v$arr[v$arr$i];
+      if (v$arr$e == null) {
+        $storage.fill(0, v$arr$o, v$arr$o);
+      } else {
+        $write$fake_msgs_HasConstant(v$arr$e, v$arr$o);
+      }
+      v$arr$o += 0;
+    }
+  }
+}
+$functions[\\"fake_msgs/HasArrayOfEmpties\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$fake_msgs_HasArrayOfEmpties(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_HasBigIntArrays($v, $o) {
+  const v$i_arr = $v.i_arr;
+  if (v$i_arr == null) {
+    $view.setFloat64($o, 0, true);
+  } else {
+    const v$i_arr$l = v$i_arr.length;
+    let v$i_arr$o = $alloc(v$i_arr$l * 8);
+    $view.setInt32($o, v$i_arr$l, true);
+    $view.setInt32(($o + 4), v$i_arr$o, true);
+    for (let v$i_arr$i = 0; v$i_arr$i < v$i_arr$l; ++v$i_arr$i) {
+      const v$i_arr$e = v$i_arr[v$i_arr$i];
+      $view.setBigInt64(v$i_arr$o, BigInt(v$i_arr$e || 0), true);
+      v$i_arr$o += 8;
+    }
+  }
+  const v$u_arr = $v.u_arr;
+  if (v$u_arr == null) {
+    $view.setFloat64(($o + 8), 0, true);
+  } else {
+    const v$u_arr$l = v$u_arr.length;
+    let v$u_arr$o = $alloc(v$u_arr$l * 8);
+    $view.setInt32(($o + 8), v$u_arr$l, true);
+    $view.setInt32(($o + 12), v$u_arr$o, true);
+    for (let v$u_arr$i = 0; v$u_arr$i < v$u_arr$l; ++v$u_arr$i) {
+      const v$u_arr$e = v$u_arr[v$u_arr$i];
+      $view.setBigUint64(v$u_arr$o, BigInt(v$u_arr$e || 0), true);
+      v$u_arr$o += 8;
+    }
+  }
+}
+$functions[\\"fake_msgs/HasBigIntArrays\\"] = (message) => {
+  const $ret = $alloc(16);
+  $write$fake_msgs_HasBigIntArrays(message, $ret);
+  return $ret;
+};
+function $write$fake_msgs_ContainsEverything($v, $o) {
+  const v$first = $v.first;
+  if (v$first == null) {
+    $storage.fill(0, $o, ($o + 20));
+  } else {
+    $write$std_msgs_Header(v$first, $o);
+  }
+  const v$second = $v.second;
+  if (v$second == null) {
+    $storage.fill(0, ($o + 20), ($o + 48));
+  } else {
+    $write$fake_msgs_HasComplexAndArray(v$second, ($o + 20));
+  }
+  const v$third = $v.third;
+  if (v$third == null) {
+    $storage.fill(0, ($o + 48), ($o + 56));
+  } else {
+    $write$fake_msgs_HasComplexArray(v$third, ($o + 48));
+  }
+  const v$fourth = $v.fourth;
+  if (v$fourth == null) {
+    $storage.fill(0, ($o + 56), ($o + 56));
+  } else {
+    $write$fake_msgs_HasConstant(v$fourth, ($o + 56));
+  }
+  const v$fifth = $v.fifth;
+  if (v$fifth == null) {
+    $storage.fill(0, ($o + 56), ($o + 64));
+  } else {
+    $write$fake_msgs_HasByteArray(v$fifth, ($o + 56));
+  }
+  const v$sixth = $v.sixth;
+  if (v$sixth == null) {
+    $storage.fill(0, ($o + 64), ($o + 72));
+  } else {
+    $write$fake_msgs_HasJson(v$sixth, ($o + 64));
+  }
+  const v$seventh = $v.seventh;
+  if (v$seventh == null) {
+    $storage.fill(0, ($o + 72), ($o + 88));
+  } else {
+    $write$fake_msgs_HasInt64s(v$seventh, ($o + 72));
+  }
+  const v$eighth = $v.eighth;
+  if (v$eighth == null) {
+    $storage.fill(0, ($o + 88), ($o + 96));
+  } else {
+    $write$fake_msgs_HasArrayOfEmpties(v$eighth, ($o + 88));
+  }
+  const v$ninth = $v.ninth;
+  if (v$ninth == null) {
+    $storage.fill(0, ($o + 96), ($o + 112));
+  } else {
+    $write$fake_msgs_HasBigIntArrays(v$ninth, ($o + 96));
+  }
+}
+$functions[\\"fake_msgs/ContainsEverything\\"] = (message) => {
+  const $ret = $alloc(112);
+  $write$fake_msgs_ContainsEverything(message, $ret);
+  return $ret;
+};
+function $write$time($v, $o) {
+  const v$sec = $v.sec;
+  $view.setInt32($o, v$sec, true);
+  const v$nsec = $v.nsec;
+  $view.setInt32(($o + 4), v$nsec, true);
+}
+$functions[\\"time\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$time(message, $ret);
+  return $ret;
+};
+function $write$duration($v, $o) {
+  const v$sec = $v.sec;
+  $view.setInt32($o, v$sec, true);
+  const v$nsec = $v.nsec;
+  $view.setInt32(($o + 4), v$nsec, true);
+}
+$functions[\\"duration\\"] = (message) => {
+  const $ret = $alloc(8);
+  $write$duration(message, $ret);
+  return $ret;
+};
+return $functions;
+"
+`;

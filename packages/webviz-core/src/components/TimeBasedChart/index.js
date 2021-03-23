@@ -143,7 +143,9 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   useForceRerenderOnVisibilityChange();
 
-  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+  const { pauseFrame } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
+  );
   const onChartUpdate = useCallback(() => {
     const resumeFrame = pauseFrame("TimeBasedChart");
     return () => {

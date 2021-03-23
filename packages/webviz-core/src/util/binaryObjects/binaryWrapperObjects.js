@@ -16,28 +16,9 @@ import {
   friendlyTypeName,
   fieldSize,
   isComplex,
+  PointerExpression,
   typeSize,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
-
-// Exported for tests
-export class PointerExpression {
-  variable: string;
-  constant: number;
-
-  constructor(variable: string, _constant: number = 0) {
-    this.variable = variable;
-    this.constant = _constant;
-  }
-  toString() {
-    if (this.constant === 0) {
-      return this.variable;
-    }
-    return `(${this.variable} + ${this.constant})`;
-  }
-  add(o: number) {
-    return new PointerExpression(this.variable, this.constant + o);
-  }
-}
 
 // Exported for tests
 export const printSingularExpression = (

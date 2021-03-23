@@ -32,6 +32,25 @@ const primitiveSizes = {
 
 export const primitiveList: Set<string> = new Set(Object.keys(primitiveSizes));
 
+export class PointerExpression {
+  variable: string;
+  constant: number;
+
+  constructor(variable: string, _constant: number = 0) {
+    this.variable = variable;
+    this.constant = _constant;
+  }
+  toString() {
+    if (this.constant === 0) {
+      return this.variable;
+    }
+    return `(${this.variable} + ${this.constant})`;
+  }
+  add(o: number) {
+    return new PointerExpression(this.variable, this.constant + o);
+  }
+}
+
 export const typeSize = memoize(
   (typesByName: RosDatatypes, typeName: string): number => {
     if (primitiveSizes[typeName] != null) {

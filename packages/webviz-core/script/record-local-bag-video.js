@@ -54,6 +54,7 @@ program
   .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
+  .option("--crop <string>", "Crop the video dimensions: '<width>:<height>:<left>:<top>'")
   .option(
     "--experimentalFeaturesSettings <string>",
     'Stringified JSON of experimental feature settings: \'{"featureName":"alwaysOn"}\''
@@ -69,25 +70,37 @@ async function main() {
     );
   }
 
-  const originUrlBase = "http://localhost:3000/";
-  const urlObject = new URL(program.url || originUrlBase, originUrlBase);
-  urlObject.searchParams.set("video-recording-mode", "1");
-  urlObject.searchParams.set("video-recording-speed", program.speed || 1);
-  urlObject.searchParams.set("video-recording-framerate", `${program.framerate || 30}`);
-  if (program.frameless) {
-    urlObject.searchParams.set("frameless", "1");
-  }
+  const {
+    speed,
+    frameless,
+    framerate,
+    parallel,
+    bag,
+    url,
+    experimentalFeaturesSettings,
+    width,
+    height,
+    crop: cropStr,
+  } = program;
+  const crop =
+    cropStr &&
+    (() => {
+      const [cropWidth, cropHeight, cropLeft, cropTop] = cropStr.split(":").map((s) => parseFloat(s) || 0);
+      return { width: cropWidth, height: cropHeight, left: cropLeft, top: cropTop };
+    })();
 
   console.log("Recording video...");
   const { videoFile: video } = await recordVideo({
-    parallel: program.parallel || 1,
-    bagPath: program.bag,
-    experimentalFeaturesSettings: program.experimentalFeaturesSettings,
-    url: urlObject.toString(),
-    puppeteerLaunchConfig: {
-      headless: !process.env.DEBUG_CI,
-      defaultViewport: { width: program.width || 1920, height: program.height || 1080 },
-    },
+    speed,
+    frameless,
+    framerate,
+    parallel,
+    bagPath: bag,
+    experimentalFeaturesSettings,
+    url,
+    crop,
+    dimensions: width && height ? { width, height } : undefined,
+    puppeteerLaunchConfig: { headless: !process.env.DEBUG_CI },
     panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : null,
   });
 

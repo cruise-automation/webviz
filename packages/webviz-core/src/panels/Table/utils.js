@@ -8,6 +8,12 @@
 
 import type { ConditionalFormat, ColumnConfigs, ConditionalFormats } from "webviz-core/src/panels/Table/types";
 
+export const getLastAccessor = (accessorPath: string) => {
+  const splitPath = accessorPath.split(/(\.|\[\d+\])/);
+  // Filter any empty strings
+  return splitPath.filter(Boolean).pop();
+};
+
 export const COMPARATOR_LIST = ["<", ">", "==", "!=", ">=", "<=", "~"];
 
 const COMPARATOR_FUNCTIONS = {

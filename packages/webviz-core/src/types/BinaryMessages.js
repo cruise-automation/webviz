@@ -55,6 +55,8 @@ export type BinaryPoseStamped = $ReadOnly<BinaryStampedMessage & {| pose(): Bina
 export type BinaryPolygon = $ReadOnly<{| points(): ArrayView<BinaryPoint> |}>;
 export type BinaryPolygonStamped = $ReadOnly<BinaryStampedMessage & {| polygon(): BinaryPolygon |}>;
 
+export type BinaryPath = $ReadOnly<BinaryStampedMessage & {| poses(): ArrayView<BinaryPoseStamped> |}>;
+
 export type BinaryColorRgba = $ReadOnly<{|
   r(): number,
   g(): number,

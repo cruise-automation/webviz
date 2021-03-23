@@ -208,7 +208,9 @@ const TableSettings = React.memo<Props>(({ config, saveConfig }: Props) => {
       newConditionalFormat,
       config.columnConfigs
     );
-    saveConfig({ columnConfigs: newColumnConfigs });
+    saveConfig({
+      columnConfigs: newColumnConfigs,
+    });
   }, [config.columnConfigs, saveConfig]);
 
   const addNewCondition = React.useCallback(() => {

@@ -62,7 +62,7 @@ export class LayoutWorkerDataReceiver {
   _rpc: Rpc;
   _bobjectReceiver: BobjectRpcReceiver;
   _nextArgs: Args = { frame: {}, worldContextValue: {} };
-  constructor(rpc: Rpc, callback: (Args) => RenderResult) {
+  constructor(rpc: Rpc, callback: (Args) => Promise<RenderResult>) {
     this._rpc = rpc;
     this._bobjectReceiver = new BobjectRpcReceiver(rpc);
     this._rpc.receive("$$clearFrameBobjects", () => {

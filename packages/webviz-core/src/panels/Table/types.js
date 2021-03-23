@@ -150,5 +150,3 @@ export type Config = {|
   cellConfigs?: CellConfigs,
   columnConfigs?: ColumnConfigs,
 |};
-
-export type MutableColumnConfigs = $RecursiveMutable<ColumnConfigs>;

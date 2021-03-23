@@ -6,12 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type {
-  ConditionalFormat,
-  ColumnConfigs,
-  ConditionalFormats,
-  MutableColumnConfigs,
-} from "webviz-core/src/panels/Table/types";
+import type { ConditionalFormat, ColumnConfigs, ConditionalFormats } from "webviz-core/src/panels/Table/types";
 
 export const getLastAccessor = (accessorPath: string) => {
   const splitPath = accessorPath.split(/(\.|\[\d+\])/);
@@ -60,7 +55,7 @@ export const getFormattedColor = (value: any, conditionalFormats: ?ConditionalFo
   return "";
 };
 
-const findOldAccessorPath = (conditionalFormatId: string, columnConfigs: ?ColumnConfigs = {}): ?string => {
+const findOldAccessorPath = (conditionalFormatId: string, columnConfigs: ColumnConfigs): ?string => {
   for (const accessorPath in columnConfigs) {
     const conditionalFormats = columnConfigs[accessorPath] && columnConfigs[accessorPath]?.conditionalFormats;
     if (!conditionalFormats) {
@@ -80,12 +75,12 @@ export const updateConditionalFormat = (
   newConditionalFormat: ?ConditionalFormat,
   columnConfigs: ?ColumnConfigs = {}
 ): ColumnConfigs => {
-  const newColumnConfigs: MutableColumnConfigs = {
+  const newColumnConfigs: ColumnConfigs = {
     ...columnConfigs,
   };
 
   // First delete the old entry.
-  const oldAccessorPath = findOldAccessorPath(conditionalFormatId, columnConfigs);
+  const oldAccessorPath = findOldAccessorPath(conditionalFormatId, newColumnConfigs);
   const currentConfig = newColumnConfigs[oldAccessorPath];
   const currentConditionalFormats = currentConfig?.conditionalFormats;
   if (currentConditionalFormats && currentConditionalFormats[conditionalFormatId]) {
@@ -100,7 +95,7 @@ export const updateConditionalFormat = (
 
   // In this case we've already deleted the conditional format.
   if (!newConditionalFormat) {
-    return (newColumnConfigs: any);
+    return newColumnConfigs;
   }
 
   return {

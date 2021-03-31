@@ -82,13 +82,13 @@ export type Mat4 = [
   number,
   number,
   number,
-  number
+  number,
 ];
 
 export interface CameraCommand {
   getProjection(): Mat4;
   getView(): Mat4;
-  toScreenCoord(viewport: Viewport, point: Vec3): ?Vec3;
+  toScreenCoord(viewport: Viewport, point: Vec3, cameraProjection: ?Mat4, cameraView: ?Mat4): ?Vec3;
   draw(props: {}, (ctx: any) => void): void;
 }
 

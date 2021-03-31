@@ -71,6 +71,8 @@ export type WorldviewContextType = {
   onDirty(): void,
   +dimension: Dimensions,
   +initializedData: ?InitializedData,
+  _cameraProjection: ?Mat4,
+  _cameraView: ?Mat4,
 };
 
 // Compile instructions with an initialized regl context into a regl command.

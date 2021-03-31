@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import type { Point, CameraCommand, Dimensions, Color, Pose, Scale, Vec4 } from "../types";
+import type { Point, CameraCommand, Dimensions, Color, Pose, Scale, Vec4, Mat4 } from "../types";
 import { getCSSColor, toColor } from "../utils/commandUtils";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -169,6 +169,8 @@ export default class Text extends React.Component<Props> {
     const {
       dimension,
       dimension: { width, height },
+      _cameraProjection: cameraProjection,
+      _cameraView: cameraView,
     } = context;
     const { camera } = initializedData;
 
@@ -177,7 +179,7 @@ export default class Text extends React.Component<Props> {
     for (const marker of markers) {
       const { pose, name } = marker;
       const { position } = pose;
-      const coord = this.project(position, camera, dimension);
+      const coord = this.project(position, camera, dimension, cameraProjection, cameraView);
       if (!coord) {
         continue;
       }
@@ -209,11 +211,17 @@ export default class Text extends React.Component<Props> {
     }
   };
 
-  project = (point: Point, camera: CameraCommand, dimension: Dimensions) => {
+  project = (
+    point: Point,
+    camera: CameraCommand,
+    dimension: Dimensions,
+    cameraProjection: ?Mat4,
+    cameraView: ?Mat4
+  ) => {
     const vec = [point.x, point.y, point.z];
     const { left, top, width, height } = dimension;
     const viewport = [left, top, width, height];
-    return camera.toScreenCoord(viewport, vec);
+    return camera.toScreenCoord(viewport, vec, cameraProjection, cameraView);
   };
 
   render() {

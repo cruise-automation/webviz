@@ -39,9 +39,9 @@ export default (regl: any) => {
     }
 
     // convert a point in 3D space to a point on the screen
-    toScreenCoord(viewport: Viewport, point: Vec3) {
-      const projection = this.getProjection();
-      const view = selectors.view(this.cameraState);
+    toScreenCoord(viewport: Viewport, point: Vec3, cameraProjection: ?Mat4, cameraView: ?Mat4) {
+      const projection = cameraProjection != null ? cameraProjection : this.getProjection();
+      const view = cameraView != null ? cameraView : selectors.view(this.cameraState);
       const combinedProjView = mat4.multiply(TEMP_MAT, projection, view);
       const [x, y, z, w] = project([], point, viewport, combinedProjView);
       if (z < 0 || z > 1 || w < 0) {
@@ -66,13 +66,13 @@ export default (regl: any) => {
           // because we need them for raycasting
           this.viewportWidth = viewportWidth;
           this.viewportHeight = viewportHeight;
-          const { state, cameraProjection } = props
+          const { state, cameraProjection } = props;
           this.cameraState = state;
           return cameraProjection != null ? cameraProjection : this.getProjection();
         },
 
         view(context, props) {
-          const { cameraView } = props
+          const { cameraView } = props;
           return cameraView != null ? cameraView : this.getView();
         },
 

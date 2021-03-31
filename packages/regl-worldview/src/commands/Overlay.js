@@ -65,13 +65,14 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
     if (!context || !context.initializedData) {
       return;
     }
-    const { dimension } = context;
+
+    const { dimension, _cameraProjection: cameraProjection, _cameraView: cameraView } = context;
     const { camera } = context.initializedData;
 
     const vec = [point.x, point.y, point.z];
     const { left, top, width, height } = dimension;
     const viewport = [left, top, width, height];
-    return camera.toScreenCoord(viewport, vec);
+    return camera.toScreenCoord(viewport, vec, cameraProjection, cameraView);
   };
 
   render() {

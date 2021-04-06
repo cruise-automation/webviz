@@ -99,6 +99,10 @@ export function perPanelHooks() {
     DIAGNOSTIC_TOPIC,
   } = require("webviz-core/src/util/globalConstants");
 
+  const sceneBuilderHooks = require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks").default;
+  const supportsOffscreenCanvas = require("webviz-core/src/util/supportsOffscreenCanvas").default;
+  const initLayoutNonWorker = require("webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker").default;
+
   const SUPPORTED_MARKER_DATATYPES = {
     // generally supported datatypes
     VISUALIZATION_MSGS_MARKER_DATATYPE,
@@ -174,10 +178,16 @@ export function perPanelHooks() {
       icons: {},
       AdditionalToolbarItems: () => null,
       // TODO(useWorkerIn3DPanel): Remove sceneBuilderHooks when flag is deleted.
-      sceneBuilderHooks: require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks").default,
+      sceneBuilderHooks,
       useWorldContextValue: require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/useWorldContextValue")
         .default,
-      getLayoutWorker: () => require("webviz-core/src/panels/ThreeDimensionalViz/Layout/Layout.worker"),
+      getLayoutWorker: () => {
+        if (supportsOffscreenCanvas()) {
+          const WorkerType = require("webviz-core/src/panels/ThreeDimensionalViz/Layout/Layout.worker");
+          return new WorkerType();
+        }
+        return initLayoutNonWorker(sceneBuilderHooks);
+      },
       // Duplicated in sceneBuilderHooks
       consumePose: () => {},
       skipTransformFrame: null,

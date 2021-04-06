@@ -6,17 +6,46 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type {
-  ConditionalFormat,
-  ColumnConfigs,
-  ConditionalFormats,
-  MutableColumnConfigs,
-} from "webviz-core/src/panels/Table/types";
+import _ from "lodash";
+import { TimeUtil } from "rosbag";
+
+import type { ConditionalFormat } from "webviz-core/src/panels/Table/types";
+import { formatFrame } from "webviz-core/src/util/time";
 
 export const getLastAccessor = (accessorPath: string) => {
-  const splitPath = accessorPath.split(/(\.|\[\d+\])/);
+  const splitPath = accessorPath.split(".");
   // Filter any empty strings
   return splitPath.filter(Boolean).pop();
+};
+
+export const stripLastAccessor = (accessorPath: string) => {
+  const splitPath = accessorPath.split(".").filter(Boolean);
+  return splitPath.slice(0, splitPath.length - 1).join(".");
+};
+
+export const sortTimestamps = (rowA: any, rowB: any, columnId: string) => {
+  const timeA = rowA?.values?.[columnId];
+  const timeB = rowB?.values?.[columnId];
+  if (!timeA || !timeB) {
+    return 0;
+  }
+
+  return TimeUtil.compare(timeA, timeB);
+};
+
+export const filterTimestamps = (columnId: string, rows: any, columnIds: string[], filterValue: string) => {
+  if (!filterValue) {
+    return rows;
+  }
+
+  return rows.filter((row) => {
+    const time = _.get(row.values, columnId);
+    if (time && time?.sec && time?.nsec) {
+      const stamp = formatFrame(time);
+      return stamp.includes(filterValue);
+    }
+    return false;
+  });
 };
 
 export const COMPARATOR_LIST = ["<", ">", "==", "!=", ">=", "<=", "~"];
@@ -47,70 +76,15 @@ export const evaluateCondition = (value: any, comparator: string, primitive: str
   }
 };
 
-export const getFormattedColor = (value: any, conditionalFormats: ?ConditionalFormats): string => {
+export const getFormattedColor = (value: any, conditionalFormats: ?(ConditionalFormat[])): string => {
   if (!conditionalFormats) {
     return "";
   }
-  for (const id of Object.keys(conditionalFormats)) {
-    const { comparator, color, primitive } = conditionalFormats[id];
-    if (conditionalFormats[id] && evaluateCondition(value, comparator, primitive)) {
+  for (const conditionalFormat of conditionalFormats) {
+    const { comparator, color, primitive } = conditionalFormat;
+    if (evaluateCondition(value, comparator, primitive)) {
       return color;
     }
   }
   return "";
-};
-
-const findOldAccessorPath = (conditionalFormatId: string, columnConfigs: ?ColumnConfigs = {}): ?string => {
-  for (const accessorPath in columnConfigs) {
-    const conditionalFormats = columnConfigs[accessorPath] && columnConfigs[accessorPath]?.conditionalFormats;
-    if (!conditionalFormats) {
-      continue;
-    }
-    for (const id in conditionalFormats) {
-      if (id === conditionalFormatId) {
-        return accessorPath;
-      }
-    }
-  }
-};
-
-export const updateConditionalFormat = (
-  accessorPath: string,
-  conditionalFormatId: string,
-  newConditionalFormat: ?ConditionalFormat,
-  columnConfigs: ?ColumnConfigs = {}
-): ColumnConfigs => {
-  const newColumnConfigs: MutableColumnConfigs = {
-    ...columnConfigs,
-  };
-
-  // First delete the old entry.
-  const oldAccessorPath = findOldAccessorPath(conditionalFormatId, columnConfigs);
-  const currentConfig = newColumnConfigs[oldAccessorPath];
-  const currentConditionalFormats = currentConfig?.conditionalFormats;
-  if (currentConditionalFormats && currentConditionalFormats[conditionalFormatId]) {
-    delete currentConditionalFormats[conditionalFormatId];
-  }
-  if (currentConditionalFormats && !Object.keys(currentConditionalFormats || {}).length) {
-    delete newColumnConfigs[oldAccessorPath].conditionalFormats;
-  }
-  if (newColumnConfigs[oldAccessorPath] && !Object.keys(newColumnConfigs[oldAccessorPath]).length) {
-    delete newColumnConfigs[oldAccessorPath];
-  }
-
-  // In this case we've already deleted the conditional format.
-  if (!newConditionalFormat) {
-    return (newColumnConfigs: any);
-  }
-
-  return {
-    ...newColumnConfigs,
-    [accessorPath]: {
-      ...newColumnConfigs[accessorPath],
-      conditionalFormats: {
-        ...newColumnConfigs[accessorPath]?.conditionalFormats,
-        [conditionalFormatId]: newConditionalFormat,
-      },
-    },
-  };
 };

@@ -22,6 +22,7 @@ import styles from "./index.module.scss";
 import { ProgressPlot } from "./ProgressPlot";
 import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import Flex from "webviz-core/src/components/Flex";
 import PlaybackBarHoverTicks from "webviz-core/src/components/HovarBar/PlaybackBarHoverTicks";
 import Icon from "webviz-core/src/components/Icon";
@@ -50,8 +51,8 @@ export const StyledFullWidthBar = styled.div`
   height: 4px;
 `;
 
-export const StyledMarker = styled.div.attrs(({ width }) => ({
-  style: { left: `calc(${(width || 0) * 100}% - 2px)` },
+export const StyledMarker = styled.div.attrs(({ value }) => ({
+  style: { transform: `translateX(${value}px) translateX(-2px)` },
 }))`
   background-color: white;
   position: absolute;
@@ -59,6 +60,7 @@ export const StyledMarker = styled.div.attrs(({ width }) => ({
   border: 1px solid ${colors.divider};
   width: 2px;
   top: 32%;
+  will-change: transform;
 `;
 
 export type PlaybackControlProps = {|
@@ -170,6 +172,23 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
     [activeData, seek]
   );
 
+  const sliderCallback = useCallback(
+    ({ width }) => (
+      <Slider
+        ref={slider}
+        min={min || 0}
+        max={max || 100}
+        disabled={min == null || max == null}
+        step={step}
+        value={value}
+        draggable
+        onChange={onChange}
+        renderSlider={(val) => (val == null ? null : <StyledMarker value={val * width} />)}
+      />
+    ),
+    [max, min, onChange, step, value]
+  );
+
   return (
     <Flex row className={styles.container}>
       <KeyListener global keyDownHandlers={keyDownHandlers} />
@@ -186,17 +205,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
           <ProgressPlot progress={progress} />
         </div>
         <div ref={el} className={styles.sliderContainer} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
-          <Slider
-            ref={slider}
-            min={min || 0}
-            max={max || 100}
-            disabled={min == null || max == null}
-            step={step}
-            value={value}
-            draggable
-            onChange={onChange}
-            renderSlider={(val) => (val == null ? null : <StyledMarker width={val} />)}
-          />
+          <Dimensions>{sliderCallback}</Dimensions>
         </div>
         <PlaybackBarHoverTicks componentId={hoverComponentId} />
       </div>

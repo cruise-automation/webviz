@@ -7,49 +7,35 @@
 //  You may not use this file except in compliance with the License.
 
 import DeleteIcon from "@mdi/svg/svg/delete.svg";
+import PencilIcon from "@mdi/svg/svg/pencil.svg";
 import PlusIcon from "@mdi/svg/svg/plus.svg";
-import { sortBy } from "lodash";
 import ColorPicker from "rc-color-picker";
 import * as React from "react";
 import styled from "styled-components";
+import uuid from "uuid";
 
+import Checkbox from "webviz-core/src/components/Checkbox";
 import Dropdown from "webviz-core/src/components/Dropdown";
+import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
-import type { ConditionalFormat, Config } from "webviz-core/src/panels/Table/types";
-import { updateConditionalFormat, COMPARATOR_LIST } from "webviz-core/src/panels/Table/utils";
-import type { SaveConfig } from "webviz-core/src/types/panels";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
-import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
-
-const STableSettings = styled.div`
-  background-color: ${toolsColorScheme.base.dark};
-  overflow: auto;
-  align-items: flex-start;
-  padding: 16px;
-  left: 0;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-`;
+import { ConfigContext, TableContext, useColumnConfigValue, SHeaderDropdown } from "webviz-core/src/panels/Table";
+import type { ConditionalFormat, ColumnInstance } from "webviz-core/src/panels/Table/types";
+import { COMPARATOR_LIST } from "webviz-core/src/panels/Table/utils";
+import { useContextSelector } from "webviz-core/src/util/hooks";
 
 const RemoveButton = styled.div`
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
 `;
 
 const SConditionalFormatInput = styled.div`
-  margin: 8px 0;
   display: flex;
   align-items: center;
   width: 100%;
   > * {
     flex-grow: unset;
     margin: 0 4px;
-  }
-
-  &:hover ${RemoveButton} {
-    display: flex;
   }
 `;
 
@@ -66,10 +52,8 @@ const SColorPickerWrapper = styled.span`
 
 type ConditionalFormatInputProps = {
   ...ConditionalFormat,
-  id: string,
-  accessorPath: string,
-  updateCondition: (accessorPath: string, conditionalFormatId: string, newConditionalFormat: ConditionalFormat) => void,
-  removeCondition: (accessorPath: string, id: string) => void,
+  setConditionalFormat: (conditionalFormat: ConditionalFormat) => void,
+  removeConditionalFormat: (conditionalFormatId: string) => void,
 };
 
 const formatPrimitive = (value: any) => {
@@ -85,23 +69,86 @@ const formatPrimitive = (value: any) => {
   return value;
 };
 
+const ColumnCheckbox = ({
+  setHideColumn,
+  columnId,
+}: {
+  setHideColumn: (id: string, hide: boolean) => void,
+  columnId: string,
+}) => {
+  const isHidden = useContextSelector(
+    ConfigContext,
+    React.useCallback((config) => {
+      const columnConfig = config.columnConfigs?.[columnId] || {};
+      return !!columnConfig.hidden;
+    }, [columnId])
+  );
+
+  return (
+    <Checkbox
+      label={columnId}
+      checked={!isHidden}
+      onChange={(shown) => {
+        setHideColumn(columnId, !shown);
+      }}
+    />
+  );
+};
+type ColumnDropdownProps = {
+  setHideColumn: (columnId: string, hide?: boolean) => void,
+  toggleAllColumns: (hidden: boolean) => void,
+  columns: ColumnInstance[],
+};
+export const ColumnDropdown = React.memo<ColumnDropdownProps>(
+  ({ setHideColumn, toggleAllColumns, columns }: ColumnDropdownProps) => {
+    return (
+      <Dropdown
+        dataTest="column-dropdown"
+        style={{
+          position: "absolute",
+          top: "9px",
+          left: "8px",
+          zIndex: 1,
+        }}
+        menuStyle={{
+          padding: "8px",
+        }}
+        toggleComponent={
+          <Icon tooltip="Show/hide columns">
+            <PencilIcon />
+          </Icon>
+        }>
+        <Flex row>
+          <button onClick={() => toggleAllColumns(true)} data-test="hide-all-columns">
+            Hide all
+          </button>
+          <button onClick={() => toggleAllColumns(false)} data-test="show-all-columns">
+            Show all
+          </button>
+        </Flex>
+        {columns.map(({ id }) => (
+          <ColumnCheckbox columnId={id} key={id} setHideColumn={setHideColumn} />
+        ))}
+      </Dropdown>
+    );
+  }
+);
+
 const ConditionalFormatInput = ({
   id,
   comparator,
   primitive,
   color,
-  accessorPath,
-  updateCondition,
-  removeCondition,
+  removeConditionalFormat,
+  setConditionalFormat,
 }: ConditionalFormatInputProps) => {
   return (
     <SConditionalFormatInput>
-      <span style={{ color: colors.TEXT_MUTED }}>CONDITION</span>
       <SColorPickerWrapper>
         <ColorPicker
           color={color}
           onChange={(newColor: { color: string, alpha: number }) =>
-            updateCondition(accessorPath, id, {
+            setConditionalFormat({
               id,
               color: newColor.color,
               comparator,
@@ -110,26 +157,12 @@ const ConditionalFormatInput = ({
           }
         />
       </SColorPickerWrapper>
-      <input
-        type="text"
-        placeholder="column name"
-        key={`column-id-${id}`}
-        value={accessorPath}
-        onChange={(e) => {
-          updateCondition(e.target.value, id, {
-            id,
-            color,
-            comparator,
-            primitive,
-          });
-        }}
-      />
-
       <Dropdown
         value={comparator}
         key={`comparator-${id}`}
+        closeOnChange={false}
         onChange={(newComparator) => {
-          updateCondition(accessorPath, id, {
+          setConditionalFormat({
             id,
             color,
             comparator: newComparator,
@@ -148,7 +181,7 @@ const ConditionalFormatInput = ({
         placeholder="primitive value"
         key={`primitive-${id}`}
         onChange={(e) => {
-          updateCondition(accessorPath, id, {
+          setConditionalFormat({
             id,
             color,
             comparator,
@@ -157,90 +190,79 @@ const ConditionalFormatInput = ({
         }}
       />
       <RemoveButton>
-        <Icon large onClick={() => removeCondition(accessorPath, id)}>
+        <Icon large onClick={() => removeConditionalFormat(id)}>
           <DeleteIcon />
         </Icon>
-        <span style={{ color: colors.TEXT_MUTED }}>{"e.g. classification == car"}</span>
       </RemoveButton>
     </SConditionalFormatInput>
   );
 };
 
-const DEFAULT_CONDITIONAL_FORMAT: ConditionalFormat = {
-  primitive: "",
-  color: "#ffffff",
-  comparator: "",
-};
-
-type Props = { config: Config, saveConfig: SaveConfig<Config> };
-
-const TableSettings = React.memo<Props>(({ config, saveConfig }: Props) => {
-  const lastIdRef = React.useRef<number>(-1);
-  const conditonalFormats = React.useMemo(() => {
-    const conditions = [];
-    const columnConfigs = config?.columnConfigs || {};
-    for (const accessorPath in columnConfigs) {
-      for (const conditionalFormatId in columnConfigs[accessorPath].conditionalFormats) {
-        conditions.push({
-          ...columnConfigs[accessorPath].conditionalFormats[conditionalFormatId],
-          conditionalFormatId,
-          accessorPath,
-        });
-        // Always keep a reference to the largest id so we can increment it.
-        // This ensures that the input ordering is deterministic.
-        if (Number(conditionalFormatId) > lastIdRef.current) {
-          lastIdRef.current = Number(conditionalFormatId);
+export const ConditionaFormatsInput = ({ columnId }: {| columnId: string |}) => {
+  const { updateConditionalFormats } = React.useContext(TableContext);
+  const conditionalFormats = useColumnConfigValue<"conditionalFormats">(columnId, "conditionalFormats") || [];
+  const addConditionalFormat = React.useCallback(() => {
+    updateConditionalFormats(columnId, [
+      ...conditionalFormats,
+      {
+        id: uuid.v4(),
+        primitive: "",
+        color: "#ffffff",
+        comparator: "<",
+      },
+    ]);
+  }, [columnId, conditionalFormats, updateConditionalFormats]);
+  const setConditionalFormat = React.useCallback((updatedConditionalFormat) => {
+    updateConditionalFormats(
+      columnId,
+      conditionalFormats.map((conditionalFormat) => {
+        if (conditionalFormat.id === updatedConditionalFormat.id) {
+          return updatedConditionalFormat;
         }
-      }
-    }
-    // Order needs to be deterministic.
-    return sortBy(conditions, ({ conditionalFormatId }) => conditionalFormatId);
-  }, [config]);
-
-  const updateCondition = React.useCallback((
-    accessorPath: string,
-    conditionalFormatId: string,
-    newConditionalFormat: ?ConditionalFormat
-  ) => {
-    const newColumnConfigs = updateConditionalFormat(
-      accessorPath,
-      conditionalFormatId,
-      newConditionalFormat,
-      config.columnConfigs
+        return conditionalFormat;
+      })
     );
-    saveConfig({ columnConfigs: newColumnConfigs });
-  }, [config.columnConfigs, saveConfig]);
+  }, [columnId, conditionalFormats, updateConditionalFormats]);
 
-  const addNewCondition = React.useCallback(() => {
-    updateCondition("", `${lastIdRef.current++}`, DEFAULT_CONDITIONAL_FORMAT);
-  }, [updateCondition]);
-
-  const removeCondition = React.useCallback((accessorPath: string, id: string) => {
-    updateCondition(accessorPath, id, undefined);
-  }, [updateCondition]);
+  const removeConditionalFormat = React.useCallback((conditionalFormatId: string) => {
+    updateConditionalFormats(
+      columnId,
+      conditionalFormats.filter((conditionalFormat) => {
+        return conditionalFormat.id !== conditionalFormatId;
+      })
+    );
+  }, [columnId, conditionalFormats, updateConditionalFormats]);
 
   return (
-    <STableSettings>
-      {conditonalFormats.map(({ comparator, color, primitive, conditionalFormatId, accessorPath }) => (
-        <ConditionalFormatInput
-          key={conditionalFormatId}
-          id={conditionalFormatId}
-          comparator={comparator}
-          primitive={primitive}
-          color={color}
-          accessorPath={accessorPath}
-          updateCondition={updateCondition}
-          removeCondition={removeCondition}
-        />
-      ))}
-      <button onClick={addNewCondition} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <Icon>
-          <PlusIcon />
-        </Icon>
-        Add new conditional format
-      </button>
-    </STableSettings>
+    <>
+      {conditionalFormats.map((conditionalFormat) => {
+        return (
+          <SHeaderDropdown key={conditionalFormat.id}>
+            <ConditionalFormatInput
+              columnId={columnId}
+              {...conditionalFormat}
+              setConditionalFormat={setConditionalFormat}
+              removeConditionalFormat={removeConditionalFormat}
+            />
+          </SHeaderDropdown>
+        );
+      })}
+      <SHeaderDropdown>
+        <button
+          onClick={addConditionalFormat}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            background: "none",
+            padding: "0",
+          }}>
+          <Icon>
+            <PlusIcon />
+          </Icon>
+          Add formatting
+        </button>
+      </SHeaderDropdown>
+    </>
   );
-});
-
-export default TableSettings;
+};

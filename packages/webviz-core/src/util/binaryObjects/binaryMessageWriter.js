@@ -41,7 +41,11 @@ export class BobWriter {
 
   alloc(bytes: number): { offset: number, view: DataView, storage: Uint8Array } {
     if (this._bytesUsed + bytes > this._storage.length) {
-      const newStorage = new Uint8Array(this._storage.length * 2);
+      let newSize = this._storage.length;
+      while (newSize < this._bytesUsed + bytes) {
+        newSize *= 2;
+      }
+      const newStorage = new Uint8Array(newSize);
       newStorage.set(this._storage);
       this._storage = newStorage;
       this._view = new DataView(this._storage.buffer);

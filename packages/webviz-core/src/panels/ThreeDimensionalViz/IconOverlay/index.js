@@ -17,6 +17,7 @@ import { SIconWrapper, getIconStyles, type OnIconClick } from "webviz-core/src/p
 import type { OverlayIconMarker } from "webviz-core/src/types/Messages";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import Rpc from "webviz-core/src/util/Rpc";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {
   cameraDistance: number,
@@ -24,11 +25,6 @@ type Props = {
   rpc: Rpc,
 };
 
-const SCircle = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 const SText = styled.span`
   margin-left: 4px;
   margin-right: 8px;
@@ -49,7 +45,7 @@ const IconOverlay = (props: Props) => {
   }
 
   // Render smaller icons when camera is zoomed out.
-  const { iconWrapperStyles, scaledIconWrapperSize, scaledIconSize } = getIconStyles(cameraDistance);
+  const { scaledIconWrapperSize, iconWrapperPadding, scaledIconSize } = getIconStyles(cameraDistance);
   const onClick = React.useCallback(async (ev) => {
     const name = ev.currentTarget.dataset.iconName;
     const marker = await rpc.send<?Interactive<OverlayIconMarker>>("getIconData", name);
@@ -64,14 +60,12 @@ const IconOverlay = (props: Props) => {
     }
     const {
       name,
-      iconType,
+      iconTypes,
       text,
       markerStyle = {},
       iconOffset: { x = 0, y = 0 } = {},
       coordinates: [left, top],
     } = icon;
-
-    const SvgIcon = ICON_BY_TYPE[iconType] || ICON_BY_TYPE.DEFAULT;
 
     return (
       <SIconWrapper
@@ -80,16 +74,23 @@ const IconOverlay = (props: Props) => {
         onClick={onClick}
         style={{
           ...markerStyle,
-          ...iconWrapperStyles,
+          borderRadius: scaledIconWrapperSize / 2,
+          padding: iconWrapperPadding,
           transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(
             top -
             scaledIconWrapperSize / 2 +
             y
           ).toFixed()}px)`,
         }}>
-        <SCircle style={{ width: scaledIconSize, height: scaledIconSize, borderRadius: scaledIconSize / 2 }}>
-          <SvgIcon width={scaledIconSize} height={scaledIconSize} fill="white" />
-        </SCircle>
+        {iconTypes.map(({ icon_type, color }, idx) => {
+          const SvgIcon = ICON_BY_TYPE[`${icon_type}`] || ICON_BY_TYPE.DEFAULT;
+          let fill = colors.BLUE;
+          if (color) {
+            const { r, g, b, a } = color; // Use color to control the background color of the icon.
+            fill = `rgba(${r * 255},${g * 255},${b * 255},${a})`;
+          }
+          return <SvgIcon key={`${icon_type}${idx}`} width={scaledIconSize} height={scaledIconSize} fill={fill} />;
+        })}
         {text && <SText>{text}</SText>}
       </SIconWrapper>
     );

@@ -7,43 +7,68 @@
 //  You may not use this file except in compliance with the License.
 
 import DownArrow from "@mdi/svg/svg/arrow-down.svg";
+import ArrowExpandIcon from "@mdi/svg/svg/arrow-expand.svg";
 import UpArrow from "@mdi/svg/svg/arrow-up.svg";
-import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
-import MenuRightIcon from "@mdi/svg/svg/menu-right.svg";
-import MinusIcon from "@mdi/svg/svg/minus-box-outline.svg";
-import PlusIcon from "@mdi/svg/svg/plus-box-outline.svg";
-import _ from "lodash";
+import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
+import CloseIcon from "@mdi/svg/svg/close.svg";
+import FilterIcon from "@mdi/svg/svg/filter.svg";
+import FormatFillIcon from "@mdi/svg/svg/format-color-fill.svg";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import { useTable, usePagination, useSortBy, useBlockLayout, useFlexLayout, useResizeColumns } from "react-table";
+import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns, useFilters } from "react-table";
+import { type RosMsgField, type Time } from "rosbag";
+import shallowequal from "shallowequal";
 import styled from "styled-components";
 
 import helpContent from "./index.help.md";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
-import type { RosPath } from "webviz-core/src/components/MessagePathSyntax/constants";
+import { rosPrimitives } from "webviz-core/src/components/MessagePathSyntax/constants";
+import type { RosPath, MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import {
+  messagePathStructures,
+  traverseStructure,
+} from "webviz-core/src/components/MessagePathSyntax/messagePathsForDatatype";
 import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import { useCachedGetMessagePathDataItems } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import { useMessagesByTopic } from "webviz-core/src/PanelAPI";
-import TableSettings from "webviz-core/src/panels/Table/TableSettings";
+import Tooltip from "webviz-core/src/components/Tooltip";
+import { useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
+import { ColumnDropdown, ConditionaFormatsInput } from "webviz-core/src/panels/Table/TableSettings";
 import type {
   Config,
   TableInstance,
   PaginationProps,
   PaginationState,
   ColumnOptions,
-  RowConfig,
-  CellConfig,
+  UpdateConfig,
+  CellProps,
+  ColumnInstance,
+  Row,
+  ColumnConfig,
+  ColumnConfigKey,
+  ConditionalFormat,
 } from "webviz-core/src/panels/Table/types";
-import { getFormattedColor, getLastAccessor } from "webviz-core/src/panels/Table/utils";
-import type { RosObject } from "webviz-core/src/players/types";
+import {
+  getFormattedColor,
+  getLastAccessor,
+  stripLastAccessor,
+  sortTimestamps,
+  filterTimestamps,
+} from "webviz-core/src/panels/Table/utils";
+import { type Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { isComplex, primitiveList } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import { createSelectableContext, useChangeDetector, useContextSelector } from "webviz-core/src/util/hooks";
+import { enumValuesByDatatypeAndField, type EnumMap } from "webviz-core/src/util/selectors";
 import { ROBOTO_MONO, colors } from "webviz-core/src/util/sharedStyleConstants";
+import { formatFrame, DEFAULT_ZERO_TIME, isTimeInRangeInclusive } from "webviz-core/src/util/time";
 import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
 const STable = styled.div`
@@ -54,13 +79,15 @@ const STable = styled.div`
 `;
 
 const STableRow = styled.div`
-  border-bottom: 1px solid ${colors.DARK3};
+  border-bottom: ${({ removeBorder }) => (removeBorder ? "none" : `1px solid ${colors.DARK3}`)};
   &:hover {
     background-color: ${colors.DARK1};
   }
 `;
 
 const STableHeader = styled.div`
+  display: flex;
+  flex-direction: row;
   background-color: ${toolsColorScheme.base.dark};
   border-left: none;
   border-right: none;
@@ -71,6 +98,45 @@ const STableHeader = styled.div`
   vertical-align: middle;
 `;
 
+const SFilterInput = styled.div`
+  position: relative;
+  padding: 8px 12px;
+
+  input {
+    width: 100%;
+  }
+
+  & > .clear-filter {
+    visibility: hidden;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &:hover {
+    & > .clear-filter {
+      visibility: visible;
+    }
+  }
+`;
+
+const STableHeaderDropdown = styled.div`
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+
+  & > .dropdown-icon {
+    visibility: hidden;
+  }
+
+  &:hover {
+    & > .dropdown-icon {
+      visibility: visible;
+    }
+  }
+`;
+
 const SCell = styled.span`
   padding: 4px 0 4px 8px;
   display: block;
@@ -78,15 +144,11 @@ const SCell = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border-bottom: ${({ addBorder }) => (addBorder ? `1px solid ${colors.DARK3}` : "none")};
 `;
 
 const SPrimitiveCell = styled(SCell)`
-  font-family: ${({ value }: { value: string | number }) => (typeof value === "number" ? ROBOTO_MONO : "inherit")};
-`;
-
-const SObjectCell = styled(SCell)`
-  font-style: italic;
-  cursor: pointer;
+  font-family: ${({ useRoboto }: { useRoboto: boolean }) => (useRoboto ? ROBOTO_MONO : "inherit")};
 `;
 
 const STableContainer = styled.div`
@@ -105,8 +167,8 @@ const SNavigation = styled.div`
 const STableHeaderBorder = styled.div`
   position: absolute;
   right: 0;
-  top: 2px;
-  bottom: 2px;
+  top: 0px;
+  bottom: 0px;
   width: 10px;
   &:after {
     content: "";
@@ -119,180 +181,466 @@ const STableHeaderBorder = styled.div`
   }
 `;
 
-// Accessor paths are a little like message paths. The accessor path for /foo.bar[0].baz.quux[1] is
-// "bar[0].baz[0].quux[1]". Note the strange "[0]" after ".baz" -- nested objects make single-row
-// tables.
-const sanitizeAccessorPath = (accessorPath) => {
-  return accessorPath.replace(/\./g, "-").replace(/[[\]]/g, "");
+export const SHeaderDropdown = styled.div`
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  & > .menu-item {
+    margin-right: 4px;
+  }
+
+  &:hover {
+    background-color: ${colors.DARK5};
+  }
+`;
+
+const mapValues = (obj: { [columnId: string]: any }, key) => {
+  const result = [];
+  for (const columnId in obj) {
+    result.push({ id: columnId, [key]: obj[columnId] });
+  }
+  return result;
 };
 
-const ALL_INDICES = /\[\d+\]/g;
-const accessorPathToGenericPath = (path: string) => path.replace(ALL_INDICES, "");
+type TableContextProps = {|
+  setHideColumn: (columnId: string, hidden: boolean) => void,
+  setExpandColumn: (columnId: string, isExpanded: boolean) => void,
+  setColumnFilter: (columnId: string, filter: string) => void,
+  setColumnWidth: (columnId: string, width: number) => void,
+  updateConditionalFormats: (columnId: string, conditionalFormats: ConditionalFormat[]) => void,
+|};
 
-type UpdateConfig = (updater: (Config) => Config) => void;
-const NO_SORT = [];
+export const TableContext = React.createContext<TableContextProps>({
+  setHideColumn: () => {},
+  setExpandColumn: () => {},
+  setColumnFilter: () => {},
+  setColumnWidth: () => {},
+  updateConditionalFormats: () => {},
+});
 
-const ConfigContext = createSelectableContext<Config>();
+export const ConfigContext = createSelectableContext<Config>();
 
-const DEFAULT_CELL: CellConfig = { sortBy: [], columnWidths: {} };
-const DEFAULT_ROW: RowConfig = Object.freeze({});
-const DEFAULT_COLUMN_WIDTHS = Object.freeze({});
-const updateCell = (config: Config, accessorPath: string, newCellConfig: $Shape<CellConfig>) => {
-  const newCell = { ...DEFAULT_CELL, ...config.cellConfigs?.[accessorPath], ...newCellConfig };
-  return { ...config, cellConfigs: { ...config.cellConfigs, [accessorPath]: newCell } };
-};
-const updateRow = (config: Config, accessorPath: string, rowIndex: number, newRowConfig: $Shape<RowConfig>) => {
-  const newRowConfigs = (config.cellConfigs?.[accessorPath]?.rowConfigs ?? []).slice();
-  newRowConfigs[rowIndex] = { ...DEFAULT_ROW, ...newRowConfigs[rowIndex], ...newRowConfig };
-  return updateCell(config, accessorPath, { rowConfigs: newRowConfigs });
-};
-
-const useIsRowExpanded = (accessorPath, rowIndex) =>
-  useContextSelector(
+export const useColumnConfigValue = <T: ColumnConfigKey>(columnId: string, key: T): ?$ElementType<ColumnConfig, T> => {
+  return useContextSelector(
     ConfigContext,
-    React.useCallback((config) => !!config.cellConfigs?.[accessorPath]?.rowConfigs?.[rowIndex]?.isExpanded, [
-      accessorPath,
-      rowIndex,
-    ])
+    React.useCallback((config) => {
+      if (config.columnConfigs?.[columnId]?.[key]) {
+        // $FlowFixMe -- Flow confusing this return value with BAILOUTTOKEN
+        return config.columnConfigs?.[columnId]?.[key];
+      }
+    }, [columnId, key])
+  );
+};
+
+const useColumnConfigFilterMap = (property: ColumnConfigKey) => {
+  return useContextSelector<Config, string[]>(
+    ConfigContext,
+    React.useCallback((config) => {
+      const result: string[] = [];
+      for (const key in config?.columnConfigs || {}) {
+        const columnConfig = config?.columnConfigs?.[key];
+        if (columnConfig && columnConfig.hasOwnProperty(property)) {
+          if (columnConfig[property]) {
+            result.push(key);
+          }
+        }
+      }
+      return result;
+    }, [property]),
+    { memoResolver: shallowequal }
+  );
+};
+
+const useColumnConfigFilterReduce = <T: ColumnConfigKey>(
+  property: ColumnConfigKey,
+  filterTruthy?: boolean
+): { [key: string]: $ElementType<ColumnConfig, T> } => {
+  return useContextSelector(
+    ConfigContext,
+    React.useCallback((config) => {
+      const result = {};
+      for (const key in config?.columnConfigs || {}) {
+        const columnConfig = config?.columnConfigs?.[key];
+        if (columnConfig && columnConfig.hasOwnProperty(property)) {
+          if (filterTruthy && columnConfig[property]) {
+            result[key] = columnConfig[property];
+          } else if (!filterTruthy) {
+            result[key] = columnConfig[property];
+          }
+        }
+      }
+      return result;
+    }, [filterTruthy, property]),
+    { memoResolver: shallowequal }
+  );
+};
+
+function updateColumnConfigWrapper<T: ColumnConfigKey>(
+  updateConfig: UpdateConfig,
+  columnId: string,
+  key: ColumnConfigKey,
+  value: $ElementType<ColumnConfig, T>
+) {
+  updateConfig((config) => ({
+    ...config,
+    columnConfigs: {
+      ...config.columnConfigs,
+      [columnId]: {
+        ...config.columnConfigs?.[columnId],
+        [key]: value,
+      },
+    },
+  }));
+}
+
+type PrimitiveCellProps = {|
+  columnId: string,
+  value: any,
+  type: string,
+  enumValue?: ?string,
+  isNestedArray?: boolean,
+|};
+
+const TimeCell = ({
+  value,
+  color,
+  isNestedArray,
+}: {
+  value: Time,
+  type: "time" | "duration",
+  color: ?string,
+  isNestedArray: ?boolean,
+}) => {
+  const renderedValue = formatFrame(value);
+  const { seekPlayback, startTime, endTime } = useMessagePipeline(
+    React.useCallback((state) => {
+      const { activeData } = state.playerState;
+      return {
+        seekPlayback: state.seekPlayback,
+        startTime: (activeData && activeData.startTime) || DEFAULT_ZERO_TIME,
+        endTime: (activeData && activeData.endTime) || DEFAULT_ZERO_TIME,
+      };
+    }, [])
   );
 
-function getColumnsFromObject(
-  obj: RosObject,
-  accessorPath: string,
-  updateConfig: UpdateConfig,
-  columnWidths: { [id: string]: number }
-): ColumnOptions[] {
-  const isTopLevelTable = !accessorPath;
-  const columns = [
-    ...Object.keys(obj).map((accessor) => {
-      const id = accessorPath ? `${accessorPath}.${accessor}` : accessor;
-      return {
-        Header: accessor,
-        accessor,
-        id,
-        minWidth: 30,
-        width: columnWidths[getLastAccessor(id)] ?? 100,
-        // eslint-disable-next-line react/display-name
-        Cell: ({ value, row }) => {
-          const conditonalFormats = useContextSelector(
-            ConfigContext,
-            React.useCallback((config) => {
-              const columnConfigs = config?.columnConfigs;
-              return columnConfigs ? columnConfigs[accessorPathToGenericPath(id)]?.conditionalFormats : null;
-            }, [])
-          );
+  const isWithinRange = isTimeInRangeInclusive(value, startTime, endTime);
 
-          if (Array.isArray(value) && typeof value[0] !== "object") {
-            return <SCell>{JSON.stringify(value)}</SCell>;
-          }
+  return (
+    <SPrimitiveCell
+      onClick={() => isWithinRange && seekPlayback(value)}
+      style={{
+        color,
+        cursor: isWithinRange ? "pointer" : "inherit",
+        textDecoration: isWithinRange ? "underline" : "inherit",
+      }}
+      addBorder={isNestedArray}
+      useRoboto>
+      <Tooltip contents={isWithinRange ? "Seek to time" : "Cannot seek. Time not within range of current bag."}>
+        <span>{renderedValue}</span>
+      </Tooltip>
+    </SPrimitiveCell>
+  );
+};
 
-          if (typeof value === "object" && value !== null) {
-            const cellPath = `${id}[${row.index}]`;
-            return <TableCell value={value} row={row} accessorPath={cellPath} updateConfig={updateConfig} />;
-          }
-
-          const color = getFormattedColor(value, conditonalFormats);
-          // In case the value is null.
-          return <SPrimitiveCell style={{ color }}>{`${value}`}</SPrimitiveCell>;
-        },
-      };
-    }),
-  ];
-  if (isTopLevelTable) {
-    columns.unshift({
-      id: "expander",
-      maxWidth: 30,
-      minWidth: 30,
-      // eslint-disable-next-line react/display-name
-      Cell: ({ row }) => {
-        const isExpanded = useIsRowExpanded(accessorPath, row.index);
-        const toggleIsExpanded = React.useCallback(
-          () => updateConfig((config) => updateRow(config, accessorPath, row.index, { isExpanded: !isExpanded })),
-          [row.index, isExpanded]
-        );
-        return (
-          <Icon medium onClick={toggleIsExpanded} dataTest={`expand-row-${row.index}`}>
-            {isExpanded ? <MinusIcon /> : <PlusIcon />}
-          </Icon>
-        );
-      },
-    });
+const PrimitiveCell = ({ value, type, enumValue, isNestedArray, columnId }: PrimitiveCellProps) => {
+  const conditionalFormats = useColumnConfigValue<"conditionalFormats">(columnId, "conditionalFormats");
+  let renderedValue = value;
+  if (enumValue) {
+    renderedValue = `${enumValue} (${value})`;
   }
+
+  const color = conditionalFormats && getFormattedColor(renderedValue, conditionalFormats);
+  if (type === "time" || type === "duration") {
+    return <TimeCell type={type} color={color} value={value} isNestedArray={isNestedArray} />;
+  }
+
+  return (
+    <SPrimitiveCell
+      style={{ color }}
+      addBorder={isNestedArray}
+      useRoboto={typeof renderedValue === "number" || type === "time" || type === "duration" || enumValue}>
+      {`${renderedValue}`}
+    </SPrimitiveCell>
+  );
+};
+
+const ComplexCell = ({ columnId, disableExpansion }: {| columnId: string, disableExpansion?: boolean |}) => {
+  const { setExpandColumn } = React.useContext(TableContext);
+
+  const expandColumn = React.useCallback(() => {
+    if (disableExpansion) {
+      return;
+    }
+    setExpandColumn(columnId, true);
+  }, [columnId, disableExpansion, setExpandColumn]);
+
+  return (
+    <Tooltip contents={!disableExpansion ? "Expand column" : "Cannot expand nested submessages"}>
+      <span
+        style={{
+          cursor: !disableExpansion ? "pointer" : "not-allowed",
+          display: "block",
+          width: "100%",
+          height: "100%",
+        }}
+        onClick={expandColumn}>
+        {"..."}
+      </span>
+    </Tooltip>
+  );
+};
+
+type HeaderCellProps = {|
+  column: any,
+  updateConfig: UpdateConfig,
+  rosMsgField: ?RosMsgField,
+  tableAccessorPath: string,
+  setHideColumn: (columnId: string, hidden: boolean) => void,
+  toggleExpandColumn: (columnId: string, isExpanded: boolean) => void,
+  setColumnFilter: (columnId: string, filter: string) => void,
+  setColumnWidth: (columnId: string, width: number) => void,
+|};
+
+function getColumnsFromDatatype(
+  datatype: string,
+  fields: RosMsgField[],
+  accessorPath: string,
+  columnWidths: { [key: string]: ?number },
+  enumMap: EnumMap,
+  expandedColumns: string[],
+  datatypes: RosDatatypes,
+  parentField: ?RosMsgField = null
+): ColumnOptions[] {
+  const columns = fields
+    // "*webviz_enum" fields are added by rosbagjs for constants, so there's no
+    // reason to show them in the UI.
+    .filter((field) => !field.name.endsWith("webviz_enum"))
+    .map((field) => {
+      const { name: accessor } = field;
+      // NOTE: react-table mutates `column.id`, so it's best not rely on it. They
+      // do set `column.originalId` but it's not a guranteed property.
+      const columnId = accessorPath ? `${accessorPath}.${accessor}` : accessor;
+      const lastAccessor = getLastAccessor(columnId);
+      const isComplexType = isComplex(field.type);
+      const isExpanded = expandedColumns.includes(columnId);
+
+      const Cell = ({ value }: CellProps<ColumnInstance, Row>) => {
+        if (parentField?.isArray) {
+          if (rosPrimitives.includes(field.type)) {
+            return (
+              <Flex col>
+                {value.map((obj, i) => {
+                  const innerValue = obj[field.name];
+                  return (
+                    <PrimitiveCell
+                      columnId={columnId}
+                      value={innerValue}
+                      type={field.type}
+                      enumValue={enumMap?.[datatype]?.[lastAccessor]?.[innerValue]}
+                      isNestedArray
+                      key={i}
+                    />
+                  );
+                })}
+              </Flex>
+            );
+          }
+          // TODO(troy): Allow for successive nesting.
+          return <ComplexCell columnId={columnId} disableExpansion />;
+        }
+
+        if (rosPrimitives.includes(field.type) && field.isArray) {
+          return (
+            <Flex col>
+              {value.map((innerValue, i) => {
+                return <PrimitiveCell columnId={columnId} value={innerValue} type={field.type} isNestedArray key={i} />;
+              })}
+            </Flex>
+          );
+        }
+
+        if (isComplexType) {
+          return <ComplexCell columnId={columnId} />;
+        }
+
+        return (
+          <PrimitiveCell
+            columnId={columnId}
+            value={value}
+            type={field.type}
+            enumValue={enumMap?.[datatype]?.[lastAccessor]?.[value]}
+          />
+        );
+      };
+
+      const HeaderCell = ({ column }: HeaderCellProps) => {
+        const { setExpandColumn, setHideColumn, setColumnFilter, setColumnWidth } = React.useContext(TableContext);
+        if (useChangeDetector([column.isResizing], false) && !column.isResizing) {
+          setColumnWidth(columnId, column.width);
+        }
+
+        const isColumnExpanded = useColumnConfigValue<"isExpanded">(columnId, "isExpanded");
+        const filterValue = useColumnConfigValue<"filter">(columnId, "filter") || "";
+        const conditionalFormats = useColumnConfigValue<"conditionalFormats">(columnId, "conditionalFormats") || [];
+
+        const setColumnFilterCallback = React.useCallback((e) => {
+          setColumnFilter(columnId, e.target.value);
+        }, [setColumnFilter]);
+
+        const renderedHeader = getLastAccessor(columnId);
+
+        return (
+          <Flex>
+            <Dropdown
+              dataTest={`column-header-dropdown-${columnId}`}
+              style={{ width: "100%" }}
+              menuStyle={{ minWidth: "150px" }}
+              toggleComponent={
+                <STableHeaderDropdown>
+                  <Tooltip contents={renderedHeader}>
+                    <span>{renderedHeader}</span>
+                  </Tooltip>
+                  {column.isSorted ? <Icon>{column.isSortedDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
+                  {column.filterValue ? (
+                    <Icon>
+                      <FilterIcon />
+                    </Icon>
+                  ) : null}
+                  {!!conditionalFormats.length && (
+                    <Icon>
+                      <FormatFillIcon />
+                    </Icon>
+                  )}
+                  <Icon className="dropdown-icon">
+                    <ChevronDownIcon />
+                  </Icon>
+                </STableHeaderDropdown>
+              }>
+              {!isComplexType && !parentField?.isArray ? (
+                <>
+                  <SFilterInput>
+                    <input placeholder="filter" value={filterValue} onChange={setColumnFilterCallback} />
+                    {column.filterValue && (
+                      <Icon
+                        onClick={() => setColumnFilter(columnId, "")}
+                        className="clear-filter"
+                        tooltip="Clear filter">
+                        <CloseIcon />
+                      </Icon>
+                    )}
+                  </SFilterInput>
+                  <SHeaderDropdown data-test={"sort-column"} {...column.getSortByToggleProps()}>
+                    <Icon className="menu-item">
+                      {column.isSorted ? column.isSortedDesc ? <CloseIcon /> : <DownArrow /> : <UpArrow />}
+                    </Icon>
+                    Sort {column.isSorted ? (column.isSortedDesc ? "(clear)" : "(desc)") : "(asc)"}
+                  </SHeaderDropdown>
+                </>
+              ) : (
+                !parentField?.isArray && (
+                  <SHeaderDropdown
+                    data-test={"toggle-expand-column"}
+                    onClick={() => {
+                      setExpandColumn(columnId, !isColumnExpanded);
+                    }}
+                    key={"toggle-expand"}>
+                    <Icon className="menu-item">
+                      <ArrowExpandIcon />
+                    </Icon>
+                    {isColumnExpanded ? "Collapse" : "Expand"} column
+                  </SHeaderDropdown>
+                )
+              )}
+              <SHeaderDropdown
+                data-test={"hide-column"}
+                onClick={() => {
+                  setHideColumn(columnId, true);
+                }}
+                key={"hide"}>
+                <Icon className="menu-item">
+                  <CloseIcon />
+                </Icon>
+                Hide column
+              </SHeaderDropdown>
+              {!isComplexType && <ConditionaFormatsInput columnId={columnId} />}
+            </Dropdown>
+          </Flex>
+        );
+      };
+
+      const subColumns =
+        isComplexType && isExpanded
+          ? getColumnsFromDatatype(
+              field.type,
+              datatypes[field.type].fields.filter(({ isConstant }) => !isConstant),
+              columnId,
+              columnWidths,
+              enumMap,
+              expandedColumns,
+              datatypes,
+              field
+            )
+          : undefined;
+
+      const columnAccessor = !parentField?.isArray ? columnId : stripLastAccessor(columnId);
+      const columnOptions: ColumnOptions = {
+        Header: HeaderCell,
+        accessor: columnAccessor,
+        id: columnId,
+        minWidth: 30,
+        width: columnWidths?.[columnId] ?? 100,
+        Cell: isExpanded ? undefined : Cell,
+        columns: subColumns,
+      };
+
+      if (field.type === "time" || field.type === "duration") {
+        columnOptions.sortType = sortTimestamps;
+        columnOptions.filter = filterTimestamps.bind(null, columnId);
+      }
+
+      return columnOptions;
+    });
 
   return columns;
 }
 
-const HeaderCell = ({
-  column,
-  updateConfig,
-  tableAccessorPath,
-}: {|
-  column: any,
-  updateConfig: UpdateConfig,
-  tableAccessorPath: string,
-|}) => {
-  const sanitizedId = sanitizeAccessorPath(column.id);
-
-  if (useChangeDetector([column.isResizing], false) && !column.isResizing) {
-    updateConfig((config) => {
-      return updateCell(config, tableAccessorPath, {
-        columnWidths: {
-          ...config.cellConfigs?.[tableAccessorPath]?.columnWidths,
-          [getLastAccessor(column.id)]: column.width,
-        },
-      });
-    });
-  }
-
-  return (
-    <STableHeader
-      className="th"
-      key={column.id}
-      data-test={`column-header-${sanitizedId}`}
-      {...column.getHeaderProps()}>
-      <span style={{ cursor: "pointer" }} {...column.getSortByToggleProps()} data-test={`sort-${sanitizedId}`}>
-        {column.render("Header")}
-      </span>
-      {column.isSorted ? <Icon>{column.isSortedDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
-      <STableHeaderBorder {...column.getResizerProps()} />
-    </STableHeader>
-  );
-};
-
 const Table = React.memo(
-  ({ value, accessorPath, updateConfig }: {| value: mixed, accessorPath: string, updateConfig: UpdateConfig |}) => {
-    const isNested = !!accessorPath;
+  ({
+    msg,
+    accessorPath,
+    updateConfig,
+    msgDatatype,
+    enumMap,
+  }: {|
+    msg: mixed,
+    accessorPath: string,
+    updateConfig: UpdateConfig,
+    msgDatatype: string,
+    enumMap: EnumMap,
+  |}) => {
+    const { datatypes } = useDataSourceInfo();
 
-    const columnWidths = useContextSelector(
-      ConfigContext,
-      React.useCallback((config) => {
-        return config.cellConfigs?.[accessorPathToGenericPath(accessorPath)]?.columnWidths ?? DEFAULT_COLUMN_WIDTHS;
-      }, [accessorPath])
+    const hiddenColumns = useColumnConfigFilterMap("hidden");
+    const expandedColumns = useColumnConfigFilterMap("isExpanded");
+
+    const initialFilters = useColumnConfigFilterReduce("filter");
+    const initialSortBy = useColumnConfigFilterReduce<"sortDesc">("sortDesc");
+    const columnWidths = useColumnConfigFilterReduce<"width">("width", true);
+
+    const fields = React.useMemo(
+      () => (datatypes[msgDatatype] ? datatypes[msgDatatype].fields.filter(({ isConstant }) => !isConstant) : []),
+      [datatypes, msgDatatype]
     );
 
-    const columns = React.useMemo(() => {
-      if (
-        value === null ||
-        typeof value !== "object" ||
-        (Array.isArray(value) && typeof value[0] !== "object" && value[0] !== null)
-      ) {
-        return [];
-      }
-
-      const rosObject: RosObject = ((Array.isArray(value) ? value[0] || {} : value): any);
-
-      // Strong assumption about structure of data.
-      return getColumnsFromObject(rosObject, accessorPath, updateConfig, columnWidths);
-    }, [accessorPath, columnWidths, updateConfig, value]);
-
-    const data = React.useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
-
-    const initialSort = useContextSelector(
-      ConfigContext,
-      React.useCallback((config) => {
-        return config.cellConfigs?.[accessorPath]?.sortBy ?? NO_SORT;
-      }, [accessorPath])
+    const columns = React.useMemo(
+      () =>
+        getColumnsFromDatatype(msgDatatype, fields, accessorPath, columnWidths, enumMap, expandedColumns, datatypes),
+      [msgDatatype, fields, accessorPath, columnWidths, enumMap, expandedColumns, datatypes]
     );
+
+    const data = React.useMemo(() => (Array.isArray(msg) ? msg : [msg]), [msg]);
 
     const tableInstance: TableInstance<PaginationProps, PaginationState> = useTable(
       {
@@ -300,26 +648,31 @@ const Table = React.memo(
         data,
         initialState: {
           pageSize: 30,
-          sortBy: initialSort,
+          sortBy: mapValues(initialSortBy, "desc"),
+          hiddenColumns,
+          filters: mapValues(initialFilters, "value"),
         },
       },
+      useFilters,
       useSortBy,
       useResizeColumns,
-      isNested ? useFlexLayout : useBlockLayout,
-      !isNested ? usePagination : _.noop
+      useBlockLayout,
+      usePagination
     );
 
+    const updateColumnConfig = React.useCallback((...args) => updateColumnConfigWrapper(updateConfig, ...args), [
+      updateConfig,
+    ]);
+
     // $FlowFixMe: useSortBy above adds the sortBy prop, but flow doesn't know.
-    const { sortBy }: { sortBy: SortBy } = tableInstance.state;
+    const { sortBy }: { sortBy: SortBy[] } = tableInstance.state;
     if (useChangeDetector([sortBy], false)) {
-      updateConfig((config) => updateCell(config, accessorPath, { sortBy }));
+      sortBy.forEach((sort) => {
+        updateColumnConfig(sort.id, "sortDesc", sort.desc);
+      });
     }
 
-    if (
-      typeof value !== "object" ||
-      value === null ||
-      (!isNested && Array.isArray(value) && typeof value[0] !== "object")
-    ) {
+    if (primitiveList.has(msgDatatype)) {
       return (
         <EmptyState>Cannot render primitive values in a table. Try using the Raw Messages panel instead.</EmptyState>
       );
@@ -331,7 +684,6 @@ const Table = React.memo(
       headerGroups,
       page,
       prepareRow,
-      rows,
       canPreviousPage,
       canNextPage,
       pageOptions,
@@ -340,48 +692,103 @@ const Table = React.memo(
       nextPage,
       previousPage,
       setPageSize,
+      toggleHideColumn,
+      setFilter,
+      allColumns,
+      toggleHideAllColumns: rcToggleHideAllColumns,
       state: { pageIndex, pageSize },
     } = tableInstance;
 
+    const setHideColumn = React.useCallback((columnId: string, hidden?: boolean) => {
+      toggleHideColumn(columnId, hidden);
+      updateColumnConfig(columnId, "hidden", hidden);
+    }, [toggleHideColumn, updateColumnConfig]);
+
+    const setExpandColumn = React.useCallback((columnId: string, isExpanded: boolean) => {
+      updateColumnConfig(columnId, "isExpanded", isExpanded);
+    }, [updateColumnConfig]);
+
+    const setColumnFilter = React.useCallback((columnId: string, filter: string) => {
+      setFilter(columnId, filter);
+      updateColumnConfig(columnId, "filter", filter);
+    }, [setFilter, updateColumnConfig]);
+
+    const setColumnWidth = React.useCallback((columnId: string, width: number) => {
+      updateColumnConfig(columnId, "width", width);
+    }, [updateColumnConfig]);
+
+    const toggleAllColumns = React.useCallback((hidden: boolean) => {
+      rcToggleHideAllColumns(hidden);
+      updateConfig((config) => {
+        const ids = allColumns.map(({ id }) => id);
+        const columnConfigs = { ...config.columnConfigs };
+        ids.forEach((id) => {
+          columnConfigs[id] = {
+            ...columnConfigs[id],
+            hidden,
+          };
+        });
+        return {
+          ...config,
+          columnConfigs,
+        };
+      });
+    }, [allColumns, rcToggleHideAllColumns, updateConfig]);
+
+    const updateConditionalFormats = React.useCallback((columnId: string, conditionalFormats: ConditionalFormat[]) => {
+      updateColumnConfig(columnId, "conditionalFormats", conditionalFormats);
+    }, [updateColumnConfig]);
+
     return (
       <>
-        <STable className="table" {...getTableProps()}>
-          <div className="thead">
-            {headerGroups.map((headerGroup, i) => {
-              return (
-                <STableRow className="tr" key={i} {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => {
-                    return (
-                      <HeaderCell
-                        tableAccessorPath={accessorPathToGenericPath(accessorPath)}
-                        column={column}
-                        key={column.id}
-                        updateConfig={updateConfig}
-                      />
-                    );
-                  })}
-                </STableRow>
-              );
-            })}
-          </div>
-          <div className="tbody" {...getTableBodyProps()}>
-            {(!isNested ? page : rows).map((row) => {
-              prepareRow(row);
-              return (
-                <STableRow {...row.getRowProps()} key={row.index} index={row.index}>
-                  {row.cells.map((cell, i) => {
-                    return (
-                      <div className="td" key={i} {...cell.getCellProps()}>
-                        {cell.render("Cell")}
-                      </div>
-                    );
-                  })}
-                </STableRow>
-              );
-            })}
-          </div>
-        </STable>
-        {!isNested && (
+        <TableContext.Provider
+          value={{
+            setHideColumn,
+            setExpandColumn,
+            setColumnFilter,
+            setColumnWidth,
+            updateConditionalFormats,
+          }}>
+          <STable className="table" {...getTableProps()}>
+            <ColumnDropdown
+              columns={allColumns}
+              updateConfig={updateConfig}
+              setHideColumn={setHideColumn}
+              toggleAllColumns={toggleAllColumns}
+            />
+            <div className="thead">
+              {headerGroups.map((headerGroup, i) => {
+                return (
+                  <STableRow removeBorder className="tr" key={i} {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => {
+                      return (
+                        <STableHeader className="th" key={column.id} {...column.getHeaderProps()}>
+                          {column.render("Header")}
+                          <STableHeaderBorder {...column.getResizerProps()} />
+                        </STableHeader>
+                      );
+                    })}
+                  </STableRow>
+                );
+              })}
+            </div>
+            <div className="tbody" {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                return (
+                  <STableRow {...row.getRowProps()} key={row.index} index={row.index}>
+                    {row.cells.map((cell, i) => {
+                      return (
+                        <div className="td" key={i} {...cell.getCellProps()}>
+                          {cell.render("Cell")}
+                        </div>
+                      );
+                    })}
+                  </STableRow>
+                );
+              })}
+            </div>
+          </STable>
           <SNavigation>
             <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
               {"<<"}
@@ -413,48 +820,8 @@ const Table = React.memo(
               ))}
             </select>
           </SNavigation>
-        )}
+        </TableContext.Provider>
       </>
-    );
-  }
-);
-
-const TableCell = React.memo(
-  ({
-    value,
-    row,
-    accessorPath,
-    updateConfig,
-  }: {
-    value: any,
-    row: any,
-    accessorPath: string,
-    updateConfig: UpdateConfig,
-  }) => {
-    // Table accessor path does not have the cell path's row index or column name.
-    const tableAccessorPath = accessorPath.replace(/\.?\w+\[\d+\]$/, "");
-    const rowIsExpanded = useIsRowExpanded(tableAccessorPath, row.index);
-    const cellIsExpanded = useContextSelector(
-      ConfigContext,
-      React.useCallback((config) => !!config.cellConfigs?.[accessorPath]?.isExpanded, [accessorPath])
-    );
-    const toggleIsExpanded = React.useCallback(() => {
-      updateConfig((config) => updateCell(config, accessorPath, { isExpanded: !cellIsExpanded }));
-    }, [accessorPath, cellIsExpanded, updateConfig]);
-
-    return rowIsExpanded || cellIsExpanded ? (
-      <div style={{ position: "relative", overflow: "hidden" }}>
-        {cellIsExpanded && (
-          <Icon style={{ position: "absolute", right: "2px", top: "2px", zIndex: 1 }} onClick={toggleIsExpanded}>
-            <MinusIcon />
-          </Icon>
-        )}
-        <Table value={value} accessorPath={accessorPath} updateConfig={updateConfig} />
-      </div>
-    ) : (
-      <SObjectCell data-test={`expand-cell-${sanitizeAccessorPath(accessorPath)}`} onClick={toggleIsExpanded}>
-        Object
-      </SObjectCell>
     );
   }
 );
@@ -464,13 +831,25 @@ function TablePanel({ config, saveConfig }: Props) {
   const { topicPath } = config;
   const onTopicPathChange = React.useCallback((newTopicPath: string) => {
     // We don't want any config settings persisting for completely different topics.
-    saveConfig({ topicPath: newTopicPath, cellConfigs: {} });
+    saveConfig({ topicPath: newTopicPath, columnConfigs: {} });
   }, [saveConfig]);
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  const toggleIsExpanded = React.useCallback(() => setIsExpanded((expanded) => !expanded), [setIsExpanded]);
 
+  const { topics, datatypes } = useDataSourceInfo();
   const topicRosPath: ?RosPath = React.useMemo(() => parseRosPath(topicPath), [topicPath]);
+  const topic: ?Topic = React.useMemo(
+    () => topicRosPath && topics.find(({ name }) => name === topicRosPath.topicName),
+    [topicRosPath, topics]
+  );
+
   const topicName = topicRosPath?.topicName || "";
+
+  const rootStructureItem: ?MessagePathStructureItem = React.useMemo(() => {
+    if (!topic || !topicRosPath) {
+      return;
+    }
+    return traverseStructure(messagePathStructures(datatypes)[topic.datatype], topicRosPath.messagePath).structureItem;
+  }, [datatypes, topic, topicRosPath]);
+
   const msgs = useMessagesByTopic({ topics: [topicName], historySize: 1 })[topicName];
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([topicPath]);
   const cachedMessages = msgs.length ? cachedGetMessagePathDataItems(topicPath, msgs[0]) : [];
@@ -483,19 +862,35 @@ function TablePanel({ config, saveConfig }: Props) {
     saveConfig(updater(configRef.current));
   }, [saveConfig]);
 
+  const msgDatatype: ?string = React.useMemo(() => {
+    if (!rootStructureItem) {
+      return null;
+    }
+    switch (rootStructureItem.structureType) {
+      case "message":
+        return rootStructureItem.datatype;
+      case "array":
+        if (rootStructureItem.next.structureType === "primitive") {
+          return rootStructureItem.next.primitiveType;
+        }
+        return rootStructureItem.next.datatype;
+      case "primitive":
+        return rootStructureItem.primitiveType;
+      default:
+        return null;
+    }
+  }, [rootStructureItem]);
+
+  const enumMap = React.useMemo(() => {
+    return enumValuesByDatatypeAndField(datatypes);
+  }, [datatypes]);
+
   return (
     <ConfigContext.Provider value={config}>
       <Flex col clip style={{ position: "relative" }}>
         <Flex col style={{ flexGrow: "unset" }}>
           <PanelToolbar helpContent={helpContent}>
-            <Flex row style={{ width: "100%", lineHeight: "20px" }}>
-              <Icon
-                onClick={toggleIsExpanded}
-                large
-                dataTest="expand-settings"
-                tooltip={isExpanded ? "Collapse settings" : "Expand settings"}>
-                {!isExpanded ? <MenuRightIcon /> : <MenuDownIcon />}
-              </Icon>
+            <Flex row style={{ width: "100%", lineHeight: "20px", marginLeft: "16px" }}>
               <MessagePathInput
                 index={0}
                 path={topicPath}
@@ -504,13 +899,18 @@ function TablePanel({ config, saveConfig }: Props) {
               />
             </Flex>
           </PanelToolbar>
-          {isExpanded && <TableSettings config={config} saveConfig={saveConfig} />}
         </Flex>
         {!topicPath && <EmptyState>No topic selected</EmptyState>}
         {topicPath && !cachedMessages?.length && <EmptyState>Waiting for next message</EmptyState>}
-        {topicPath && cachedMessages && !!cachedMessages?.length && (
+        {topicPath && cachedMessages && !!cachedMessages?.length && msgDatatype && (
           <STableContainer>
-            <Table value={cachedMessages[0].value} accessorPath={""} updateConfig={updateConfig} />
+            <Table
+              msg={cachedMessages.length > 1 ? cachedMessages.map(({ value }) => value) : cachedMessages[0].value}
+              msgDatatype={msgDatatype}
+              accessorPath={""}
+              updateConfig={updateConfig}
+              enumMap={enumMap}
+            />
           </STableContainer>
         )}
       </Flex>
@@ -521,7 +921,6 @@ function TablePanel({ config, saveConfig }: Props) {
 TablePanel.panelType = "Table";
 TablePanel.defaultConfig = {
   topicPath: "",
-  cellConfigs: {},
 };
 
 export default hot(Panel<Config>(TablePanel));

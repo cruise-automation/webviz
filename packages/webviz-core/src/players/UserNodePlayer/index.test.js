@@ -16,6 +16,7 @@ import { Sources, DiagnosticSeverity, ErrorCodes } from "webviz-core/src/players
 import MockUserNodePlayerWorker from "webviz-core/src/players/UserNodePlayer/worker.mock";
 import { wrapMessages } from "webviz-core/src/test/datatypes";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
+import { getSourceData } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Storage from "webviz-core/src/util/Storage";
@@ -1427,6 +1428,12 @@ describe("UserNodePlayer", () => {
 
       const { messages, bobjects } = await done;
 
+      // Generated bobjects should be "true binary bobjects"
+      bobjects.forEach(({ message, topic }) => {
+        if (topic.startsWith(`${DEFAULT_WEBVIZ_NODE_PREFIX}`)) {
+          expect(getSourceData(Object.getPrototypeOf((message: any)).constructor)).toHaveProperty("buffer");
+        }
+      });
       return { messages, bobjects };
     };
 

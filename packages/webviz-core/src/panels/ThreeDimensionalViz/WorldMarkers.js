@@ -57,7 +57,7 @@ import type {
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const ICON_WRAPPER_SIZE = 24;
-const ICON_SIZE = 14;
+const ICON_SIZE = 16;
 export const BG_COLOR = tinyColor(colors.BLUE)
   .setAlpha(0.75)
   .toRgbString();
@@ -65,23 +65,20 @@ export const BG_COLOR = tinyColor(colors.BLUE)
 const ICON_WIDTH = 28;
 
 export const SIconWrapper = styled.div`
-  box-shadow: 0px 0px 12px rgba(23, 34, 40, 0.5);
+  box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.15);
   border-radius: ${ICON_WIDTH / 2}px;
+  color: ${colors.BLUE};
   display: flex;
   overflow: hidden;
   align-items: center;
-  background: ${BG_COLOR};
+  background: ${colors.DARK2};
   position: absolute;
   top: 0;
   left: 0;
   cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.075);
 `;
 
-const SCircle = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 export const SText = styled.span`
   margin-left: 4px;
   margin-right: 8px;
@@ -154,19 +151,16 @@ function getIconScaleByCameraDistance(distance: number): number {
 export function getIconStyles(
   distance: number
 ): {|
-  iconWrapperStyles: { [attr: string]: string | number },
+  iconWrapperPadding: number,
   scaledIconSize: number,
   scaledIconWrapperSize: number,
 |} {
   const scale = getIconScaleByCameraDistance(distance);
   const scaledIconWrapperSize = Math.round(scale * ICON_WRAPPER_SIZE);
   const scaledIconSize = Math.round(scale * ICON_SIZE);
-  const padding = Math.floor((scaledIconWrapperSize - scaledIconSize) / 2);
+  const iconWrapperPadding = Math.floor((scaledIconWrapperSize - scaledIconSize) / 2);
   return {
-    iconWrapperStyles: {
-      padding,
-      borderRadius: scaledIconWrapperSize,
-    },
+    iconWrapperPadding,
     scaledIconSize,
     scaledIconWrapperSize,
   };
@@ -228,7 +222,7 @@ export default function WorldMarkers({
   const groupedLines = groupLinesIntoInstancedLineLists([...lineList, ...lineStrip]);
 
   // Render smaller icons when camera is zoomed out.
-  const { iconWrapperStyles, scaledIconWrapperSize, scaledIconSize } = useMemo(() => getIconStyles(cameraDistance), [
+  const { scaledIconWrapperSize, scaledIconSize, iconWrapperPadding } = useMemo(() => getIconStyles(cameraDistance), [
     cameraDistance,
   ]);
 
@@ -287,15 +281,12 @@ export default function WorldMarkers({
           }
           const {
             name,
-            iconType,
             text,
             markerStyle = {},
             iconOffset: { x = 0, y = 0 } = {},
             coordinates: [left, top],
+            iconTypes,
           } = projectedItem;
-
-          const SvgIcon = ICON_BY_TYPE[`${iconType}`] || ICON_BY_TYPE.DEFAULT;
-
           return (
             <SIconWrapper
               key={name}
@@ -305,16 +296,25 @@ export default function WorldMarkers({
               }}
               style={{
                 ...markerStyle,
-                ...iconWrapperStyles,
+                borderRadius: scaledIconWrapperSize / 2,
+                padding: iconWrapperPadding,
                 transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(
                   top -
                   scaledIconWrapperSize / 2 +
                   y
                 ).toFixed()}px)`,
               }}>
-              <SCircle style={{ width: scaledIconSize, height: scaledIconSize, borderRadius: scaledIconSize / 2 }}>
-                <SvgIcon width={scaledIconSize} height={scaledIconSize} fill="white" />
-              </SCircle>
+              {iconTypes.map(({ icon_type, color }, idx) => {
+                const SvgIcon = ICON_BY_TYPE[`${icon_type}`] || ICON_BY_TYPE.DEFAULT;
+                let fill = colors.BLUE;
+                if (color) {
+                  const { r, g, b, a } = color; // Use color to control the background color of the icon.
+                  fill = `rgba(${r * 255},${g * 255},${b * 255},${a})`;
+                }
+                return (
+                  <SvgIcon key={`${icon_type}${idx}`} width={scaledIconSize} height={scaledIconSize} fill={fill} />
+                );
+              })}
               {text && <SText>{text}</SText>}
             </SIconWrapper>
           );

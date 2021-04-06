@@ -595,7 +595,8 @@ export default class SceneBuilder implements MarkerProvider {
     const marker: any = {
       type: message.type(),
       scale: deepParse(message.scale()),
-      lifetime: deepParse(lifetime),
+      // Missing lifetimes are badly inferred during tests. Hopefully not needed for long.
+      lifetime: lifetime ? deepParse(lifetime) : null,
       pose,
       interactionData,
       color: matchingOverrideColor || color,
@@ -623,8 +624,8 @@ export default class SceneBuilder implements MarkerProvider {
     // TODO(Matt): show the original message upon marker click instead of parsing metadata upfront.
     if (message.metadata != null) {
       marker.metadata = message.metadata();
-      if (iconTextTemplate) {
-        // Replace the text field with parsed icon text.
+      // Replace the text field with parsed icon text. Only replace when the marker type is overlayIcon.
+      if (iconTextTemplate && marker.type === 109) {
         marker.text = parseStringTemplate(iconTextTemplate, marker.metadata);
       }
     }

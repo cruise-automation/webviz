@@ -12,6 +12,7 @@ import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
 import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
+import { SEEK_BACK_NANOSECONDS } from "webviz-core/src/players/RandomAccessPlayer";
 import type {
   AdvertisePayload,
   BobjectMessage,
@@ -32,11 +33,19 @@ import sendNotification, {
   detailsToString,
   setNotificationHandler,
 } from "webviz-core/src/util/sendNotification";
-import { getSeekTimeFromSpec, clampTime, subtractTimes, toMillis, getSeekToTime } from "webviz-core/src/util/time";
+import {
+  getSeekTimeFromSpec,
+  clampTime,
+  subtractTimes,
+  toMillis,
+  fromMillis,
+  getSeekToTime,
+} from "webviz-core/src/util/time";
 
 export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
+  durationMs?: number | typeof undefined;
   workerIndex?: number;
   workerTotal?: number;
   shouldLoadDataBeforePlaying: boolean;
@@ -262,8 +271,9 @@ export default class AutomatedRunPlayer implements Player {
 
   async _start() {
     // Call _getMessages to start data loading and rendering for the first frame.
-    const { parsedMessages, bobjects } = await this._getMessages(this._startTime, this._startTime);
-    await this._emitState(parsedMessages, bobjects, this._providerResult.start);
+    const backfillStart = subtractTimes(this._startTime, { sec: 0, nsec: SEEK_BACK_NANOSECONDS });
+    const { parsedMessages, bobjects } = await this._getMessages(backfillStart, this._startTime);
+    await this._emitState(parsedMessages, bobjects, backfillStart);
     if (!this._startCalled) {
       this._client.markPreloadStart();
     }
@@ -309,10 +319,14 @@ export default class AutomatedRunPlayer implements Player {
     this._isPlaying = true;
     this._client.markPreloadEnd();
     console.log("AutomatedRunPlayer._run()");
-
     await this._emitState([], [], this._startTime);
 
-    const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._startTime));
+    const requestedDurationMs = this._client.durationMs || Infinity;
+    const bagLengthMs = Math.min(
+      requestedDurationMs,
+      toMillis(subtractTimes(this._providerResult.end, this._startTime))
+    );
+    const endTime = TimeUtil.add(this._startTime, fromMillis(bagLengthMs));
     this._client.start({ bagLengthMs });
 
     const startEpoch = Date.now();
@@ -328,7 +342,7 @@ export default class AutomatedRunPlayer implements Player {
     currentTime = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
 
     let frameCount = 0;
-    while (TimeUtil.isLessThan(currentTime, this._providerResult.end)) {
+    while (TimeUtil.isLessThan(currentTime, endTime)) {
       if (this._waitToReportErrorPromise) {
         await this._waitToReportErrorPromise;
       }
@@ -400,4 +414,5 @@ export default class AutomatedRunPlayer implements Player {
   setGlobalVariables() {
     console.warn(`setGlobalVariables: Unsupported in AutomatedRunPlayer`);
   }
+  setMessageOrder() {}
 }

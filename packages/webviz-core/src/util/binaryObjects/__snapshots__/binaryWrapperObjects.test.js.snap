@@ -272,9 +272,14 @@ function deepParse$time($offset) {
 }
 $context.associateSourceData(time, { datatypes: $typesByName, datatype: \\"time\\", buffer: $arrayBuffer, bigString: $bigString })
 const string$Array = $context.getArrayView((offset) => $bigString.substr($view.getInt32((offset + 4), true), $view.getInt32(offset, true)), 8);
+$context.associateSourceData(string$Array, { datatypes: $typesByName, datatype: \\"string\\", buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });
 const fake_msgs_HasComplexAndArray$Array = $context.getArrayView((offset) => new fake_msgs_HasComplexAndArray(offset), 28);
+$context.associateSourceData(fake_msgs_HasComplexAndArray$Array, { datatypes: $typesByName, datatype: \\"fake_msgs/HasComplexAndArray\\", buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });
 const fake_msgs_HasConstant$Array = $context.getArrayView((offset) => new fake_msgs_HasConstant(offset), 0);
+$context.associateSourceData(fake_msgs_HasConstant$Array, { datatypes: $typesByName, datatype: \\"fake_msgs/HasConstant\\", buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });
 const int64$Array = $context.getArrayView((offset) => $int53.readInt64LE($buffer, offset), 8, (offset) => $view.getBigInt64(offset, true));
+$context.associateSourceData(int64$Array, { datatypes: $typesByName, datatype: \\"int64\\", buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });
 const uint64$Array = $context.getArrayView((offset) => $int53.readUInt64LE($buffer, offset), 8, (offset) => $view.getBigUint64(offset, true));
+$context.associateSourceData(uint64$Array, { datatypes: $typesByName, datatype: \\"uint64\\", buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });
 return fake_msgs_ContainsEverything;"
 `;

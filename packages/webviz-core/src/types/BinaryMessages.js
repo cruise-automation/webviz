@@ -9,6 +9,7 @@
 // All message types supported by Rviz
 // http://wiki.ros.org/rviz/DisplayTypes
 
+import type { IconMetadata } from "webviz-core/src/types/Messages";
 import type { ArrayView } from "webviz-core/src/util/binaryObjects";
 
 export type BinaryTime = $ReadOnly<{|
@@ -119,7 +120,7 @@ export type BinaryIconMarker = $ReadOnly<{|
   colors(): ArrayView<BinaryColorRgba>,
   text(): string,
   icon_type(): ?string | number,
-  metadata(): ?any,
+  metadata(): ?IconMetadata,
 |}>;
 export type BinaryMarkerArray = $ReadOnly<{|
   markers(): ArrayView<BinaryMarker>,

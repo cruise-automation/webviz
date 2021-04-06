@@ -57,6 +57,15 @@ export function DEBUGShallowEquals(name: string, item: {}) {
   });
 }
 
+// Returns a function that, when called, returns the value passed in. This doesn't sound very useful, but in this
+// case the function will never change identity, so it's useful for passing to callbacks or children without triggering
+// rerenders.
+export function useGetCurrentValue<T>(value: T): () => T {
+  const ref = useRef(value);
+  ref.current = value;
+  return useCallback(() => ref.current, []);
+}
+
 // Return initiallyTrue the first time, and again if any of the given deps have changed.
 export function useChangeDetector(deps: any[], initiallyTrue: boolean) {
   const ref = useRef(initiallyTrue ? undefined : deps);
@@ -198,6 +207,8 @@ function isBailout(value: mixed): boolean %checks {
   return (value === useContextSelector.BAILOUT /*:: || value instanceof Symbol */);
 }
 
+export type MemoResolver<T> = (a: T | BailoutToken, b: ?(T | BailoutToken)) => boolean;
+
 // `useContextSelector(context, selector)` behaves like `selector(useContext(context))`, but
 // only triggers a re-render when the selected value actually changes.
 //
@@ -209,9 +220,9 @@ function isBailout(value: mixed): boolean %checks {
 export function useContextSelector<T, U>(
   context: SelectableContext<T>,
   selector: (T) => U | BailoutToken,
-  options?: ?{| enableShallowMemo: boolean |}
+  options?: ?{| memoResolver: MemoResolver<U> |}
 ): U {
-  const enableShallowMemo = options?.enableShallowMemo || false;
+  const memoResolver = options?.memoResolver;
 
   // eslint-disable-next-line no-underscore-dangle
   const handle = useContext(context._ctx);
@@ -248,8 +259,8 @@ export function useContextSelector<T, U>(
       if (isBailout(newSelectedValue)) {
         return;
       }
-      const newValueMatchesPrevious = enableShallowMemo
-        ? shallowequal(newSelectedValue, latestSelectedValue.current)
+      const newValueMatchesPrevious = memoResolver
+        ? memoResolver(newSelectedValue, latestSelectedValue.current)
         : newSelectedValue === latestSelectedValue.current;
       if (!newValueMatchesPrevious) {
         // Because newSelectedValue might be a function, we have to always use the reducer form of setState.
@@ -260,7 +271,7 @@ export function useContextSelector<T, U>(
     return () => {
       handle.removeSubscriber(sub);
     };
-  }, [enableShallowMemo, handle, selector]);
+  }, [handle, memoResolver, selector]);
 
   return selectedValue;
 }

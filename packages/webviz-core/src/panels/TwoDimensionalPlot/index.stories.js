@@ -16,24 +16,53 @@ const example0 = {
   xAxisLabel: "This is my X axis label",
   yAxisLabel: "This is my Y axis label",
   lines: [
-    { label: "solid-line", borderColor: "red", backgroundColor: "red", data: [{ x: 0, y: 0 }, { x: 5, y: 5 }] },
+    {
+      order: 0,
+      label: "solid-line",
+      borderDash: [],
+      borderColor: "red",
+      backgroundColor: "red",
+      pointBackgroundColor: "",
+      pointBorderColor: "",
+      pointBorderWidth: 0,
+      pointStyle: "",
+      pointRadius: 3,
+      data: [{ x: 0, y: 0 }, { x: 5, y: 5 }],
+    },
     {
       order: 1,
       label: "dashed-line",
       borderDash: [5, 5],
       borderColor: "pink",
       backgroundColor: "pink",
+      pointBackgroundColor: "",
+      pointBorderColor: "",
+      pointBorderWidth: 0,
+      pointStyle: "",
+      pointRadius: 3,
       data: [{ x: 1, y: 1.5 }, { x: 5, y: 3.5 }],
     },
   ],
   points: [
     {
+      order: 0,
       label: "circle-point",
+      borderDash: [],
+      borderColor: "",
+      backgroundColor: "",
       pointBackgroundColor: "blue",
+      pointBorderColor: "",
+      pointBorderWidth: 0,
+      pointStyle: "",
+      pointRadius: 3,
       data: [{ x: 1.5, y: 2.5 }, { x: 3, y: 4 }, { x: 4, y: 3.5 }],
     },
     {
+      order: 0,
       label: "cross-point",
+      borderDash: [],
+      borderColor: "",
+      backgroundColor: "",
       pointBackgroundColor: "teal",
       pointBorderColor: "teal",
       pointBorderWidth: 3,
@@ -45,10 +74,25 @@ const example0 = {
 };
 
 const example1 = {
+  title: "",
+  xAxisLabel: "This is my X axis label",
+  yAxisLabel: "This is my Y axis label",
   lines: [
     // This also has a solid-line, but with completely different dimensions. If we don't properly
     // clone these objects, Chart.js might mutate the object above because the label is the same.
-    { label: "solid-line", data: [{ x: 100, y: 100 }, { x: 200, y: 100 }] },
+    {
+      order: 0,
+      label: "solid-line",
+      borderDash: [],
+      borderColor: "",
+      backgroundColor: "",
+      pointBackgroundColor: "",
+      pointBorderColor: "",
+      pointBorderWidth: 0,
+      pointStyle: "",
+      pointRadius: 3,
+      data: [{ x: 100, y: 100 }, { x: 200, y: 100 }],
+    },
   ],
 };
 

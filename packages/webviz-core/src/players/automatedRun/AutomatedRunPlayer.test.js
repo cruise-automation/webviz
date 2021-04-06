@@ -139,7 +139,7 @@ describe("AutomatedRunPlayer", () => {
       await delay(1);
     }
     expect(frames).toEqual([
-      { startTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS }, endTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS } },
+      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS } },
       { startTime: { sec: 10, nsec: 0 + SEEK_ON_START_NS }, endTime: { sec: 30, nsec: 0 + SEEK_ON_START_NS } },
       { startTime: { sec: 30, nsec: 1 + SEEK_ON_START_NS }, endTime: { sec: 50, nsec: 1 + SEEK_ON_START_NS } },
       { startTime: { sec: 50, nsec: 2 + SEEK_ON_START_NS }, endTime: { sec: 70, nsec: 2 + SEEK_ON_START_NS } },

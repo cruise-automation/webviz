@@ -211,11 +211,11 @@ $context.associateSourceData(${friendlyTypeName(typeName)}, { datatypes: $typesB
 type TypesUsed = $ReadOnly<{| arrayTypes: Set<string>, classes: Set<string> |}>;
 
 const getTypesUsed = (typesByName: RosDatatypes, typeName: string): TypesUsed => {
+  let frontier = [typeName].filter((t) => isComplex(t) || t === "time" || t === "duration");
   const arrayTypes = new Set<string>();
-  const classes = new Set<string>([typeName]);
+  const classes = new Set<string>(frontier);
 
   // Breadth-first enumeration of types and arrays.
-  let frontier = [typeName];
   while (frontier.length > 0) {
     const nextFrontier = [];
     for (const nextTypeName of frontier) {
@@ -248,9 +248,17 @@ const getTypesUsed = (typesByName: RosDatatypes, typeName: string): TypesUsed =>
 };
 
 // Exported for tests
-export const printGetClassForView = (inputTypesByName: RosDatatypes, topLevelTypeName: string): string => {
+export const printGetClassForView = (
+  inputTypesByName: RosDatatypes,
+  topLevelTypeName: string,
+  getArrayView: boolean
+): string => {
   const typesByName = addTimeTypes(inputTypesByName);
   const { arrayTypes, classes } = getTypesUsed(typesByName, topLevelTypeName);
+  if (getArrayView) {
+    arrayTypes.add(topLevelTypeName);
+  }
+  const returnClassName = getArrayView ? arrayTypeName(topLevelTypeName) : friendlyTypeName(topLevelTypeName);
 
   const classDefinitions = [...classes].map((typeName) => printClassDefinition(typesByName, typeName));
   const arrays = [...arrayTypes].map((typeName) => {
@@ -260,7 +268,10 @@ export const printGetClassForView = (inputTypesByName: RosDatatypes, topLevelTyp
     const getBigIntElement = ["int64", "uint64"].includes(typeName)
       ? `, (offset) => ${printPrimitiveSingularExpression(typeName, new PointerExpression("offset"), true)}`
       : "";
-    return `const ${className} = $context.getArrayView((offset) => ${getElement}, ${size}${getBigIntElement});`;
+    return `const ${className} = $context.getArrayView((offset) => ${getElement}, ${size}${getBigIntElement});
+$context.associateSourceData(${className}, { datatypes: $typesByName, datatype: ${JSON.stringify(
+      typeName
+    )}, buffer: $arrayBuffer, bigString: $bigString, isArrayView: true });`;
   });
   return `const $offset = $context.offsetSymbol;
 const $deepParse = $context.deepParse;
@@ -269,16 +280,22 @@ const $arrayBuffer = $view.buffer;
 const $buffer = $context.Buffer.from($arrayBuffer);
 ${classDefinitions.join("\n")}
 ${arrays.join("\n")}
-return ${friendlyTypeName(topLevelTypeName)};`;
+return ${returnClassName};`;
 };
 
 // Performance suffers if we generate functions for every topic/block -- too much code means no code
 // is very "hot", and the JIT probably refuses to optimize it. Memoize the codegen and function
 // instantiation so we can share definitions between topics and blocks.
-const getGetClassForView = memoize((typesByName: RosDatatypes, typeName: string) => {
+const getGetClassForView = memoize((typesByName: RosDatatypes, typeName: string, getArrayView: ?boolean) => {
   /* eslint-disable no-new-func */
   // $FlowFixMe
-  return Function("$context", "$view", "$bigString", "$typesByName", printGetClassForView(typesByName, typeName));
+  return Function(
+    "$context",
+    "$view",
+    "$bigString",
+    "$typesByName",
+    printGetClassForView(typesByName, typeName, getArrayView ?? false)
+  );
   /* eslint-enable no-new-func */
 });
 

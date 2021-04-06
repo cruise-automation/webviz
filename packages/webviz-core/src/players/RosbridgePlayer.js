@@ -356,4 +356,5 @@ export default class RosbridgePlayer implements Player {
   setPlaybackSpeed(_speedFraction: number) {}
   requestBackfill() {}
   setGlobalVariables() {}
+  setMessageOrder() {}
 }

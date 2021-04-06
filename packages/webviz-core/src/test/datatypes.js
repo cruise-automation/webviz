@@ -7,11 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import { groupBy } from "lodash";
-import type { RosMsgField } from "rosbag";
+import { type RosMsgField } from "rosbag";
 
 import type { Frame, Message, Topic, TypedMessage } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { getObjects, wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { BobWriter, getSerializeFunctions } from "webviz-core/src/util/binaryObjects/binaryMessageWriter";
 
 // eslint-disable-next-line no-use-before-define
 type InferredObject = { [field: string]: FieldType };
@@ -20,6 +21,8 @@ type FieldType =
   | { type: "string", isArray: boolean }
   | { type: "json", isArray: boolean }
   | { type: "bool", isArray: boolean }
+  | { type: "int8", isArray: boolean }
+  | { type: "uint8", isArray: boolean }
   | { type: "float64", isArray: boolean }
   | { type: "message", isArray: boolean, object: InferredObject }
   | { type: "unknown", isArray: boolean };
@@ -61,6 +64,10 @@ export const inferDatatypes = (fieldType: FieldType, value: any): FieldType => {
       throw new Error("Type mismatch");
     }
     return { isArray: fieldType.isArray, type: "bool" };
+  } else if (value instanceof Uint8Array) {
+    return { isArray: true, type: "uint8" };
+  } else if (value instanceof Int8Array) {
+    return { isArray: true, type: "int8" };
   } else if (ArrayBuffer.isView(value)) {
     return { isArray: true, type: "float64" };
   } else if (value == null) {
@@ -98,6 +105,8 @@ const addRosDatatypes = (
       const inferredField = object[fieldName];
       switch (inferredField.type) {
         case "bool":
+        case "int8":
+        case "uint8":
         case "float64":
         case "string":
         case "json":
@@ -141,15 +150,34 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
   return ret;
 };
 
-export const wrapMessages = <T>(messages: $ReadOnlyArray<Message>): TypedMessage<T>[] => {
+export const wrapMessages = <T>(messages: $ReadOnlyArray<Message>, wrapAsJsObjects: ?boolean): TypedMessage<T>[] => {
   const frame = groupBy(messages, "topic");
   const topics = Object.keys(frame).map((topic) => ({ name: topic, datatype: topic }));
   const datatypes = createRosDatatypesFromFrame(topics, frame);
-  return messages.map(({ topic, receiveTime, message }) => ({
-    topic,
-    receiveTime,
-    message: wrapJsObject(datatypes, topic, message),
-  }));
+  if (wrapAsJsObjects) {
+    // Some tests depend on nulled fields, which don't happen with binary messages.
+    return messages.map(({ topic, receiveTime, message }) => ({
+      topic,
+      receiveTime,
+      message: wrapJsObject(datatypes, topic, message),
+    }));
+  }
+  // Serialize messages to binary. This has slightly beter fidelity when crossing worker boundaries.
+  // If wrapped JS objects contain wrapped JS objects, and the outer object has inexact datatypes,
+  // deep-parsing is lossy. If the inner objects are binary then there won't be any deep-parsing --
+  // they'll be sent to the in binary form and wrapped with their original datatypes.
+  const writer = new BobWriter();
+  const serializeFunctions = getSerializeFunctions(datatypes, writer);
+  const messageMap = new Map(); // maintain input:output message order.
+  Object.keys(frame).forEach((topic) => {
+    const frameMessages = frame[topic];
+    const offsets = frameMessages.map(({ message }) => serializeFunctions[topic](message));
+    const { buffer, bigString } = writer.write();
+    getObjects(datatypes, topic, buffer, bigString, offsets).forEach((message: any, i) => {
+      messageMap.set(frameMessages[i], { ...frameMessages[i], message });
+    });
+  });
+  return messages.map((m) => messageMap.get(m)).filter(Boolean);
 };
 
 export const wrapMessage = <T>(message: Message): TypedMessage<T> => wrapMessages<T>([message])[0];

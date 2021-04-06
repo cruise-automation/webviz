@@ -10,6 +10,21 @@ import * as Sentry from "@sentry/browser";
 import React from "react";
 import ReactDOM from "react-dom";
 
+const getEnableWhyDidYouRender = () => {
+  try {
+    return JSON.parse(process.env.ENABLE_WHY_DID_YOU_RENDER || "false");
+  } catch {
+    return false;
+  }
+};
+
+if (process.env.NODE_ENV === "development" && getEnableWhyDidYouRender()) {
+  const whyDidYouRender = require("@welldone-software/why-did-you-render");
+  whyDidYouRender(React, {
+    trackAllPureComponents: true,
+  });
+}
+
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
 let importedPanelsByCategory;

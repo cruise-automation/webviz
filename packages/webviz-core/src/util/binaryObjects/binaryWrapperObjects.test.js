@@ -104,6 +104,6 @@ const() {
 
 describe("printGetClassForView", () => {
   it("returns the expected code", () => {
-    expect(printGetClassForView(definitions, "fake_msgs/ContainsEverything")).toMatchSnapshot();
+    expect(printGetClassForView(definitions, "fake_msgs/ContainsEverything", false)).toMatchSnapshot();
   });
 });

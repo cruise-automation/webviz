@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import type { Time } from "rosbag";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Topic, Message } from "webviz-core/src/players/types";
@@ -100,7 +101,7 @@ export type NodeRegistration = {|
   nodeData: NodeData,
   inputs: $ReadOnlyArray<string>,
   output: Topic,
-  processMessages: (Message[], GlobalVariables) => Promise<Message[]>,
+  processMessages: (Message[], RosDatatypes, GlobalVariables) => Promise<Message[]>,
   terminate: () => void,
 |};
 
@@ -126,8 +127,20 @@ export type ProcessMessageOutput = {
   userNodeLogs: UserNodeLog[],
 };
 
-export type ProcessMessagesOutput = {
-  messages: Message[],
-  error: null | string,
-  userNodeLogs: UserNodeLog[],
-};
+export type ProcessMessagesOutput =
+  | {
+      error: null | string,
+      userNodeLogs: UserNodeLog[],
+      type: "parsed",
+      messages: Message[],
+    }
+  | {
+      error: null | string,
+      userNodeLogs: UserNodeLog[],
+      type: "binary",
+      binaryData: {
+        bigString: string,
+        buffer: ArrayBuffer,
+        serializedMessages: { offset: number, receiveTime: Time, topic: string }[],
+      },
+    };

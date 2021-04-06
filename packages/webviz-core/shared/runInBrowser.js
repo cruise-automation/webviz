@@ -179,7 +179,7 @@ export async function withBrowser<T>(
     }
     return Promise.reject();
   } catch (error) {
-    console.error(error.stack || (error.toString && error.toString()) || error);
+    log.error(error.stack || (error.toString && error.toString()) || error);
     throw error;
   } finally {
     if (browser) {
@@ -200,7 +200,7 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
       }
       if (captureLogs) {
         onLog(text);
-        console.log(text);
+        log.info(text);
       }
     });
   });
@@ -208,7 +208,7 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
   function onPuppeteerError(error: any) {
     const errorMessage: string = (error.jsonValue && error.jsonValue()) || error.toString();
     log.error(`[runInBrowser error] ${errorMessage}`);
-    console.warn(errorMessage);
+    log.warn(errorMessage);
     onError(errorMessage);
   }
 
@@ -226,10 +226,10 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
       if (error.message.includes("ResizeObserver loop limit exceeded")) {
         return;
       }
-      console.error(error);
+      log.error(error);
     });
     window.addEventListener("unhandledrejection", (event) => {
-      console.error("Unhandled promise rejection.", event.reason);
+      log.error("Unhandled promise rejection.", event.reason);
     });
   });
 }
@@ -246,7 +246,7 @@ export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
       const experimentalFeatures = JSON.parse(experimentalFeaturesSettings);
       await page.evaluate((features) => window.setExperimentalFeatures(features), experimentalFeatures);
     } catch (error) {
-      console.error("Failed to parse experimentalFeaturesSettings JSON", error);
+      log.error("Failed to parse experimentalFeaturesSettings JSON", error);
     }
   }
 

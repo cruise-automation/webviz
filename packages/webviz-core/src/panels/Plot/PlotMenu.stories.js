@@ -25,9 +25,8 @@ storiesOf("<PlotMenu>", module)
         saveConfig={noop}
         setMinMax={noop}
         setWidth={noop}
-        datasets={[]}
-        maxMessages="123"
-        tooltips={[]}
+        getDatasets={() => []}
+        getTooltips={() => []}
         xAxisVal="timestamp"
       />
     </Wrapper>
@@ -41,9 +40,8 @@ storiesOf("<PlotMenu>", module)
         saveConfig={noop}
         setMinMax={noop}
         setWidth={noop}
-        datasets={[]}
-        maxMessages=""
-        tooltips={[]}
+        getDatasets={() => []}
+        getTooltips={() => []}
         xAxisVal="timestamp"
       />
     </Wrapper>

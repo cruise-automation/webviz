@@ -6,12 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+type FlowPrimitives = ?(string | number | boolean | null | Symbol);
+
 // A deep-recursive version of $ReadOnly<T>
-declare function makeReadonlyRecursive<O: {}>(O): $RecursiveReadOnly<O>;
+declare function makeReadonlyRecursive<O: {} | FlowPrimitives>(O): $RecursiveReadOnly<O>;
 type $RecursiveReadOnly<O: { [key: string]: any }> = $ReadOnly<$ObjMap<O, typeof makeReadonlyRecursive>>;
 
 // A deep-recursive helper to make an object mutable using { ...T }
-declare function makeMutableRecursive<O: {}>(O): $RecursiveMutable<O>;
+declare function makeMutableRecursive<O: {} | FlowPrimitives>(O): $RecursiveMutable<O>;
 type $RecursiveMutable<O: $ReadOnly<{}>> = { ...$ObjMap<O, typeof makeMutableRecursive> };
 
 declare type GitInfo = {
@@ -36,7 +38,7 @@ declare class FinalizationRegistry {
   register(obj: any, heldItem: any): void;
 }
 
-declare function BigInt(arg: string | numer): typeof BigInt;
+declare function BigInt(arg: string | number): typeof BigInt;
 
 declare type WebvizExpectType = {
   toContainOnly(arr: Array<any>): void,

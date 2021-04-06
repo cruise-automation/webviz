@@ -22,13 +22,17 @@ import { formatTimeRaw, isTimeInRangeInclusive, getValidatedTimeAndMethodFromStr
 const MAX_WIDTH = 200;
 
 const SInput = styled.input`
+  margin-top: 2px;
   padding: 8px 4px;
   width: calc(100% - 4px);
+  color: ${colors.LIGHT};
 `;
 const STimestamp = styled.span`
+  margin-top: 2px;
   padding: 8px 4px;
   cursor: pointer;
   border-radius: 4px;
+  color: ${colors.LIGHT};
 
   &:hover {
     background-color: ${colors.DARK3};

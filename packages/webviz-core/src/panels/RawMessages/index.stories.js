@@ -18,7 +18,7 @@ import {
   topicsWithIdsToDiffFixture,
   multipleNumberMessagesFixture,
 } from "./fixture";
-import RawMessages, { PREV_MSG_METHOD, OTHER_SOURCE_METHOD } from "webviz-core/src/panels/RawMessages";
+import RawMessages, { CUSTOM_METHOD, PREV_MSG_METHOD, OTHER_SOURCE_METHOD } from "webviz-core/src/panels/RawMessages";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
@@ -294,6 +294,36 @@ storiesOf("<RawMessages>", module)
           config={{
             topicPath: "/multiple_number_messages{value==2}",
             ...noDiffConfig,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("diff same NaN values", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }}>
+        <RawMessages
+          config={{
+            topicPath: "/NaN",
+            diffMethod: PREV_MSG_METHOD,
+            diffTopicPath: "/NaN",
+            diffEnabled: true,
+            showFullMessageForDiff: false,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("diff NaN with something else", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }}>
+        <RawMessages
+          config={{
+            topicPath: "/NaN",
+            diffMethod: CUSTOM_METHOD,
+            diffTopicPath: "/baz/num",
+            diffEnabled: true,
+            showFullMessageForDiff: false,
           }}
         />
       </PanelSetup>

@@ -49,6 +49,7 @@ program
   .option("--out <path>", "Output .mp4 video file", parseNonExistingFileString)
   .option("--speed <number>", "Playback speed", parseNumber)
   .option("--framerate <number>", "Framerate", parseNumber)
+  .option("--duration <number>", "Restrict the recording duration specified in milliseconds")
   .option("--width <number>", "Width", parseNumber)
   .option("--height <number>", "Height", parseNumber)
   .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
@@ -71,6 +72,7 @@ async function main() {
   }
 
   const {
+    duration,
     speed,
     frameless,
     framerate,
@@ -91,6 +93,7 @@ async function main() {
 
   console.log("Recording video...");
   const { videoFile: video } = await recordVideo({
+    duration,
     speed,
     frameless,
     framerate,

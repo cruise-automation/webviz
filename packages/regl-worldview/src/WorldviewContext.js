@@ -84,6 +84,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _frame: ?AnimationFrameID;
+  _needsPaint = false;
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   _cachedReadHitmapCall: ?{
@@ -233,6 +234,7 @@ export class WorldviewContext {
   }
 
   _paint() {
+    this._needsPaint = false;
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {
@@ -251,12 +253,20 @@ export class WorldviewContext {
       paintCall();
     });
     this.counters.render = Date.now() - start;
-    this._frame = undefined;
+    // More React state updates may have happened while we were painting, since paint happens
+    // outside the normal React render flow. If this is the case, we need to paint again.
+    if (this._needsPaint) {
+      this._frame = requestAnimationFrame(() => this.paint());
+    } else {
+      this._frame = undefined;
+    }
   }
 
   onDirty = () => {
     if (undefined === this._frame) {
       this._frame = requestAnimationFrame(() => this.paint());
+    } else {
+      this._needsPaint = true;
     }
   };
 

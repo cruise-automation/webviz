@@ -7,10 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import domToImage from "dom-to-image-more-scroll-fix";
-import React, { createContext, useCallback, useState, useRef } from "react";
+import React, { createContext, useCallback, useState } from "react";
 
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import { PANEL_LAYOUT_ROOT_ID } from "webviz-core/src/util/globalConstants";
+import { useGetCurrentValue } from "webviz-core/src/util/hooks";
 import Logger from "webviz-core/src/util/Logger";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
@@ -34,12 +35,10 @@ export function ScreenshotsProvider({ children }: { children: React$Node }) {
     useCallback((messagePipeline) => ({ pausePlayback: messagePipeline.pausePlayback }), [])
   );
 
-  // Use an additional ref here because we never want these callbacks to change.
-  const isTakingScreenshotRef = useRef(isTakingScreenshot);
-  isTakingScreenshotRef.current = isTakingScreenshot;
+  const getIsTakingScreenshot = useGetCurrentValue(isTakingScreenshot);
 
   const takeScreenshot = useCallback(async (): Promise<?Blob> => {
-    if (isTakingScreenshotRef.current) {
+    if (getIsTakingScreenshot()) {
       return;
     }
     const selector = `#${PANEL_LAYOUT_ROOT_ID}`;
@@ -62,7 +61,7 @@ export function ScreenshotsProvider({ children }: { children: React$Node }) {
       setIsTakingScreenshot(false);
     }
     return image;
-  }, [pausePlayback]);
+  }, [getIsTakingScreenshot, pausePlayback]);
 
   const contextValue = {
     takeScreenshot,

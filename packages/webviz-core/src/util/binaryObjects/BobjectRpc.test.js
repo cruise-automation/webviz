@@ -8,6 +8,7 @@
 
 import signal from "webviz-core/shared/signal";
 import { cast } from "webviz-core/src/players/types";
+import { wrapObjects } from "webviz-core/src/test/datatypes";
 import { deepParse, getObject, merge, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import {
   BobjectRpcSender,
@@ -41,9 +42,22 @@ const binaryBobject = cast<HasComplexAndArray>(getObject(definitions, datatype, 
 const mixedBobject = cast<HasComplexAndArray>(
   wrapJsObject(definitions, datatype, { ...js, header: binaryBobject.header() })
 );
+const jsPrimitiveArrayObject = { stringArray: ["hello", "world"] };
+const binaryPrimitiveArrayBobject = wrapObjects([jsPrimitiveArrayObject])[0];
+const mixedBinaryPrimitiveArrayBobject = merge(binaryPrimitiveArrayBobject, {
+  stringArray: binaryPrimitiveArrayBobject.stringArray(),
+});
+
+const jsComplexArrayObject = { complexArray: [{ foo: 1, bar: "a" }, { foo: 2, bar: "b" }] };
+const binaryComplexArrayBobject = wrapObjects([jsComplexArrayObject])[0];
+const mixedBinaryComplexArrayBobject = merge(binaryComplexArrayBobject, {
+  complexArray: binaryComplexArrayBobject.complexArray(),
+});
 
 const topic = "/topic";
 const receiveTime = { sec: 1, nsec: 2 };
+
+const isBinary = (message) => "buffer" in (getSourceData(Object.getPrototypeOf(message).constructor) ?? {});
 
 describe("BobjectRpc", () => {
   it("can send parsed -> parsed", async () => {
@@ -117,12 +131,47 @@ describe("BobjectRpc", () => {
       expect(msg.receiveTime).toEqual(receiveTime);
       expect(deepParse(msg.message)).toEqual(js);
       // Message should be a reverse-wrapped bobject
-      expect(getSourceData(Object.getPrototypeOf(msg.message).constructor)).not.toHaveProperty("buffer");
+      expect(isBinary(msg.message)).toBe(false);
       // Header should be a binary bobject
-      expect(getSourceData(Object.getPrototypeOf(msg.message.header()).constructor)).toHaveProperty("buffer");
+      expect(isBinary(msg.message.header())).toBe(true);
       promise.resolve();
     });
     sender.send("action name", { topic, receiveTime, message: mixedBobject });
+    await promise;
+  });
+
+  it("can send nested binary primitive arrays across worker boundaries", async () => {
+    const { local, remote } = createLinkedChannels();
+    const sender = new BobjectRpcSender(new Rpc(local));
+    const receiver = new BobjectRpcReceiver(new Rpc(remote));
+    const promise = signal();
+    receiver.receive("action name", "bobject", async (msg) => {
+      expect(deepParse(msg.message)).toEqual(jsPrimitiveArrayObject);
+      // Message should be a reverse-wrapped bobject
+      expect(isBinary(msg.message)).toBe(false);
+      // stringArray should be binary
+      expect(isBinary(msg.message.stringArray())).toBe(true);
+      promise.resolve();
+    });
+    sender.send("action name", { topic, receiveTime, message: mixedBinaryPrimitiveArrayBobject });
+    await promise;
+  });
+
+  it("can send nested binary complex arrays across worker boundaries", async () => {
+    const { local, remote } = createLinkedChannels();
+    const sender = new BobjectRpcSender(new Rpc(local));
+    const receiver = new BobjectRpcReceiver(new Rpc(remote));
+    const promise = signal();
+    receiver.receive("action name", "bobject", async (msg) => {
+      expect(deepParse(msg.message)).toEqual(jsComplexArrayObject);
+      // Message should be a reverse-wrapped bobject
+      expect(isBinary(msg.message)).toBe(false);
+      // Header should be a js bobject
+      expect(isBinary(msg.message.complexArray())).toBe(true);
+      promise.resolve();
+    });
+
+    sender.send("action name", { topic, receiveTime, message: mixedBinaryComplexArrayBobject });
     await promise;
   });
 });

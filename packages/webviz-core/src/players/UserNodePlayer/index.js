@@ -16,6 +16,7 @@ import uuid from "uuid";
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
 import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
@@ -44,12 +45,13 @@ import {
 import { hasTransformerErrors } from "webviz-core/src/players/UserNodePlayer/utils";
 import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { deepParse, getObjects, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcMainThreadUtils";
+import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 import { addTopicPrefix, joinTopics } from "webviz-core/src/util/topicUtils";
 
 type UserNodeActions = {|
@@ -62,7 +64,7 @@ const rpcFromNewSharedWorker = (worker) => {
   const port: MessagePort = worker.port;
   port.start();
   const rpc = new Rpc(port);
-  setupReceiveReportErrorHandler(rpc);
+  setupMainThreadRpc(rpc);
   return rpc;
 };
 
@@ -87,9 +89,11 @@ export default class UserNodePlayer implements Player {
   _rosLib: ?string;
   _globalVariables: GlobalVariables = {};
   _pendingResetWorkers: ?Promise<void>;
+  _binaryNodeOutputs: boolean;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
+    this._binaryNodeOutputs = getExperimentalFeature("binaryNodePlaygroundOutputs") || process.env.NODE_ENV === "test";
     const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } = userNodeActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
@@ -153,21 +157,27 @@ export default class UserNodePlayer implements Player {
       const nodeBobjects = [];
       await Promise.all(
         [...nodesToRun].map(async ([node, nodeInputMessages]) => {
-          const nodeMessages = await node.processMessages(nodeInputMessages, globalVariables);
+          const nodeMessages = await node.processMessages(nodeInputMessages, datatypes, globalVariables);
           // There should be at most 2 subscriptions -- parsed and/or bobject.
           const subscriptions = this._subscribedFormatByTopic[node.output.name];
           for (const format of subscriptions.values()) {
             if (format === "parsedMessages") {
-              nodeMessages.forEach((msg) => {
-                nodeParsedMessages.push(msg);
+              nodeMessages.forEach(({ message, topic, receiveTime }) => {
+                const parsedMessage = isBobject(message)
+                  ? { message: deepParse(message), topic, receiveTime }
+                  : { message, topic, receiveTime };
+                nodeParsedMessages.push(parsedMessage);
               });
             } else {
-              nodeMessages.forEach((msg) => {
-                nodeBobjects.push({
-                  topic: msg.topic,
-                  receiveTime: msg.receiveTime,
-                  message: wrapJsObject(datatypes, node.output.datatype, msg.message),
-                });
+              nodeMessages.forEach(({ message, topic, receiveTime }) => {
+                const bobject = isBobject(message)
+                  ? { message, topic, receiveTime }
+                  : {
+                      topic,
+                      receiveTime,
+                      message: wrapJsObject(datatypes, node.output.datatype, message),
+                    };
+                nodeBobjects.push(bobject);
               });
             }
           }
@@ -232,7 +242,7 @@ export default class UserNodePlayer implements Player {
       nodeData,
       inputs: inputTopics,
       output: { name: outputTopic, datatype: outputDatatype },
-      processMessages: async (messages: Message[], globalVariables: GlobalVariables) => {
+      processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
         // We allow _resetWorkers to "cancel" the processing by creating a new signal every time we process a message
         terminateSignal = signal<void>();
 
@@ -243,6 +253,8 @@ export default class UserNodePlayer implements Player {
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             projectCode,
             nodeCode: transpiledCode,
+            datatypes,
+            datatype: nodeData.outputDatatype,
           });
           if (error) {
             this._setUserNodeDiagnostics(nodeId, [
@@ -269,7 +281,11 @@ export default class UserNodePlayer implements Player {
         }
         // TODO: FUTURE - surface runtime errors / infinite loop errors
         const processMessagesResult = await Promise.race([
-          rpc.send<ProcessMessagesOutput>("processMessages", { globalVariables, outputTopic }),
+          rpc.send<ProcessMessagesOutput>("processMessages", {
+            globalVariables,
+            outputTopic,
+            binaryOutputs: this._binaryNodeOutputs,
+          }),
           terminateSignal,
         ]);
         if (!processMessagesResult) {
@@ -286,7 +302,17 @@ export default class UserNodePlayer implements Player {
           ]);
         }
         this._addUserNodeLogs(nodeId, processMessagesResult.userNodeLogs);
-        return processMessagesResult.messages;
+        if (processMessagesResult.type === "parsed") {
+          return processMessagesResult.messages;
+        }
+        const { serializedMessages, buffer, bigString } = processMessagesResult.binaryData;
+        const offsets = serializedMessages.map(({ offset }) => offset);
+        const bobjects = getObjects(datatypes, nodeData.outputDatatype, buffer, bigString, offsets);
+        return bobjects.map((message, i) => ({
+          receiveTime: serializedMessages[i].receiveTime,
+          topic: serializedMessages[i].topic,
+          message,
+        }));
       },
       terminate: () => {
         terminateSignal.resolve();
@@ -313,12 +339,16 @@ export default class UserNodePlayer implements Player {
       // Pre and post-process the node's messages so the topics are correct
       const nodeRegistrationTwo = {
         ...nodeRegistrationTwoRaw,
-        processMessages: async (messages: Message[], globalVariables: GlobalVariables) => {
+        processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
           const inputMessages = messages.map((m) => ({
             ...m,
             topic: m.topic.replace(SECOND_SOURCE_PREFIX, ""),
           }));
-          const originalMessages = await nodeRegistrationTwoRaw.processMessages(inputMessages, globalVariables);
+          const originalMessages = await nodeRegistrationTwoRaw.processMessages(
+            inputMessages,
+            datatypes,
+            globalVariables
+          );
           return originalMessages.map((m) => ({ ...m, topic: outputTopic }));
         },
       };
@@ -545,4 +575,5 @@ export default class UserNodePlayer implements Player {
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
   seekPlayback = (time: Time, backfillDuration: ?Time) => this._player.seekPlayback(time, backfillDuration);
   requestBackfill = () => this._player.requestBackfill();
+  setMessageOrder = (messageOrder: TimestampMethod) => this._player.setMessageOrder(messageOrder);
 }

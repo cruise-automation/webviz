@@ -10,7 +10,15 @@ import globalEnvVars from "./globalEnvVars";
 // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 type LogSeverity = "DEFAULT" | "DEBUG" | "INFO" | "NOTICE" | "WARNING" | "ERROR" | "CRITICAL" | "ALERT" | "EMERGENCY";
 
-export type LogObject = $ReadOnly<{ [key: string]: number | string | string[] | number[] | void | {} | null }>;
+export type LogObject = $ReadOnly<{
+  [key: string]: number | string | string[] | number[] | void | {} | null | LogObject,
+}>;
+
+// Set a global "context" object that will be included with every log event
+let recordingRequestContext: { [string]: any } = {};
+export const setGlobalRecordingLogContext = (_logContext: { [string]: any }) => {
+  recordingRequestContext = _logContext;
+};
 
 let log = (severity: LogSeverity, scope: string, message: string, moreData?: LogObject | Error) => {
   const domain = (process.domain: any);
@@ -25,6 +33,7 @@ let log = (severity: LogSeverity, scope: string, message: string, moreData?: Log
         scope,
         message,
         ...parsedMoreData,
+        ...recordingRequestContext,
       };
       if (user) {
         data.user = user;

@@ -103,6 +103,7 @@ export type BobjectSourceData =
       ...CommonBobjectSourceData,
       buffer: ArrayBuffer, // Present in binary bobjects
       bigString: string,
+      isArrayView: boolean,
     |}>;
 export const classSourceData = new WeakMap<any, BobjectSourceData>();
 export const associateSourceData = (cls: any, sourceData: BobjectSourceData): void => {

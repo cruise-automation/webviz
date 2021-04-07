@@ -7,21 +7,22 @@
 //  You may not use this file except in compliance with the License.
 
 import { useContext, useMemo } from "react";
-import type { Vec3, Dimensions, Point, WorldviewContextType } from "regl-worldview";
+import type { Vec3, Dimensions, RGBA, Point, WorldviewContextType } from "regl-worldview";
 import { WorldviewReactContext } from "regl-worldview";
 
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import type { OverlayIconMarker } from "webviz-core/src/types/Messages";
 
-export type RenderItemOutput = {
-  iconType: number,
+type IconTypeItem = {| icon_type: number | string, color?: RGBA |};
+export type RenderItemOutput = {|
   text: string,
   coordinates: Vec3,
   name: string,
   dimension: Dimensions,
   markerStyle: any,
   iconOffset: any,
-};
+  iconTypes: IconTypeItem[],
+|};
 
 type Props = {
   children: any[],
@@ -53,7 +54,7 @@ export const projectItem = ({
   coordinates,
   dimension: { width, height },
 }: {|
-  item: any,
+  item: Interactive<OverlayIconMarker>,
   coordinates: ?Vec3,
   dimension: Dimensions,
 |}): ?RenderItemOutput => {
@@ -65,20 +66,26 @@ export const projectItem = ({
     return null; // Don't render anything that's too far outside of the canvas
   }
   const name = getIconName(item);
-  const iconType = icon_type || metadata.icon_type;
   const markerStyle = metadata.markerStyle || {};
-  const { r, g, b, a } = item.color; // Use color to control the background color of the icon.
-  markerStyle.backgroundColor = `rgba(${r * 255},${g * 255},${b * 255},${a})`;
+  let iconTypes: ?(IconTypeItem[]) = metadata.icon_types;
+  // TODO[Audrey]: deprecate the support for icon_type in late 2021.
+  const iconType = icon_type || metadata.icon_type;
+  if (!iconTypes && iconType) {
+    console.warn(
+      `icon_type has been deprecated. Use 'icon_types' instead. Example format: 'iconTypes: [{icon_type: 'arrow-left', color: {r: 1, g: 1, b: 1, a: 1}}]'`
+    );
+    iconTypes = [{ icon_type: iconType, color: item.color }];
+  }
 
-  return iconType
+  return iconTypes && iconTypes.length > 0
     ? {
         name,
-        iconType,
         coordinates,
         dimension: { width, height },
         text: item.text,
         markerStyle,
         ...(metadata.iconOffset ? { iconOffset: metadata.iconOffset } : undefined),
+        iconTypes,
       }
     : undefined;
 };

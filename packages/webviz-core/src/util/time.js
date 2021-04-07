@@ -21,6 +21,7 @@ import {
   SEEK_TO_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 
+export const DEFAULT_ZERO_TIME = { sec: 0, nsec: 0 };
 type BatchTimestamp = {
   seconds: number,
   nanoseconds: number,

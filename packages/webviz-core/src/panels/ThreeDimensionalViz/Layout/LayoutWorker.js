@@ -35,7 +35,7 @@ import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useChangeDetector } from "webviz-core/src/util/hooks";
 import render from "webviz-core/src/util/NoopReactRenderer";
-import Rpc from "webviz-core/src/util/Rpc";
+import Rpc, { createLinkedChannels, type Channel } from "webviz-core/src/util/Rpc";
 import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
 
 export type OffscreenCanvas = HTMLCanvasElement;
@@ -279,6 +279,7 @@ class LayoutWorker {
   searchTextMatches: GLTextMarker[];
   availableTfs: any[];
   _renderSignals: Signal<void>[] = [];
+  _hasOffscreenCanvas: boolean;
 
   constructor(canvas, hooks, rpc) {
     this.canvas = canvas;
@@ -289,6 +290,7 @@ class LayoutWorker {
     this.searchTextMatches = [];
     this.availableTfs = [];
     let iconDrawables = [];
+    this._hasOffscreenCanvas = canvas.clientWidth == null;
     render(
       <ReactWorldInterface
         registerCallbacks={(callbacks) => {
@@ -413,10 +415,13 @@ class LayoutWorker {
       this.hooks.consumePose
     );
 
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.canvas.clientWidth = width;
-    this.canvas.clientHeight = height;
+    if (this._hasOffscreenCanvas) {
+      // These attributes exist already (and are read-only) in HTMLCanvasElement.
+      this.canvas.width = width;
+      this.canvas.height = height;
+      this.canvas.clientWidth = width;
+      this.canvas.clientHeight = height;
+    }
     const renderSignal = signal<void>();
     this._renderSignals.push(renderSignal);
 
@@ -472,13 +477,23 @@ class LayoutWorker {
   };
 }
 
+function setupLayoutRenderer(hooks: ThreeDimensionalVizHooks, rpc: Rpc) {
+  rpc.receive("initialize", ({ canvas }: { canvas: OffscreenCanvas }) => {
+    new LayoutWorker(canvas, hooks, rpc);
+  });
+}
+
 export default function initLayoutWorker(hooks: ThreeDimensionalVizHooks) {
   if (global.postMessage && !global.onmessage) {
     const rpc = new Rpc(global);
     setupWorker(rpc);
-
-    rpc.receive("initialize", ({ canvas }: { canvas: OffscreenCanvas }) => {
-      new LayoutWorker(canvas, hooks, rpc);
-    });
+    setupLayoutRenderer(hooks, rpc);
   }
+}
+
+export function initLayoutNonWorker(hooks: ThreeDimensionalVizHooks): Channel {
+  const { local, remote } = createLinkedChannels();
+  const remoteRpc = new Rpc(remote);
+  setupLayoutRenderer(hooks, remoteRpc);
+  return local;
 }

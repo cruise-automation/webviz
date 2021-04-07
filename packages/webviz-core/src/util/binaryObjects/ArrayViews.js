@@ -94,6 +94,11 @@ export const getArrayView = <T>(
     find(predicate: (item: T, index: number, collection: T[]) => boolean): ?T {
       return find(this.toArray(), predicate);
     }
+
+    offset(): number {
+      // It would be nice to just define an [offsetSymbol] attribute, but flow really dislikes it.
+      return this._begin;
+    }
   };
 
 export class PrimitiveArrayView<T> implements ArrayView<T> {

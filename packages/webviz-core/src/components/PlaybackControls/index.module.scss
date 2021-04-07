@@ -113,6 +113,13 @@
   color: $light;
   opacity: 1;
 
+  svg {
+    opacity: 1 !important;
+    margin-left: -2px !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
   &:hover {
     background-color: transparent;
     opacity: 0.8;

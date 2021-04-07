@@ -147,7 +147,7 @@ const SearchText = React.memo<SearchTextProps>(
     if (!searchTextOpen) {
       return (
         <Button onClick={() => toggleSearchTextOpen(!searchTextOpen)}>
-          <Icon tooltip="search text markers">
+          <Icon style={{ color: colors.LIGHT }} tooltip="search text markers">
             <SearchIcon />
           </Icon>
         </Button>
@@ -164,7 +164,7 @@ const SearchText = React.memo<SearchTextProps>(
           height: "36px" /* Hack to match the heights of the other toolbar components */,
         }}>
         <div style={{ backgroundColor: "#1A191F", padding: "0px 4px 0px 8px", borderRadius: "4px" }}>
-          <Icon medium>
+          <Icon medium style={{ color: colors.LIGHT }}>
             <SearchIcon />
           </Icon>
           <input
@@ -191,13 +191,13 @@ const SearchText = React.memo<SearchTextProps>(
             {searchTextMatches.length > 0 ? selectedMatchIndex + 1 : "0"} of {searchTextMatches.length}
           </span>
         </div>
-        <Icon medium onClick={() => iterateCurrentIndex(-1)}>
+        <Icon medium onClick={() => iterateCurrentIndex(-1)} style={{ color: colors.LIGHT }}>
           <ArrowUpIcon />
         </Icon>
-        <Icon medium onClick={() => iterateCurrentIndex(1)}>
+        <Icon medium onClick={() => iterateCurrentIndex(1)} style={{ color: colors.LIGHT }}>
           <ArrowDownIcon />
         </Icon>
-        <Icon onClick={() => toggleSearchTextOpen(false)} tooltip="[esc]" medium>
+        <Icon onClick={() => toggleSearchTextOpen(false)} tooltip="[esc]" medium style={{ color: colors.LIGHT }}>
           <CloseIcon />
         </Icon>
       </div>

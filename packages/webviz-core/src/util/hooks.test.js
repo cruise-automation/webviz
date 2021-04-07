@@ -9,6 +9,7 @@
 import { renderHook } from "@testing-library/react-hooks";
 import { mount } from "enzyme";
 import React from "react";
+import shallowequal from "shallowequal";
 
 import {
   useChangeDetector,
@@ -21,6 +22,7 @@ import {
   type SelectableContext,
   useReducedValue,
   useDeepMemo,
+  type MemoResolver,
 } from "./hooks";
 
 describe("useChangeDetector", () => {
@@ -197,7 +199,7 @@ describe("createSelectableContext/useContextSelector", () => {
   function createTestConsumer<T, U>(
     ctx: SelectableContext<T>,
     selector: (T) => U,
-    options: ?{| enableShallowMemo: boolean |}
+    options: ?{| memoResolver: MemoResolver<U> |}
   ) {
     function Consumer() {
       const value = useContextSelector(ctx, Consumer.selectorFn, options);
@@ -324,8 +326,8 @@ describe("createSelectableContext/useContextSelector", () => {
 
   it("uses shallowequals when `enableShallowMemo` is set to true", () => {
     const C = createSelectableContext();
-    const Consumer1 = createTestConsumer(C, ({ one }) => ({ one }), { enableShallowMemo: true });
-    const Consumer2 = createTestConsumer(C, ({ two }) => ({ two }), { enableShallowMemo: true });
+    const Consumer1 = createTestConsumer(C, ({ one }) => ({ one }), { memoResolver: shallowequal });
+    const Consumer2 = createTestConsumer(C, ({ two }) => ({ two }), { memoResolver: shallowequal });
 
     const root = mount(
       <C.Provider value={{ one: 1, two: 2 }}>

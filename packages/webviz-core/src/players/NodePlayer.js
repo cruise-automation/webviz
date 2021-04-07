@@ -30,6 +30,7 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 export default class NodePlayer implements Player {
   _player: Player;
@@ -169,4 +170,5 @@ export default class NodePlayer implements Player {
   setGlobalVariables(globalVariables: GlobalVariables) {
     this._player.setGlobalVariables(globalVariables);
   }
+  setMessageOrder = (messageOrder: TimestampMethod) => this._player.setMessageOrder(messageOrder);
 }

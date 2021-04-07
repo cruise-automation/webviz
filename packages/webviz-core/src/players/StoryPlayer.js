@@ -129,4 +129,5 @@ export default class StoryPlayer implements Player {
   seekPlayback = () => {};
   requestBackfill = () => {};
   setGlobalVariables = () => {};
+  setMessageOrder = () => {};
 }

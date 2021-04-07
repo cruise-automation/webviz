@@ -26,6 +26,7 @@ export const SCheckbox = styled.div`
 export const SLabel = styled.label`
   margin: ${(props) => (props.labelDirection === "top" ? "6px 6px 6px 0" : "6px")};
   color: ${(props) => (props.disabled || props.labelDirection === "top" ? colors.GRAY : colors.LIGHT1)};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
 export type Props = {
@@ -73,9 +74,9 @@ export default function Checkbox({
   }
 
   return (
-    <SCheckbox disabled={disabled} labelDirection={labelDirection} style={style}>
+    <SCheckbox disabled={disabled} labelDirection={labelDirection} style={style} onClick={onClick} dataTest={dataTest}>
       {labelDirection === "left" && styledLabel}
-      <Icon small tooltip={tooltip} onClick={onClick} dataTest={dataTest}>
+      <Icon small tooltip={tooltip}>
         <Component />
       </Icon>
       {labelDirection === "right" && styledLabel}

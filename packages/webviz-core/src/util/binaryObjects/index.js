@@ -51,6 +51,18 @@ export const getBinaryOffset = (obj: any): number => {
   return offset;
 };
 
+export const getBinaryArrayView = (
+  typesByName: RosDatatypes,
+  datatype: string,
+  buffer: ArrayBuffer,
+  bigString: string,
+  firstElementOffset: number,
+  length: number
+): ArrayView<any> => {
+  const Class = getGetClassForView(typesByName, datatype, true)(context, new DataView(buffer), bigString, typesByName);
+  return new Class(firstElementOffset, length);
+};
+
 export const getObject = (
   typesByName: RosDatatypes,
   datatype: string,

@@ -37,6 +37,7 @@ async function recordVideo({
   dimensions = { width: 1920, height: 1080 },
   crop,
   parallel = 2,
+  duration,
   bagPath,
   url,
   puppeteerLaunchConfig,
@@ -54,6 +55,7 @@ async function recordVideo({
   speed?: number,
   framerate?: number,
   frameless?: boolean,
+  duration?: number,
   experimentalFeaturesSettings?: string,
   dimensions?: { width: number, height: number },
   crop?: { width: number, height: number, top: number, left: number },
@@ -84,6 +86,9 @@ async function recordVideo({
       }
       if (frameless) {
         urlObject.searchParams.set("frameless", "1");
+      }
+      if (duration) {
+        urlObject.searchParams.set("duration", `${duration}`);
       }
 
       return runInBrowser({
@@ -160,32 +165,7 @@ async function recordVideo({
                   isRunning = false;
                   msPerFrame = actionObj.msPerFrame;
                 } else if (actionObj.action === "screenshot") {
-                  // Wait for xhr requests to resolve
-                  try {
-                    await promiseTimeout(
-                      new Promise(async (resolve) => {
-                        const waitForRequests = async () => {
-                          while (pendingRequestUrls.size > 0) {
-                            console.log(`Waiting for ${pendingRequestUrls.size} requests to resolve...`);
-                            await delay(pendingRequestPauseDurationMs);
-                          }
-                        };
-
-                        if (pendingRequestUrls.size > 0) {
-                          await waitForRequests();
-                          // All requests resolved, but wait a little bit longer to make sure.
-                          // This helps us catch cases where there's a brief pause between batches of requests
-                          await delay(pendingRequestPauseDurationMs);
-                          await waitForRequests();
-                        }
-                        resolve();
-                      }),
-                      30000,
-                      `Waiting for XHR Requests: ${JSON.stringify([...pendingRequestUrls])}`
-                    );
-                  } catch (e) {
-                    console.warn(e);
-                  }
+                  await waitForXhrRequests(pendingRequestUrls);
 
                   // Take a screenshot, and then tell the client that we're done taking a screenshot,
                   // so it can continue executing.
@@ -219,6 +199,13 @@ async function recordVideo({
       throw new Error("msPerFrame was not set");
     }
     const imageCount = fs.readdirSync(screenshotsDir).length;
+    if (imageCount === 0) {
+      log.error(
+        `No screenshots found! Could not create video – the source was likely too short. Try adjusting the URL's start, seek-to, or duration and try again.`
+      );
+      throw new Error("No screenshots found");
+    }
+
     const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.jpg`);
     const outputFilename = "out.mp4";
 
@@ -253,6 +240,41 @@ async function recordVideo({
   } finally {
     log.info(`Removing ${screenshotsDir}`);
     await rmfr(screenshotsDir);
+  }
+}
+
+// Exported for tests
+export async function waitForXhrRequests(pendingRequestUrls: Set<string>) {
+  let timeout = false;
+  const waitForRequestsLoop = async () => {
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (pendingRequestUrls.size > 0 && !timeout) {
+      log.info(`Waiting for ${pendingRequestUrls.size} request(s) to resolve...`);
+      await delay(pendingRequestPauseDurationMs);
+    }
+  };
+
+  try {
+    await promiseTimeout(
+      new Promise(async (resolve) => {
+        if (pendingRequestUrls.size > 0) {
+          await waitForRequestsLoop();
+          // All requests resolved, but wait a little bit longer to make sure.
+          // This helps us catch cases where there's a brief pause between batches of requests
+          await delay(pendingRequestPauseDurationMs);
+          await waitForRequestsLoop();
+        }
+        resolve();
+      }),
+      30000,
+      `Waiting for XHR Requests: ${JSON.stringify([...pendingRequestUrls])}`
+    );
+  } catch (error) {
+    // Clear the pending urls or else they'll continue to timeout forever
+    pendingRequestUrls.clear();
+    log.warn(error);
+  } finally {
+    timeout = true;
   }
 }
 

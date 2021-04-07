@@ -8,7 +8,7 @@
 
 import hoistNonReactStatics from "hoist-non-react-statics";
 import { omit, debounce } from "lodash";
-import React, { type Node, useCallback, useMemo, useState, useRef, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
 import { type CameraState } from "regl-worldview";
 
@@ -17,7 +17,6 @@ import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
 import Layout from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
@@ -62,7 +61,6 @@ export type Props = {
   cleared?: boolean,
   config: ThreeDimensionalVizConfig,
   frame: Frame,
-  helpContent: Node | string,
   saveConfig: Save3DConfig,
   setSubscriptions: (subscriptions: string[]) => void,
   topics: Topic[],
@@ -192,7 +190,6 @@ const BaseRenderer = (props: Props, ref) => {
       followOrientation={!!followOrientation}
       followTf={followTf}
       frame={frame}
-      helpContent={helpContent}
       isPlaying={isPlaying}
       onAlignXYAxis={onAlignXYAxis}
       onCameraStateChange={onCameraStateChange}

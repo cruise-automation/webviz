@@ -212,5 +212,6 @@ export default class OrderedStampPlayer implements Player {
         this.seekPlayback(this._currentTime);
       }
     }
+    this._player.setMessageOrder(order);
   }
 }

@@ -27,7 +27,7 @@ async function convertVideoToGif(inputVideoPath: string, outputGifPath: string, 
   console.log(`Converting video '${inputVideoPath}' to gif '${outputGifPath}'...`);
   await exec(
     [
-      `ffmpeg`,
+      `ffmpeg -y`,
       // TODO: Support creating a gif for only a portion of the video
       // `-ss 61.0`, // start the gif this many seconds into the video
       // `-t 2.5`, // duration of gif in seconds

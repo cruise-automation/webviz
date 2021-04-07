@@ -12,6 +12,7 @@ import type { Message } from "webviz-core/src/players/types";
 import {
   bobjectFieldNames,
   deepParse,
+  getBinaryArrayView,
   getBinaryOffset,
   getObjects,
   isBobject,
@@ -29,6 +30,7 @@ type BinaryMessageDescriptor = $ReadOnly<{|
   ...MessageDescriptorCommon,
   binaryDataIndex: number,
   offset: number,
+  length?: number,
 |}>;
 
 type ParsedMessageDescriptor = $ReadOnly<{|
@@ -181,7 +183,9 @@ export class BobjectRpcSender {
           { buffer: messageSourceData.buffer, bigString: messageSourceData.bigString },
           messageSourceData.buffer
         );
-        return { datatype, datatypesIndex, binaryDataIndex, offset: getBinaryOffset(inputMessage) };
+        return messageSourceData.isArrayView
+          ? { datatype, datatypesIndex, binaryDataIndex, offset: inputMessage.offset(), length: inputMessage.length() }
+          : { datatype, datatypesIndex, binaryDataIndex, offset: getBinaryOffset(inputMessage) };
       }
       return { datatype, datatypesIndex, message: deepParse(inputMessage), complexFields: [] };
     }
@@ -236,10 +240,13 @@ export class BobjectRpcReceiver {
   }
 
   _decodeBinaryBobject(data: BinaryMessageDescriptor) {
-    const { datatypesIndex, datatype } = data;
+    const { datatypesIndex, datatype, offset, length } = data;
     const datatypes = this._gcDataReceiver.getItem(datatypesIndex);
     const { buffer, bigString } = this._gcDataReceiver.getItem(data.binaryDataIndex);
-    return getObjects(datatypes, datatype, buffer, bigString, [data.offset])[0];
+    if (length == null) {
+      return getObjects(datatypes, datatype, buffer, bigString, [offset])[0];
+    }
+    return getBinaryArrayView(datatypes, datatype, buffer, bigString, offset, length);
   }
 
   _decodeParsedBobject(data: ParsedMessageDescriptor) {

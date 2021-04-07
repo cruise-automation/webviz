@@ -67,6 +67,7 @@ window.videoRecording = {
 };
 
 const params = new URLSearchParams(location.search);
+const durationMs = params.has("duration") ? parseFloat(params.get("duration")) * 1000 : undefined;
 const [workerIndex = 0, workerTotal = 1] = (params.get("video-recording-worker") || "0/1")
   .split("/")
   .map((n) => parseInt(n));
@@ -77,6 +78,7 @@ const speed = params.has("video-recording-speed") ? parseFloat(params.get("video
 
 class VideoRecordingClient {
   msPerFrame = msPerFrame;
+  durationMs = durationMs;
   workerIndex = workerIndex;
   workerTotal = workerTotal;
   speed = speed;

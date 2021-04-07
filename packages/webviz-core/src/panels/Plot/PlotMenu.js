@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import cx from "classnames";
-import React, { useMemo, useRef } from "react";
+import React, { memo, useMemo } from "react";
 import styled from "styled-components";
 
 import styles from "./PlotMenu.module.scss";
@@ -85,33 +85,29 @@ function downloadCsvFile(datasets: DataSet[], tooltips: TimeBasedChartTooltipDat
   downloadFiles([{ blob, fileName: `plot_data_export.csv` }]);
 }
 
-export default function PlotMenu({
-  displayWidth,
-  minYValue,
-  maxYValue,
-  saveConfig,
-  setMinMax,
-  setWidth,
-  datasets,
-  xAxisVal,
-  tooltips,
-}: {
+type Props = {|
   displayWidth: string,
   minYValue: string,
   maxYValue: string,
   saveConfig: ($Shape<PlotConfig>) => void,
   setMinMax: ($Shape<PlotConfig>) => void,
   setWidth: ($Shape<PlotConfig>) => void,
-  datasets: DataSet[],
+  getDatasets: () => DataSet[],
+  getTooltips: () => TimeBasedChartTooltipData[],
   xAxisVal: PlotXAxisVal,
-  tooltips: TimeBasedChartTooltipData[],
-}) {
-  // We want to avoid rerendering every frame, but datasets and tooltips change frequently. Create
-  // stable refs (with values updated every frame) for the callbacks that need the data.
-  const stableDatasets = useRef<DataSet[]>(datasets);
-  stableDatasets.current = datasets;
-  const stableTooltips = useRef<TimeBasedChartTooltipData[]>(tooltips);
-  stableTooltips.current = tooltips;
+|};
+
+export default memo<Props>(function PlotMenu({
+  displayWidth,
+  minYValue,
+  maxYValue,
+  saveConfig,
+  setMinMax,
+  setWidth,
+  xAxisVal,
+  getDatasets,
+  getTooltips,
+}: Props) {
   return useMemo(() => {
     const followWidthItem =
       xAxisVal === "timestamp" ? (
@@ -140,7 +136,10 @@ export default function PlotMenu({
       ) : null;
     return (
       <>
-        <Item onClick={() => downloadCsvFile(stableDatasets.current, stableTooltips.current, xAxisVal)}>
+        <Item
+          onClick={() => {
+            downloadCsvFile(getDatasets(), getTooltips(), xAxisVal);
+          }}>
           Download plot data (csv)
         </Item>
         <hr />
@@ -181,5 +180,5 @@ export default function PlotMenu({
         {followWidthItem}
       </>
     );
-  }, [xAxisVal, displayWidth, setWidth, maxYValue, minYValue, setMinMax, saveConfig]);
-}
+  }, [xAxisVal, displayWidth, setWidth, maxYValue, minYValue, setMinMax, saveConfig, getDatasets, getTooltips]);
+});

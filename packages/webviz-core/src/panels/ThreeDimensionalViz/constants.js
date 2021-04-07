@@ -11,10 +11,13 @@ import ArrowCollapseUp from "@mdi/svg/svg/arrow-collapse-up.svg";
 import ArrowDecision from "@mdi/svg/svg/arrow-decision.svg";
 import ArrowLeft from "@mdi/svg/svg/arrow-left.svg";
 import ArrowRight from "@mdi/svg/svg/arrow-right.svg";
+import ArrowTopLeft from "@mdi/svg/svg/arrow-top-left.svg";
+import ArrowTopRight from "@mdi/svg/svg/arrow-top-right.svg";
 import Bike from "@mdi/svg/svg/bike.svg";
 import BusSchool from "@mdi/svg/svg/bus-school.svg";
 import Bus from "@mdi/svg/svg/bus.svg";
 import CarBrakeAlert from "@mdi/svg/svg/car-brake-alert.svg";
+import CarParkingLights from "@mdi/svg/svg/car-parking-lights.svg";
 import Car from "@mdi/svg/svg/car.svg";
 import CubeOutline from "@mdi/svg/svg/cube-outline.svg";
 import HazardLights from "@mdi/svg/svg/hazard-lights.svg";
@@ -40,22 +43,15 @@ export const LAYER_INDEX_DIFF_MODE_BASE_PER_PASS = 100;
 
 // Use for both 3D panel and ImageView panel. Use icon names from https://materialdesignicons.com for future icons.
 export const ICON_BY_TYPE = {
-  // signal icons, deprecated.
-  "100001": Car, // open door, for both left and right
-  "100002": ArrowLeft, // left signal
-  "100003": ArrowRight, // right signal
-  "100004": HazardLights, // hazard
-  "100005": CarBrakeAlert, // brakes
-  "100006": AlphaR, // reverse lights
-  "100007": SignalOff, // signal off
-  "100008": HelpCircleOutline, // signal unknown
-
   // Supported icons, add more if needed.
   "alpha-r": AlphaR,
   "arrow-collapse-up": ArrowCollapseUp,
   "arrow-decision": ArrowDecision,
   "arrow-left": ArrowLeft,
+  "arrow-top-left": ArrowTopLeft,
   "arrow-right": ArrowRight,
+  "arrow-top-right": ArrowTopRight,
+  "car-parking-lights": CarParkingLights,
   "bus-school": BusSchool,
   "car-brake-alert": CarBrakeAlert,
   "hazard-lights": HazardLights,

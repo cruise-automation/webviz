@@ -27,7 +27,7 @@ import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-c
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
-import { useShallowMemo } from "webviz-core/src/util/hooks";
+import { useShallowMemo, useGetCurrentValue } from "webviz-core/src/util/hooks";
 import { fromSec, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export const plotableRosTypes = [
@@ -265,25 +265,30 @@ function Plot(props: Props) {
     seek(seekTime);
   }, [seek, startTime, xAxisVal]);
 
+  // We want to avoid rerendering the plot menu every frame, but datasets and tooltips change frequently.
+  const getDatasets = useGetCurrentValue(datasets);
+  const getTooltips = useGetCurrentValue(tooltips);
+
+  const plotMenu = useMemo(
+    () => (
+      <PlotMenu
+        displayWidth={followingViewWidth || ""}
+        minYValue={minYValue}
+        maxYValue={maxYValue}
+        saveConfig={saveConfig}
+        setMinMax={setMinMax}
+        setWidth={setWidth}
+        xAxisVal={xAxisVal}
+        getDatasets={getDatasets}
+        getTooltips={getTooltips}
+      />
+    ),
+    [followingViewWidth, minYValue, maxYValue, saveConfig, setMinMax, setWidth, xAxisVal, getDatasets, getTooltips]
+  );
+
   return (
     <Flex col clip center style={{ position: "relative" }}>
-      <PanelToolbar
-        helpContent={helpContent}
-        floating
-        menuContent={
-          <PlotMenu
-            displayWidth={followingViewWidth || ""}
-            minYValue={minYValue}
-            maxYValue={maxYValue}
-            saveConfig={saveConfig}
-            setMinMax={setMinMax}
-            setWidth={setWidth}
-            datasets={datasets}
-            xAxisVal={xAxisVal}
-            tooltips={tooltips}
-          />
-        }
-      />
+      <PanelToolbar helpContent={helpContent} floating menuContent={plotMenu} />
       <PlotChart
         paths={yAxisPaths}
         minYValue={parseFloat(minYValue)}

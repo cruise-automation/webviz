@@ -83,6 +83,7 @@ import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
 const {
@@ -126,7 +127,6 @@ type Props = {|
   cleared?: boolean,
   currentTime: Time,
   frame?: Frame,
-  helpContent: Node | string,
   isPlaying?: boolean,
   config: ThreeDimensionalVizConfig,
   saveConfig: Save3DConfig,
@@ -163,7 +163,6 @@ export default function Layout({
   followOrientation,
   followTf,
   frame,
-  helpContent,
   isPlaying,
   onAlignXYAxis,
   onCameraStateChange,
@@ -752,8 +751,7 @@ export default function Layout({
     if (!useWorkerIn3DPanel) {
       return null;
     }
-    const WorkerType = getLayoutWorker();
-    const ret = new Rpc(new WorkerType());
+    const ret = new Rpc(getLayoutWorker());
     setupMainThreadRpc(ret);
     ret.receive("onAvailableNsAndErrors", async (props) => {
       if (stillMounted.current) {
@@ -867,7 +865,7 @@ export default function Layout({
   const setCanvasRef = useCallback((canvas) => {
     if (canvas && !initialized && rpc) {
       // $FlowFixMe: flow does not recognize `transferControlToOffscreen`
-      const transferableCanvas = canvas.transferControlToOffscreen();
+      const transferableCanvas = supportsOffscreenCanvas() ? canvas.transferControlToOffscreen() : canvas;
       rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]).then(() => {
         if (stillMounted.current) {
           setInitialized(true);
@@ -964,7 +962,6 @@ export default function Layout({
             autoTextBackgroundColor={!!autoTextBackgroundColor}
             checkedKeys={checkedKeys}
             flattenMarkers={!!flattenMarkers}
-            helpContent={helpContent}
             saveConfig={saveConfig}
             settingsByKey={settingsByKey}
           />

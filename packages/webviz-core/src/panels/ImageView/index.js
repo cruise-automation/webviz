@@ -97,7 +97,7 @@ const SEmptyStateWrapper = styled.div`
   height: 100%;
   position: absolute;
   z-index: 200;
-  background: ${sharedColors.DARK2};
+  background: ${sharedColors.DARK};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,6 +146,8 @@ function renderEmptyState(
     <SEmptyStateWrapper>
       <EmptyState>
         Waiting for images {markerTopics.length > 0 && "and markers"} on:
+        <br />
+        <br />
         <ul>
           <li>
             <code>{cameraTopic}</code>
@@ -158,9 +160,7 @@ function renderEmptyState(
         </ul>
         {shouldSynchronize && (
           <>
-            <p>
-              Synchronization is enabled, so all messages with <code>header.stamp</code>s must match exactly.
-            </p>
+            <p>Synchronization is enabled, so all messages with `header.stamp`s must match exactly.</p>
             <ul>
               {Object.keys(messagesByTopic).map((topic) => (
                 <li key={topic}>

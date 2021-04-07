@@ -1423,6 +1423,25 @@ describe("RandomAccessPlayer", () => {
     player.close();
   });
 
+  it("adjusts the end-time in header-stamp mode", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    player.setMessageOrder("headerStamp");
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+    await player.setListener(store.add);
+    const firstMessages = await store.done;
+    expect(firstMessages).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ endTime: { sec: 101, nsec: 0 } }) }),
+    ]);
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
   it("does not seek until setListener is called to initialize the start and end time", async () => {
     const provider = new TestProvider();
     provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));

@@ -9,6 +9,7 @@
 // All message types supported by Rviz
 // http://wiki.ros.org/rviz/DisplayTypes
 
+import type { RGBA } from "regl-worldview";
 import type { Time } from "rosbag";
 
 export type Namespace = $ReadOnly<{|
@@ -142,14 +143,19 @@ export type ArrowMarker = $ReadOnly<
   }
 >;
 
-type IconMetadata = {
-  id: number,
-  icon_type: string,
-  iconOffset: { x: number, y: number },
+export type IconTypeItem = {| icon_type: number | string, color?: RGBA |};
+export type IconMetadata = {
+  id?: number,
+  icon_type?: string, // Deprecated, use icon_types instead
+  icon_types?: IconTypeItem[],
+  iconOffset?: { x: number, y: number },
+  markerStyle?: { [attr: string]: string | number },
 };
 export type OverlayIconMarker = $ReadOnly<
   BaseMarker & {
     type: 109,
+    text: string,
+    icon_type?: string,
     metadata: IconMetadata,
   }
 >;

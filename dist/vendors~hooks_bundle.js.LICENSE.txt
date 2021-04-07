@@ -148,6 +148,8 @@ object-assign
 
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
 
+/*! ./../../../../../node_modules/webpack/buildin/module.js */
+
 /*! ./../../../../../node_modules/webpack/node_modules/process/browser.js */
 
 /*! ./../../../../node_modules/webpack/buildin/global.js */
@@ -726,6 +728,10 @@ object-assign
 
 /*! ./chalk */
 
+/*! ./cjs/react-reconciler.production.min.js */
+
+/*! ./cjs/scheduler.production.min.js */
+
 /*! ./codeschool */
 
 /*! ./colorConverters */
@@ -1128,7 +1134,7 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/GlobalVariablesTable.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/MessagePathSyntax/MessagePathInput.js (referenced with cjs require), ./packages/webviz-core/src/components/Select/Select.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/MessagePathSyntax/MessagePathInput.js (referenced with cjs require), ./packages/webviz-core/src/components/Select/Select.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require) */
 
@@ -1162,11 +1168,11 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatus.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/TableSettings.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/index.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
 
@@ -1485,6 +1491,8 @@ object-assign
 /*! react-virtualized/dist/commonjs/List */
 
 /*! readable-stream */
+
+/*! scheduler */
 
 /*! source-map */
 
@@ -2369,6 +2377,10 @@ object-assign
   \*******************************************************************/
 
 /*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/filter.svg ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/layers.svg ***!
   \*******************************************************************/
 
@@ -2724,6 +2736,10 @@ object-assign
   !*** ./packages/webviz-core/node_modules/pure-color/parse/index.js ***!
   \*********************************************************************/
 
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-reconciler/index.js ***!
+  \*********************************************************************/
+
 /*!**********************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_assocIndexOf.js ***!
   \**********************************************************************/
@@ -2933,10 +2949,6 @@ object-assign
   \***********************************************************************/
 
 /*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/menu-right.svg ***!
-  \***********************************************************************/
-
-/*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/navigation.svg ***!
   \***********************************************************************/
 
@@ -3105,6 +3117,10 @@ object-assign
   \*************************************************************************/
 
 /*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-expand.svg ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/block-helper.svg ***!
   \*************************************************************************/
 
@@ -3241,6 +3257,10 @@ object-assign
   \***************************************************************************/
 
 /*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-top-left.svg ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/camera-control.svg ***!
   \***************************************************************************/
 
@@ -3294,6 +3314,10 @@ object-assign
 
 /*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-left-bold.svg ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-top-right.svg ***!
   \****************************************************************************/
 
 /*!****************************************************************************!*\
@@ -3369,10 +3393,6 @@ object-assign
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/plus-box-outline.svg ***!
-  \*****************************************************************************/
-
-/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/inherits.js ***!
   \*****************************************************************************/
 
@@ -3397,7 +3417,7 @@ object-assign
   \******************************************************************************/
 
 /*!******************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/minus-box-outline.svg ***!
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/format-color-fill.svg ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\
@@ -3411,6 +3431,10 @@ object-assign
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-highlight-words/dist/main.js ***!
   \******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/car-parking-lights.svg ***!
+  \*******************************************************************************/
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chart-line-variant.svg ***!
@@ -3728,6 +3752,10 @@ object-assign
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/array-set.js ***!
   \********************************************************************************************/
 
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-reconciler/node_modules/scheduler/index.js ***!
+  \********************************************************************************************/
+
 /*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/base64-vlq.js ***!
   \*********************************************************************************************/
@@ -3843,6 +3871,10 @@ object-assign
 /*!**************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/entities/maps/entities.json ***!
   \**************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-reconciler/cjs/react-reconciler.production.min.js ***!
+  \***************************************************************************************************/
 
 /*!***************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/utils/animationFrame.js ***!
@@ -4304,6 +4336,10 @@ object-assign
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.create.js ***!
   \*******************************************************************************************************************/
 
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-reconciler/node_modules/scheduler/cjs/scheduler.production.min.js ***!
+  \*******************************************************************************************************************/
+
 /*!********************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/get-prototype-of.js ***!
   \********************************************************************************************************************/
@@ -4449,4 +4485,22 @@ object-assign
  * @return {boolean} True if the event is supported.
  * @internal
  * @license Modernizr 3.0.0pre (Custom Build) | MIT
+ */
+
+/** @license React v0.20.1
+ * scheduler.production.min.js
+ *
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+/** @license React v0.26.1
+ * react-reconciler.production.min.js
+ *
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */

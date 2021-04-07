@@ -1,9 +1,5 @@
 /*! ./ChartJSManager */
 
-/*! ./Rpc */
-
-/*! ./overwriteFetch */
-
 /*! ./zoomAndPanHelpers */
 
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
@@ -28,17 +24,9 @@
 
 /*! webviz-core/src/util/installChartjs */
 
-/*! webviz-core/src/util/logEvent */
-
 /*! webviz-core/src/util/multicolorLineChart */
 
-/*! webviz-core/src/util/sendNotification */
-
 /*! webviz-core/src/util/workers */
-
-/*!*********************************************************!*\
-  !*** ./packages/webviz-core/src/util/RpcWorkerUtils.js ***!
-  \*********************************************************/
 
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/installChartjs.js ***!

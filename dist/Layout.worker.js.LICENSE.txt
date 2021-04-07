@@ -603,6 +603,10 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/arrow-right.svg */
 
+/*! @mdi/svg/svg/arrow-top-left.svg */
+
+/*! @mdi/svg/svg/arrow-top-right.svg */
+
 /*! @mdi/svg/svg/bike.svg */
 
 /*! @mdi/svg/svg/bus-school.svg */
@@ -610,6 +614,8 @@ and limitations under the License.
 /*! @mdi/svg/svg/bus.svg */
 
 /*! @mdi/svg/svg/car-brake-alert.svg */
+
+/*! @mdi/svg/svg/car-parking-lights.svg */
 
 /*! @mdi/svg/svg/car.svg */
 
@@ -2863,6 +2869,10 @@ and limitations under the License.
   \***************************************************************************/
 
 /*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-top-left.svg ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/MemoryCacheDataProvider.js ***!
   \***************************************************************************/
 
@@ -2872,6 +2882,10 @@ and limitations under the License.
 
 /*!****************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_isStrictComparable.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-top-right.svg ***!
   \****************************************************************************/
 
 /*!****************************************************************************!*\
@@ -2921,6 +2935,10 @@ and limitations under the License.
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker.js ***!
   \******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/car-parking-lights.svg ***!
+  \*******************************************************************************/
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/Cover.js ***!

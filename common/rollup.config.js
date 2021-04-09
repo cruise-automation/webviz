@@ -26,7 +26,16 @@ const input = "src/index.js";
 const libraryName = "ReglWorldview";
 
 const globals = { react: "React", "react-dom": "ReactDOM" };
-const isExternal = (id) => !id.startsWith(".") && !id.startsWith("/");
+const isExternal = (id) => {
+  if (id.startsWith(".")) {
+    return false;
+  }
+  if (id.startsWith(__dirname)) {
+    return false;
+  }
+
+  return true;
+};
 
 export default function(pkg) {
   return [

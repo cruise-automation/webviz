@@ -47,7 +47,7 @@ export default function(pkg) {
           browser: true,
         }),
         babel(getBabelOptions({ useESModules: true })),
-        commonjs({ include: "node_modules/**" }),
+        commonjs({ include: /node_modules/ }),
         replace({ "process.env.NODE_ENV": JSON.stringify("development") }),
         terser(),
       ],

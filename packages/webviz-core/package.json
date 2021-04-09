@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "rosbag analysis tool",
   "license": "Apache-2.0",
-  "engines": {
-    "node": ">=10.22.0 <12"
-  },
   "dependencies": {
     "@cruise-automation/button": "0.0.7",
     "@cruise-automation/hooks": "0.0.1",

@@ -11,6 +11,13 @@ import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitm
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
+// HACK: TinySDF doesn't agree with workers. Until support is added, hack this to make it work.
+// TODO(steel): Upstream the fix in memoizedCreateCanvas.
+if (!self.document) {
+  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
+  self.document = { createElement: () => new OffscreenCanvas(0, 0) };
+}
+
 // The GLText command renders text from a Signed Distance Field texture.
 // There are many external resources about SDFs and text rendering in WebGL, including:
 // https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
@@ -80,7 +87,8 @@ const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
 const memoizedCreateCanvas = memoizeOne((font) => {
-  const canvas = document.createElement("canvas");
+  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
+  const canvas: HTMLCanvasElement = self.OffscreenCanvas ? new OffscreenCanvas(0, 0) : document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   ctx.font = font;
   return ctx;

@@ -99,17 +99,7 @@ export type Line = {
   pointBorderColor?: string,
   pointBorderWidth?: number,
   pointRadius?: number,
-  pointStyle?:
-    | "circle"
-    | "cross"
-    | "crossRot"
-    | "dash"
-    | "line"
-    | "rect"
-    | "rectRounded"
-    | "rectRot"
-    | "star"
-    | "triangle",
+  pointStyle?: string,
   lineTension?: number,
   data: { x: number, y: number }[],
 };

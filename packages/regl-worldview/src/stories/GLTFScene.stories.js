@@ -53,4 +53,28 @@ storiesOf("Worldview/GLTFScene", module)
         </GLTFScene>
       </Worldview>
     );
+  })
+  .add("Support for KHR_materials_pbrSpecularGlossiness extension", () => {
+    const model = require("common/fixtures/SpecGlossVsMetalRough.glb");
+    return (
+      <Worldview
+        defaultCameraState={{
+          distance: 4,
+          thetaOffset: (-3 * Math.PI) / 4,
+          phi: Math.PI / 3,
+          targetOffset: [0, 3, 0],
+        }}>
+        <Axes />
+        <Grid />
+        <GLTFScene model={model}>
+          {{
+            pose: {
+              position: { x: 0, y: 3, z: 0 },
+              orientation: { x: 0, y: 0, z: 1, w: 0 },
+            },
+            scale: { x: 7, y: 7, z: 7 },
+          }}
+        </GLTFScene>
+      </Worldview>
+    );
   });

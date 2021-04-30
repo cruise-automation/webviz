@@ -147,8 +147,8 @@ const drawModel = (regl) => {
           data: bitmap,
           min: glConstantToRegl(sampler.minFilter),
           mag: glConstantToRegl(sampler.magFilter),
-          wrapS: glConstantToRegl(sampler.wrapS),
-          wrapT: glConstantToRegl(sampler.wrapT),
+          wrapS: sampler.wrapS ? glConstantToRegl(sampler.wrapS) : "repeat",
+          wrapT: sampler.wrapT ? glConstantToRegl(sampler.wrapT) : "repeat",
         });
         return texture;
       });
@@ -160,10 +160,23 @@ const drawModel = (regl) => {
     // helper to draw the primitives comprising a mesh
     function drawMesh(mesh, nodeMatrix) {
       for (const primitive of mesh.primitives) {
-        const material = model.json.materials[primitive.material];
-        const texInfo = material.pbrMetallicRoughness.baseColorTexture;
         if (!accessors) {
           throw new Error("Error decoding GLB model: Missing `accessors` in JSON data");
+        }
+        const material = model.json.materials[primitive.material];
+        let texInfo;
+        let baseColorFactor = [1, 1, 1, 1];
+        if (
+          material.extensions?.KHR_materials_pbrSpecularGlossiness?.diffuseTexture ||
+          material.extensions?.KHR_materials_pbrSpecularGlossiness?.diffuseFactor
+        ) {
+          // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness
+          // Simply use the diffuse color as the base color, and ignore the specular color
+          texInfo = material.extensions.KHR_materials_pbrSpecularGlossiness.diffuseTexture;
+          baseColorFactor = material.extensions.KHR_materials_pbrSpecularGlossiness.diffuseFactor || baseColorFactor;
+        } else if (material.pbrMetallicRoughness) {
+          texInfo = material.pbrMetallicRoughness.baseColorTexture;
+          baseColorFactor = material.pbrMetallicRoughness.baseColorFactor || baseColorFactor;
         }
         drawCalls.push({
           indices: accessors[primitive.indices],
@@ -173,7 +186,7 @@ const drawModel = (regl) => {
             ? accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
             : { divisor: 1, buffer: singleTexCoord },
           baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
-          baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],
+          baseColorFactor,
           nodeMatrix,
         });
       }

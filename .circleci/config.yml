@@ -8,10 +8,23 @@ version: 2
 jobs:
   build:
     machine: true
+    environment:
+      - GIT_LFS_SKIP_SMUDGE: 1
 
     steps:
       - checkout
 
+      # Caching LFS assets, e.g. glb files. https://mflash.dev/blog/2020/09/05/using-git-lfs-in-ci/
+      - run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+      - restore_cache:
+          keys:
+            - v1-lfscache-{{ checksum ".lfs-assets-id" }}
+            - v1-lfscache-
+      - run: git lfs pull
+      - save_cache:
+          paths:
+            - .git/lfs
+          key: v1-lfscache-{{ checksum ".lfs-assets-id" }}
       - restore_cache:
           keys:
             - global-deps-{{ checksum "package-lock.json" }}

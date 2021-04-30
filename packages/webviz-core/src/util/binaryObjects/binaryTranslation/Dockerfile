@@ -9,3 +9,6 @@ FROM trzeci/emscripten:1.39.17-upstream
 RUN apt-get update
 RUN apt-get -y install clang-format clang-tidy
 
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash \
+  && sudo apt-get install git-lfs \
+  && git lfs install

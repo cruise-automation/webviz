@@ -82,6 +82,11 @@ module.exports = {
     // https://webpack.js.org/configuration/resolve/#resolve-symlinks
     // and https://github.com/webpack/webpack/issues/1866
     symlinks: false,
+    alias: {
+      // The Buffer bundled by webpack copies data when doing Buffer.from(sharedArrayBuffer).
+      // Force use of the version in webviz-core/node_modules.
+      buffer$: path.resolve(`${__dirname}/packages/webviz-core/node_modules/buffer`),
+    },
   },
   module: {
     strictExportPresence: true,

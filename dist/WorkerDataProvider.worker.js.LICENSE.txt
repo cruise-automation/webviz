@@ -5,6 +5,13 @@
  * @license  MIT
  */
 
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -202,7 +209,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -326,6 +333,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! idb */
 
 /*! ieee754 */
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /*! indent-string */
 
@@ -726,6 +735,10 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************************/
 
 /*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/buffer/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/VirtualLRUBuffer.js ***!
   \***********************************************************/
 
@@ -739,6 +752,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_duplex.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/ieee754/index.js ***!
   \************************************************************/
 
 /*!************************************************************!*\
@@ -775,6 +792,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!**************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_writable.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/base64-js/index.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\

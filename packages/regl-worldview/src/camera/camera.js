@@ -18,6 +18,10 @@ const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 // This is the regl command which encapsulates the camera projection and view matrices.
 // It adds the matrices to the regl context so they can be used by other commands.
 export default (regl: any) => {
+  if (!regl) {
+    throw new Error("Invalid regl instance");
+  }
+
   return class Camera implements CameraCommand {
     viewportWidth: number = 0;
     viewportHeight: number = 0;

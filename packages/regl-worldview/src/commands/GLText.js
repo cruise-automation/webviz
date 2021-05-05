@@ -344,6 +344,10 @@ function makeTextCommand(alphabet?: string[]) {
   const memoizedDrawAtlasTexture = createMemoizedDrawAtlasTexture();
 
   const command = (regl: any) => {
+    if (!regl) {
+      throw new Error("Invalid regl instance");
+    }
+
     const atlasTexture = regl.texture();
 
     const drawText = regl({

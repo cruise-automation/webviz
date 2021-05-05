@@ -60,6 +60,10 @@ const getSceneToDraw = ({ json }) => {
 };
 
 const drawModel = (regl) => {
+  if (!regl) {
+    throw new Error("Invalid regl instance");
+  }
+
   const command = regl({
     primitive: "triangles",
     blend: defaultBlend,

@@ -141,6 +141,11 @@ export class WorldviewContext {
         profile: getNodeEnv() !== "production",
       })
     );
+
+    if (!regl) {
+      throw new Error("Cannot initialize regl");
+    }
+
     // compile any components which mounted before regl is initialized
     this._commands.forEach((uncompiledCommand) => {
       const compiledCommand = compile(regl, uncompiledCommand);

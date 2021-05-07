@@ -26,6 +26,10 @@ type Props = {
 
 export const makePointsCommand = ({ useWorldSpaceSize }: PointsProps) => {
   return (regl: Regl) => {
+    if (!regl) {
+      throw new Error("Invalid regl instance");
+    }
+
     const [minLimitPointSize, maxLimitPointSize] = regl.limits.pointSizeDims;
     return withPose({
       primitive: "points",

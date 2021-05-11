@@ -6,6 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import draco3d from "draco3d";
+// import draco3dgltf from "draco3dgltf/draco_decoder_gltf_nodejs";
+import draco3dWasm from "draco3d/draco_decoder.wasm";
+
 type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
 
 export type GLBModel = {
@@ -71,9 +75,94 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
     return { json };
   }
 
+  // const decoderModule = await draco3dgltf.createDecoderModule({ type: "js" });
+  // const decoderModule = await draco3d.createDecoderModule({ type: "js" });
+
+  const decoderModule = await draco3d.createDecoderModule({
+    locateFile: () => {
+      return draco3dWasm;
+    },
+  });
+  console.log({ decoderModule });
+
+  const decoder = new decoderModule.Decoder();
+
+  console.log({ decoder });
+
+  // let dracoGeometry;
+  // let status;
+  // if (geometryType === decoderModule.TRIANGULAR_MESH) {
+  //   dracoGeometry = new decoderModule.Mesh();
+  //   status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
+  // } else if (geometryType === decoderModule.POINT_CLOUD) {
+  //   dracoGeometry = new decoderModule.PointCloud();
+  //   status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
+  // } else {
+  //   const errorMsg = "Error: Unknown geometry type.";
+  //   console.error(errorMsg);
+  // }
+
+  // console.log({ status });
+
   if (json.buffers[0].uri !== undefined) {
     throw new Error("expected GLB-stored buffer");
   }
+
+  json.meshes.forEach((mesh) => {
+    mesh.primitives.forEach((primitive) => {
+      console.log({ mesh, primitive });
+      const { extensions = {} } = primitive;
+      const dracoCompression = extensions.KHR_draco_mesh_compression;
+      if (dracoCompression) {
+        console.log({ dracoCompression });
+        const { bufferView: bufferViewIndex, attributes } = dracoCompression;
+        const bufferView = json.bufferViews[bufferViewIndex];
+        const buffer = new decoderModule.DecoderBuffer();
+        const data = new Int8Array(
+          binary.buffer,
+          binary.byteOffset + (bufferView.byteOffset || 0),
+          bufferView.byteLength
+        );
+        buffer.Init(data, bufferView.byteLength); //new Int8Array(binary), bufferView.byteLength);
+        const geometryType = decoder.GetEncodedGeometryType(buffer);
+        let dracoGeometry;
+        let status;
+        if (geometryType === decoderModule.TRIANGULAR_MESH) {
+          dracoGeometry = new decoderModule.Mesh();
+          status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
+        } else if (geometryType === decoderModule.POINT_CLOUD) {
+          dracoGeometry = new decoderModule.PointCloud();
+          status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
+        } else {
+          const errorMsg = "Error: Unknown geometry type.";
+          console.error(errorMsg);
+        }
+
+        if (!status.ok() || dracoGeometry.ptr === 0) {
+          throw new Error(`Decoding failed: ${status.error_msg()}`);
+        }
+
+        const numFaces = dracoGeometry.num_faces();
+        const numIndices = numFaces * 3;
+        const numPoints = dracoGeometry.num_points();
+        console.log({
+          geometryType,
+          bufferViewIndex,
+          attributes,
+          bufferView,
+          dracoGeometry,
+          status,
+          numFaces,
+          numIndices,
+          numPoints,
+          json,
+          data,
+          buffer,
+        });
+        decoderModule.destroy(buffer);
+      }
+    });
+  });
 
   // create a TypedArray for each accessor
   const accessors = json.accessors.map((accessorInfo) => {
@@ -126,6 +215,8 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
         return self.createImageBitmap(new Blob([data], { type: imgInfo.mimeType }));
       })
     ));
+
+  decoderModule.destroy(decoder);
 
   return { json, accessors, images };
 }

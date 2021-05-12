@@ -14,6 +14,7 @@ import {
   compile,
   extractDatatypes,
   extractGlobalVariables,
+  checkForMultiSourceSupport,
   compose,
   getInputTopics,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
@@ -22,7 +23,7 @@ import baseDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransforme
 import userUtilsLibs from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils";
 import { DiagnosticSeverity, ErrorCodes, Sources, type NodeData } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 // Exported for use in other tests.
 export const baseNodeData: NodeData = {
@@ -38,6 +39,7 @@ export const baseNodeData: NodeData = {
   datatypes: {},
   sourceFile: undefined,
   typeChecker: undefined,
+  enableSecondSource: false,
   rosLib: generateRosLib({
     topics: [{ name: "/some_topic", datatype: "std_msgs/ColorRGBA" }],
     datatypes: exampleDatatypes,
@@ -144,6 +146,35 @@ describe("pipeline", () => {
       expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.BAD_PREFIX);
     });
   });
+
+  describe("checkForMultiSourceSupport", () => {
+    const getTopics = (topicNames) => topicNames.map((name) => ({ name, datatype: "some_datatype" }));
+
+    it("sets enableSecondSource", () => {
+      const { enableSecondSource } = checkForMultiSourceSupport(
+        { ...baseNodeData, inputTopics: ["/foo", "/bar"] },
+        getTopics(["/foo", "/webviz_source_2/foo", "/bar", "/webviz_source_2/foo"])
+      );
+      expect(enableSecondSource).toBeTruthy();
+    });
+
+    it("does not set enableSecondSource if no source_2 topics are present", () => {
+      const { enableSecondSource } = checkForMultiSourceSupport(
+        { ...baseNodeData, inputTopics: ["/foo"] },
+        getTopics(["/foo"])
+      );
+      expect(enableSecondSource).toBeFalsy();
+    });
+
+    it("does not set enableSecondSource if the node uses input from source_2", () => {
+      const { enableSecondSource } = checkForMultiSourceSupport(
+        { ...baseNodeData, inputTopics: ["/foo", "/webviz_source_2/bar"] },
+        getTopics(["/foo", "/webviz_source_2/foo"])
+      );
+      expect(enableSecondSource).toBeFalsy();
+    });
+  });
+
   describe("validateInputTopics", () => {
     it.each([[["/foo"], ["/bar"]], [["/foo"], ["/bar", "/baz"]]])(
       "returns a  error when an input topic is not yet available",
@@ -160,6 +191,15 @@ describe("pipeline", () => {
     it("errs when a node tries to input another user node", () => {
       const { diagnostics } = validateInputTopics(
         { ...baseNodeData, inputTopics: [`${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`] },
+        []
+      );
+      expect(diagnostics.length).toEqual(1);
+      expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
+      expect(diagnostics[0].code).toEqual(ErrorCodes.InputTopicsChecker.CIRCULAR_IMPORT);
+    });
+    it("errs when a node tries to input another user node from source two", () => {
+      const { diagnostics } = validateInputTopics(
+        { ...baseNodeData, inputTopics: [`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`] },
         []
       );
       expect(diagnostics.length).toEqual(1);

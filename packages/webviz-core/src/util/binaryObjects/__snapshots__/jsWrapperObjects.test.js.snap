@@ -161,6 +161,33 @@ class fake_msgs_HasArrayOfEmpties {
 }
 const fake_msgs_HasArrayOfEmpties$Array = $context.getReverseWrapperArrayView(fake_msgs_HasArrayOfEmpties);
 
+class fake_msgs_HasBigIntArrays {
+  constructor(value) {
+    this[$value] = value;
+  }
+  i_arr() {
+    const $fieldValue = this[$value].i_arr;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new $PrimitiveArrayView($fieldValue);
+  }
+  u_arr() {
+    const $fieldValue = this[$value].u_arr;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new $PrimitiveArrayView($fieldValue);
+  }
+  [$deepParse]() {
+    return {
+      i_arr: $maybeDeepParse(this.i_arr()),
+      u_arr: $maybeDeepParse(this.u_arr()),
+    };
+  }
+}
+const fake_msgs_HasBigIntArrays$Array = $context.getReverseWrapperArrayView(fake_msgs_HasBigIntArrays);
+
 class fake_msgs_ContainsEverything {
   constructor(value) {
     this[$value] = value;
@@ -221,6 +248,13 @@ class fake_msgs_ContainsEverything {
     }
     return new fake_msgs_HasArrayOfEmpties($fieldValue);
   }
+  ninth() {
+    const $fieldValue = this[$value].ninth;
+    if ($fieldValue == null || $fieldValue[$deepParse] != null) {
+      return $fieldValue;
+    }
+    return new fake_msgs_HasBigIntArrays($fieldValue);
+  }
   [$deepParse]() {
     return {
       first: $maybeDeepParse(this.first()),
@@ -231,6 +265,7 @@ class fake_msgs_ContainsEverything {
       sixth: $maybeDeepParse(this.sixth()),
       seventh: $maybeDeepParse(this.seventh()),
       eighth: $maybeDeepParse(this.eighth()),
+      ninth: $maybeDeepParse(this.ninth()),
     };
   }
 }
@@ -284,6 +319,7 @@ return {
   \\"fake_msgs/HasJson\\": fake_msgs_HasJson,
   \\"fake_msgs/HasInt64s\\": fake_msgs_HasInt64s,
   \\"fake_msgs/HasArrayOfEmpties\\": fake_msgs_HasArrayOfEmpties,
+  \\"fake_msgs/HasBigIntArrays\\": fake_msgs_HasBigIntArrays,
   \\"fake_msgs/ContainsEverything\\": fake_msgs_ContainsEverything,
   \\"time\\": time,
   \\"duration\\": duration,

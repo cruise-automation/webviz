@@ -9,7 +9,7 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {|
   children: React.Node,
@@ -23,11 +23,10 @@ const Container = styled.div`
   justify-content: ${(props) => (props.alignLeft ? "left" : "center")};
   margin: 20px;
   line-height: 1.4;
-  color: ${colors.textMuted};
+  color: ${colors.GRAY};
 
   code {
-    color: ${colors.highlight};
-    opacity: 0.5;
+    color: ${colors.DARK9};
     background: transparent;
     padding: 0;
   }

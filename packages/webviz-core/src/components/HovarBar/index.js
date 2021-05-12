@@ -11,6 +11,24 @@ import { useSelector } from "react-redux";
 import styled from "styled-components";
 
 import { getChartPx, type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
+
+export const SBar = styled.div.attrs(({ xAxisIsPlaybackTime }) => ({
+  style: {
+    background: xAxisIsPlaybackTime ? `${colors.YELLOW} padding-box` : `${colors.BLUE} padding-box`,
+    // Non-timestamp plot hover bars have no triangles (indicating click-to-seek) at top/bottom.
+    borderWidth: xAxisIsPlaybackTime ? "4px" : "0px 4px",
+  },
+}))`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  margin-left: -4px;
+  display: block;
+  border-style: solid;
+  border-color: ${colors.YELLOW} transparent;
+`;
 
 const SWrapper = styled.div`
   top: 0;
@@ -21,6 +39,19 @@ const SWrapper = styled.div`
   // "visibility" and "transform" are set by JS, but outside of React.
   visibility: hidden;
 `;
+
+// Given the scale bounds, returns the distance from the top of the chart canvas to the top of the actual chart area,
+// and the height of the chart area.
+export function getChartTopAndHeight(scaleBounds: ?$ReadOnlyArray<ScaleBounds>): ?{ topPx: number, heightPx: number } {
+  const firstYScale = scaleBounds && scaleBounds.find(({ axes }) => axes === "yAxes");
+  if (firstYScale == null) {
+    return;
+  }
+  const topPx = Math.min(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+  const bottomPx = Math.max(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+  const heightPx = bottomPx - topPx;
+  return { topPx, heightPx };
+}
 
 type Props = {|
   children?: React.Node,
@@ -37,9 +68,23 @@ function hideBar(wrapper) {
   }
 }
 
-function showBar(wrapper, position) {
-  wrapper.style.visibility = "visible";
-  wrapper.style.transform = `translateX(${position}px)`;
+function showBar(wrapper, position, topPx, heightPx) {
+  if (wrapper.style.visibility !== "visible") {
+    wrapper.style.visibility = "visible";
+  }
+  const transform = `translateX(${position}px)`;
+  if (transform !== wrapper.style.transform) {
+    wrapper.style.transform = transform;
+  }
+
+  const top = `${topPx}px`;
+  const height = `${heightPx}px`;
+  if (top !== wrapper.style.top) {
+    wrapper.style.top = top;
+  }
+  if (height !== wrapper.style.height) {
+    wrapper.style.height = height;
+  }
 }
 
 function shouldShowBar(hoverValue, componentId, isTimestampScale) {
@@ -70,10 +115,11 @@ export default React.memo<Props>(({ children, componentId, isTimestampScale, sca
     }
     if (shouldShowBar(hoverValue, componentId, isTimestampScale)) {
       const position = getChartPx(xBounds, hoverValue.value);
-      if (position == null) {
+      const topAndHeight = getChartTopAndHeight(scaleBounds.current);
+      if (position == null || topAndHeight == null) {
         hideBar(current);
       } else {
-        showBar(current, position);
+        showBar(current, position, topAndHeight.topPx, topAndHeight.heightPx);
       }
     }
   }

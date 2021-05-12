@@ -39,11 +39,12 @@ type Props = {|
   onMouseEnter?: (MouseEvent) => void,
   onMouseLeave?: (MouseEvent) => void,
   onMouseMove?: (MouseEvent) => void,
+  ref?: React.Ref<?HTMLDivElement>,
   // for storybook screenshots tests
   dataTest?: string,
 |};
 
-const Flex = (props: Props) => {
+const Flex = React.forwardRef<Props, ?HTMLDivElement>((props: Props, forwardedRef) => {
   const {
     col,
     row,
@@ -96,11 +97,12 @@ const Flex = (props: Props) => {
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onMouseMove={onMouseMove}>
+      onMouseMove={onMouseMove}
+      ref={forwardedRef}>
       {children}
     </div>
   );
-};
+});
 
 Flex.displayName = "Flex";
 export default Flex;

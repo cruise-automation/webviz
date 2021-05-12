@@ -75,6 +75,8 @@ export interface Player {
   // Set the globalVariables for Players that support it.
   // This is generally used to pass new globalVariables to the UserNodePlayer
   setGlobalVariables(globalVariables: GlobalVariables): void;
+
+  setMessageOrder(order: TimestampMethod): void;
 }
 
 export type PlayerState = {|
@@ -187,6 +189,11 @@ export type Topic = {|
   // The number of messages present on the topic. Valid only for sources with a fixed number of
   // messages, such as bags.
   numMessages?: number,
+  // Whether the data can appear in the preloaded blocks. Authoritative if present -- this field
+  // will be set by the player to allow for optimizations in the PanelAPI and panels.
+  preloadable?: boolean,
+  // For our respective NodePlayers to publish their nodes' input topics.
+  inputTopics?: string[],
 |};
 
 // A ROS-like message.

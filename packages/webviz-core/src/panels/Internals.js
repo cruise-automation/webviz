@@ -25,6 +25,7 @@ import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic, Message, SubscribePayload, AdvertisePayload } from "webviz-core/src/players/types";
 import { downloadTextFile } from "webviz-core/src/util";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const { useCallback } = React;
 
@@ -39,6 +40,22 @@ const Container = styled.div`
   }
   li {
     margin: 4px 0;
+  }
+  // Taken shamelessly from https://stackoverflow.com/a/14424029.
+  li div {
+    padding-left: 1em;
+    position: relative;
+  }
+  li div::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -2px;
+    bottom: 50%;
+    width: 0.75em;
+    border: 2px solid ${colors.TEXT_MUTED};
+    border-top: 0 none transparent;
+    border-right: 0 none transparent;
   }
   h1 {
     font-size: 1.5em;
@@ -84,10 +101,12 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
 function Internals(): React.Node {
   const { topics } = PanelAPI.useDataSourceInfo();
   const topicsByName = React.useMemo(() => getTopicsByTopicName(topics), [topics]);
-  const subscriptions = useMessagePipeline(
-    useCallback(({ subscriptions: pipelineSubscriptions }) => pipelineSubscriptions, [])
+  const { subscriptions, publishers } = useMessagePipeline(
+    useCallback(
+      (messagePipeline) => ({ subscriptions: messagePipeline.subscriptions, publishers: messagePipeline.publishers }),
+      []
+    )
   );
-  const publishers = useMessagePipeline(useCallback(({ publishers: pipelinePublishers }) => pipelinePublishers, []));
 
   const [groupedSubscriptions, subscriptionGroups] = React.useMemo(() => {
     const grouped = groupBy(subscriptions, getSubscriptionGroup);
@@ -113,6 +132,13 @@ function Internals(): React.Node {
                       topicsByName[sub.topic].originalTopic &&
                       ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
                   </tt>
+                  <ul>
+                    {((topicsByName[sub.topic] && topicsByName[sub.topic].inputTopics) ?? []).map((inputTopic) => (
+                      <li key={`${i}-${inputTopic}`}>
+                        <div>{inputTopic}</div>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>

@@ -19,14 +19,14 @@ import { JSONInput } from "webviz-core/src/components/input/JSONInput";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type {
+  ColorOverride,
+  ColorOverrideBySourceIdxByVariable,
+} from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import ColorPickerForTopicSettings, {
   PICKER_SIZE,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
-import type {
-  ColorOverride,
-  ColorOverrideBySourceIdxByVariable,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import type { Color } from "webviz-core/src/types/Messages";
 import { hexToColorObj } from "webviz-core/src/util/colorUtils";
 import { lineColors } from "webviz-core/src/util/plotColors";

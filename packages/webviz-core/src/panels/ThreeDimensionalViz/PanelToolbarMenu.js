@@ -12,11 +12,12 @@ import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import SwapHorizontalIcon from "@mdi/svg/svg/swap-horizontal.svg";
 import SyncIcon from "@mdi/svg/svg/sync.svg";
-import React, { type Node } from "react";
+import React, { memo } from "react";
 
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { type Save3DConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
+import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
@@ -27,7 +28,6 @@ export const SYNC_OPTIONS = {
 };
 
 type Props = {
-  helpContent: Node | string,
   saveConfig: Save3DConfig,
   flattenMarkers: boolean,
   autoTextBackgroundColor: boolean,
@@ -124,8 +124,7 @@ export function syncBags({ checkedKeys, settingsByKey }: BagSyncData, syncOption
   return { checkedKeys: [...result.checkedKeys.bag1, ...result.checkedKeys.bag2], settingsByKey: newSettingsByKey };
 }
 
-export default function PanelToolbarMenu({
-  helpContent,
+export default memo<Props>(function PanelToolbarMenu({
   checkedKeys,
   settingsByKey,
   saveConfig,
@@ -148,7 +147,7 @@ export default function PanelToolbarMenu({
             tooltip="Automatically apply dark/light background color to text."
             icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
             onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
-            Auto Text Background
+            Auto text background
           </Item>
           <SubMenu checked={false} text="Sync settings" icon={<SyncIcon />}>
             <Item
@@ -174,4 +173,4 @@ export default function PanelToolbarMenu({
       }
     />
   );
-}
+});

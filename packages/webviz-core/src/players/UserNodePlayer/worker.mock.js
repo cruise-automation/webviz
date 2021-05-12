@@ -8,7 +8,7 @@
 
 import { isPlainObject } from "lodash";
 
-import { processMessage, registerNode } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
+import { processMessages, registerNode } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
 import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import { BobjectRpcReceiver } from "webviz-core/src/util/binaryObjects/BobjectRpc";
@@ -49,9 +49,16 @@ export default class MockUserNodePlayerWorker {
     receiveAndLog("generateRosLib", generateRosLib);
     receiveAndLog("transform", transform);
     receiveAndLog("registerNode", registerNode);
-    new BobjectRpcReceiver(receiver).receive("processMessage", "parsed", async (message, globalVariables) => {
-      this.messageSpy("processMessage");
-      return processMessage({ message, globalVariables });
+    let messagesToProcess = [];
+    new BobjectRpcReceiver(receiver).receive("addMessage", "parsed", async (message) => {
+      this.messageSpy("addMessage");
+      messagesToProcess.push(message);
+      return true;
+    });
+    receiveAndLog("processMessages", ({ binaryOutputs, globalVariables, outputTopic }) => {
+      const messages = messagesToProcess;
+      messagesToProcess = [];
+      return processMessages({ binaryOutputs, messages, globalVariables, outputTopic });
     });
   }
 

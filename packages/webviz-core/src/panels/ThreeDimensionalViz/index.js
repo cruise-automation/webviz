@@ -8,7 +8,7 @@
 
 import hoistNonReactStatics from "hoist-non-react-statics";
 import { omit, debounce } from "lodash";
-import React, { type Node, useCallback, useMemo, useState, useRef, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
 import { type CameraState } from "regl-worldview";
 
@@ -17,14 +17,13 @@ import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
+import Layout from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
+import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import {
   useTransformedCameraState,
   getNewCameraStateOnFollowChange,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import Layout from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
-import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
@@ -62,12 +61,13 @@ export type Props = {
   cleared?: boolean,
   config: ThreeDimensionalVizConfig,
   frame: Frame,
-  helpContent: Node | string,
   saveConfig: Save3DConfig,
   setSubscriptions: (subscriptions: string[]) => void,
   topics: Topic[],
   transforms: Transforms,
 };
+
+const DEFAULT_TIME = { sec: 0, nsec: 0 };
 
 const BaseRenderer = (props: Props, ref) => {
   const {
@@ -82,11 +82,14 @@ const BaseRenderer = (props: Props, ref) => {
   } = props;
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
 
-  const currentTime = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => (activeData && activeData.currentTime) || { sec: 0, nsec: 0 }, [])
-  );
-  const isPlaying = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => !!(activeData && activeData.isPlaying), [])
+  const { currentTime, isPlaying } = useMessagePipeline(
+    useCallback(
+      ({ playerState: { activeData } }) => ({
+        currentTime: (activeData && activeData.currentTime) || DEFAULT_TIME,
+        isPlaying: !!(activeData && activeData.isPlaying),
+      }),
+      []
+    )
   );
 
   // We use useState to store the cameraState instead of using config directly in order to
@@ -187,7 +190,6 @@ const BaseRenderer = (props: Props, ref) => {
       followOrientation={!!followOrientation}
       followTf={followTf}
       frame={frame}
-      helpContent={helpContent}
       isPlaying={isPlaying}
       onAlignXYAxis={onAlignXYAxis}
       onCameraStateChange={onCameraStateChange}
@@ -204,6 +206,36 @@ const BaseRenderer = (props: Props, ref) => {
 BaseRenderer.displayName = "ThreeDimensionalViz";
 BaseRenderer.panelType = "3D Panel";
 BaseRenderer.defaultConfig = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.defaultConfig;
+BaseRenderer.shortcuts = [
+  {
+    description: "Toggle between 2D and 3D mode",
+    keys: ["3"],
+  },
+  {
+    description: "Move the camera forward / left / backward / right",
+    keys: ["w", "a", "s", "d"],
+  },
+  {
+    description: "Zoom in and out",
+    keys: ["z", "x"],
+  },
+  {
+    description: "Open topic tree",
+    keys: ["t"],
+  },
+  {
+    description: "Hold ctrl key and click on the canvas to start drawing polygons",
+    keys: ["ctrl"],
+  },
+  {
+    description: "Move the camera position parallel to the ground",
+    keys: ["left", "drag"],
+  },
+  {
+    description: "Pan and rotate the camera",
+    keys: ["right", "drag"],
+  },
+];
 
 export const Renderer = hoistNonReactStatics(React.forwardRef<Props, typeof BaseRenderer>(BaseRenderer), BaseRenderer);
 

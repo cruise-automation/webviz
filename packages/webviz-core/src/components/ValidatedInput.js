@@ -13,7 +13,7 @@ import styled from "styled-components";
 import { validationErrorToString, type ValidationResult } from "webviz-core/shared/validators";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import YAML from "webviz-core/src/util/yaml";
 
 const { useState, useCallback, useRef, useLayoutEffect, useEffect } = React;
@@ -38,9 +38,10 @@ const STransparentDropdownButton = styled.div`
 const StyledTextarea = styled.textarea`
   flex: 1 1 auto;
   resize: none;
+  border: 1px solid ${colors.GRAY};
 `;
 const SError = styled.div`
-  color: ${colors.red};
+  color: ${colors.RED};
   padding: 8px 4px;
 `;
 
@@ -181,7 +182,7 @@ export function ValidatedInputBase({
   );
 }
 
-function JsonInput(props: BaseProps) {
+export function JsonInput(props: BaseProps) {
   function stringify(val) {
     return JSON.stringify(val, null, 2);
   }

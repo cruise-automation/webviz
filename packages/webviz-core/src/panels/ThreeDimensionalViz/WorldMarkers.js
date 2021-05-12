@@ -22,19 +22,24 @@ import {
   Overlay,
 } from "regl-worldview";
 import styled from "styled-components";
+import tinyColor from "tinycolor2";
 
 import glTextAtlasLoader, { type TextAtlas } from "./utils/glTextAtlasLoader";
 import { groupLinesIntoInstancedLineLists } from "./utils/groupingUtils";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
   LaserScans,
   PointClouds,
-  PoseMarkers,
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
-import { LAYER_INDEX_TEXT, LAYER_INDEX_OCCUPANCY_GRIDS } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
+import { projectItem } from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
+import {
+  LAYER_INDEX_TEXT,
+  LAYER_INDEX_OCCUPANCY_GRIDS,
+  ICON_BY_TYPE,
+} from "webviz-core/src/panels/ThreeDimensionalViz/constants";
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
+import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/types";
 import { type GLTextMarker } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import type {
   BaseMarker,
@@ -49,23 +54,40 @@ import type {
   TextMarker,
   OverlayIconMarker,
 } from "webviz-core/src/types/Messages";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const ICON_WRAPPER_SIZE = 24;
-const ICON_SIZE = 14;
+const ICON_SIZE = 16;
+export const BG_COLOR = tinyColor(colors.BLUE)
+  .setAlpha(0.75)
+  .toRgbString();
+
+const ICON_WIDTH = 28;
 
 export const SIconWrapper = styled.div`
-  position: absolute;
-  color: ${colors.LIGHT};
-  box-shadow: 0px 0px 12px rgba(23, 34, 40, 0.7);
+  box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.15);
+  border-radius: ${ICON_WIDTH / 2}px;
+  color: ${colors.BLUE};
+  display: flex;
   overflow: hidden;
-  pointer-events: none;
+  align-items: center;
+  background: ${colors.DARK2};
+  position: absolute;
   top: 0;
   left: 0;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.075);
 `;
-export type MarkerWithInteractionData = Interactive<any>;
 
+export const SText = styled.span`
+  margin-left: 4px;
+  margin-right: 8px;
+`;
+
+export type MarkerWithInteractionData = Interactive<any>;
+// Unfortunately, we call onIconClick with a nasty "drawable icon data" message, for which we have
+// no good type. It bears a little resemblance to a parsed icon marker, though.
+export type OnIconClick = (iconMarker: Interactive<OverlayIconMarker>, {| clientX: number, clientY: number |}) => void;
 export type InteractiveMarkersByType = {
   arrow: MarkerWithInteractionData[],
   cube: Interactive<CubeMarker>[],
@@ -113,6 +135,8 @@ export type WorldMarkerProps = {|
   isDemoMode: boolean,
   cameraDistance: number,
   diffModeEnabled: boolean,
+  hooks: ThreeDimensionalVizHooks,
+  onIconClick: OnIconClick,
 |};
 
 const MIN_SCALE = 0.6;
@@ -124,24 +148,19 @@ function getIconScaleByCameraDistance(distance: number): number {
   return 1 - ((effectiveIconDistance - MIN_DISTANCE) * (1 - MIN_SCALE)) / (MAX_DISTANCE - MIN_DISTANCE);
 }
 
-function getIconStyles(
+export function getIconStyles(
   distance: number
 ): {|
-  iconWrapperStyles: { [attr: string]: string | number },
+  iconWrapperPadding: number,
   scaledIconSize: number,
   scaledIconWrapperSize: number,
 |} {
   const scale = getIconScaleByCameraDistance(distance);
   const scaledIconWrapperSize = Math.round(scale * ICON_WRAPPER_SIZE);
   const scaledIconSize = Math.round(scale * ICON_SIZE);
-  const padding = Math.floor((scaledIconWrapperSize - scaledIconSize) / 2);
+  const iconWrapperPadding = Math.floor((scaledIconWrapperSize - scaledIconSize) / 2);
   return {
-    iconWrapperStyles: {
-      padding,
-      width: scaledIconWrapperSize,
-      height: scaledIconWrapperSize,
-      borderRadius: scaledIconWrapperSize,
-    },
+    iconWrapperPadding,
     scaledIconSize,
     scaledIconWrapperSize,
   };
@@ -153,6 +172,8 @@ export default function WorldMarkers({
   markersByType,
   clearCachedMarkers,
   cameraDistance,
+  hooks,
+  onIconClick,
 }: WorldMarkerProps) {
   const getChildrenForHitmap = useMemo(() => createInstancedGetChildrenForHitmap(1), []);
   const {
@@ -177,9 +198,7 @@ export default function WorldMarkers({
     triangleList,
     ...rest
   } = markersByType;
-  const additionalMarkers = getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.renderAdditionalMarkers(rest);
+  const additionalMarkers = hooks.renderAdditionalMarkers(rest);
 
   // GLTextAtlas download is shared among all instances of World, but we should only load the GLText command once we
   // have the pregenerated atlas available.
@@ -203,32 +222,40 @@ export default function WorldMarkers({
   const groupedLines = groupLinesIntoInstancedLineLists([...lineList, ...lineStrip]);
 
   // Render smaller icons when camera is zoomed out.
-  const { iconWrapperStyles, scaledIconWrapperSize, scaledIconSize } = useMemo(() => getIconStyles(cameraDistance), [
+  const { scaledIconWrapperSize, scaledIconSize, iconWrapperPadding } = useMemo(() => getIconStyles(cameraDistance), [
     cameraDistance,
   ]);
 
-  const useWorldspacePointSize = getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.useWorldspacePointSize();
-
   return (
     <>
-      <OccupancyGrids layerIndex={layerIndex + LAYER_INDEX_OCCUPANCY_GRIDS}>{grid}</OccupancyGrids>
+      <OccupancyGrids layerIndex={layerIndex + LAYER_INDEX_OCCUPANCY_GRIDS} getMapPalette={hooks.getMapPalette}>
+        {grid}
+      </OccupancyGrids>
       {additionalMarkers}
       {/* Render PointClouds first so other markers with the same zIndex can show on top of PointClouds. */}
-      <PointClouds layerIndex={layerIndex} clearCachedMarkers={clearCachedMarkers}>
+      <PointClouds
+        layerIndex={layerIndex}
+        clearCachedMarkers={clearCachedMarkers}
+        createPointCloudPositionBuffer={hooks.createPointCloudPositionBuffer}>
         {pointcloud}
       </PointClouds>
       <Arrows layerIndex={layerIndex}>{arrow}</Arrows>
-      <Points layerIndex={layerIndex} useWorldSpaceSize={useWorldspacePointSize}>
+      <Points layerIndex={layerIndex} useWorldSpaceSize={hooks.useWorldspacePointSize}>
         {points}
       </Points>
       <Triangles layerIndex={layerIndex}>{triangleList}</Triangles>
       <Spheres layerIndex={layerIndex}>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders layerIndex={layerIndex}>{cylinder}</Cylinders>
       <Cubes layerIndex={layerIndex}>{[...cube, ...cubeList]}</Cubes>
-      <PoseMarkers layerIndex={layerIndex}>{poseMarker}</PoseMarkers>
-      <LaserScans layerIndex={layerIndex}>{laserScan}</LaserScans>
+      <hooks.PoseMarkers
+        originalScaling={hooks.originalPoseScaling}
+        updatedScaling={hooks.updatedPoseScaling}
+        layerIndex={layerIndex}>
+        {poseMarker}
+      </hooks.PoseMarkers>
+      <LaserScans layerIndex={layerIndex} laserScanVert={hooks.LaserScanVert}>
+        {laserScan}
+      </LaserScans>
       {glTextAtlasInfo.status === "LOADED" && (
         <GLText
           layerIndex={layerIndex + LAYER_INDEX_TEXT}
@@ -244,39 +271,51 @@ export default function WorldMarkers({
         {[...instancedLineList, ...groupedLines]}
       </Lines>
       <LinedConvexHulls layerIndex={layerIndex}>{linedConvexHull}</LinedConvexHulls>
+
+      {/* TODO(useWorkerIn3DPanel): `<Overlay/>` will only render icons if the flag is off. Otherwise, we use `<IconOverlay/>` in `<Layout/>` */}
       <Overlay
-        renderItem={({ item, coordinates, index, dimension: { width, height } }) => {
-          if (!coordinates) {
+        renderItem={({ item, coordinates, dimension }) => {
+          const projectedItem = projectItem({ item, coordinates, dimension });
+          if (!projectedItem) {
             return null;
           }
-          const [left, top] = coordinates;
-          if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
-            return null; // Don't render anything that's too far outside of the canvas
-          }
-          const originalMsg = item.interactionData?.originalMessage || {};
-          const parsedMsg = isBobject(originalMsg) ? deepParse(originalMsg) : originalMsg;
-
-          const metadata = parsedMsg?.metadata;
-          if (!metadata) {
-            return;
-          }
-          const { name, markerStyle = {}, iconOffset: { x = 0, y = 0 } = {} } = metadata;
-          const iconsByClassification = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.iconsByClassification;
-          const SvgIcon = iconsByClassification[name] || iconsByClassification.DEFAULT;
-
+          const {
+            name,
+            text,
+            markerStyle = {},
+            iconOffset: { x = 0, y = 0 } = {},
+            coordinates: [left, top],
+            iconTypes,
+          } = projectedItem;
           return (
             <SIconWrapper
-              key={index}
+              key={name}
+              onClick={(ev: MouseEvent) => {
+                ev.stopPropagation();
+                onIconClick(item, { clientX: ev.clientX, clientY: ev.clientY });
+              }}
               style={{
                 ...markerStyle,
-                ...iconWrapperStyles,
+                borderRadius: scaledIconWrapperSize / 2,
+                padding: iconWrapperPadding,
                 transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(
                   top -
                   scaledIconWrapperSize / 2 +
                   y
                 ).toFixed()}px)`,
               }}>
-              <SvgIcon fill="white" width={scaledIconSize} height={scaledIconSize} />
+              {iconTypes.map(({ icon_type, color }, idx) => {
+                const SvgIcon = ICON_BY_TYPE[`${icon_type}`] || ICON_BY_TYPE.DEFAULT;
+                let fill = colors.BLUE;
+                if (color) {
+                  const { r, g, b, a } = color; // Use color to control the background color of the icon.
+                  fill = `rgba(${r * 255},${g * 255},${b * 255},${a})`;
+                }
+                return (
+                  <SvgIcon key={`${icon_type}${idx}`} width={scaledIconSize} height={scaledIconSize} fill={fill} />
+                );
+              })}
+              {text && <SText>{text}</SText>}
             </SIconWrapper>
           );
         }}>

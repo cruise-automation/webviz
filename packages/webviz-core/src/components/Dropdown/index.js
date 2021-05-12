@@ -29,6 +29,7 @@ type Props = {|
   tooltip?: string,
   dataTest?: string,
   noPortal?: boolean,
+  style?: StyleObj,
   btnStyle?: StyleObj,
   btnClassname?: string,
   menuStyle?: StyleObj,
@@ -113,8 +114,8 @@ export default class Dropdown extends React.Component<Props, State> {
 
   render() {
     const { isOpen } = this.state;
-    const { position, flatEdges, menuStyle } = this.props;
-    const style = {
+    const { position, flatEdges, menuStyle, style } = this.props;
+    const fullMenuStyle = {
       borderTopLeftRadius: flatEdges && position !== "above" ? "0" : undefined,
       borderTopRightRadius: flatEdges && position !== "above" ? "0" : undefined,
       borderBottomLeftRadius: flatEdges && position === "above" ? "0" : undefined,
@@ -124,14 +125,14 @@ export default class Dropdown extends React.Component<Props, State> {
     };
     return (
       <ChildToggle
-        style={{ maxWidth: "100%", zIndex: 0 }}
+        style={{ ...style, maxWidth: "100%", zIndex: 0 }}
         position={position}
         isOpen={isOpen}
         onToggle={this.toggle}
         dataTest={this.props.dataTest}
         noPortal={this.props.noPortal}>
         {this.renderButton()}
-        <Menu style={style}>{this.renderChildren()}</Menu>
+        <Menu style={fullMenuStyle}>{this.renderChildren()}</Menu>
       </ChildToggle>
     );
   }

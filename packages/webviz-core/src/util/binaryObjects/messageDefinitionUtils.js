@@ -32,6 +32,25 @@ const primitiveSizes = {
 
 export const primitiveList: Set<string> = new Set(Object.keys(primitiveSizes));
 
+export class PointerExpression {
+  variable: string;
+  constant: number;
+
+  constructor(variable: string, _constant: number = 0) {
+    this.variable = variable;
+    this.constant = _constant;
+  }
+  toString() {
+    if (this.constant === 0) {
+      return this.variable;
+    }
+    return `(${this.variable} + ${this.constant})`;
+  }
+  add(o: number) {
+    return new PointerExpression(this.variable, this.constant + o);
+  }
+}
+
 export const typeSize = memoize(
   (typesByName: RosDatatypes, typeName: string): number => {
     if (primitiveSizes[typeName] != null) {
@@ -74,11 +93,23 @@ export const addTimeTypes = (typesByName: RosDatatypes): RosDatatypes => ({
 const allBadCharacters = new RegExp("[/-]", "g");
 export const friendlyTypeName = (name: string): string => name.replace(allBadCharacters, "_");
 export const deepParseSymbol = Symbol("deepParse");
-export const classDatatypes = new WeakMap<any, [RosDatatypes, string]>();
-export const associateDatatypes = (cls: any, datatypes: [RosDatatypes, string]): void => {
-  classDatatypes.set(cls, datatypes);
+type CommonBobjectSourceData = $ReadOnly<{|
+  datatypes: RosDatatypes,
+  datatype: string,
+|}>;
+export type BobjectSourceData =
+  | CommonBobjectSourceData
+  | $ReadOnly<{|
+      ...CommonBobjectSourceData,
+      buffer: ArrayBuffer, // Present in binary bobjects
+      bigString: string,
+      isArrayView: boolean,
+    |}>;
+export const classSourceData = new WeakMap<any, BobjectSourceData>();
+export const associateSourceData = (cls: any, sourceData: BobjectSourceData): void => {
+  classSourceData.set(cls, sourceData);
 };
-export const getDatatypes = (cls: any): ?[RosDatatypes, string] => classDatatypes.get(cls);
+export const getSourceData = (cls: any): ?BobjectSourceData => classSourceData.get(cls);
 
 // Note: returns false for "time" and "duration". Might be more useful not doing that.
 // The RosMsgField flow-type has an `isComplex` field, but it isn't present for the websocket

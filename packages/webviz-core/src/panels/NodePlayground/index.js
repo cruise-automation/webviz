@@ -24,6 +24,7 @@ import Icon from "webviz-core/src/components/Icon";
 import Item from "webviz-core/src/components/Menu/Item";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import ResizableSplitFlex from "webviz-core/src/components/ResizableSplitFlex";
 import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
 import TextContent from "webviz-core/src/components/TextContent";
 import BottomBar from "webviz-core/src/panels/NodePlayground/BottomBar";
@@ -147,6 +148,12 @@ function NodePlayground(props: Props) {
   const { autoFormatOnSave, selectedNodeId, editorForStorybook, vimMode } = config;
 
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
+  const [bottomBarSplitPercent, setBottomBarSplitPercent] = React.useState<number>(1);
+
+  const bottomBarOpen = bottomBarSplitPercent < 0.95;
+  const toggleBottomBarOpen = React.useCallback(() => setBottomBarSplitPercent(bottomBarOpen ? 1 : 0.8), [
+    bottomBarOpen,
+  ]);
 
   const userNodes = useSelector((state) => state.persistedState.panels.userNodes);
   const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
@@ -304,45 +311,52 @@ function NodePlayground(props: Props) {
 
               <Flex col style={{ flexGrow: 1, position: "relative" }}>
                 {!selectedNodeId && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
-                <div
-                  key={`${height}x${width}`}
-                  data-nativeundoredo="true"
-                  style={{
-                    height: "100%",
-                    width: "100%",
-                    display: selectedNodeId
-                      ? "initial"
-                      : "none" /* Ensures the monaco-editor starts loading before the user opens it */,
-                  }}>
-                  <React.Suspense
-                    fallback={
-                      <Flex center style={{ width: "100%", height: "100%" }}>
-                        <Icon large>
-                          <SpinningLoadingIcon />
-                        </Icon>
-                      </Flex>
-                    }>
-                    {editorForStorybook || (
-                      <Editor
-                        autoFormatOnSave={!!autoFormatOnSave}
-                        script={currentScript}
-                        setScriptCode={setScriptCode}
-                        setScriptOverride={setScriptOverride}
-                        vimMode={vimMode}
-                        rosLib={rosLib}
-                        resizeKey={`${width}-${height}-${explorer || "none"}-${selectedNodeId || "none"}`}
-                        save={saveNode}
-                      />
-                    )}
-                  </React.Suspense>
-                </div>
-                <BottomBar
-                  nodeId={selectedNodeId}
-                  isSaved={isNodeSaved}
-                  save={() => saveNode(currentScript?.code)}
-                  diagnostics={selectedNodeDiagnostics}
-                  logs={selectedNodeLogs}
-                />
+
+                <ResizableSplitFlex column splitPercent={bottomBarSplitPercent} onChange={setBottomBarSplitPercent}>
+                  <div
+                    key={`${height}x${width}`}
+                    data-nativeundoredo="true"
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      display: selectedNodeId
+                        ? "initial"
+                        : "none" /* Ensures the monaco-editor starts loading before the user opens it */,
+                    }}>
+                    <React.Suspense
+                      fallback={
+                        <Flex center style={{ width: "100%", height: "100%" }}>
+                          <Icon large>
+                            <SpinningLoadingIcon />
+                          </Icon>
+                        </Flex>
+                      }>
+                      {editorForStorybook || (
+                        <Editor
+                          autoFormatOnSave={!!autoFormatOnSave}
+                          script={currentScript}
+                          setScriptCode={setScriptCode}
+                          setScriptOverride={setScriptOverride}
+                          vimMode={vimMode}
+                          rosLib={rosLib}
+                          resizeKey={`${width}-${height}-${explorer || "none"}-${selectedNodeId || "none"}`}
+                          save={saveNode}
+                        />
+                      )}
+                    </React.Suspense>
+                  </div>
+                  <div style={{ width: "100%", height: "100%", minHeight: "28px" }}>
+                    <BottomBar
+                      nodeId={selectedNodeId}
+                      isSaved={isNodeSaved}
+                      save={() => saveNode(currentScript?.code)}
+                      diagnostics={selectedNodeDiagnostics}
+                      logs={selectedNodeLogs}
+                      open={bottomBarOpen}
+                      toggleBottomBarOpen={toggleBottomBarOpen}
+                    />
+                  </div>
+                </ResizableSplitFlex>
               </Flex>
             </Flex>
           </Flex>

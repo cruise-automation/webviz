@@ -78,14 +78,27 @@ export default function PanelSetupWithBag({
         if (!activeData) {
           return Promise.resolve();
         }
-        const { messages, bobjects, topics } = activeData;
+        const { messages, bobjects, topics, datatypes } = activeData;
         const frame = groupBy([...messages, ...bobjects], "topic");
-        setFixture(
-          getMergedFixture({
-            frame,
-            topics,
-          })
-        );
+        const fix = getMergedFixture({
+          frame,
+          topics,
+        });
+        setFixture({
+          ...fix,
+          datatypes,
+          progress: {
+            messageCache: {
+              startTime: activeData.startTime,
+              blocks: [
+                {
+                  sizeInBytes: 0,
+                  messagesByTopic: groupBy(bobjects, "topic"),
+                },
+              ],
+            },
+          },
+        });
         return Promise.resolve();
       });
     })();

@@ -143,7 +143,7 @@ const messageCache = {
   startTime: fromSec(0.6),
 };
 
-const fixture = {
+export const fixture = {
   datatypes,
   topics: [
     { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
@@ -198,7 +198,7 @@ const paths = [
   { value: "/some_topic/location.header.stamp", enabled: true, timestampMethod: "receiveTime" },
 ];
 
-const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
+export const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
 storiesOf("<Plot>", module)
   .addParameters({
     screenshot: {

@@ -15,7 +15,7 @@ export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";
 export const DISABLE_WORKERS_QUERY_KEY = "no-workers";
-export const SEEK_TO_UNIX_MS_QUERY_KEY = "seek-to"; // Used on load and set when paused
+export const SEEK_TO_QUERY_KEY = "seek-to"; // Used on load and set when paused
 export const SEEK_TO_RELATIVE_MS_QUERY_KEY = "seek-by"; // Only used on load. Can be negative.
 export const SEEK_TO_FRACTION_QUERY_KEY = "seek-fraction"; // Only used on load
 export const LAYOUT_QUERY_KEY = "layout";
@@ -38,6 +38,7 @@ export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
 export const GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE = "geometry_msgs/PolygonStamped";
 export const NAV_MSGS_OCCUPANCY_GRID_DATATYPE = "nav_msgs/OccupancyGrid";
+export const NAV_MSGS_PATH_DATATYPE = "nav_msgs/Path";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
 export const SENSOR_MSGS_LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
@@ -47,6 +48,9 @@ export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerA
 export const TF_DATATYPE = "tf2_msgs/TFMessage";
 export const VISUALIZATION_MSGS_MARKER_DATATYPE = "visualization_msgs/Marker";
 export const VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE = "visualization_msgs/MarkerArray";
+
+export const WEBVIZ_2D_ICON_ARRAY_DATATYPE = "webviz_icon_msgs/WebViz2dIconArray";
+export const WEBVIZ_3D_ICON_ARRAY_DATATYPE = "webviz_icon_msgs/WebViz3dIconArray";
 
 export const MARKER_ARRAY_DATATYPES = [
   "visualization_msgs/MarkerArray",
@@ -117,3 +121,9 @@ export const jsonTreeTheme = {
 export const TAB_PANEL_TYPE = "Tab";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
+
+export const PANEL_LAYOUT_ROOT_ID = "PanelLayout-root";
+
+// Feature announcements
+export const FEATURE_ANNOUNCEMENTS_LOCAL_STORAGE_KEY = "webvizFeatureAnnouncements";
+export const TIMELINE_COMMENTING_ANNOUNCEMENT_KEY = "timelineCommenting";

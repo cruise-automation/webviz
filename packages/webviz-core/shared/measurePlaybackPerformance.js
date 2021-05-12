@@ -47,12 +47,12 @@ async function measurePlaybackPerformance({
   filePaths,
   url,
   panelLayout,
-  experimentalFeatureSettings,
+  experimentalFeaturesSettings,
 }: {
   filePaths: ?(string[]),
   url: string,
   panelLayout?: any,
-  experimentalFeatureSettings: ?string, // JSON
+  experimentalFeaturesSettings: ?string, // JSON
 }): Promise<{ stats: PerformanceStats, logs: string[] }> {
   const doneSignal = signal<PerfOutput>();
   if (!url.includes("measure-playback-performance-mode")) {
@@ -70,7 +70,7 @@ async function measurePlaybackPerformance({
       headless: !process.env.DEBUG_CI,
     },
     panelLayout,
-    experimentalFeatureSettings,
+    experimentalFeaturesSettings,
     dimensions: { width: 1920, height: 1080 },
     loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
     captureLogs: true,

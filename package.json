@@ -48,7 +48,7 @@
     "eslint-plugin-react-hooks": "^1.6.0",
     "expect": "^24.9.0",
     "file-loader": "^4.0.0",
-    "flow-bin": "0.106.2",
+    "flow-bin": "0.110.0",
     "flow-copy-source": "^2.0.2",
     "flow-typed": "2.6.1",
     "gh-pages": "^2.0.1",

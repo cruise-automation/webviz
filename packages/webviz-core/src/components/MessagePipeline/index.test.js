@@ -547,7 +547,13 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
     beforeEach(async () => {
       logger = jest.fn();
-      initializeLogEvent(logger, { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" }, { PANEL_TYPES: "panel_types" });
+      resetLogEventForTests();
+      initializeLogEvent(
+        // $FlowFixMe
+        { logEventError: logger },
+        { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" },
+        {}
+      );
 
       player = new FakePlayer();
       el = mount(

@@ -10,6 +10,7 @@ import { PANELS_ACTION_TYPES } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Store } from "webviz-core/src/reducers";
 import { setPersistedStateInLocalStorage } from "webviz-core/src/reducers/panels";
+import { isInIFrame } from "webviz-core/src/util/iframeUtils";
 import { getShouldProcessPatch } from "webviz-core/src/util/layout";
 
 type Action = { type: string, payload: any };
@@ -17,9 +18,11 @@ type Action = { type: string, payload: any };
 let updateUrlTimer;
 
 function maybeSetPersistedStateInLocalStorage(store: Store, skipSettingLocalStorage: boolean) {
-  if (skipSettingLocalStorage) {
+  // Disable saving layouts and other global states to local storage when using miniviz.
+  if (skipSettingLocalStorage || isInIFrame()) {
     return;
   }
+
   const state = store.getState();
   const persistedState = {
     ...state.persistedState,
@@ -48,6 +51,8 @@ const {
   DROP_PANEL,
   START_DRAG,
   END_DRAG,
+  SET_FULL_SCREEN_PANEL,
+  CLEAR_FULL_SCREEN_PANEL,
 } = PANELS_ACTION_TYPES;
 
 const updateUrlAndLocalStorageMiddlewareDebounced = (store: Store) => (next: (Action) => any) => (action: Action) => {
@@ -76,6 +81,8 @@ const updateUrlAndLocalStorageMiddlewareDebounced = (store: Store) => (next: (Ac
       DROP_PANEL,
       START_DRAG,
       END_DRAG,
+      SET_FULL_SCREEN_PANEL,
+      CLEAR_FULL_SCREEN_PANEL,
     ].includes(action.type)
   ) {
     if (updateUrlTimer) {

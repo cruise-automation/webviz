@@ -6,9 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-type DebouncedFn = ((...args: any) => void) & { currentPromise: ?Promise<void> };
-
-export default function debouncePromise(fn: (...args: any) => Promise<void>): DebouncedFn {
+export default function debouncePromise<T>(fn: T): T & { currentPromise: ?Promise<void> } {
   // Whether we are currently waiting for a promise returned by `fn` to resolve.
   let calling = false;
   // Whether another call to the debounced function was made while a call was in progress.
@@ -26,7 +24,7 @@ export default function debouncePromise(fn: (...args: any) => Promise<void>): De
     calling = true;
     callPending = undefined;
 
-    debouncedFn.currentPromise = fn(...args).finally(() => {
+    debouncedFn.currentPromise = (fn: any)(...args).finally(() => {
       calling = false;
       debouncedFn.currentPromise = undefined;
       if (callPending) {
@@ -35,5 +33,5 @@ export default function debouncePromise(fn: (...args: any) => Promise<void>): De
     });
   }
 
-  return debouncedFn;
+  return (debouncedFn: any);
 }

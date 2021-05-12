@@ -18,6 +18,7 @@ export const fixture = {
     { name: "/baz/array", datatype: "baz/array" },
     { name: "/baz/array/obj", datatype: "baz/array/obj" },
     { name: "/geometry/types", datatype: "geometry/types" },
+    { name: "/NaN", datatype: "baz/num" },
   ],
   frame: {
     "/msgs/big_topic": [
@@ -38,7 +39,7 @@ export const fixture = {
           some_id_example_1: { someId: 123, additional_data: 42 },
           some_id_example_2: { some_id: 123 },
           some_short_data: new Int8Array(6),
-          some_long_data: new Uint8ClampedArray(2000),
+          some_long_data: new Uint8Array(2000),
           some_float_data: new Float64Array(10),
         },
       },
@@ -52,7 +53,11 @@ export const fixture = {
       {
         topic: "/foo",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: { some_array: ["a", "b", "c", "d", "e", "f"], some_id_example_2: { some_id: 123 } },
+        message: {
+          some_array: ["a", "b", "c", "d", "e", "f"],
+          some_deleted_key: "GONE",
+          some_id_example_2: { some_id: 123 },
+        },
       },
     ],
     [`${SECOND_SOURCE_PREFIX}/foo`]: [
@@ -61,7 +66,6 @@ export const fixture = {
         receiveTime: { sec: 123, nsec: 456789011 },
         message: {
           some_array: ["a", "f", "n", "o", "p"],
-          some_deleted_key: "BYE",
           some_id_example_2: { some_id: 567 },
         },
       },
@@ -116,6 +120,18 @@ export const fixture = {
             z: 3.0,
           },
         },
+      },
+    ],
+    "/NaN": [
+      {
+        topic: "/NaN",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: { value: NaN },
+      },
+      {
+        topic: "/NaN",
+        receiveTime: { sec: 123, nsec: 456789013 },
+        message: { value: NaN },
       },
     ],
   },
@@ -189,8 +205,9 @@ export const enumFixture = {
         { type: "uint8", name: "value", isArray: false },
       ],
     },
+    "baz/EnumArray": { fields: [{ type: "baz/enum", name: "arr", isArray: true }] },
   },
-  topics: [{ name: "/baz/enum", datatype: "baz/enum" }],
+  topics: [{ name: "/baz/enum", datatype: "baz/enum" }, { name: "/baz/enum_array", datatype: "baz/EnumArray" }],
   frame: {
     "/baz/enum": [
       {
@@ -198,6 +215,15 @@ export const enumFixture = {
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
           value: 2,
+        },
+      },
+    ],
+    "/baz/enum_array": [
+      {
+        topic: "/baz/enum_array",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          arr: [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }],
         },
       },
     ],

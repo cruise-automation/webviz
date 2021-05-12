@@ -31,7 +31,7 @@ import withDragDropContext from "webviz-core/src/components/withDragDropContext"
 import type { State } from "webviz-core/src/reducers";
 import getGlobalStore from "webviz-core/src/store/getGlobalStore";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
-import browserHistory from "webviz-core/src/util/history";
+import history from "webviz-core/src/util/history";
 import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
 // Only used in dev.
 setReactHotLoaderConfig();
@@ -114,7 +114,7 @@ const ConnectedApp = connect<Props, { history: any }, _, _, _, _>(
 const Root = () => {
   return (
     <Provider store={getGlobalStore()}>
-      <ConnectedRouter history={browserHistory}>
+      <ConnectedRouter history={history}>
         <div className="app-container" key="0">
           <ErrorBoundary>
             <Route path="/" render={({ history: routeHistory }) => <ConnectedApp history={routeHistory} />} />

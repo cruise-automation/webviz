@@ -9,6 +9,7 @@
 // All message types supported by Rviz
 // http://wiki.ros.org/rviz/DisplayTypes
 
+import type { IconMetadata } from "webviz-core/src/types/Messages";
 import type { ArrayView } from "webviz-core/src/util/binaryObjects";
 
 export type BinaryTime = $ReadOnly<{|
@@ -54,6 +55,8 @@ export type BinaryPoseStamped = $ReadOnly<BinaryStampedMessage & {| pose(): Bina
 
 export type BinaryPolygon = $ReadOnly<{| points(): ArrayView<BinaryPoint> |}>;
 export type BinaryPolygonStamped = $ReadOnly<BinaryStampedMessage & {| polygon(): BinaryPolygon |}>;
+
+export type BinaryPath = $ReadOnly<BinaryStampedMessage & {| poses(): ArrayView<BinaryPoseStamped> |}>;
 
 export type BinaryColorRgba = $ReadOnly<{|
   r(): number,
@@ -101,6 +104,24 @@ export type BinaryInstancedMarker = $ReadOnly<{|
   closed(): boolean,
 |}>;
 
+export type BinaryIconMarker = $ReadOnly<{|
+  header(): BinaryHeader,
+  ns(): string,
+  id(): number,
+  type(): number,
+  action(): 0 | 1 | 2 | 3,
+  pose(): BinaryPose,
+  scale(): BinaryPoint,
+  color(): BinaryColorRgba,
+  // Reverse-wrapped "markers" created in the 3D panel sometimes have no lifetimes :(((
+  lifetime(): ?BinaryTime,
+  frame_locked(): boolean,
+  points(): ArrayView<BinaryPoint>,
+  colors(): ArrayView<BinaryColorRgba>,
+  text(): string,
+  icon_type(): ?string | number,
+  metadata(): ?IconMetadata,
+|}>;
 export type BinaryMarkerArray = $ReadOnly<{|
   markers(): ArrayView<BinaryMarker>,
 |}>;

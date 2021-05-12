@@ -16,7 +16,15 @@ import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 describe("useMessageReducer", () => {
   // Create a helper component that exposes restore, addMessage, and the results of the hook for mocking
   function createTest(useAddMessage: boolean = true, useAddMessages: boolean = false, useAddBobjects = false) {
-    function Test({ topics, addMessagesOverride }: { topics: string[], addMessagesOverride?: any }) {
+    function Test({
+      topics,
+      addMessagesOverride,
+      preloadingFallback,
+    }: {
+      topics: string[],
+      addMessagesOverride?: any,
+      preloadingFallback?: boolean,
+    }) {
       try {
         Test.result(
           PanelAPI.useMessageReducer({
@@ -25,6 +33,7 @@ describe("useMessageReducer", () => {
             addMessages: useAddMessages ? addMessagesOverride || Test.addMessages : undefined,
             addBobjects: useAddBobjects ? Test.addBobjects : undefined,
             restore: Test.restore,
+            preloadingFallback: !!preloadingFallback,
           })
         );
       } catch (e) {
@@ -358,6 +367,31 @@ describe("useMessageReducer", () => {
     expect(Test.restore.mock.calls).toEqual([[undefined]]);
     expect(Test.addMessage.mock.calls).toEqual([[1, message1]]);
     expect(Test.result.mock.calls).toEqual([[2]]);
+
+    root.unmount();
+  });
+
+  it("doesn't add messages from preloadable topics when preloadingFallback is set", async () => {
+    const Test = createTest();
+
+    Test.restore.mockReturnValue(1);
+    Test.addMessage.mockImplementation((_, msg) => msg.message.value);
+
+    const messages = [
+      { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: { value: 2 } },
+      { topic: "/bar", receiveTime: { sec: 0, nsec: 0 }, message: { value: 3 } },
+    ];
+    const topics = [{ name: "/foo", datatype: "foo", preloadable: true }, { name: "/bar", datatype: "bar" }];
+
+    const root = mount(
+      <MockMessagePipelineProvider topics={topics} messages={messages}>
+        <Test preloadingFallback topics={["/foo", "/bar"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([[1, messages[1]]]);
+    expect(Test.result.mock.calls).toEqual([[3]]);
 
     root.unmount();
   });

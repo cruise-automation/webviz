@@ -19,7 +19,7 @@ import ServerLogger from "./ServerLogger";
 const log = new ServerLogger(__filename);
 
 type PageOptions = { captureLogs?: boolean, onLog: (string) => void, onError: (string) => void };
-type LayoutOptions = { panelLayout: ?MosaicNode, experimentalFeatureSettings?: ?string, filePaths: ?(string[]) };
+type LayoutOptions = { panelLayout: ?MosaicNode, experimentalFeaturesSettings?: ?string, filePaths: ?(string[]) };
 
 // Starts a puppeteer browser pointing at the URL. Sets the panel layout, dimensions, and drops in the bag if specified.
 // Takes an `onLoad` function that runs once the browser has initialized.
@@ -29,7 +29,7 @@ export default async function runInBrowser<T>({
   url,
   puppeteerLaunchConfig,
   panelLayout,
-  experimentalFeatureSettings,
+  experimentalFeaturesSettings,
   dimensions,
   loadBrowserTimeout,
   onLoad,
@@ -40,7 +40,7 @@ export default async function runInBrowser<T>({
   url: string,
   puppeteerLaunchConfig: any,
   panelLayout: ?MosaicNode,
-  experimentalFeatureSettings?: ?string, // JSON
+  experimentalFeaturesSettings?: ?string, // JSON
   dimensions: { width: number, height: number },
   loadBrowserTimeout: number,
   beforeLoad?: ({| page: Page |}) => Promise<void>,
@@ -67,7 +67,7 @@ export default async function runInBrowser<T>({
             browser,
             beforeLoad,
             pageLoadTimeout: loadBrowserTimeout,
-            layoutOptions: { panelLayout, filePaths, experimentalFeatureSettings },
+            layoutOptions: { panelLayout, filePaths, experimentalFeaturesSettings },
             pageOptions: { onLog, onError, captureLogs },
             url,
           }
@@ -114,7 +114,7 @@ export async function runInPage<T>(
 
     log.info(`Navigating to URL: ${url}`);
     await page.goto(url, { waitUntil: "networkidle2", timeout: pageLoadTimeout });
-    await page.waitFor(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
+    await page.waitForFunction(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
 
     await setupPageLogging(page, pageOptions);
     await setupWebvizLayout(page, layoutOptions);
@@ -179,7 +179,7 @@ export async function withBrowser<T>(
     }
     return Promise.reject();
   } catch (error) {
-    console.error(error.stack || (error.toString && error.toString()) || error);
+    log.error(error.stack || (error.toString && error.toString()) || error);
     throw error;
   } finally {
     if (browser) {
@@ -200,7 +200,7 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
       }
       if (captureLogs) {
         onLog(text);
-        console.log(text);
+        log.info(text);
       }
     });
   });
@@ -208,7 +208,7 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
   function onPuppeteerError(error: any) {
     const errorMessage: string = (error.jsonValue && error.jsonValue()) || error.toString();
     log.error(`[runInBrowser error] ${errorMessage}`);
-    console.warn(errorMessage);
+    log.warn(errorMessage);
     onError(errorMessage);
   }
 
@@ -226,30 +226,32 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
       if (error.message.includes("ResizeObserver loop limit exceeded")) {
         return;
       }
-      console.error(error);
+      log.error(error);
     });
     window.addEventListener("unhandledrejection", (event) => {
-      console.error("Unhandled promise rejection.", event.reason);
+      log.error("Unhandled promise rejection.", event.reason);
     });
   });
 }
 
 // Sets the layout, experimental features, and triggers the bag drag-and-drop behavior
 export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
-  const { panelLayout, experimentalFeatureSettings, filePaths } = options;
+  const { panelLayout, experimentalFeaturesSettings, filePaths } = options;
 
   // Make sure the page is ready before proceeding.
   await page.waitForSelector(".app-container");
 
-  if (experimentalFeatureSettings) {
-    await page.evaluate(
-      (settings: any) => localStorage.setItem("experimentalFeaturesSettings", (settings: string)),
-      experimentalFeatureSettings
-    );
+  if (experimentalFeaturesSettings) {
+    try {
+      const experimentalFeatures = JSON.parse(experimentalFeaturesSettings);
+      await page.evaluate((features) => window.setExperimentalFeatures(features), experimentalFeatures);
+    } catch (error) {
+      log.error("Failed to parse experimentalFeaturesSettings JSON", error);
+    }
   }
 
   if (panelLayout) {
-    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
+    await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
   }
 
   if (filePaths && filePaths.length) {

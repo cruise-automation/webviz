@@ -17,15 +17,14 @@ import {
   nonInstancedGetChildrenForHitmap,
 } from "regl-worldview";
 
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { LaserScan } from "webviz-core/src/types/Messages";
 
 export const DEFAULT_FLAT_COLOR = { r: 0.5, g: 0.5, b: 1, a: 1 };
 
-const laserScan = (regl: Regl) =>
+const getLaserScan = (vert) => (regl: Regl) =>
   withPose({
     primitive: "points",
-    vert: getGlobalHooks().perPanelHooks().ThreeDimensionalViz.LaserScanVert,
+    vert,
     frag: `
   precision mediump float;
   varying vec4 vColor;
@@ -67,8 +66,13 @@ const laserScan = (regl: Regl) =>
     count: regl.prop("ranges.length"),
   });
 
-type Props = { ...CommonCommandProps, children: LaserScan[] };
+type Props = {
+  ...CommonCommandProps,
+  laserScanVert: string,
+  children: LaserScan[],
+};
 
 export default function LaserScans(props: Props) {
-  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={laserScan} />;
+  const command = React.useMemo(() => getLaserScan(props.laserScanVert), [props.laserScanVert]);
+  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={command} />;
 }

@@ -88,6 +88,7 @@ export type PanelsState = {|
   playbackConfig: PlaybackConfig,
   restrictedTopics?: string[],
   version?: number,
+  fullScreenPanel?: ?$ReadOnly<{| panelId: string, locked: boolean |}>,
 |};
 
 export const setPersistedStateInLocalStorage = (persistedState: PersistedState) => {
@@ -870,6 +871,15 @@ const panelsReducer = function(state: State, action: ActionTypes): State {
 
     case "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT":
       newState.persistedState.fetchedLayout.layoutUrlReplacedByDefault = undefined;
+      break;
+
+    case "SET_FULL_SCREEN_PANEL":
+      newState.persistedState.panels.fullScreenPanel = action.payload;
+      break;
+    case "CLEAR_FULL_SCREEN_PANEL":
+      if (state.persistedState.panels.fullScreenPanel?.panelId === action.payload.panelId) {
+        newState.persistedState.panels.fullScreenPanel = undefined;
+      }
       break;
 
     default:

@@ -6,29 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { definitions } from "./messageDefinitionUtils.test";
+import { PointerExpression } from "./messageDefinitionUtils";
+import { definitions } from "./testUtils";
 import {
   printFieldDefinition,
   printGetClassForView,
   printSingularExpression,
-  PointerExpression,
 } from "webviz-core/src/util/binaryObjects/binaryWrapperObjects";
-
-describe("PointerExpression", () => {
-  it("prints a constructed expression nicely", () => {
-    expect(new PointerExpression("this.offset").toString()).toBe("this.offset");
-  });
-
-  it("adds correctly", () => {
-    expect(new PointerExpression("this.offset").add(10).toString()).toBe("(this.offset + 10)");
-    expect(
-      new PointerExpression("this.offset")
-        .add(10)
-        .add(-10)
-        .toString()
-    ).toBe("this.offset");
-  });
-});
 
 describe("printSingularExpression", () => {
   it("handles strings", () => {
@@ -120,6 +104,6 @@ const() {
 
 describe("printGetClassForView", () => {
   it("returns the expected code", () => {
-    expect(printGetClassForView(definitions, "fake_msgs/ContainsEverything")).toMatchSnapshot();
+    expect(printGetClassForView(definitions, "fake_msgs/ContainsEverything", false)).toMatchSnapshot();
   });
 });

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { omit } from "lodash";
+import { omit, noop } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
@@ -110,7 +110,10 @@ describe("RandomAccessPlayer", () => {
           messageOrder: "receiveTime",
           speed: 0.2,
           startTime: { sec: 10, nsec: 0 },
-          topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
+          topics: [
+            { datatype: "fooBar", name: "/foo/bar", preloadable: true },
+            { datatype: "baz", name: "/baz", preloadable: true },
+          ],
           parsedMessageDefinitionsByTopic: {},
           playerWarnings: {},
         },
@@ -631,6 +634,66 @@ describe("RandomAccessPlayer", () => {
 
     source.close();
     await delay(1);
+  });
+
+  it("does not emit empty messages if seeking again while a backfill is in progress", async () => {
+    mockDateNow.mockRestore();
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    const store = new MessageStore(2);
+
+    let listenerResolve = noop;
+    let getMessagesResolver = noop;
+    source.setListener(
+      (message: PlayerState) =>
+        new Promise((r) => {
+          listenerResolve = r;
+          return store.add(message);
+        })
+    );
+    const resolveMessages = () => {
+      getMessagesResolver({
+        ...getMessagesResult,
+        parsedMessages: [
+          {
+            topic: "/foo/bar",
+            receiveTime: { sec: 10, nsec: 5 },
+            message: { payload: "foo bar" },
+          },
+        ],
+      });
+    };
+    provider.getMessages = async (): Promise<GetMessagesResult> =>
+      new Promise((resolve) => (getMessagesResolver = resolve));
+
+    // Do a "normal" backfill, where everything resolves normally
+    source.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    source.requestBackfill(); // Call #1
+    await delay(100);
+    resolveMessages();
+    listenerResolve();
+
+    const done = await store.done;
+    expect(done?.[0].activeData).toEqual(undefined);
+    expect(done?.[1].activeData?.messages.length).toEqual(1);
+    store.reset(1);
+
+    // Now we requestBackfill twice, without ever resolving the emitState callback
+    source.requestBackfill(); // Call #2
+    await delay(100);
+    resolveMessages();
+    source.requestBackfill(); // Call #3
+    await delay(100);
+    resolveMessages();
+
+    // Call requestBackfill a third time and finally resolve the listener from call #2
+    source.requestBackfill(); // Call #4
+    listenerResolve(); // Resolves the emitState from Call #2
+
+    // emitState will automatically be called again, debounced from call #3
+    // Verify that the messages are never cleared
+    const done2 = await store.done;
+    expect(done2?.[0].activeData?.messages.length).toEqual(1);
   });
 
   it("backfills previous messages on seek", async () => {
@@ -1311,7 +1374,6 @@ describe("RandomAccessPlayer", () => {
       [{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, { parsedMessages: ["/foo/bar"], bobjects: [] }],
     ]);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "hidden",
@@ -1327,7 +1389,6 @@ describe("RandomAccessPlayer", () => {
 
     store.reset(1);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "visible",
@@ -1356,6 +1417,25 @@ describe("RandomAccessPlayer", () => {
       expect.objectContaining({
         activeData: expect.objectContaining({ isPlaying: false, messages: [], bobjects: [] }),
       }),
+    ]);
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
+  it("adjusts the end-time in header-stamp mode", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    player.setMessageOrder("headerStamp");
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+    await player.setListener(store.add);
+    const firstMessages = await store.done;
+    expect(firstMessages).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ endTime: { sec: 101, nsec: 0 } }) }),
     ]);
     expect(provider.getMessages).toHaveBeenCalled();
 

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart/utils";
 import type { PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
 
 export function derivative(

@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { isEqual, groupBy, partition } from "lodash";
+import { isEqual, groupBy, partition, flatten } from "lodash";
 import microMemoize from "micro-memoize";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
@@ -16,6 +16,7 @@ import uuid from "uuid";
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
 import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
@@ -35,20 +36,23 @@ import {
   DiagnosticSeverity,
   ErrorCodes,
   type NodeRegistration,
-  type ProcessMessageOutput,
+  type ProcessMessagesOutput,
   type RegistrationOutput,
   Sources,
   type UserNodeLog,
+  type NodeData,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import { hasTransformerErrors } from "webviz-core/src/players/UserNodePlayer/utils";
 import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { deepParse, getObjects, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcMainThreadUtils";
+import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
+import type { TimestampMethod } from "webviz-core/src/util/time";
+import { addTopicPrefix, joinTopics } from "webviz-core/src/util/topicUtils";
 
 type UserNodeActions = {|
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -60,24 +64,8 @@ const rpcFromNewSharedWorker = (worker) => {
   const port: MessagePort = worker.port;
   port.start();
   const rpc = new Rpc(port);
-  setupReceiveReportErrorHandler(rpc);
+  setupMainThreadRpc(rpc);
   return rpc;
-};
-
-const getBobjectMessage = async (
-  datatypes: RosDatatypes,
-  datatype: string,
-  messagePromise: Promise<?Message>
-): Promise<?BobjectMessage> => {
-  const msg = await messagePromise;
-  if (!msg) {
-    return null;
-  }
-  return {
-    topic: msg.topic,
-    receiveTime: msg.receiveTime,
-    message: wrapJsObject(datatypes, datatype, msg.message),
-  };
 };
 
 // TODO: FUTURE - Performance tests
@@ -101,9 +89,11 @@ export default class UserNodePlayer implements Player {
   _rosLib: ?string;
   _globalVariables: GlobalVariables = {};
   _pendingResetWorkers: ?Promise<void>;
+  _binaryNodeOutputs: boolean;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
+    this._binaryNodeOutputs = getExperimentalFeature("binaryNodePlaygroundOutputs") || process.env.NODE_ENV === "test";
     const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } = userNodeActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
@@ -136,7 +126,7 @@ export default class UserNodePlayer implements Player {
     },
     { isEqual }
   );
-  _getNodeRegistration = microMemoize(this._createNodeRegistration, {
+  _getNodeRegistration = microMemoize(this._createMultiSourceNodeRegistration, {
     isEqual,
     isPromise: true,
     maxSize: Infinity, // We prune the cache anytime the userNodes change, so it's not *actually* Infinite
@@ -152,35 +142,47 @@ export default class UserNodePlayer implements Player {
       globalVariables: GlobalVariables,
       nodeRegistrations: NodeRegistration[]
     ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
-      const parsedMessagesPromises = [];
-      const bobjectPromises = [];
+      const nodesToRun = new Map<NodeRegistration, Message[]>();
       for (const message of bobjects) {
-        // BobjectRpc is currently not re-entrant: It has per-topic state, so we can't currently run multiple messages
-        // concurrently. This also helps us provide an ordering guarantee for stateful nodes.
-        // We run all nodes in parallel, but run all messages in series.
-        const messagePromises = [];
         for (const nodeRegistration of nodeRegistrations) {
           const subscriptions = this._subscribedFormatByTopic[nodeRegistration.output.name];
           if (subscriptions && nodeRegistration.inputs.includes(message.topic)) {
-            const messagePromise = nodeRegistration.processMessage(message, globalVariables);
-            messagePromises.push(messagePromise);
-            // There should be at most 2 subscriptions.
-            for (const format of subscriptions.values()) {
-              if (format === "parsedMessages") {
-                parsedMessagesPromises.push(messagePromise);
-              } else {
-                bobjectPromises.push(getBobjectMessage(datatypes, nodeRegistration.output.datatype, messagePromise));
-              }
-            }
+            const nodeInputMessages = nodesToRun.get(nodeRegistration) ?? [];
+            nodeInputMessages.push(message);
+            nodesToRun.set(nodeRegistration, nodeInputMessages);
           }
         }
-        await Promise.all(messagePromises);
       }
-      const [nodeParsedMessages, nodeBobjects] = await Promise.all([
-        (await Promise.all(parsedMessagesPromises)).filter(Boolean),
-        (await Promise.all(bobjectPromises)).filter(Boolean),
-      ]);
-
+      const nodeParsedMessages = [];
+      const nodeBobjects = [];
+      await Promise.all(
+        [...nodesToRun].map(async ([node, nodeInputMessages]) => {
+          const nodeMessages = await node.processMessages(nodeInputMessages, datatypes, globalVariables);
+          // There should be at most 2 subscriptions -- parsed and/or bobject.
+          const subscriptions = this._subscribedFormatByTopic[node.output.name];
+          for (const format of subscriptions.values()) {
+            if (format === "parsedMessages") {
+              nodeMessages.forEach(({ message, topic, receiveTime }) => {
+                const parsedMessage = isBobject(message)
+                  ? { message: deepParse(message), topic, receiveTime }
+                  : { message, topic, receiveTime };
+                nodeParsedMessages.push(parsedMessage);
+              });
+            } else {
+              nodeMessages.forEach(({ message, topic, receiveTime }) => {
+                const bobject = isBobject(message)
+                  ? { message, topic, receiveTime }
+                  : {
+                      topic,
+                      receiveTime,
+                      message: wrapJsObject(datatypes, node.output.datatype, message),
+                    };
+                nodeBobjects.push(bobject);
+              });
+            }
+          }
+        })
+      );
       return {
         parsedMessages: parsedMessages
           .concat(nodeParsedMessages)
@@ -215,8 +217,7 @@ export default class UserNodePlayer implements Player {
     });
   }
 
-  // Defines the inputs/outputs and worker interface of a user node.
-  async _createNodeRegistration(nodeId: string, userNode: UserNode): Promise<NodeRegistration> {
+  async _compileNodeData(userNode: UserNode): Promise<NodeData> {
     // Pass all the nodes a set of basic datatypes that we know how to render.
     // These could be overwritten later by bag datatypes, but these datatype definitions should be very stable.
     const { topics = [], datatypes = {} } = this._lastPlayerStateActiveData || {};
@@ -226,7 +227,11 @@ export default class UserNodePlayer implements Player {
     const { name, sourceCode } = userNode;
     const transformMessage = { name, sourceCode, topics, rosLib, datatypes: nodeDatatypes };
     const transformWorker = this._getTransformWorker();
-    const nodeData = await transformWorker.send("transform", transformMessage);
+    return transformWorker.send("transform", transformMessage);
+  }
+
+  // Defines the inputs/outputs and worker interface of a user node.
+  _createNodeRegistrationFromNodeData(nodeId: string, nodeData: NodeData): NodeRegistration {
     const { inputTopics, outputTopic, transpiledCode, projectCode, outputDatatype } = nodeData;
 
     let bobjectSender;
@@ -237,7 +242,7 @@ export default class UserNodePlayer implements Player {
       nodeData,
       inputs: inputTopics,
       output: { name: outputTopic, datatype: outputDatatype },
-      processMessage: async (message: Message) => {
+      processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
         // We allow _resetWorkers to "cancel" the processing by creating a new signal every time we process a message
         terminateSignal = signal<void>();
 
@@ -248,6 +253,8 @@ export default class UserNodePlayer implements Player {
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             projectCode,
             nodeCode: transpiledCode,
+            datatypes,
+            datatype: nodeData.outputDatatype,
           });
           if (error) {
             this._setUserNodeDiagnostics(nodeId, [
@@ -259,43 +266,53 @@ export default class UserNodePlayer implements Player {
                 code: ErrorCodes.RUNTIME,
               },
             ]);
-            return;
+            return [];
           }
           this._addUserNodeLogs(nodeId, userNodeLogs);
         }
 
-        const result = await Promise.race([
-          bobjectSender.send<ProcessMessageOutput>("processMessage", message, this._globalVariables),
+        for (const message of messages) {
+          // We send messages to workers in series to provide an ordering guarantee for stateful
+          // nodes.
+          const addMessageResult = await Promise.race([bobjectSender.send("addMessage", message), terminateSignal]);
+          if (!addMessageResult) {
+            return []; // reset
+          }
+        }
+        // TODO: FUTURE - surface runtime errors / infinite loop errors
+        const processMessagesResult = await Promise.race([
+          rpc.send<ProcessMessagesOutput>("processMessages", {
+            globalVariables,
+            outputTopic,
+            binaryOutputs: this._binaryNodeOutputs,
+          }),
           terminateSignal,
         ]);
-        if (!result) {
-          return;
+        if (!processMessagesResult) {
+          return []; // reset
         }
-
-        const diagnostics = result.error
-          ? [
-              {
-                source: Sources.Runtime,
-                severity: DiagnosticSeverity.Error,
-                message: result.error,
-                code: ErrorCodes.RUNTIME,
-              },
-            ]
-          : [];
-        if (diagnostics.length > 0) {
-          this._setUserNodeDiagnostics(nodeId, diagnostics);
+        if (processMessagesResult.error) {
+          this._setUserNodeDiagnostics(nodeId, [
+            {
+              source: Sources.Runtime,
+              severity: DiagnosticSeverity.Error,
+              message: processMessagesResult.error,
+              code: ErrorCodes.RUNTIME,
+            },
+          ]);
         }
-        this._addUserNodeLogs(nodeId, result.userNodeLogs);
-
-        // TODO: FUTURE - surface runtime errors / infinite loop errors
-        if (!result.message) {
-          return;
+        this._addUserNodeLogs(nodeId, processMessagesResult.userNodeLogs);
+        if (processMessagesResult.type === "parsed") {
+          return processMessagesResult.messages;
         }
-        return {
-          topic: outputTopic,
-          receiveTime: message.receiveTime,
-          message: result.message,
-        };
+        const { serializedMessages, buffer, bigString } = processMessagesResult.binaryData;
+        const offsets = serializedMessages.map(({ offset }) => offset);
+        const bobjects = getObjects(datatypes, nodeData.outputDatatype, buffer, bigString, offsets);
+        return bobjects.map((message, i) => ({
+          receiveTime: serializedMessages[i].receiveTime,
+          topic: serializedMessages[i].topic,
+          message,
+        }));
       },
       terminate: () => {
         terminateSignal.resolve();
@@ -305,6 +322,40 @@ export default class UserNodePlayer implements Player {
         }
       },
     };
+  }
+
+  async _createMultiSourceNodeRegistration(nodeId: string, userNode: UserNode): Promise<NodeRegistration[]> {
+    const nodeData = await this._compileNodeData(userNode);
+    const nodeRegistration = this._createNodeRegistrationFromNodeData(nodeId, nodeData);
+    const allNodeRegistrations = [nodeRegistration];
+
+    // If the input doesn't use any source two input topics, automatically support source two
+    if (nodeData.enableSecondSource) {
+      const outputTopic = joinTopics(SECOND_SOURCE_PREFIX, nodeData.outputTopic);
+      const inputTopics = addTopicPrefix(nodeData.inputTopics, SECOND_SOURCE_PREFIX);
+      const nodeDataSourceTwo = { ...nodeData, inputTopics, outputTopic };
+      const nodeRegistrationTwoRaw = this._createNodeRegistrationFromNodeData(nodeId, nodeDataSourceTwo);
+
+      // Pre and post-process the node's messages so the topics are correct
+      const nodeRegistrationTwo = {
+        ...nodeRegistrationTwoRaw,
+        processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
+          const inputMessages = messages.map((m) => ({
+            ...m,
+            topic: m.topic.replace(SECOND_SOURCE_PREFIX, ""),
+          }));
+          const originalMessages = await nodeRegistrationTwoRaw.processMessages(
+            inputMessages,
+            datatypes,
+            globalVariables
+          );
+          return originalMessages.map((m) => ({ ...m, topic: outputTopic }));
+        },
+      };
+      allNodeRegistrations.push(nodeRegistrationTwo);
+    }
+
+    return allNodeRegistrations;
   }
 
   _getTransformWorker(): Rpc {
@@ -352,9 +403,9 @@ export default class UserNodePlayer implements Player {
     );
 
     // Filter out nodes with compilation errors
-    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(({ nodeData, nodeId }) => {
+    const nodeRegistrations: Array<NodeRegistration> = flatten(allNodeRegistrations).filter(({ nodeData, nodeId }) => {
       const hasError = hasTransformerErrors(nodeData);
-      if (hasError) {
+      if (nodeData.diagnostics.length > 0) {
         this._setUserNodeDiagnostics(nodeId, nodeData.diagnostics);
       }
       return !hasError;
@@ -444,7 +495,13 @@ export default class UserNodePlayer implements Player {
           ...activeData,
           messages: parsedMessages,
           bobjects: augmentedBobjects,
-          topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
+          topics: this._getTopics(
+            topics,
+            this._nodeRegistrations.map((nodeRegistration) => ({
+              ...nodeRegistration.output,
+              inputTopics: nodeRegistration.inputs,
+            }))
+          ),
           datatypes: allDatatypes,
         },
       };
@@ -462,7 +519,10 @@ export default class UserNodePlayer implements Player {
     const nodeSubscriptions: SubscribePayload[] = [];
     for (const subscription of subscriptions) {
       // For performance, only check topics that start with DEFAULT_WEBVIZ_NODE_PREFIX.
-      if (!subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
+      if (
+        !subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX) &&
+        !subscription.topic.startsWith(`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
+      ) {
         realTopicSubscriptions.push(subscription);
         continue;
       }
@@ -495,7 +555,6 @@ export default class UserNodePlayer implements Player {
       subscribedFormatByTopic[topic].add(format);
     }
     this._subscribedFormatByTopic = subscribedFormatByTopic;
-
     this._player.setSubscriptions(realTopicSubscriptions);
   }
 
@@ -516,4 +575,5 @@ export default class UserNodePlayer implements Player {
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
   seekPlayback = (time: Time, backfillDuration: ?Time) => this._player.seekPlayback(time, backfillDuration);
   requestBackfill = () => this._player.requestBackfill();
+  setMessageOrder = (messageOrder: TimestampMethod) => this._player.setMessageOrder(messageOrder);
 }

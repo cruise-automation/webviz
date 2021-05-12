@@ -9,7 +9,7 @@
 import { noop } from "lodash";
 import React from "react";
 
-import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
+import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { Color } from "webviz-core/src/types/Messages";
 
 // Used to check if a Marker's path matches a value

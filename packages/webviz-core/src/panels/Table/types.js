@@ -16,8 +16,7 @@ import * as React from "react";
 // https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react-table
 // which we can use in the future for reference. Unfortunately flowgen could not
 // easily convert these types.
-
-type CellProps<C, R> = {
+export type CellProps<C, R> = {
   column: C,
   row: R,
   cell: any,
@@ -29,7 +28,7 @@ type Cell = {
   render(props: any): React.Element<any>,
 };
 
-type Row = {
+export type Row = {
   cells: Cell[],
   allCells: Cell[],
   values: any,
@@ -38,10 +37,6 @@ type Row = {
   original: any,
   subRows: Row[],
   state: {},
-
-  // useExpanded properties.
-  getToggleRowExpandedProps(): {},
-  isExpanded: boolean,
 };
 
 export type PaginationProps = {|
@@ -61,23 +56,24 @@ export type PaginationState = {
   pageIndex: number,
 };
 
-type ColumnInstance = {
+export type ColumnInstance = {
   id: string,
   isVisible: boolean,
   render(props: any): React.Element<any>,
   totalLeft: number,
   totalWidth: number,
-  getHeaderProps(props: {}): {},
+  getHeaderProps(): {},
   toggleHidden(hidden: boolean): void,
   getToggleHiddenProps(userProps: {}): {},
   // useSortBy properties.
   isSorted?: boolean,
   isSortedDesc?: boolean,
   getSortByToggleProps(): {},
+  getResizerProps(): {},
 };
 
 export type ColumnOptions = {|
-  Header?: string | (() => ?React.Element<any>),
+  Header?: any,
   accessor?: string,
   columns?: ColumnOptions[],
   Cell?: (props: CellProps<ColumnInstance, Row>) => any,
@@ -85,6 +81,8 @@ export type ColumnOptions = {|
   width?: number,
   minWidth?: number,
   maxWidth?: number,
+  sortType?: (aRow: any, bRow: any, columnId: string, desc: boolean) => number,
+  filter?: (rows: Row[], columnIds: string[], filterValue: string) => Row[],
 |};
 
 type HeaderGroup = {
@@ -111,9 +109,38 @@ export type TableInstance<HookInstances, HookState> = {|
   prepareRow(row: Row): void,
   flatRows: Row[],
   totalColumnsWidth: number,
-  toggleHideColumn(columnId: string, value: ?boolean): void,
-  setHiddenColumns(columnIds: string[]): void,
+  toggleHideColumn(accessorPath: string, value: ?boolean): void,
   toggleHideAllColumns(val: ?boolean): void,
   getToggleHideAllColumnsProps(userProps: any): any,
+  setFilter(columnId: string, filterValue: any): void,
   ...HookInstances,
 |};
+export type ConditionalFormat = $ReadOnly<{
+  id: string,
+  comparator: string,
+  primitive: number | string | boolean,
+  color: string,
+}>;
+
+export type ColumnConfig = {|
+  hidden?: boolean,
+  conditionalFormats?: ConditionalFormat[],
+  isExpanded?: boolean,
+  filter?: string,
+  sortDesc?: boolean,
+  width?: ?number,
+|};
+
+export type ColumnConfigKey = $Keys<ColumnConfig>;
+
+export type ColumnConfigs = $ReadOnly<{
+  [accessorPath: ?string]: ColumnConfig,
+}>;
+export type Config = {|
+  topicPath: string,
+  columnConfigs?: ColumnConfigs,
+|};
+
+export type MutableColumnConfigs = $RecursiveMutable<ColumnConfigs>;
+
+export type UpdateConfig = (updater: (Config) => Config) => void;

@@ -9,19 +9,18 @@
 import { mapKeys, difference } from "lodash";
 import { useMemo, useRef } from "react";
 
+import generateNodeKey from "./generateNodeKey";
 import type { UseSceneBuilderAndTransformsDataInput, UseSceneBuilderAndTransformsDataOutput } from "./types";
-import { generateNodeKey } from "./useTopicTree";
-import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useChangeDetector, useDeepMemo } from "webviz-core/src/util/hooks";
 
 // Derived namespace and error information for TopicTree from sceneBuilder and transforms.
 export default function useSceneBuilderAndTransformsData({
+  playerId,
   sceneBuilder,
   transforms,
   staticallyAvailableNamespacesByTopic,
 }: UseSceneBuilderAndTransformsDataInput): UseSceneBuilderAndTransformsDataOutput {
-  const { playerId } = useDataSourceInfo();
   const hasChangedPlayerId = useChangeDetector([playerId], false);
 
   const newAvailableTfs = transforms
@@ -45,9 +44,11 @@ export default function useSceneBuilderAndTransformsData({
   }
   const availableTfs = availableTfsRef.current;
 
+  const allNamespaces = sceneBuilder ? sceneBuilder.allNamespaces : [];
+
   const availableNamespacesByTopic = useMemo(() => {
     const result = { ...staticallyAvailableNamespacesByTopic };
-    for (const { name, topic } of sceneBuilder.allNamespaces) {
+    for (const { name, topic } of allNamespaces) {
       result[topic] = result[topic] || [];
       result[topic].push(name);
     }
@@ -55,12 +56,13 @@ export default function useSceneBuilderAndTransformsData({
       result[TRANSFORM_TOPIC] = availableTfs;
     }
     return result;
-  }, [availableTfs, sceneBuilder.allNamespaces, staticallyAvailableNamespacesByTopic]);
+  }, [availableTfs, allNamespaces, staticallyAvailableNamespacesByTopic]);
 
-  const sceneErrorsByKey = useMemo(
-    () => mapKeys(sceneBuilder.errorsByTopic, (value, topicName) => generateNodeKey({ topicName })),
-    [sceneBuilder.errorsByTopic]
-  );
+  const errorsByTopic = sceneBuilder ? sceneBuilder.errorsByTopic : {};
+
+  const sceneErrorsByKey = useMemo(() => mapKeys(errorsByTopic, (value, topicName) => generateNodeKey({ topicName })), [
+    errorsByTopic,
+  ]);
 
   const sceneErrorsByKeyMemo = useDeepMemo(sceneErrorsByKey);
 

@@ -28,6 +28,39 @@ storiesOf("<Internals>", module)
       </PanelSetup>
     );
   })
+  .add("nodeplayer topics", () => {
+    return (
+      <PanelSetup
+        fixture={{
+          topics: [
+            { name: "/webviz_node/story_node", datatype: "my_datatype", inputTopics: ["/my/topic", "/another/topic"] },
+            { name: "/another/topic", datatype: "my_datatype" },
+            { name: "/my/topic", datatype: "my_datatype" },
+          ],
+          frame: {},
+        }}>
+        <Internals />
+        <div style={{ display: "none" }}>
+          <SubscribeToList config={{ topics: "/webviz_node/story_node" }} />
+        </div>
+      </PanelSetup>
+    );
+  })
+  .add("nonexistent topics", () => {
+    return (
+      <PanelSetup
+        fixture={{
+          topics: [],
+          frame: {},
+        }}>
+        <Internals />
+        <div style={{ display: "none" }}>
+          <SubscribeToList config={{ topics: "/webviz_node/story_node" }} />
+        </div>
+      </PanelSetup>
+    );
+  })
+
   .add("click record", () => {
     return (
       <PanelSetup

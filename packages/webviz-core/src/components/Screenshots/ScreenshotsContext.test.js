@@ -12,10 +12,11 @@ import { noop } from "lodash";
 import React, { useContext } from "react";
 import { act } from "react-dom/test-utils";
 
-import { ScreenshotsProvider, ScreenshotsContext } from "./ScreenshotsProvider";
+import { ScreenshotsProvider, ScreenshotsContext } from "./ScreenshotsContext";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import { PANEL_LAYOUT_ROOT_ID } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const defaultContext = {
@@ -51,8 +52,13 @@ describe("ScreenshotsProvider", () => {
     expect(pausePlayback).not.toHaveBeenCalled();
 
     const element = document.createElement("div");
+    element.setAttribute("id", PANEL_LAYOUT_ROOT_ID);
+    if (!document.body) {
+      throw new Error("No document.body found");
+    }
+    document.body.appendChild(element);
     await act(async () => {
-      const returnedPromise = context.takeScreenshot(element);
+      const returnedPromise = context.takeScreenshot();
       await delay(10);
       expect(context.isTakingScreenshot).toEqual(true);
       expect(pausePlayback).toHaveBeenCalled();
@@ -79,8 +85,13 @@ describe("ScreenshotsProvider", () => {
       return Promise.reject("Dummy error");
     });
     const element = document.createElement("div");
+    element.setAttribute("id", PANEL_LAYOUT_ROOT_ID);
+    if (!document.body) {
+      throw new Error("No document.body found");
+    }
+    document.body.appendChild(element);
     await act(async () => {
-      const returnedPromise = context.takeScreenshot(element);
+      const returnedPromise = context.takeScreenshot();
 
       const returnValue = await returnedPromise;
       expect(returnValue).toEqual(undefined);

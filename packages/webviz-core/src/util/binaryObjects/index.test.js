@@ -24,13 +24,14 @@ import { typeSize } from "./messageDefinitionUtils";
 import {
   definitions,
   type HasArrayOfEmpties,
+  type HasBigIntArrays,
   type HasByteArray,
   type HasComplexAndArray,
   type HasComplexArray,
   type HasConstant,
   type HasJson,
   type HasInt64s,
-} from "./messageDefinitionUtils.test";
+} from "./testUtils";
 import { cast } from "webviz-core/src/players/types";
 import type { BinaryHeader, BinaryTime } from "webviz-core/src/types/BinaryMessages";
 
@@ -155,6 +156,10 @@ describe("getObjects", () => {
     const intArray = new Int32Array([0xffffffff, 0xffffffff, 0x1, 0x0]);
     const hasInt64s = cast<HasInt64s>(getObject(definitions, "fake_msgs/HasInt64s", intArray.buffer, ""));
     expect(deepParse(hasInt64s)).toEqual({ i64: -1, u64: 1 });
+    expect(hasInt64s.i64()).toBe(-1);
+    expect(hasInt64s.i64(true)).toEqual(BigInt("-1"));
+    expect(hasInt64s.u64()).toBe(1);
+    expect(hasInt64s.u64(true)).toEqual(BigInt("1"));
   });
 
   it("throws on access for out-of-range 64-bit integers", () => {
@@ -167,7 +172,32 @@ describe("getObjects", () => {
     const intArray = new Int32Array([0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff]);
     const hasInt64s = cast<HasInt64s>(getObject(definitions, "fake_msgs/HasInt64s", intArray.buffer, ""));
     expect(hasInt64s.i64()).toBe(-1);
+    expect(hasInt64s.i64(true)).toEqual(BigInt("-1"));
     expect(() => hasInt64s.u64()).toThrow("number too large");
+    expect(hasInt64s.u64(true)).toEqual(BigInt("0xffffffffffffffff"));
+  });
+
+  it("can get 64-bit integers from arrays", () => {
+    // $FlowFixMe: console.assert is read-only.
+    console.assert = (statement, message) => {
+      if (!statement) {
+        throw new Error(message);
+      }
+    };
+    const intArray = new Int32Array([
+      ...[1, 16, 1, 24], // message
+      ...[0xffffffff, 0xffffffff], // i_arr
+      ...[0xffffffff, 0xffffffff], // u_arr
+    ]);
+    const hasBigIntArrays = cast<HasBigIntArrays>(
+      getObject(definitions, "fake_msgs/HasBigIntArrays", intArray.buffer, "")
+    );
+    expect(hasBigIntArrays.i_arr().length()).toBe(1);
+    expect(hasBigIntArrays.u_arr().length()).toBe(1);
+    expect(hasBigIntArrays.i_arr().get(0)).toBe(-1);
+    expect(hasBigIntArrays.i_arr().get(0, true)).toBe(BigInt(-1));
+    expect(() => hasBigIntArrays.u_arr().get(0)).toThrow("number too large");
+    expect(hasBigIntArrays.u_arr().get(0, true)).toBe(BigInt("0xffffffffffffffff"));
   });
 
   it("doesn't crash when given arrays of empty messages", () => {

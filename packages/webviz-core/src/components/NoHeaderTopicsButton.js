@@ -15,6 +15,7 @@ import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import TextContent from "webviz-core/src/components/TextContent";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SRoot = styled.div`
   max-width: calc(100vw - 30px);
@@ -59,7 +60,7 @@ export default function NoHeaderTopicsButton() {
         <td>{datatype}</td>
       </tr>
     ));
-    const color = topicsWithoutHeaders.length > COLOR_THRESHOLD ? "#F7BE00" : "default";
+    const color = topicsWithoutHeaders.length > COLOR_THRESHOLD ? colors.YELLOW : "default";
     const tooltip =
       topicsWithoutHeaders.length === 1
         ? "1 subscribed topic does not have headers"

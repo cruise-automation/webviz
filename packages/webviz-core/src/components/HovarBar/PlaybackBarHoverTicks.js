@@ -9,8 +9,9 @@ import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 
 import Dimensions from "webviz-core/src/components/Dimensions";
+import HoverBar from "webviz-core/src/components/HovarBar";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
-import HoverBar from "webviz-core/src/components/TimeBasedChart/HoverBar";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { toSec } from "webviz-core/src/util/time";
 
 const sharedTickStyles = css`
@@ -28,13 +29,13 @@ const sharedTickStyles = css`
 const TopTick = styled.div`
   ${sharedTickStyles}
   top: 8px;
-  border-top: 5px solid #f7be00;
+  border-top: 5px solid ${colors.YELLOW};
 `;
 
 const BottomTick = styled.div`
   ${sharedTickStyles}
   bottom: 8px;
-  border-bottom: 5px solid #f7be00;
+  border-bottom: 5px solid ${colors.YELLOW};
 `;
 
 function getStartAndEndTime({ playerState: { activeData } }) {
@@ -48,12 +49,13 @@ type Props = {|
   componentId: string,
 |};
 
-export default React.memo<Props>(({ componentId }: Props) => {
+export default React.memo<Props>(function PlaybackBarHoverTicks({ componentId }: Props) {
   const { startTime, endTime } = useMessagePipeline(getStartAndEndTime);
   const [width, setWidth] = useState<?number>();
+  const [height, setHeight] = useState<?number>();
 
   const scaleBounds = useMemo(() => {
-    if (width == null || startTime == null || endTime == null) {
+    if (width == null || height == null || startTime == null || endTime == null) {
       return null;
     }
     return {
@@ -68,18 +70,29 @@ export default React.memo<Props>(({ componentId }: Props) => {
           minAlongAxis: 0,
           maxAlongAxis: width,
         },
+        {
+          id: componentId,
+          min: 0,
+          max: height,
+          axes: "yAxes",
+          minAlongAxis: 0,
+          maxAlongAxis: height,
+        },
       ],
     };
-  }, [width, startTime, endTime, componentId]);
+  }, [width, height, startTime, endTime, componentId]);
 
   return (
     <>
       <Dimensions>
-        {({ width: newWidth }) => {
+        {({ width: newWidth, height: newHeight }) => {
           // Just using the Dimensions for a side-effect instead of rendering children makes
           // memoizing scaleBounds to preserve identity a bit simpler.
           if (width !== newWidth) {
             setWidth(newWidth);
+          }
+          if (height !== newHeight) {
+            setHeight(newHeight);
           }
           return null;
         }}

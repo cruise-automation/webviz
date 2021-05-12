@@ -243,6 +243,10 @@ function pointsEqual(a, b) {
 }
 
 export const lines = (regl: any) => {
+  if (!regl) {
+    throw new Error("Invalid regl instance");
+  }
+
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
     type: "uint16",

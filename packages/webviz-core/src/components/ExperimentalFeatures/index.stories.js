@@ -9,11 +9,8 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
-import { ExperimentalFeaturesModal } from "webviz-core/src/components/ExperimentalFeatures";
-import {
-  dummyExperimentalFeaturesList,
-  dummyExperimentalFeaturesSettings,
-} from "webviz-core/src/components/ExperimentalFeatures.fixture";
+import { ExperimentalFeaturesModal } from ".";
+import { dummyExperimentalFeaturesList, dummyExperimentalFeaturesSettings } from "./fixture";
 
 storiesOf("<ExperimentalFeatures>", module)
   .addParameters({

@@ -11,6 +11,8 @@ const COMMENTING_ACTION_TYPES = {
   SET_FETCHED_COMMENTS_BASE: "SET_FETCHED_COMMENTS_BASE",
   SET_FETCHED_COMMENTS_FEATURE: "SET_FETCHED_COMMENTS_FEATURE",
   SET_SOURCE_TO_SHOW: "SET_SOURCE_TO_SHOW",
+  SET_IS_SIDEBAR_OPEN: "SET_IS_SIDEBAR_OPEN",
+  SET_IS_EDITOR_OPEN: "SET_IS_EDITOR_OPEN",
 };
 
 type SET_FETCHED_COMMENTS_BASE = { type: "SET_FETCHED_COMMENTS_BASE", payload: Comment[] };
@@ -31,4 +33,19 @@ export const setSourceToShow = (payload: CommentSourceToShow): Dispatcher<SET_SO
   return dispatch({ type: COMMENTING_ACTION_TYPES.SET_SOURCE_TO_SHOW, payload });
 };
 
-export type CommentingActions = SET_FETCHED_COMMENTS_BASE | SET_FETCHED_COMMENTS_FEATURE | SET_SOURCE_TO_SHOW;
+type SET_IS_SIDEBAR_OPEN = { type: "SET_IS_SIDEBAR_OPEN", payload: boolean };
+export const setIsSidebarOpen = (payload: boolean): Dispatcher<SET_IS_SIDEBAR_OPEN> => (dispatch) => {
+  return dispatch({ type: COMMENTING_ACTION_TYPES.SET_IS_SIDEBAR_OPEN, payload });
+};
+
+type SET_IS_EDITOR_OPEN = { type: "SET_IS_EDITOR_OPEN", payload: boolean };
+export const setIsEditorOpen = (payload: boolean): Dispatcher<SET_IS_EDITOR_OPEN> => (dispatch) => {
+  return dispatch({ type: COMMENTING_ACTION_TYPES.SET_IS_EDITOR_OPEN, payload });
+};
+
+export type CommentingActions =
+  | SET_FETCHED_COMMENTS_BASE
+  | SET_FETCHED_COMMENTS_FEATURE
+  | SET_SOURCE_TO_SHOW
+  | SET_IS_SIDEBAR_OPEN
+  | SET_IS_EDITOR_OPEN;

@@ -10,7 +10,8 @@ import { noop } from "lodash";
 import * as React from "react";
 import styled from "styled-components";
 
-import { setExperimentalFeature, type FeatureValue } from "webviz-core/src/components/ExperimentalFeatures";
+import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import type { FeatureValue } from "webviz-core/src/components/ExperimentalFeatures/types";
 
 export const SCREENSHOT_VIEWPORT = {
   width: 1001,

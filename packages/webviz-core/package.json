@@ -7,7 +7,9 @@
     "node": ">=10.22.0 <12"
   },
   "dependencies": {
+    "@cruise-automation/button": "0.0.7",
     "@cruise-automation/hooks": "0.0.1",
+    "@cruise-automation/tooltip": "0.0.7",
     "@mdi/svg": "5.7.55",
     "@sentry/browser": "5.11.0",
     "async-retry": "1.2.3",
@@ -61,6 +63,8 @@
     "react-markdown": "4.0.4",
     "react-mosaic-component": "troygibb/react-mosaic#860c8d70ba3c723be07bc6208f0d05e2c3f2915f",
     "react-outside-click-handler": "1.2.4",
+    "react-range": "1.8.6",
+    "react-reconciler": "^0.26.1",
     "react-redux": "7.1.0",
     "react-resize-detector": "4.2.1",
     "react-router": "5.0.1",
@@ -95,10 +99,11 @@
   "devDependencies": {
     "@babel/register": "7.11.5",
     "@testing-library/react-hooks": "1.1.0",
+    "@welldone-software/why-did-you-render": "6.1.1",
     "eslint-plugin-react-hooks": "^1.5.0",
     "fake-indexeddb": "2.0.4",
     "fetch-mock": "7.2.5",
-    "flow-bin": "0.106.2",
+    "flow-bin": "0.110.0",
     "react-test-renderer": "16.10.2",
     "redux-devtools-extension": "^2.13.7"
   },

@@ -101,7 +101,12 @@ describe("OrderedStampPlayer", () => {
     // if this changes, this test must change as well
     expect(BUFFER_DURATION_SECS).toEqual(1);
 
-    const upstreamMessages = [makeMessage(8.9, 9.5), makeMessage(8, 10), makeMessage(9.5, 10)];
+    const upstreamMessages = [
+      makeMessage(8.9, 9.5),
+      makeMessage(8, 10),
+      makeMessage(9.0, 10), // exactly equal to the current time. Should be emitted.
+      makeMessage(9.5, 10),
+    ];
 
     await fakePlayer.emit({
       ...getState(),
@@ -111,7 +116,7 @@ describe("OrderedStampPlayer", () => {
     expect(states).toEqual([
       expect.objectContaining({
         activeData: expect.objectContaining({
-          messages: [makeMessage(8, 10), makeMessage(8.9, 9.5)],
+          messages: [makeMessage(8, 10), makeMessage(8.9, 9.5), makeMessage(9.0, 10.0)],
           // Received messages up to 10s, can play header stamps up to 9s.
           currentTime: fromSec(9),
           startTime: fromSec(0),

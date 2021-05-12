@@ -11,7 +11,9 @@ import React, { useCallback, type ComponentType } from "react";
 import { hot } from "react-hot-loader/root";
 
 import { SLabel, SDescription, SInput } from "./common";
+import IconMarkerSettingsEditor from "./IconMarkerSettingsEditor";
 import LaserScanSettingsEditor from "./LaserScanSettingsEditor";
+import MarkerOverrideColorSettingsEditor from "./MarkerOverrideColorSettingsEditor";
 import MarkerSettingsEditor from "./MarkerSettingsEditor";
 import PointCloudSettingsEditor from "./PointCloudSettingsEditor";
 import PoseSettingsEditor from "./PoseSettingsEditor";
@@ -26,6 +28,11 @@ import {
   POSE_STAMPED_DATATYPE,
   SENSOR_MSGS_LASER_SCAN_DATATYPE,
   WEBVIZ_MARKER_DATATYPE,
+  WEBVIZ_3D_ICON_ARRAY_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_DATATYPE,
+  VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
+  NAV_MSGS_PATH_DATATYPE,
 } from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
@@ -124,8 +131,11 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
     [SENSOR_MSGS_LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
     [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
-    "visualization_msgs/Marker": MarkerSettingsEditor,
-    "visualization_msgs/MarkerArray": MarkerSettingsEditor,
+    [WEBVIZ_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS_MARKER_DATATYPE]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
+    [WEBVIZ_3D_ICON_ARRAY_DATATYPE]: IconMarkerSettingsEditor,
+    [NAV_MSGS_PATH_DATATYPE]: MarkerOverrideColorSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,
   };
   return editors[datatype];

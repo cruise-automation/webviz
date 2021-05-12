@@ -9,6 +9,7 @@
 import { debounce, flatten, groupBy, isEqual } from "lodash";
 import * as React from "react";
 import { type Time, TimeUtil } from "rosbag";
+import shallowequal from "shallowequal";
 
 import { pauseFrameForPromises, type FramePromise } from "./pauseFrameForPromise";
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
@@ -66,8 +67,10 @@ export type MessagePipelineContext = {|
 
 const Context = createSelectableContext<MessagePipelineContext>();
 
+const options = { memoResolver: shallowequal };
+// Note that this selector always uses shallow memo to test whether its results are equal.
 export function useMessagePipeline<T>(selector: (MessagePipelineContext) => T | BailoutToken): T {
-  return useContextSelector(Context, selector);
+  return useContextSelector(Context, selector, options);
 }
 
 function defaultPlayerState(): PlayerState {
@@ -349,9 +352,9 @@ export function MockMessagePipelineProvider(props: {|
   const flattenedSubscriptions: SubscribePayload[] = useMemo(() => flatten(objectValues(allSubscriptions)), [
     allSubscriptions,
   ]);
-  const setSubscriptions = useCallback((id, subs) => setAllSubscriptions((s) => ({ ...s, [id]: subs })), [
-    setAllSubscriptions,
-  ]);
+  const setSubscriptions = useCallback((id, subs) => {
+    setAllSubscriptions((s) => ({ ...s, [id]: subs }));
+  }, [setAllSubscriptions]);
 
   const requestBackfill = useMemo(() => props.requestBackfill || (() => {}), [props.requestBackfill]);
 

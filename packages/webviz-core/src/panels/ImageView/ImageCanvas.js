@@ -18,17 +18,18 @@ import shallowequal from "shallowequal";
 import styled from "styled-components";
 import uuid from "uuid";
 
+import IconMarkers from "./IconMarkers";
 import styles from "./ImageCanvas.module.scss";
 import ImageCanvasWorker from "./ImageCanvas.worker";
-import type { ImageViewPanelHooks, Config, SaveImagePanelConfig } from "./index";
+import type { Config, SaveImagePanelConfig } from "./index";
 import { renderImage } from "./renderImage";
 import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import Menu, { Item } from "webviz-core/src/components/Menu";
-import type { Message, Topic } from "webviz-core/src/players/types";
+import type { Message, Topic, TypedMessage } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { CameraInfo } from "webviz-core/src/types/Messages";
+import type { CameraInfo, Icon2dMarkersMessage } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import type Rpc from "webviz-core/src/util/Rpc";
@@ -40,13 +41,13 @@ type OnFinishRenderImage = () => void;
 type Props = {|
   topic: ?Topic,
   image: ?Message,
+  iconMarkers?: TypedMessage<Icon2dMarkersMessage>[],
   rawMarkerData: {|
     markers: Message[],
     scale: number,
     transformMarkers: boolean,
     cameraInfo: ?CameraInfo,
   |},
-  panelHooks?: ImageViewPanelHooks,
   config: Config,
   saveConfig: SaveImagePanelConfig,
   onStartRenderImage: () => OnFinishRenderImage,
@@ -498,8 +499,28 @@ export default class ImageCanvas extends React.Component<Props, State> {
     },
   };
 
+  _getIconMarkerWrapperStyle() {
+    // We need to apply the canvas scaling and position to the icon marker wrapper so the icons are
+    // properly positioned according to the scaled image.
+    const canvas = this._canvasRef.current;
+    if (!canvas || !this.panZoomCanvas) {
+      return {};
+    }
+    const { x, y, scale } = this.panZoomCanvas.getTransform();
+    return {
+      width: canvas.width * scale,
+      height: canvas.height * scale,
+      left: x,
+      top: y,
+    };
+  }
+
   render() {
-    const { mode, zoomPercentage, offset } = this.props.config;
+    const {
+      config: { mode, zoomPercentage, offset, iconTextTemplate },
+      saveConfig,
+      iconMarkers,
+    } = this.props;
     if (zoomPercentage && (zoomPercentage > 150 || zoomPercentage < 0)) {
       sendNotification(
         `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and 150. It has been reset to 100.`,
@@ -507,7 +528,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         "user",
         "warn"
       );
-      this.props.saveConfig({ zoomPercentage: 100 });
+      saveConfig({ zoomPercentage: 100 });
     }
     if (offset && offset.length !== 2) {
       sendNotification(
@@ -518,15 +539,24 @@ export default class ImageCanvas extends React.Component<Props, State> {
         "user",
         "warn"
       );
-      this.props.saveConfig({ offset: [0, 0] });
+      saveConfig({ offset: [0, 0] });
     }
+
     return (
       <ReactResizeDetector handleWidth handleHeight onResize={this.applyPanZoom}>
         <div className={styles.root} ref={this._divRef}>
           <KeyListener keyDownHandlers={this.keyDownHandlers} />
-          <div>
+          <div style={{ position: "relative" }}>
             {this.state.error && <SErrorMessage>Error: {this.state.error.message}</SErrorMessage>}
             <canvas onContextMenu={this.onCanvasRightClick} ref={this._setCanvasRef} className={styles.canvas} />
+            {iconMarkers && iconMarkers.length > 0 && (
+              <IconMarkers
+                style={this._getIconMarkerWrapperStyle()}
+                zoomPercentage={zoomPercentage || 1}
+                iconMarkers={iconMarkers}
+                iconTextTemplate={iconTextTemplate}
+              />
+            )}
           </div>
           <OutsideClickHandler
             onOutsideClick={() => {

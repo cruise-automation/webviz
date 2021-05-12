@@ -6,17 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
-import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
-import InformationIcon from "@mdi/svg/svg/information.svg";
 import React from "react";
 
 import { type TopicSettingsEditorProps } from ".";
 import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
-import Icon from "webviz-core/src/components/Icon";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -28,8 +23,7 @@ type PoseSettings = {|
     headWidth: number,
     shaftWidth: number,
   },
-  modelType?: "car-model" | "arrow" | "car-outline",
-  addCarOutlineBuffer?: boolean,
+  modelType?: "car-model" | "arrow",
 |};
 
 export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseStamped, PoseSettings>) {
@@ -51,17 +45,6 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
               onChange={(e) => onSettingsChange({ ...settings, alpha: parseFloat(e.target.value) })}
             />
           </Flex>
-        );
-      }
-      case "car-outline": {
-        return (
-          <>
-            <SLabel>Color of outline</SLabel>
-            <ColorPickerForTopicSettings
-              color={settings.overrideColor}
-              onChange={(newColor) => onFieldChange("overrideColor", newColor)}
-            />
-          </>
         );
       }
       case "arrow":
@@ -109,9 +92,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
     }
   }, [onFieldChange, onSettingsChange, settings]);
 
-  const badModelTypeSetting = React.useMemo(() => !["car-model", "car-outline", "arrow"].includes(settings.modelType), [
-    settings,
-  ]);
+  const badModelTypeSetting = React.useMemo(() => !["car-model", "arrow"].includes(settings.modelType), [settings]);
 
   if (!message) {
     return (
@@ -121,19 +102,6 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
     );
   }
 
-  const CheckboxComponent = settings.addCarOutlineBuffer ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
-
-  const iconProps = {
-    width: 16,
-    height: 16,
-    style: {
-      fill: "currentColor",
-      position: "relative",
-      top: "5px",
-    },
-  };
-
-  const copy = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.copy.poseSettingsEditor;
   return (
     <Flex col>
       <SLabel>Rendered Car</SLabel>
@@ -142,11 +110,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
         onChange={(e) => {
           onSettingsChange({ ...settings, modelType: e.target.value, alpha: undefined });
         }}>
-        {[
-          { value: "car-model", title: "Car Model" },
-          { value: "car-outline", title: "Car Outline" },
-          { value: "arrow", title: "Arrow" },
-        ].map(({ value, title }) => (
+        {[{ value: "car-model", title: "Car Model" }, { value: "arrow", title: "Arrow" }].map(({ value, title }) => (
           <div key={value} style={{ marginBottom: "4px", display: "flex" }}>
             <input
               type="radio"
@@ -157,19 +121,6 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
           </div>
         ))}
       </div>
-
-      <Flex style={{ marginBottom: "5px", cursor: "pointer" }}>
-        <CheckboxComponent
-          {...iconProps}
-          onClick={() => onSettingsChange({ ...settings, addCarOutlineBuffer: !settings.addCarOutlineBuffer })}
-        />
-        <SLabel>Show error buffer</SLabel>
-        {copy?.errorBuffer && (
-          <Icon tooltip={copy.errorBuffer}>
-            <InformationIcon />
-          </Icon>
-        )}
-      </Flex>
       {settingsByCarType}
     </Flex>
   );

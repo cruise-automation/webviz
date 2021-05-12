@@ -140,6 +140,7 @@ const drawModel = (regl) => {
 
   // build the draw calls needed to draw the model. This will happen whenever the model changes.
   const getDrawCalls = memoizeWeak((model: GLBModel) => {
+    console.log({ model });
     // upload textures to the GPU
     const { accessors } = model;
     const textures =
@@ -166,15 +167,21 @@ const drawModel = (regl) => {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
-        if (!accessors) {
+        const { extensions = {} } = primitive;
+        const dracoCompression = extensions.KHR_draco_mesh_compression;
+        let primitiveAccessors = accessors;
+        if (dracoCompression) {
+          primitiveAccessors = dracoCompression.accessors;
+        }
+        if (!primitiveAccessors) {
           throw new Error("Error decoding GLB model: Missing `accessors` in JSON data");
         }
         drawCalls.push({
-          indices: accessors[primitive.indices],
-          positions: accessors[primitive.attributes.POSITION],
-          normals: accessors[primitive.attributes.NORMAL],
+          indices: primitiveAccessors[primitive.indices],
+          positions: primitiveAccessors[primitive.attributes.POSITION],
+          normals: primitiveAccessors[primitive.attributes.NORMAL],
           texCoords: texInfo
-            ? accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
+            ? primitiveAccessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
             : { divisor: 1, buffer: singleTexCoord },
           baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
           baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],

@@ -142,9 +142,9 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
           throw new Error(`Decoding failed: ${status.error_msg()}`);
         }
 
-        const numFaces = dracoGeometry.num_faces();
-        const numIndices = numFaces * 3;
-        const numPoints = dracoGeometry.num_points();
+        // const numFaces = dracoGeometry.num_faces();
+        // const numIndices = numFaces * 3;
+        // const numPoints = dracoGeometry.num_points();
         console.log({
           geometryType,
           bufferViewIndex,
@@ -152,13 +152,67 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
           bufferView,
           dracoGeometry,
           status,
-          numFaces,
-          numIndices,
-          numPoints,
+          // numFaces,
+          // numIndices,
+          // numPoints,
           json,
           data,
           buffer,
         });
+
+        dracoCompression.accessors = [];
+
+        // decode attributes
+        for (const attributeName in attributes) {
+          const attributeId = attributes[attributeName];
+          const attribute = decoder.GetAttributeByUniqueId(dracoGeometry, attributeId);
+
+          const numComponents = attribute.num_components();
+          const numPoints = dracoGeometry.num_points();
+          const numValues = numPoints * numComponents;
+          const attributeType = Float32Array;
+          const byteLength = numValues * attributeType.BYTES_PER_ELEMENT;
+          const dataType = decoderModule.DT_FLOAT32;
+
+          // eslint-disable-next-line no-underscore-dangle
+          const ptr = decoderModule._malloc(byteLength);
+
+          decoder.GetAttributeDataArrayForAllPoints(dracoGeometry, attribute, dataType, byteLength, ptr);
+          const array = new attributeType(decoderModule.HEAPF32.buffer, ptr, numValues).slice();
+
+          // eslint-disable-next-line no-underscore-dangle
+          decoderModule._free(ptr);
+
+          dracoCompression.accessors.push(array);
+
+          console.log("decoding attribute", {
+            array,
+            attributeName,
+            attributeId,
+            attribute,
+            attributeType,
+            byteLength,
+            dataType,
+          });
+        }
+
+        // decode indices
+        const numFaces = dracoGeometry.num_faces();
+        const numIndices = numFaces * 3;
+        const byteLength = numIndices * 4;
+
+        // eslint-disable-next-line no-underscore-dangle
+        const ptr = decoderModule._malloc(byteLength);
+
+        decoder.GetTrianglesUInt32Array(dracoGeometry, byteLength, ptr);
+        const indices = new Uint32Array(decoderModule.HEAPF32.buffer, ptr, numIndices).slice();
+
+        // eslint-disable-next-line no-underscore-dangle
+        decoderModule._free(ptr);
+
+        dracoCompression.accessors.push(indices);
+
+        decoderModule.destroy(dracoGeometry);
         decoderModule.destroy(buffer);
       }
     });
@@ -190,6 +244,9 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
       case "MAT4": numComponents = 16; break;
       default:
         throw new Error(`unrecognized type ${accessorInfo.type}`);
+    }
+    if (accessorInfo.bufferView == null) {
+      return null;
     }
     const bufferView = json.bufferViews[accessorInfo.bufferView];
     if (bufferView.buffer !== 0) {

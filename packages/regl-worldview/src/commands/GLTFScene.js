@@ -140,7 +140,6 @@ const drawModel = (regl) => {
 
   // build the draw calls needed to draw the model. This will happen whenever the model changes.
   const getDrawCalls = memoizeWeak((model: GLBModel) => {
-    console.log({ model });
     // upload textures to the GPU
     const { accessors } = model;
     const textures =

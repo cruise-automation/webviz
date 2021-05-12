@@ -6,9 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import draco3d from "draco3d";
-// import draco3dgltf from "draco3dgltf/draco_decoder_gltf_nodejs";
-import draco3dWasm from "draco3d/draco_decoder.wasm";
+import decodeCompressedGLB from "./draco";
 
 type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
 
@@ -75,151 +73,19 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
     return { json };
   }
 
-  // const decoderModule = await draco3dgltf.createDecoderModule({ type: "js" });
-  // const decoderModule = await draco3d.createDecoderModule({ type: "js" });
-
-  const decoderModule = await draco3d.createDecoderModule({
-    locateFile: () => {
-      return draco3dWasm;
-    },
-  });
-  console.log({ decoderModule });
-
-  const decoder = new decoderModule.Decoder();
-
-  console.log({ decoder });
-
-  // let dracoGeometry;
-  // let status;
-  // if (geometryType === decoderModule.TRIANGULAR_MESH) {
-  //   dracoGeometry = new decoderModule.Mesh();
-  //   status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
-  // } else if (geometryType === decoderModule.POINT_CLOUD) {
-  //   dracoGeometry = new decoderModule.PointCloud();
-  //   status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
-  // } else {
-  //   const errorMsg = "Error: Unknown geometry type.";
-  //   console.error(errorMsg);
-  // }
-
-  // console.log({ status });
-
   if (json.buffers[0].uri !== undefined) {
     throw new Error("expected GLB-stored buffer");
   }
 
-  json.meshes.forEach((mesh) => {
-    mesh.primitives.forEach((primitive) => {
-      console.log({ mesh, primitive });
-      const { extensions = {} } = primitive;
-      const dracoCompression = extensions.KHR_draco_mesh_compression;
-      if (dracoCompression) {
-        console.log({ dracoCompression });
-        const { bufferView: bufferViewIndex, attributes } = dracoCompression;
-        const bufferView = json.bufferViews[bufferViewIndex];
-        const buffer = new decoderModule.DecoderBuffer();
-        const data = new Int8Array(
-          binary.buffer,
-          binary.byteOffset + (bufferView.byteOffset || 0),
-          bufferView.byteLength
-        );
-        buffer.Init(data, bufferView.byteLength); //new Int8Array(binary), bufferView.byteLength);
-        const geometryType = decoder.GetEncodedGeometryType(buffer);
-        let dracoGeometry;
-        let status;
-        if (geometryType === decoderModule.TRIANGULAR_MESH) {
-          dracoGeometry = new decoderModule.Mesh();
-          status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
-        } else if (geometryType === decoderModule.POINT_CLOUD) {
-          dracoGeometry = new decoderModule.PointCloud();
-          status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
-        } else {
-          const errorMsg = "Error: Unknown geometry type.";
-          console.error(errorMsg);
-        }
-
-        if (!status.ok() || dracoGeometry.ptr === 0) {
-          throw new Error(`Decoding failed: ${status.error_msg()}`);
-        }
-
-        // const numFaces = dracoGeometry.num_faces();
-        // const numIndices = numFaces * 3;
-        // const numPoints = dracoGeometry.num_points();
-        console.log({
-          geometryType,
-          bufferViewIndex,
-          attributes,
-          bufferView,
-          dracoGeometry,
-          status,
-          // numFaces,
-          // numIndices,
-          // numPoints,
-          json,
-          data,
-          buffer,
-        });
-
-        dracoCompression.accessors = [];
-
-        // decode attributes
-        for (const attributeName in attributes) {
-          const attributeId = attributes[attributeName];
-          const attribute = decoder.GetAttributeByUniqueId(dracoGeometry, attributeId);
-
-          const numComponents = attribute.num_components();
-          const numPoints = dracoGeometry.num_points();
-          const numValues = numPoints * numComponents;
-          const attributeType = Float32Array;
-          const byteLength = numValues * attributeType.BYTES_PER_ELEMENT;
-          const dataType = decoderModule.DT_FLOAT32;
-
-          // eslint-disable-next-line no-underscore-dangle
-          const ptr = decoderModule._malloc(byteLength);
-
-          decoder.GetAttributeDataArrayForAllPoints(dracoGeometry, attribute, dataType, byteLength, ptr);
-          const array = new attributeType(decoderModule.HEAPF32.buffer, ptr, numValues).slice();
-
-          // eslint-disable-next-line no-underscore-dangle
-          decoderModule._free(ptr);
-
-          dracoCompression.accessors.push(array);
-
-          console.log("decoding attribute", {
-            array,
-            attributeName,
-            attributeId,
-            attribute,
-            attributeType,
-            byteLength,
-            dataType,
-          });
-        }
-
-        // decode indices
-        const numFaces = dracoGeometry.num_faces();
-        const numIndices = numFaces * 3;
-        const byteLength = numIndices * 4;
-
-        // eslint-disable-next-line no-underscore-dangle
-        const ptr = decoderModule._malloc(byteLength);
-
-        decoder.GetTrianglesUInt32Array(dracoGeometry, byteLength, ptr);
-        const indices = new Uint32Array(decoderModule.HEAPF32.buffer, ptr, numIndices).slice();
-
-        // eslint-disable-next-line no-underscore-dangle
-        decoderModule._free(ptr);
-
-        dracoCompression.accessors.push(indices);
-
-        decoderModule.destroy(dracoGeometry);
-        decoderModule.destroy(buffer);
-      }
-    });
-  });
-
   // create a TypedArray for each accessor
   const accessors = json.accessors.map((accessorInfo) => {
+    if (accessorInfo.bufferView == null) {
+      // This accessor has no associated bufferView, which happens when the mesh
+      // contains compressed data. This is not an error, though. So, we return
+      // null and let the mesh handles data access later.
+      return null;
+    }
+
     let arrayType;
     // prettier-ignore
     switch (accessorInfo.componentType) {
@@ -245,9 +111,6 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
       default:
         throw new Error(`unrecognized type ${accessorInfo.type}`);
     }
-    if (accessorInfo.bufferView == null) {
-      return null;
-    }
     const bufferView = json.bufferViews[accessorInfo.bufferView];
     if (bufferView.buffer !== 0) {
       throw new Error("only GLB-stored buffers are supported");
@@ -262,6 +125,8 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
     );
   });
 
+  await decodeCompressedGLB(json, binary);
+
   // load embedded images
   const images =
     json.images &&
@@ -272,8 +137,6 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
         return self.createImageBitmap(new Blob([data], { type: imgInfo.mimeType }));
       })
     ));
-
-  decoderModule.destroy(decoder);
 
   return { json, accessors, images };
 }

@@ -166,15 +166,19 @@ const drawModel = (regl) => {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
-        const { extensions = {} } = primitive;
-        const dracoCompression = extensions.KHR_draco_mesh_compression;
+
         let primitiveAccessors = accessors;
-        if (dracoCompression) {
-          primitiveAccessors = dracoCompression.accessors;
+        const { extensions = {} } = primitive;
+        const dracoCompressionEXT = extensions.KHR_draco_mesh_compression;
+        if (dracoCompressionEXT) {
+          // If mesh contains compressed data, accessors will be available inside
+          // the draco extension. See `parseGLB.js` and `draco.js` files.
+          primitiveAccessors = dracoCompressionEXT.accessors;
         }
         if (!primitiveAccessors) {
           throw new Error("Error decoding GLB model: Missing `accessors` in JSON data");
         }
+
         drawCalls.push({
           indices: primitiveAccessors[primitive.indices],
           positions: primitiveAccessors[primitive.attributes.POSITION],

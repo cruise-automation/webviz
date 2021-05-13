@@ -17,6 +17,7 @@ const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 // This is the regl command which encapsulates the camera projection and view matrices.
 // It adds the matrices to the regl context so they can be used by other commands.
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export default (regl: any) => {
   return class Camera implements CameraCommand {
     viewportWidth: number = 0;

@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import * as React from "react";
 
-import type { Point, CameraCommand, Dimensions, Color, Pose, Scale, Vec4, Mat4 } from "../types";
+import type { Point, CameraCommand, Dimensions, Color, Pose, Scale, Vec3, Vec4, Mat4 } from "../types";
 import { getCSSColor, toColor } from "../utils/commandUtils";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -69,8 +69,9 @@ function isColorEqual(a: Color, b: Color): boolean {
 }
 
 class TextElement {
-  wrapper = document.createElement("span");
-  _inner = document.createElement("span");
+  wrapper: HTMLElement = document.createElement("span");
+  _inner: HTMLElement = document.createElement("span");
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   _text = document.createTextNode("");
   // store prev colors to improve perf
   _prevTextColor: Color = DEFAULT_TEXT_COLOR;
@@ -140,7 +141,7 @@ export default class Text extends React.Component<Props> {
   _textComponents: Map<string | TextMarker, TextElement> = new Map();
   _textContainerRef: { current: HTMLDivElement | null } = React.createRef();
 
-  static defaultProps = {
+  static defaultProps: $Shape<Props> = {
     children: [],
   };
 
@@ -150,13 +151,13 @@ export default class Text extends React.Component<Props> {
     }
   }
 
-  componentWillUnmount = () => {
+  componentWillUnmount: () => void = () => {
     if (this._context) {
       this._context.unregisterPaintCallback(this.paint);
     }
   };
 
-  paint = () => {
+  paint: () => void = () => {
     const context = this._context;
     const textComponents = this._textComponents;
     const { children: markers, autoBackgroundColor } = this.props;
@@ -211,7 +212,13 @@ export default class Text extends React.Component<Props> {
     }
   };
 
-  project = (
+  project: (
+    point: Point,
+    camera: CameraCommand,
+    dimension: Dimensions,
+    cameraProjection: ?Mat4,
+    cameraView: ?Mat4
+  ) => ?Vec3 = (
     point: Point,
     camera: CameraCommand,
     dimension: Dimensions,
@@ -224,7 +231,7 @@ export default class Text extends React.Component<Props> {
     return camera.toScreenCoord(viewport, vec, cameraProjection, cameraView);
   };
 
-  render() {
+  render(): React.Node {
     return (
       <React.Fragment>
         <div ref={this._textContainerRef} />

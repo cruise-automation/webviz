@@ -8,7 +8,8 @@
 
 import { mat4, vec4 } from "gl-matrix";
 import memoizeWeak from "memoize-weak";
-import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
+import * as React from "react";
+import { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
 import type { Pose, Scale, MouseHandler, Mat4 } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
@@ -293,7 +294,7 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
   }, [model]);
 }
 
-export default function GLTFScene(props: Props) {
+export default function GLTFScene(props: Props): React.Node {
   const { children, model, ...rest } = props;
 
   const context = useContext(WorldviewReactContext);

@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useEffect, useState, useCallback, type Node } from "react";
+import { useEffect, useState, useCallback, type Node } from "react";
+import * as React from "react";
 
 import { inWebWorker } from "./common";
 
@@ -36,7 +37,7 @@ const ResizeObserverImpl =
 // Works by rendering an empty div, getting the parent element, and then once we know the dimensions of the parent
 // element, rendering the children. After the initial render it just observes the parent element.
 // We expect the parent element to never change.
-export default function Dimensions({ children }: Props) {
+export default function Dimensions({ children }: Props): React.Node {
   const [parentElement, setParentElement] = useState(undefined);
   const [dimensions, setDimensions] = useState<?DimensionsParams>();
   // This resizeObserver should never change.

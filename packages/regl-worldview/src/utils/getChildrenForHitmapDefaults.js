@@ -47,12 +47,14 @@ export const getChildrenForHitmapWithOriginalMarker = <T: any>(
   props: T,
   assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[]
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 ) => {
   if (Array.isArray(props)) {
     return props
       .map((prop) => nonInstancedGetChildrenForHitmapFromSingleProp(prop, assignNextColors, excludedObjects, true))
       .filter(Boolean);
   }
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextColors, excludedObjects, true);
 };
 
@@ -103,6 +105,7 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   return hitmapProp;
 }
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const createInstancedGetChildrenForHitmap = (pointCountPerInstance: number) => <T: any>(
   props: T,
   assignNextColors: AssignNextColorsFn,

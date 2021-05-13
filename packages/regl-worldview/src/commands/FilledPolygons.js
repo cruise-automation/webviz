@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import earcut from "earcut";
-import React from "react";
+import * as React from "react";
 
 import type { Vec3, Point, PolygonType } from "../types";
 import { shouldConvert, pointToVec3, vec3ToPoint } from "../utils/commandUtils";
@@ -63,6 +63,7 @@ const generateTriangles = (polygons: PolygonType[]) => {
   });
 };
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const makeFilledPolygonsCommand = () => (regl: any) => {
   const trianglesCommand = makeTrianglesCommand()(regl);
   return (props: any) => {
@@ -71,12 +72,13 @@ export const makeFilledPolygonsCommand = () => (regl: any) => {
 };
 
 // command to draw a filled polygon
-function FilledPolygons({ children: polygons = [], ...rest }: Props) {
+function FilledPolygons({ children: polygons = [], ...rest }: Props): React.Node {
   const triangles = generateTriangles(polygons);
 
   // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
   // polygon.
   return (
+    // $FlowFixMe Not fixing existing regl-worldview bugs.
     <Triangles getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...rest}>
       {triangles}
     </Triangles>

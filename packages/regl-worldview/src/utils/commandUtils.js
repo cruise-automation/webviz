@@ -37,6 +37,7 @@ export const vec3ToPoint = ([x, y, z]: Vec3): Point => ({ x, y, z });
 
 export const vec4ToOrientation = ([x, y, z, w]: Vec4): Orientation => ({ x, y, z, w });
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const pointToVec3Array = (points: Point[]) => {
   const result = new Float32Array(points.length * 3);
   let i = 0;
@@ -48,7 +49,7 @@ export const pointToVec3Array = (points: Point[]) => {
   return result;
 };
 
-export const toRGBA = (val: Color) => {
+export const toRGBA = (val: Color): Vec4 => {
   return [val.r, val.g, val.b, val.a];
 };
 
@@ -56,6 +57,7 @@ export const vec4ToRGBA = (color: Vec4): Color => ({ r: color[0], g: color[1], b
 
 export const toColor = (val: Color | Vec4): Color => (Array.isArray(val) ? vec4ToRGBA(val) : val);
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export function getCSSColor(color: Color = DEFAULT_TEXT_COLOR) {
   const { r, g, b, a } = color;
   return `rgba(${(r * 255).toFixed()}, ${(g * 255).toFixed()}, ${(b * 255).toFixed()}, ${a.toFixed(3)})`;
@@ -106,13 +108,17 @@ export const defaultReglDepth = {
 };
 
 export const defaultDepth = {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   enable: (context: any, props: any) => (props.depth && props.depth.enable) || defaultReglDepth.enable,
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   mask: (context: any, props: any) => (props.depth && props.depth.mask) || defaultReglDepth.mask,
 };
 
 export const defaultBlend = {
   ...defaultReglBlend,
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   enable: (context: any, props: any) => (props.blend && props.blend.enable) || defaultReglBlend.enable,
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   func: (context: any, props: any) => (props.blend && props.blend.func) || defaultReglBlend.func,
 };
 
@@ -170,6 +176,7 @@ function hasNestedArrays(arr: any[]) {
 // and returns a color attribute buffer for use in regl.
 // If there are multiple colors in the colors array, one color will be assigned to each instance.
 // In the case of a single color, the same color will be used for all instances.
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export function colorBuffer(regl: any) {
   const buffer = regl.buffer({
     usage: "dynamic",
@@ -196,6 +203,7 @@ export function colorBuffer(regl: any) {
 }
 
 // used to determine if the input/array of inputs is an object like {r: 0, g: 0, b: 0} or [0,0,0]
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export function shouldConvert(props: any) {
   if (!props || hasNestedArrays(props) || !isNaN(props[0])) {
     return false;

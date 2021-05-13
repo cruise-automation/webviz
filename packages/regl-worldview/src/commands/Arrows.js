@@ -8,7 +8,8 @@
 
 import { vec3, quat } from "gl-matrix";
 import omit from "lodash/omit";
-import React, { memo, Fragment } from "react";
+import * as React from "react";
+import { Fragment } from "react";
 
 import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
@@ -101,6 +102,7 @@ const generateArrowPrimitives = (markers: Arrow[]) => {
   };
 };
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const makeArrowsCommand = () => (regl: any) => {
   const cylindersCommand = cylinders(regl);
   const conesCommand = cones(regl);
@@ -111,7 +113,7 @@ export const makeArrowsCommand = () => (regl: any) => {
   };
 };
 
-function Arrows(props: Props) {
+function Arrows(props: Props): React.Node {
   const passedProps = omit(props, "children");
   const { cylinders, cones } = generateArrowPrimitives(props.children);
   return (
@@ -126,4 +128,4 @@ function Arrows(props: Props) {
   );
 }
 
-export default memo<Props>(Arrows);
+export default Arrows;

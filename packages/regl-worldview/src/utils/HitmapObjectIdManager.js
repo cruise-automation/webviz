@@ -25,10 +25,14 @@ type CommandType = Command<any>;
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: Object } = {};
   _commandsByObjectMap: Map<Object, CommandType> = new Map();
-  _nextObjectHitmapId = 1;
+  _nextObjectHitmapId: number = 1;
   _instanceIndexByObjectHitmapIdMap: { [ObjectHitmapId]: number } = {};
 
-  assignNextColors = (command: CommandType, object: Object, count: number): Vec4[] => {
+  assignNextColors: (command: CommandType, object: Object, count: number) => Vec4[] = (
+    command: CommandType,
+    object: Object,
+    count: number
+  ): Vec4[] => {
     if (count < 1) {
       throw new Error("Must get at least 1 id");
     }
@@ -54,6 +58,7 @@ export default class HitmapObjectIdManager {
     return colors;
   };
 
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
     return {
       object: this._objectsByObjectHitmapIdMap[objectHitmapId],
@@ -61,7 +66,7 @@ export default class HitmapObjectIdManager {
     };
   };
 
-  getCommandForObject = (object: Object): ?CommandType => {
+  getCommandForObject: (object: Object) => ?CommandType = (object: Object): ?CommandType => {
     return this._commandsByObjectMap.get(object);
   };
 }

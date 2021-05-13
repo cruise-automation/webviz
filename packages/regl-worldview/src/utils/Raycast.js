@@ -26,7 +26,7 @@ export class Ray {
     this.point = point;
   }
 
-  distanceToPoint(point: Vec3) {
+  distanceToPoint(point: Vec3): number {
     return vec3.distance(this.origin, point);
   }
 
@@ -46,6 +46,7 @@ export class Ray {
 }
 
 // adapted from https://github.com/regl-project/regl/blob/master/example/raycast.js
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export function getRayFromClick(camera: CameraCommand, { clientX, clientY, width, height }: ClickInfo) {
   const projectionMatrix = camera.getProjection();
   const viewMatrix = camera.getView();

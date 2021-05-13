@@ -8,13 +8,16 @@
 
 import * as React from "react";
 
-import type { Cylinder } from "../types";
+import type { Cylinder, Vec3 } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import withRenderStateOverrides from "../utils/withRenderStateOverrides";
 import Command, { type CommonCommandProps } from "./Command";
 
-export function createCylinderGeometry(numSegments: number, cone: boolean) {
+export function createCylinderGeometry(
+  numSegments: number,
+  cone: boolean
+): {| points: Vec3[], sideFaces: Vec3[], endCapFaces: Vec3[] |} {
   // "poles" are the centers of top/bottom faces
   const northPole = [0, 0, 0.5];
   const southPole = [0, 0, -0.5];
@@ -48,9 +51,11 @@ export function createCylinderGeometry(numSegments: number, cone: boolean) {
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const cylinders = withRenderStateOverrides(fromGeometry(points, sideFaces.concat(endCapFaces)));
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
-export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }) {
+export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={cylinders} />;
 }

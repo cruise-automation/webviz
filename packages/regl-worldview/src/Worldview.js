@@ -106,7 +106,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
   _dragStartPos: ?{ x: number, y: number } = null;
 
-  static defaultProps = {
+  static defaultProps: $Shape<BaseProps> = {
     maxStackedObjectCount: DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
@@ -174,12 +174,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     };
   }
 
-  static getDerivedStateFromProps({ width, height, top, left }: BaseProps, { worldviewContext }: State) {
+  static getDerivedStateFromProps({ width, height, top, left }: BaseProps, { worldviewContext }: State): ?State {
     worldviewContext.setDimension({ width, height, top, left });
     return null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (!this._canvas.current) {
       return console.warn("missing canvas element");
     }
@@ -230,7 +230,10 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  handleOffscreenMouseEvent = (e: SyntheticMouseEvent<HTMLCanvasElement>, mouseEventName: MouseEventEnum) => {
+  handleOffscreenMouseEvent: (SyntheticMouseEvent<HTMLCanvasElement>, MouseEventEnum) => void = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    mouseEventName: MouseEventEnum
+  ) => {
     if (mouseEventName === "onDoubleClick") {
       this._onDoubleClick(e, true);
     } else if (mouseEventName === "onMouseDown") {
@@ -242,20 +245,32 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   };
 
-  _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+  _onDoubleClick: (SyntheticMouseEvent<HTMLCanvasElement>, boolean) => void = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    fromOffscreenTarget: boolean
+  ) => {
     this._onMouseInteraction(e, "onDoubleClick", fromOffscreenTarget);
   };
 
-  _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+  _onMouseDown: (SyntheticMouseEvent<HTMLCanvasElement>, boolean) => void = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    fromOffscreenTarget: boolean
+  ) => {
     this._dragStartPos = { x: e.clientX, y: e.clientY };
     this._onMouseInteraction(e, "onMouseDown", fromOffscreenTarget);
   };
 
-  _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+  _onMouseMove: (SyntheticMouseEvent<HTMLCanvasElement>, boolean) => void = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    fromOffscreenTarget: boolean
+  ) => {
     this._onMouseInteraction(e, "onMouseMove", fromOffscreenTarget);
   };
 
-  _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>, fromOffscreenTarget: boolean) => {
+  _onMouseUp: (SyntheticMouseEvent<HTMLCanvasElement>, boolean) => void = (
+    e: SyntheticMouseEvent<HTMLCanvasElement>,
+    fromOffscreenTarget: boolean
+  ) => {
     this._onMouseInteraction(e, "onMouseUp", fromOffscreenTarget);
     const { _dragStartPos } = this;
     if (_dragStartPos) {
@@ -269,7 +284,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   };
 
-  _onMouseInteraction = (
+  _onMouseInteraction: (SyntheticMouseEvent<HTMLCanvasElement>, MouseEventEnum, boolean) => void = (
     e: SyntheticMouseEvent<HTMLCanvasElement>,
     mouseEventName: MouseEventEnum,
     fromOffscreenTarget: boolean
@@ -330,7 +345,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       });
   };
 
-  _renderDebug() {
+  _renderDebug(): React.Node {
     const { worldviewContext } = this.state;
     const initializedData = worldviewContext.initializedData;
 
@@ -379,7 +394,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     );
   }
 
-  render() {
+  render(): React.Node {
     const {
       width,
       height,
@@ -414,7 +429,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     );
 
     return (
-      <div style={{ position: "relative", overflow: "hidden", ...style }}>
+      <div style={{ ...style, position: "relative", overflow: "hidden", }}>
         {/* skip rendering CameraListener if Worldview has a fixed camera */}
         {isFixedCamera ? (
           canvasHtml
@@ -437,8 +452,10 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 }
 
+// $FlowFixMe
 export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
 
+// $FlowFixMe
 const Worldview = React.forwardRef<Props, _>((props: Props, ref) => (
   <ContainerDimensions>
     {({ width, height, left, top }) => (

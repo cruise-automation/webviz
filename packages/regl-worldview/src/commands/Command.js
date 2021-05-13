@@ -48,7 +48,7 @@ export type CommandProps<T> = Props<T>;
 // Component to dispatch children (for drawing) and hitmap props and a reglCommand to the render loop to render with regl.
 export default class Command<T> extends React.Component<Props<T>> {
   context: ?WorldviewContextType;
-  static displayName = "Command";
+  static displayName: ?string = "Command";
 
   constructor(props: Props<T>) {
     super(props);
@@ -119,7 +119,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     mouseHandler(e, { ray, objects });
   }
 
-  render() {
+  render(): React.Node {
     return (
       <WorldviewReactContext.Consumer>
         {(ctx: ?WorldviewContextType) => {

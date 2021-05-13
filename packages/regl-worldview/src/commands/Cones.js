@@ -17,9 +17,11 @@ import { createCylinderGeometry } from "./Cylinders";
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const cones = withRenderStateOverrides(fromGeometry(points, sideFaces.concat(endCapFaces)));
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
-export default function Cones(props: { ...CommonCommandProps, children: Cone[] }) {
+export default function Cones(props: { ...CommonCommandProps, children: Cone[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={cones} />;
 }

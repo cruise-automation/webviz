@@ -11,6 +11,7 @@ import memoize from "lodash/memoize";
 import type { DepthState, BlendState } from "../types";
 import { defaultReglDepth, defaultReglBlend } from "./commandUtils";
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 const withRenderStateOverrides = (command: any) => (regl: any) => {
   // Generate the render command once
   const reglCommand = command(regl);

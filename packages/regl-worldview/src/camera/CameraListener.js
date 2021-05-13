@@ -46,10 +46,11 @@ export default class CameraListener extends React.Component<Props> {
   _keyTimer: ?AnimationFrameID;
   _keys: Set<string> = new Set();
   _buttons: Set<number> = new Set();
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   _listeners = [];
-  _shiftKey = false;
-  _metaKey = false;
-  _ctrlKey = false;
+  _shiftKey: boolean = false;
+  _metaKey: boolean = false;
+  _ctrlKey: boolean = false;
 
   _el: ?HTMLDivElement;
   _rect: ClientRect | DOMRect;
@@ -89,7 +90,7 @@ export default class CameraListener extends React.Component<Props> {
     }
   }
 
-  _getMouseOnScreen = (mouse: MouseEvent) => {
+  _getMouseOnScreen: (MouseEvent) => [number, number] = (mouse: MouseEvent) => {
     const { clientX, clientY } = mouse;
     const { top, left, width, height } = this._rect;
     const x = (clientX - left) / width;
@@ -97,7 +98,7 @@ export default class CameraListener extends React.Component<Props> {
     return [x, y];
   };
 
-  _onMouseDown = (e: MouseEvent) => {
+  _onMouseDown: (MouseEvent) => void = (e: MouseEvent) => {
     const { _el } = this;
     if (!_el) {
       return;
@@ -111,19 +112,19 @@ export default class CameraListener extends React.Component<Props> {
     this.startDragging(e);
   };
 
-  _isLeftMouseDown() {
+  _isLeftMouseDown(): boolean {
     return this._buttons.has(0);
   }
 
-  _isRightMouseDown() {
+  _isRightMouseDown(): boolean {
     return this._buttons.has(2);
   }
 
-  _getMagnitude(base: number = 1) {
+  _getMagnitude(base: number = 1): number {
     return base;
   }
 
-  _getMoveMagnitude() {
+  _getMoveMagnitude(): {| x: number, y: number |} {
     // avoid interference with drawing tools
     if (this._ctrlKey) {
       return { x: 0, y: 0 };
@@ -146,7 +147,7 @@ export default class CameraListener extends React.Component<Props> {
     return { x: bounds.width, y: bounds.height };
   }
 
-  _onWindowMouseMove = (e: MouseEvent) => {
+  _onWindowMouseMove: (MouseEvent) => void = (e: MouseEvent) => {
     if (!this._buttons.size) {
       return;
     }
@@ -195,12 +196,12 @@ export default class CameraListener extends React.Component<Props> {
     }
   };
 
-  _onMouseUp = (e: MouseEvent) => {
+  _onMouseUp: (MouseEvent) => void = (e: MouseEvent) => {
     this._buttons.delete(e.button);
     this._endDragging();
   };
 
-  _onWindowMouseUp = (e: MouseEvent) => {
+  _onWindowMouseUp: (MouseEvent) => void = (e: MouseEvent) => {
     const { _el } = this;
     if (!_el) {
       return;
@@ -231,7 +232,7 @@ export default class CameraListener extends React.Component<Props> {
     }
   }
 
-  _getKeyMotion = (code: string): ?KeyMotion => {
+  _getKeyMotion: (string) => ?KeyMotion = (code: string): ?KeyMotion => {
     const moveSpeed = this._getMagnitude(KEYBOARD_MOVE_SPEED);
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
@@ -330,7 +331,7 @@ export default class CameraListener extends React.Component<Props> {
     this._keyTimer = undefined;
   }
 
-  _onKeyDown = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+  _onKeyDown: (e: SyntheticKeyboardEvent<HTMLDivElement>) => boolean = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
     const { keyMap } = this.props;
     this._shiftKey = e.shiftKey;
     this._metaKey = e.metaKey;
@@ -341,12 +342,12 @@ export default class CameraListener extends React.Component<Props> {
     if (e.repeat || this._keys.has(code)) {
       e.stopPropagation();
       e.preventDefault();
-      return;
+      return false;
     }
 
     if (e.altKey || e.ctrlKey || e.metaKey) {
       // we don't currently handle these modifiers
-      return;
+      return false;
     }
 
     // allow null, false, or empty keymappings which explicitly cancel Worldview from processing that key
@@ -361,9 +362,11 @@ export default class CameraListener extends React.Component<Props> {
       e.stopPropagation();
       e.preventDefault();
     }
+
+    return false;
   };
 
-  _onKeyUp = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+  _onKeyUp: (e: SyntheticKeyboardEvent<HTMLDivElement>) => void = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
     this._shiftKey = e.shiftKey;
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
@@ -371,7 +374,7 @@ export default class CameraListener extends React.Component<Props> {
     this._keys.delete(((e.nativeEvent: any): KeyboardEvent).code);
   };
 
-  _onWheel = (e: WheelEvent) => {
+  _onWheel: (e: WheelEvent) => void = (e: WheelEvent) => {
     // stop the wheel event here, as wheel propagation through the entire dom
     // can cause the browser to slow down & thrash
     e.preventDefault();
@@ -400,7 +403,7 @@ export default class CameraListener extends React.Component<Props> {
   // make sure all movements stop if the document loses focus by resetting modifier keys
   // to their 'off' position
   // (e.g. ctrl+tab leaving the page should not leave the ctrl key in the 'on' position)
-  _onBlur = (e: MouseEvent) => {
+  _onBlur: (e: MouseEvent) => void = (e: MouseEvent) => {
     this._keys = new Set();
     this._ctrlKey = false;
     this._shiftKey = false;
@@ -408,12 +411,12 @@ export default class CameraListener extends React.Component<Props> {
     this._stopKeyTimer();
   };
 
-  _onContextMenu = (e: MouseEvent) => {
+  _onContextMenu: (e: MouseEvent) => void = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  render() {
+  render(): React.Node {
     const { children } = this.props;
     return (
       <div

@@ -224,7 +224,7 @@ export default class PolygonBuilder {
   }
 
   // key down handler - to be passed to Worldview as a prop
-  onKeyDown = (e: KeyboardEvent): void => {
+  onKeyDown: (e: KeyboardEvent) => void = (e: KeyboardEvent): void => {
     // only respond to key events if we have a selected polygon
     const { activePolygon } = this;
     if (!activePolygon) {

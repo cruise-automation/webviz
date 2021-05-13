@@ -248,6 +248,7 @@ function pointsEqual(a, b) {
   return ax === bx && ay === by && az === bz;
 }
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const lines = (regl: any) => {
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
@@ -579,6 +580,7 @@ export const lines = (regl: any) => {
   };
 };
 
-export default function Lines(props: { ...CommonCommandProps, children: Line[] }) {
+export default function Lines(props: { ...CommonCommandProps, children: Line[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={lines} />;
 }

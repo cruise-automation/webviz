@@ -60,7 +60,7 @@ export default class CameraStore {
     this.setCameraState(initialCameraState);
   }
 
-  setCameraState = (state: $Shape<CameraState>) => {
+  setCameraState: (state: $Shape<CameraState>) => void = (state: $Shape<CameraState>) => {
     // Fill in missing properties from DEFAULT_CAMERA_STATE.
     // Mutate the `state` parameter instead of copying -- this
     // matches the previous behavior of this method, which didn't
@@ -75,7 +75,7 @@ export default class CameraStore {
     this.state = (state: any);
   };
 
-  cameraRotate = ([x, y]: Vec2) => {
+  cameraRotate: (Vec2) => void = ([x, y]: Vec2) => {
     // This can happen in 2D mode, when both e.movementX and e.movementY are evaluated as negative and mouseX move is 0
     if (x === 0 && y === 0) {
       return;
@@ -90,7 +90,7 @@ export default class CameraStore {
   };
 
   // move the camera along x, y axis; do not move up/down
-  cameraMove = ([x, y]: Vec2) => {
+  cameraMove: (Vec2) => void = ([x, y]: Vec2) => {
     // moveX and moveY both be 0 sometimes
     if (x === 0 && y === 0) {
       return;
@@ -109,7 +109,7 @@ export default class CameraStore {
     this._onChange(this.state);
   };
 
-  cameraZoom = (zoomPercent: number) => {
+  cameraZoom: (zoomPercent: number) => void = (zoomPercent: number) => {
     const { distance } = this.state;
     const newDistance: number = distanceAfterZoom(distance, zoomPercent);
     if (distance === newDistance) {

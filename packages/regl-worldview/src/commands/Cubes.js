@@ -14,6 +14,7 @@ import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitm
 import withRenderStateOverrides from "../utils/withRenderStateOverrides";
 import Command, { type CommonCommandProps } from "./Command";
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const cubes = withRenderStateOverrides(
   fromGeometry(
     [
@@ -52,6 +53,7 @@ export const cubes = withRenderStateOverrides(
 );
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
-export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }) {
+export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={cubes} />;
 }

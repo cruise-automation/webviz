@@ -3,7 +3,8 @@
 import TinySDF from "@mapbox/tiny-sdf";
 import difference from "lodash/difference";
 import memoizeOne from "memoize-one";
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 
 import type { Color } from "../types";
 import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
@@ -62,8 +63,8 @@ type GLTextProps = {|
   textAtlas?: GeneratedAtlas,
 |};
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 type Props = {
-  // $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
   ...CommonCommandProps,
   ...GLTextProps,
   children: $ReadOnlyArray<TextMarkerProps>,
@@ -565,6 +566,7 @@ function makeTextCommand(alphabet?: string[]) {
   return command;
 }
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const makeGLTextCommand = (props: GLTextProps) => {
   const command = makeTextCommand(props.alphabet);
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
@@ -577,7 +579,7 @@ export const makeGLTextCommand = (props: GLTextProps) => {
   return command;
 };
 
-export default function GLText(props: Props) {
+export default function GLText(props: Props): React.Node {
   const [command] = useState(() => makeGLTextCommand(props));
   const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 

@@ -167,11 +167,13 @@ const triangles = (regl: Regl) => {
   };
 };
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const makeTrianglesCommand = () => {
   return triangles;
 };
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(3);
-export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
+export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={triangles} />;
 }

@@ -31,7 +31,7 @@ import { getIdFromPixel, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
 import queuePromise from "./utils/queuePromise";
-import { getRayFromClick } from "./utils/Raycast";
+import { getRayFromClick, Ray } from "./utils/Raycast";
 
 type Props = any;
 
@@ -241,7 +241,7 @@ export class WorldviewContext {
     this.dimension = dimension;
   }
 
-  raycast = (canvasX: number, canvasY: number) => {
+  raycast: (number, number) => ?Ray = (canvasX: number, canvasY: number) => {
     if (!this.initializedData) {
       return undefined;
     }
@@ -311,13 +311,18 @@ export class WorldviewContext {
     this._frame = undefined;
   }
 
-  onDirty = () => {
+  onDirty: () => void = () => {
     if (undefined === this._frame) {
       this._frame = requestAnimationFrame(() => this.paint());
     }
   };
 
-  readHitmap = queuePromise(
+  readHitmap: (
+    canvasX: number,
+    canvasY: number,
+    enableStackedObjectEvents: boolean,
+    maxStackedObjectCount: number
+  ) => Promise<Array<[MouseEventObject, Command<any>]>> = queuePromise(
     (
       canvasX: number,
       canvasY: number,
@@ -447,7 +452,10 @@ export class WorldviewContext {
     }
   );
 
-  _drawInput = (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => {
+  _drawInput: (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => void = (
+    isHitmap?: boolean,
+    excludedObjects?: MouseEventObject[]
+  ) => {
     if (isHitmap) {
       this._hitmapObjectIdManager = new HitmapObjectIdManager();
     }
@@ -479,7 +487,7 @@ export class WorldviewContext {
     });
   };
 
-  _clearCanvas = (regl: any) => {
+  _clearCanvas: (any) => void = (regl: any) => {
     // Since we aren't using regl.frame and only rendering when we need to,
     // we need to tell regl to update its internal state.
     regl.poll();
@@ -489,6 +497,7 @@ export class WorldviewContext {
     });
   };
 
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   _instrumentCommands(regl: any) {
     // Never instrument; this causes a memory leak
     return regl;

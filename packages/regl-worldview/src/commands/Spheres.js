@@ -55,9 +55,11 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
   faces.push([pt, prevPt, 1]);
 }
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const spheres = withRenderStateOverrides(fromGeometry(points, faces));
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
-export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }) {
+export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }): React.Node {
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={spheres} />;
 }

@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 
 import type { PointType, Regl } from "../types";
 import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
@@ -17,13 +18,14 @@ type PointsProps = {|
   useWorldSpaceSize?: boolean,
 |};
 
+// $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
 type Props = {
-  // $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
   ...CommonCommandProps,
   ...PointsProps,
   children: $ReadOnlyArray<PointType>,
 };
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export const makePointsCommand = ({ useWorldSpaceSize }: PointsProps) => {
   return (regl: Regl) => {
     const [minLimitPointSize, maxLimitPointSize] = regl.limits.pointSizeDims;
@@ -110,7 +112,7 @@ export const makePointsCommand = ({ useWorldSpaceSize }: PointsProps) => {
 };
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
-export default function Points(props: Props) {
+export default function Points(props: Props): React.Node {
   const [command] = useState(() => makePointsCommand(props));
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={command} />;
 }

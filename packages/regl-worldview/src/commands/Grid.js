@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import * as React from "react";
 
 import { withPose } from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
@@ -14,6 +14,7 @@ import Command, { type CommonCommandProps } from "./Command";
 
 const DEFAULT_GRID_COLOR = [0.3, 0.3, 0.3, 1];
 
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export function grid() {
   return withPose({
     vert: `
@@ -70,9 +71,10 @@ type Props = {
 
 // useful for rendering a grid for debugging in stories
 
-export default function Grid({ count, ...rest }: Props) {
+export default function Grid({ count, ...rest }: Props): React.Node {
   const children = { count };
   return (
+    // $FlowFixMe Not fixing existing regl-worldview bugs.
     <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest} reglCommand={grid}>
       {children}
     </Command>

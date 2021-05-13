@@ -11,6 +11,7 @@ import { withPose, pointToVec3, defaultBlend, defaultDepth, shouldConvert, color
 
 // Creates a regl command factory which will render any geometry described by point positions
 // and elements (indexes into the array of positions), and apply the object's pose, scale, and color to it.
+// $FlowFixMe Not fixing existing regl-worldview bugs.
 export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand => {
   const vertexArray = Float32Array.from([].concat(...positions));
 

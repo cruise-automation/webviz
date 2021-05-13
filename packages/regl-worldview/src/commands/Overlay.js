@@ -33,6 +33,7 @@ type State = {
 // It supplies coordinates to the `renderItem` prop for positioning DOM nodes relative to the canvas.
 export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State> {
   _context: ?WorldviewContextType;
+  // $FlowFixMe Not fixing existing regl-worldview bugs.
   state = { items: [] };
 
   componentDidMount() {
@@ -41,13 +42,13 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
     }
   }
 
-  componentWillUnmount = () => {
+  componentWillUnmount: () => void = () => {
     if (this._context) {
       this._context.unregisterPaintCallback(this.paint);
     }
   };
 
-  paint = () => {
+  paint: () => void = () => {
     const context = this._context;
     const dimension = context && context.dimension;
     const { renderItem, children } = this.props;
@@ -61,7 +62,10 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
     this.setState({ items });
   };
 
-  project = (point: Point, context: ?WorldviewContextType): ?Vec3 => {
+  project: (point: Point, context: ?WorldviewContextType) => ?Vec3 = (
+    point: Point,
+    context: ?WorldviewContextType
+  ): ?Vec3 => {
     if (!context || !context.initializedData) {
       return;
     }
@@ -75,7 +79,7 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
     return camera.toScreenCoord(viewport, vec, cameraProjection, cameraView);
   };
 
-  render() {
+  render(): React.Node {
     return (
       <React.Fragment>
         <WorldviewReactContext.Consumer>

@@ -1,3 +1,11 @@
+// @flow
+//
+//  Copyright (c) 2021-present, Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
 import draco3d from "draco3d";
 import draco3dWasm from "draco3d/draco_decoder.wasm";
 
@@ -22,8 +30,8 @@ const decodeGeometry = (draco, decoder, json, binary, dracoCompression) => {
     console.error(errorMsg);
   }
 
-  if (!status.ok() || dracoGeometry.ptr === 0) {
-    throw new Error(`Decoding failed: ${status.error_msg()}`);
+  if (!status || !dracoGeometry || !status.ok() || dracoGeometry?.ptr === 0) {
+    throw new Error(`Decoding failed: ${status ? status.error_msg() : "unknown error"}`);
   }
 
   draco.destroy(buffer);
@@ -94,7 +102,7 @@ const decodePrimitive = (draco, decoder, json, binary, primitive) => {
   draco.destroy(dracoGeometry);
 };
 
-export default async function decodeCompressedGLB(json, binary) {
+export default async function decodeCompressedGLB(json: any, binary: DataView) {
   const { extensionsRequired = [] } = json;
   if (!extensionsRequired.includes("KHR_draco_mesh_compression")) {
     // this model does not uses Draco compression

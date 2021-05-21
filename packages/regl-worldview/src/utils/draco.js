@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import draco3d from "draco3d";
-import draco3dWasm from "draco3d/draco_decoder.wasm";
 
 const decodeGeometry = (draco, decoder, json, binary, dracoCompression) => {
   const { bufferView: bufferViewIndex } = dracoCompression;
@@ -102,6 +101,19 @@ const decodePrimitive = (draco, decoder, json, binary, primitive) => {
   draco.destroy(dracoGeometry);
 };
 
+async function createDracoModule(): any {
+  // npm does not work correctly when we try to use `import` to fetch the wasm module,
+  // so we need to use `require` here instead. In any case, `draco3dWasm` does not
+  // hold the actual wasm module, but the path to it, which we use in the `locateFile`
+  // function below.
+  const draco3dWasm = require("draco3d/draco_decoder.wasm");
+  return draco3d.createDecoderModule({
+    locateFile: () => {
+      return draco3dWasm;
+    },
+  });
+}
+
 export default async function decodeCompressedGLB(json: any, binary: DataView) {
   const { extensionsRequired = [] } = json;
   if (!extensionsRequired.includes("KHR_draco_mesh_compression")) {
@@ -109,12 +121,7 @@ export default async function decodeCompressedGLB(json: any, binary: DataView) {
     return;
   }
 
-  // initialize Draco module and decoder
-  const draco = await draco3d.createDecoderModule({
-    locateFile: () => {
-      return draco3dWasm;
-    },
-  });
+  const draco = await createDracoModule();
   const decoder = new draco.Decoder();
 
   json.meshes.forEach((mesh) => {

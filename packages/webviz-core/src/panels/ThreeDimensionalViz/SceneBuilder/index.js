@@ -702,10 +702,8 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
 
-    const { overrideColor } = this._settingsByKey[`t:${topic}`] || {};
     const mappedMessage = {
       ...drawData,
-      ...(overrideColor ? { color: overrideColor } : undefined),
       type,
       pose,
       interactionData: { topic, originalMessage: originalMessage ?? drawData },
@@ -775,6 +773,7 @@ export default class SceneBuilder implements MarkerProvider {
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
       case NAV_MSGS_PATH_DATATYPE: {
+        const topicSettings = this._settingsByKey[`t:${topic}`];
         const pathStamped = cast<BinaryPath>(message);
         if (pathStamped.poses().length() === 0) {
           break;
@@ -788,7 +787,7 @@ export default class SceneBuilder implements MarkerProvider {
             .map((pose) => deepParse(pose.pose().position())),
           closed: false,
           scale: { x: 0.2 },
-          color: { r: 1, g: 0, b: 0, a: 1 },
+          color: topicSettings?.overrideColor ?? { r: 1, g: 0, b: 0, a: 1 },
         };
         this._consumeNonMarkerMessage(topic, newMessage, MARKER_MSG_TYPES.LINE_STRIP, message);
         break;

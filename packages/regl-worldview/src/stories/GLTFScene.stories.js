@@ -32,6 +32,28 @@ storiesOf("Worldview/GLTFScene", module)
       </Worldview>
     );
   })
+  .add("<GLTFScene> - Load a scene from a file with Draco-compressed buffers", () => {
+    const model = require("common/fixtures/Duck-Compressed.glb");
+    return (
+      <Worldview
+        defaultCameraState={{
+          distance: 25,
+          thetaOffset: (-3 * Math.PI) / 4,
+        }}>
+        <Axes />
+        <Grid />
+        <GLTFScene model={model}>
+          {{
+            pose: {
+              position: { x: 0, y: 3, z: 0 },
+              orientation: { x: 0, y: 0, z: 1, w: 0 },
+            },
+            scale: { x: 1, y: 1, z: 1 },
+          }}
+        </GLTFScene>
+      </Worldview>
+    );
+  })
   .add("<GLTFScene> - Load a scene with default texture samplers", () => {
     const model = require("common/fixtures/gltf_bug_sampler.glb");
     return (

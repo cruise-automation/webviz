@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import wasm from "@rollup/plugin-wasm";
 import babel from "rollup-plugin-babel";
 import commonjs from "rollup-plugin-commonjs";
 import copy from "rollup-plugin-copy";
@@ -50,6 +51,7 @@ export default function(pkg) {
         commonjs({ include: "node_modules/**" }),
         replace({ "process.env.NODE_ENV": JSON.stringify("development") }),
         terser(),
+        wasm(),
       ],
     },
     {

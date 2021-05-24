@@ -1574,7 +1574,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/asap/dist/esm/browser/raw.js (<- Module uses injected variables (global)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/index.js */
 

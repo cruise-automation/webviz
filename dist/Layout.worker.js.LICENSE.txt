@@ -63,6 +63,8 @@ and limitations under the License.
 
 /*! ./../../../../node_modules/webpack/buildin/module.js */
 
+/*! ./../../../../node_modules/webpack/node_modules/process/browser.js */
+
 /*! ./../../../../webpack/node_modules/process/browser.js */
 
 /*! ./../../../node_modules/webpack/buildin/global.js */
@@ -453,6 +455,10 @@ and limitations under the License.
 
 /*! ./defineProperty */
 
+/*! ./draco_decoder_nodejs */
+
+/*! ./draco_encoder_nodejs */
+
 /*! ./eq */
 
 /*! ./factoryWithThrowingShims */
@@ -708,6 +714,10 @@ and limitations under the License.
 
 /*! distance-to-line-segment */
 
+/*! draco3d */
+
+/*! draco3d/draco_decoder.wasm */
+
 /*! earcut */
 
 /*! exports provided: API_VERSION, Hub, getMainCarrier, makeMain, getCurrentHub, getHubFromCarrier, setHubOnCarrier */
@@ -794,6 +804,8 @@ and limitations under the License.
 
 /*! exports used: logger */
 
+/*! fs */
+
 /*! get-plane-normal */
 
 /*! gl-matrix */
@@ -875,6 +887,8 @@ and limitations under the License.
 /*! normalize-wheel */
 
 /*! object-assign */
+
+/*! path */
 
 /*! point-line-distance */
 
@@ -1312,6 +1326,10 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/util/naturalSort.js ***!
   \******************************************************/
 
+/*!*******************************************************!*\
+  !*** (webpack)/node_modules/path-browserify/index.js ***!
+  \*******************************************************/
+
 /*!********************************************************!*\
   !*** ./node_modules/react/cjs/react.production.min.js ***!
   \********************************************************/
@@ -1475,6 +1493,10 @@ and limitations under the License.
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/memoize.js ***!
   \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** (webpack)/node_modules/node-libs-browser/mock/empty.js ***!
+  \**************************************************************/
 
 /*!**************************************************************!*\
   !*** ./node_modules/gl-matrix/lib/gl-matrix.js + 10 modules ***!
@@ -1779,6 +1801,10 @@ and limitations under the License.
 /*!****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/natsort/lib/index.js ***!
   \****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/regl-worldview/node_modules/draco3d/draco3d.js ***!
+  \*****************************************************************/
 
 /*!*****************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_Promise.js ***!
@@ -2773,6 +2799,10 @@ and limitations under the License.
   \************************************************************************/
 
 /*!*************************************************************************!*\
+  !*** ./packages/regl-worldview/node_modules/draco3d/draco_decoder.wasm ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_baseAssignValue.js ***!
   \*************************************************************************/
 
@@ -2914,6 +2944,14 @@ and limitations under the License.
 
 /*!******************************************************************************!*\
   !*** ./node_modules/styled-components/dist/styled-components.browser.esm.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/regl-worldview/node_modules/draco3d/draco_decoder_nodejs.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/regl-worldview/node_modules/draco3d/draco_encoder_nodejs.js ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\

@@ -506,6 +506,10 @@
 
 /*! distance-to-line-segment */
 
+/*! draco3d */
+
+/*! draco3d/draco_decoder.wasm */
+
 /*! earcut */
 
 /*! exports provided: charInfo, textureWidth, textureHeight, default */

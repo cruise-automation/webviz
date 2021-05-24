@@ -47,6 +47,7 @@ npm run serve-static-webviz # serve static build on localhost:8080
 ## Recording videos
 
 Prerequisites:
+
 - `npm run bootstrap` to install dependencies
 - Install [FFmpeg](https://ffmpeg.org/): `apt-get install ffmpeg` or `brew install ffmpeg` or so.
 - Download the ROS bag to your local machine, and also save the layout to a `.json` file.
@@ -70,23 +71,25 @@ To install dependencies, first run `npm run bootstrap`. This command will popula
 
 ### Webviz Core
 
-```npm run webviz-dev```
+`npm run webviz-dev`
 
 ### Docs
 
-```npm run docs-dev```
+`npm run docs-dev`
 
 ### Storybook
 
-```npm run storybook```
+`npm run storybook`
 
 Useful for `regl-worldview` changes.
 
 ### Full list of scripts
+
 - `npm run webviz-dev` to run a webviz-only server that you can develop Webviz on.
 - `npm run bootstrap` in the root directory to install dependencies.
 - `npm run build` to run a single build or `npm run watch` to watch and build.
-- `npm run docs` to run the docs app (e.g. go to http://localhost:8080/app to open Webviz). Requires `build` to be run first.
+- `npm run docs-dev` to run the docs app (e.g. go to http://localhost:8080/app to open Webviz). Requires `build` to be run first.
+- `npm run docs-deploy` to deploy the docs to https://webviz.io/.
 - `npm run storybook` to run storybook. Requires `build` to be run first.
 - `npm run screenshot-local` or `npm run screenshot-local-debug` to generate screenshots from stories.
 - `npm run lint` to run the linters (and `npm run lint:fix` to automatically fix issues).

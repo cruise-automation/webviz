@@ -60,7 +60,13 @@ const getLaserScan = (vert) => (regl: Regl) =>
         props.intensities.length === props.ranges.length
           ? props.intensities
           : new Float32Array(props.ranges.length).fill(1),
-      hitmapColor: (context, props) => new Array(props.ranges.length).fill(props.color || [0, 0, 0, 1]),
+      hitmapColor: (context, props) => {
+        let color = [0, 0, 0, 1];
+        if (props.color) {
+          color = Array.isArray(props.color) ? props.color : toRGBA(props.color);
+        }
+        return new Array(props.ranges.length).fill(color);
+      },
     },
 
     count: regl.prop("ranges.length"),

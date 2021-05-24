@@ -12,6 +12,7 @@ import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
 import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
+import { BUFFER_DURATION_SECS } from "webviz-core/src/players/OrderedStampPlayer";
 import { SEEK_BACK_NANOSECONDS } from "webviz-core/src/players/RandomAccessPlayer";
 import type {
   AdvertisePayload,
@@ -34,12 +35,14 @@ import sendNotification, {
   setNotificationHandler,
 } from "webviz-core/src/util/sendNotification";
 import {
+  fromSec,
   getSeekTimeFromSpec,
   clampTime,
   subtractTimes,
   toMillis,
   fromMillis,
   getSeekToTime,
+  type TimestampMethod,
 } from "webviz-core/src/util/time";
 
 export interface AutomatedRunClient {
@@ -57,7 +60,7 @@ export interface AutomatedRunClient {
   markFrameRenderEnd(): number;
   markPreloadStart(): void;
   markPreloadEnd(): number;
-  onFrameFinished(frameIndex: number): Promise<void>;
+  onFrameFinished(): Promise<void>;
   finish(): any;
 }
 
@@ -91,6 +94,7 @@ export default class AutomatedRunPlayer implements Player {
   _waitToReportErrorPromise: ?Promise<void>;
   _startCalled: boolean = false;
   _receivedBytes: number = 0;
+  _globalMessageOrder: TimestampMethod = "receiveTime";
   // Calls to this._listener must not happen concurrently, and we want them to happen
   // deterministically so we put them in a FIFO queue.
   _emitStateQueue: Queue = new Queue(1);
@@ -131,6 +135,13 @@ export default class AutomatedRunPlayer implements Player {
     });
   }
 
+  _end(): Time {
+    // Play "past the end" when in header-stamp mode so the OrderedStampPlayer goes up to the end.
+    return this._globalMessageOrder === "receiveTime"
+      ? this._providerResult.end
+      : TimeUtil.add(this._providerResult.end, fromSec(BUFFER_DURATION_SECS));
+  }
+
   async _getMessages(
     start: Time,
     end: Time
@@ -140,6 +151,8 @@ export default class AutomatedRunPlayer implements Player {
     if (parsedTopics.length === 0 && bobjectTopics.length === 0) {
       return { parsedMessages: [], bobjects: [] };
     }
+    // Make sure to clamp the start/end times to the _providerResult or getMessages will throw errors
+    // TODO: Find a better way to share this logic with RandomAccessPlayer.js
     start = clampTime(start, this._providerResult.start, this._providerResult.end);
     end = clampTime(end, this._providerResult.start, this._providerResult.end);
     const messages = await this._provider.getMessages(start, end, {
@@ -182,8 +195,9 @@ export default class AutomatedRunPlayer implements Player {
       if (!this._listener) {
         return;
       }
+      const endTime = this._end();
       const initializationResult = this._providerResult;
-      if (initializationResult.messageDefinitions.type === "raw") {
+      if (!initializationResult.messageDefinitions || initializationResult.messageDefinitions.type === "raw") {
         throw new Error("AutomatedRunPlayer requires parsed message definitions");
       }
       return this._listener({
@@ -199,7 +213,7 @@ export default class AutomatedRunPlayer implements Player {
           totalBytesReceived: this._receivedBytes,
           currentTime,
           startTime: this._providerResult.start,
-          endTime: this._providerResult.end,
+          endTime,
           isPlaying: this._isPlaying,
           speed: this._speed,
           messageOrder: "receiveTime",
@@ -265,7 +279,7 @@ export default class AutomatedRunPlayer implements Player {
       notifyPlayerManager: async () => {},
     });
     this._providerTopics = this._providerResult.topics.map((t) => ({ ...t, preloadable: true }));
-    this._startTime = getSeekTimeFromSpec(getSeekToTime(), this._providerResult.start, this._providerResult.end);
+    this._startTime = getSeekTimeFromSpec(getSeekToTime(), this._providerResult.start, this._end());
     await this._start();
   }
 
@@ -321,13 +335,16 @@ export default class AutomatedRunPlayer implements Player {
     console.log("AutomatedRunPlayer._run()");
     await this._emitState([], [], this._startTime);
 
-    const requestedDurationMs = this._client.durationMs || Infinity;
-    const bagLengthMs = Math.min(
-      requestedDurationMs,
-      toMillis(subtractTimes(this._providerResult.end, this._startTime))
+    const requestedDurationTime = this._client.durationMs
+      ? fromMillis(this._client.durationMs)
+      : { sec: Infinity, nsec: 0 };
+    const endTime = clampTime(
+      TimeUtil.add(this._startTime, requestedDurationTime),
+      this._providerResult.start,
+      this._end()
     );
-    const endTime = TimeUtil.add(this._startTime, fromMillis(bagLengthMs));
-    this._client.start({ bagLengthMs });
+    const videoDurationMs = toMillis(subtractTimes(endTime, this._startTime));
+    this._client.start({ bagLengthMs: videoDurationMs });
 
     const startEpoch = Date.now();
     const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
@@ -337,29 +354,39 @@ export default class AutomatedRunPlayer implements Player {
     const workerIndex = this._client.workerIndex ?? 0;
     const workerCount = this._client.workerTotal ?? 1;
     const nsFrameTimePerWorker = nsBagTimePerFrame * workerCount;
+    let currentTime = TimeUtil.add(this._startTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
 
-    let currentTime = this._startTime;
-    currentTime = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
-
-    let frameCount = 0;
+    // Main video recording loop
     while (TimeUtil.isLessThan(currentTime, endTime)) {
       if (this._waitToReportErrorPromise) {
         await this._waitToReportErrorPromise;
       }
-      const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsFrameTimePerWorker });
 
       this._client.markTotalFrameStart();
-      const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
+
+      const internalBackfillDuration = { sec: 0, nsec: SEEK_BACK_NANOSECONDS };
+      const backfillStart = clampTime(
+        subtractTimes(currentTime, internalBackfillDuration),
+        this._startTime,
+        this._end()
+      );
+      const { parsedMessages, bobjects } = await this._getMessages(backfillStart, currentTime);
       this._client.markFrameRenderStart();
 
       // Wait for the frame render to finish.
-      await this._emitState(parsedMessages, bobjects, end);
+      await this._emitState(parsedMessages, bobjects, currentTime);
 
       this._client.markTotalFrameEnd();
       const frameRenderDurationMs = this._client.markFrameRenderEnd();
 
       const bagTimeSinceStartMs = toMillis(subtractTimes(currentTime, this._startTime));
-      const percentComplete = bagTimeSinceStartMs / bagLengthMs;
+      currentTime = clampTime(
+        TimeUtil.add(currentTime, { sec: 0, nsec: nsFrameTimePerWorker }),
+        this._providerResult.start,
+        this._end()
+      );
+
+      const percentComplete = bagTimeSinceStartMs / videoDurationMs;
       const msPerPercent = (Date.now() - startEpoch) / percentComplete;
       const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);
       const eta = formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */));
@@ -368,11 +395,7 @@ export default class AutomatedRunPlayer implements Player {
           1
         )}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
       );
-
-      await this._client.onFrameFinished(frameCount);
-
-      currentTime = TimeUtil.add(end, { sec: 0, nsec: 1 });
-      frameCount++;
+      await this._client.onFrameFinished();
     }
 
     await this._client.finish();
@@ -414,5 +437,7 @@ export default class AutomatedRunPlayer implements Player {
   setGlobalVariables() {
     console.warn(`setGlobalVariables: Unsupported in AutomatedRunPlayer`);
   }
-  setMessageOrder() {}
+  setMessageOrder(messageOrder: TimestampMethod) {
+    this._globalMessageOrder = messageOrder;
+  }
 }

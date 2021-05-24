@@ -18,6 +18,7 @@ import PanelLayout from "webviz-core/src/components/PanelLayout";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
 import ThreeDimensionalViz, { type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
+import { use3dPanelReadyEvent } from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import createRootReducer from "webviz-core/src/reducers";
 import Store from "webviz-core/src/store";
@@ -154,10 +155,12 @@ export const ThreeDimPanelSetupWithBag = ({
   threeDimensionalConfig,
   globalVariables = {},
   bag,
+  onMount,
 }: {
   threeDimensionalConfig: $Shape<ThreeDimensionalVizConfig>,
   globalVariables: {},
   bag: string,
+  onMount?: () => Promise<void>,
 }) => {
   const store: Store = configureStore(createRootReducer(createMemoryHistory()));
   const topics = uniq(
@@ -166,6 +169,12 @@ export const ThreeDimPanelSetupWithBag = ({
       .map((topic) => topic.substring(2))
       .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics)
   );
+
+  const [_, forceUpdate] = React.useState(false);
+  const readyEvent = use3dPanelReadyEvent();
+  React.useEffect(() => {
+    readyEvent.then(() => forceUpdate(true));
+  }, [readyEvent]);
 
   return (
     <ScreenshotSizedContainer>
@@ -179,6 +188,9 @@ export const ThreeDimPanelSetupWithBag = ({
             await delay(500); // Wait for the panel to finish resizing
             // Select the panel so we can control with the keyboard
             store.dispatch(selectAllPanelIds());
+            if (onMount) {
+              onMount();
+            }
           });
         }}
         getMergedFixture={(bagFixture) => ({

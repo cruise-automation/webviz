@@ -121,13 +121,7 @@ class VideoRecordingClient {
     return errorSignal;
   }
 
-  async onFrameFinished(frameCount: number) {
-    // Wait a bit to allow for the camera to get in position and images to load.
-    if (frameCount === 0) {
-      await delay(5000);
-      return;
-    }
-
+  async onFrameFinished() {
     await delay(60); // Give PlayerDispatcher time to dispatch a frame, and then render everything.
     if (screenshotResolve) {
       throw new Error("Already have a screenshot queued!");

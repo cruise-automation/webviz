@@ -14,7 +14,6 @@ import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/Memor
 import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
 import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
-import { parseTimeStr } from "webviz-core/src/util/formatTime";
 import {
   SEEK_TO_FRACTION_QUERY_KEY,
   SEEK_TO_RELATIVE_MS_QUERY_KEY,
@@ -335,6 +334,10 @@ export function getTimestampForMessage(message: Message, timestampMethod?: Times
   return message.receiveTime;
 }
 
+export function getDisplayedTimestampMethod(timestampMethod?: TimestampMethod): string {
+  return timestampMethod === "headerStamp" ? "Header stamp" : "Receive time";
+}
+
 export const compareBinaryTimes = (a: BinaryTime, b: BinaryTime) => {
   return a.sec() - b.sec() || a.nsec() - b.nsec();
 };
@@ -354,30 +357,4 @@ export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
   if (isTime(stamp)) {
     return stamp;
   }
-};
-
-const todTimeRegex = /^\d+:\d+:\d+.\d+\s[PpAa][Mm]\s[A-Za-z$]+/;
-export const getValidatedTimeAndMethodFromString = ({
-  text,
-  date,
-  timezone,
-}: {
-  text: ?string,
-  date: string,
-  timezone: ?string,
-}): ?{ time: ?Time, method: "ROS" | "TOD" } => {
-  if (!text) {
-    return;
-  }
-  const isInvalidRosTime = isNaN(text);
-  const isInvalidTodTime = !(todTimeRegex.test(text || "") && parseTimeStr(`${date} ${text || ""}`, timezone));
-
-  if (isInvalidRosTime && isInvalidTodTime) {
-    return;
-  }
-
-  return {
-    time: !isInvalidRosTime ? parseRosTimeStr(text || "") : parseTimeStr(`${date} ${text || ""}`, timezone),
-    method: isInvalidRosTime ? "TOD" : "ROS",
-  };
 };

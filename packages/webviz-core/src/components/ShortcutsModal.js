@@ -33,6 +33,7 @@ const EXISTING_CONFIG = [
   {
     title: "Global",
     shortcuts: [
+      { description: "Open layout menu", keys: ["l"] },
       { description: "Save layouts", keys: ["⌘", "s"] },
       { description: "Import/export layouts", keys: ["⌘", "e"] },
       { description: "Undo changes", keys: ["⌘", "z"] },

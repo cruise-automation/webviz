@@ -11,10 +11,7 @@
 using cruise::DataWriter;
 using cruise::MessageWriter;
 
-bool MessageWriter::reserve(
-        Definition* definition,
-        size_t messageCount,
-        size_t totalBytes) noexcept {
+bool MessageWriter::reserve(Definition* definition, size_t messageCount, size_t totalBytes) {
 
     if (definition == nullptr || !definition->isValid()) {
         // Cannot find definition. Fail
@@ -46,7 +43,7 @@ bool MessageWriter::reserve(
 bool MessageWriter::dispatchCommands(
         const Definition::CommandBuffer& cmds,
         DataReader* src,
-        DataWriter* dst) noexcept {
+        DataWriter* dst) {
 
     for (const auto& cmd : cmds) {
         switch (cmd.type) {
@@ -117,7 +114,7 @@ bool MessageWriter::readDynamicData(
         DataWriter* dst,
         Buffer* buffer,
         const std::string& label,
-        size_t size) noexcept {
+        size_t size) {
     uint32_t length = 0;
     if (!src->readLength(&length)) {
         std::cerr << "Cannot read length for " << label << std::endl;
@@ -137,7 +134,7 @@ bool MessageWriter::readDynamicData(
     return true;
 }
 
-int32_t MessageWriter::write(Definition* definition, uintptr_t data, size_t size) noexcept {
+int32_t MessageWriter::write(Definition* definition, uintptr_t data, size_t size) {
     if (definition == nullptr || !definition->isValid()) {
         // Cannot find definition. Fail
         return -1;
@@ -160,18 +157,18 @@ int32_t MessageWriter::write(Definition* definition, uintptr_t data, size_t size
 }
 
 #if defined(__EMSCRIPTEN__)
-emscripten::val MessageWriter::getDataBufferJS() noexcept {
+emscripten::val MessageWriter::getDataBufferJS() {
     return emscripten::val(emscripten::typed_memory_view(_dataBuffer.size(), _dataBuffer.data()));
 }
 
-emscripten::val MessageWriter::getStringBufferJS() noexcept {
+emscripten::val MessageWriter::getStringBufferJS() {
     return emscripten::val(
             emscripten::typed_memory_view(_stringBuffer.size(), _stringBuffer.data()));
 }
 
 #endif
 
-DataWriter MessageWriter::allocate(Buffer* buffer, size_t size) noexcept {
+DataWriter MessageWriter::allocate(Buffer* buffer, size_t size) {
     auto begin = buffer->size();
     if (size != 0) {
         buffer->resize(begin + size);

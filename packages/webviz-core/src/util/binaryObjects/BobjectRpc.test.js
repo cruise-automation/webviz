@@ -57,7 +57,9 @@ const mixedBinaryComplexArrayBobject = merge(binaryComplexArrayBobject, {
 const topic = "/topic";
 const receiveTime = { sec: 1, nsec: 2 };
 
-const isBinary = (message) => "buffer" in (getSourceData(Object.getPrototypeOf(message).constructor) ?? {});
+// $FlowFixMe: only binary source data objects have buffers. That's what we're testing.
+const getBuffer = (message) => getSourceData(Object.getPrototypeOf(message).constructor)?.buffer;
+const isBinary = (message) => getBuffer(message) != null;
 
 describe("BobjectRpc", () => {
   it("can send parsed -> parsed", async () => {
@@ -66,11 +68,11 @@ describe("BobjectRpc", () => {
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
 
-    receiver.receive("action name", "parsed", async (msg) => {
+    receiver.receive("action name", "parsed", async ([msg]) => {
       expect(msg).toEqual({ topic, receiveTime, message: js });
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: parsedBobject });
+    sender.send("action name", [{ topic, receiveTime, message: parsedBobject }]);
     await promise;
   });
 
@@ -80,13 +82,13 @@ describe("BobjectRpc", () => {
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
 
-    receiver.receive("action name", "bobject", async (msg) => {
+    receiver.receive("action name", "bobject", async ([msg]) => {
       expect(msg.topic).toBe(topic);
       expect(msg.receiveTime).toEqual(receiveTime);
       expect(deepParse(msg.message)).toEqual(js);
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: parsedBobject });
+    sender.send("action name", [{ topic, receiveTime, message: parsedBobject }]);
     await promise;
   });
 
@@ -96,11 +98,11 @@ describe("BobjectRpc", () => {
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
 
-    receiver.receive("action name", "parsed", async (msg) => {
+    receiver.receive("action name", "parsed", async ([msg]) => {
       expect(msg).toEqual({ topic, receiveTime, message: js });
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: binaryBobject });
+    sender.send("action name", [{ topic, receiveTime, message: binaryBobject }]);
     await promise;
   });
 
@@ -110,13 +112,13 @@ describe("BobjectRpc", () => {
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
 
-    receiver.receive("action name", "bobject", async (msg) => {
+    receiver.receive("action name", "bobject", async ([msg]) => {
       expect(msg.topic).toBe(topic);
       expect(msg.receiveTime).toEqual(receiveTime);
       expect(deepParse(msg.message)).toEqual(js);
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: binaryBobject });
+    sender.send("action name", [{ topic, receiveTime, message: binaryBobject }]);
     await promise;
   });
 
@@ -126,7 +128,7 @@ describe("BobjectRpc", () => {
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
 
-    receiver.receive("action name", "bobject", async (msg) => {
+    receiver.receive("action name", "bobject", async ([msg]) => {
       expect(msg.topic).toBe(topic);
       expect(msg.receiveTime).toEqual(receiveTime);
       expect(deepParse(msg.message)).toEqual(js);
@@ -136,7 +138,7 @@ describe("BobjectRpc", () => {
       expect(isBinary(msg.message.header())).toBe(true);
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: mixedBobject });
+    sender.send("action name", [{ topic, receiveTime, message: mixedBobject }]);
     await promise;
   });
 
@@ -145,7 +147,7 @@ describe("BobjectRpc", () => {
     const sender = new BobjectRpcSender(new Rpc(local));
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
-    receiver.receive("action name", "bobject", async (msg) => {
+    receiver.receive("action name", "bobject", async ([msg]) => {
       expect(deepParse(msg.message)).toEqual(jsPrimitiveArrayObject);
       // Message should be a reverse-wrapped bobject
       expect(isBinary(msg.message)).toBe(false);
@@ -153,7 +155,7 @@ describe("BobjectRpc", () => {
       expect(isBinary(msg.message.stringArray())).toBe(true);
       promise.resolve();
     });
-    sender.send("action name", { topic, receiveTime, message: mixedBinaryPrimitiveArrayBobject });
+    sender.send("action name", [{ topic, receiveTime, message: mixedBinaryPrimitiveArrayBobject }]);
     await promise;
   });
 
@@ -162,7 +164,7 @@ describe("BobjectRpc", () => {
     const sender = new BobjectRpcSender(new Rpc(local));
     const receiver = new BobjectRpcReceiver(new Rpc(remote));
     const promise = signal();
-    receiver.receive("action name", "bobject", async (msg) => {
+    receiver.receive("action name", "bobject", async ([msg]) => {
       expect(deepParse(msg.message)).toEqual(jsComplexArrayObject);
       // Message should be a reverse-wrapped bobject
       expect(isBinary(msg.message)).toBe(false);
@@ -171,7 +173,72 @@ describe("BobjectRpc", () => {
       promise.resolve();
     });
 
-    sender.send("action name", { topic, receiveTime, message: mixedBinaryComplexArrayBobject });
+    sender.send("action name", [{ topic, receiveTime, message: mixedBinaryComplexArrayBobject }]);
+    await promise;
+  });
+
+  it("clones buffers sent to shared workers", async () => {
+    const { local, remote } = createLinkedChannels();
+    const sender = new BobjectRpcSender(new Rpc(local), true);
+    const receiver = new BobjectRpcReceiver(new Rpc(remote));
+    const promise = signal();
+    receiver.receive("action name", "bobject", async ([msg1, msg2]) => {
+      expect(deepParse(msg1.message)).toEqual(jsComplexArrayObject);
+      expect(deepParse(msg2.message)).toEqual(jsComplexArrayObject);
+      // Message should be a reverse-wrapped bobject
+      expect(isBinary(msg1.message)).toBe(true);
+      expect(isBinary(msg2.message)).toBe(true);
+
+      // Buffer is cloned,
+      expect(getBuffer(msg1.message)).not.toBe(getBuffer(binaryComplexArrayBobject));
+      // but only cloned once.
+      expect(getBuffer(msg1.message)).toBe(getBuffer(msg2.message));
+      promise.resolve();
+    });
+
+    sender.send("action name", [
+      { topic, receiveTime, message: binaryComplexArrayBobject },
+      { topic, receiveTime, message: binaryComplexArrayBobject },
+    ]);
+    await promise;
+  });
+
+  it("can send several messages at a time", async () => {
+    const { local, remote } = createLinkedChannels();
+    const sender = new BobjectRpcSender(new Rpc(local));
+    const receiver = new BobjectRpcReceiver(new Rpc(remote));
+    let promise = signal();
+    receiver.receive("action name", "bobject", async (messages) => {
+      expect(messages.map(({ message }) => deepParse(message))).toEqual([
+        js,
+        js,
+        jsPrimitiveArrayObject,
+        jsPrimitiveArrayObject,
+        jsComplexArrayObject,
+        jsComplexArrayObject,
+      ]);
+      expect(messages.map(({ message }) => isBinary(message))).toEqual([true, false, true, false, true, false]);
+      // Check some shared buffers
+      expect(getBuffer(messages[0].message)).toBe(getBuffer(messages[1].message.header()));
+      expect(getBuffer(messages[2].message)).toBe(getBuffer(messages[3].message.stringArray()));
+      expect(getBuffer(messages[4].message)).toBe(getBuffer(messages[5].message.complexArray()));
+      promise.resolve();
+    });
+
+    // Send them all with different topics so the structural binary inference doesn't run.
+    const frame = [
+      { topic: "/t1", receiveTime, message: binaryBobject },
+      { topic: "/t2", receiveTime, message: mixedBobject },
+      { topic: "/t3", receiveTime, message: binaryPrimitiveArrayBobject },
+      { topic: "/t4", receiveTime, message: mixedBinaryPrimitiveArrayBobject },
+      { topic: "/t5", receiveTime, message: binaryComplexArrayBobject },
+      { topic: "/t6", receiveTime, message: mixedBinaryComplexArrayBobject },
+    ];
+    // Do it twice, just to be sure.
+    sender.send("action name", frame);
+    await promise;
+    promise = signal();
+    sender.send("action name", frame);
     await promise;
   });
 });

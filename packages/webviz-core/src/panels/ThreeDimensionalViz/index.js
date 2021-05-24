@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import hoistNonReactStatics from "hoist-non-react-statics";
-import { omit, debounce } from "lodash";
-import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { omit, debounce, isEqual } from "lodash";
+import React, { useCallback, useMemo, useState, useRef } from "react";
 import { hot } from "react-hot-loader/root";
 import { type CameraState } from "regl-worldview";
 
@@ -30,6 +30,7 @@ import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTrans
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/globalConstants";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 // The amount of time to wait before dispatching the saveConfig action to save the cameraState into the layout
 export const CAMERA_STATE_UPDATE_DEBOUNCE_DELAY_MS = 250;
@@ -95,8 +96,15 @@ const BaseRenderer = (props: Props, ref) => {
   // We use useState to store the cameraState instead of using config directly in order to
   // speed up the pan/rotate performance of the 3D panel. This allows us to update the cameraState
   // immediately instead of setting the new cameraState by dispatching a saveConfig.
-  const [configCameraState, setConfigCameraState] = useState(config.cameraState);
-  useEffect(() => setConfigCameraState(config.cameraState), [config]);
+  // eslint-disable-next-line prefer-const
+  let [configCameraState, setConfigCameraState] = useState(config.cameraState);
+  if (useChangeDetector([config.cameraState], false) && !isEqual(config.cameraState, configCameraState)) {
+    // Sometimes camera state updates come by the slow path. Use the config value if that happens,
+    // because _other_ config values might be updated at the same time, and we don't want to render
+    // inconsistent local state.
+    configCameraState = config.cameraState;
+    setConfigCameraState(config.cameraState);
+  }
 
   const { transformedCameraState, targetPose } = useTransformedCameraState({
     configCameraState,

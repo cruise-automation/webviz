@@ -59,6 +59,7 @@ const IconOverlay = (props: Props) => {
       return null;
     }
     const {
+      textColor,
       name,
       iconTypes,
       text,
@@ -74,6 +75,7 @@ const IconOverlay = (props: Props) => {
         onClick={onClick}
         style={{
           ...markerStyle,
+          color: `rgba(${textColor.r * 255},${textColor.g * 255},${textColor.b * 255},${textColor.a})`,
           borderRadius: scaledIconWrapperSize / 2,
           padding: iconWrapperPadding,
           transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(

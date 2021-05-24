@@ -23,6 +23,12 @@ import {
   POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/fixture/pointCloudData";
 import { MarkerStory } from "webviz-core/src/panels/ThreeDimensionalViz/stories/MarkerStory";
+import storiesWithEventsOf from "webviz-core/src/panels/ThreeDimensionalViz/stories/storiesWithEventsOf";
+import {
+  use3dPanelRenderEvent,
+  waitFor3dPanelSelectionEvent,
+} from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
+import { normalizeMouseEventObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import { ScreenshotSizedContainer } from "webviz-core/src/stories/storyHelpers";
 import colors from "webviz-core/src/styles/colors.module.scss";
@@ -80,6 +86,7 @@ const sharedProps = {
   selectedObject,
   interactionsTabType: OBJECT_TAB_TYPE,
   setInteractionsTabType: () => {},
+  findTopicInTopicTree: () => {},
 };
 
 function GlobalVariablesDisplay() {
@@ -230,17 +237,16 @@ storiesOf("<Interaction>", module)
     );
   })
   .add("instanced interactionData", () => {
+    const instancedObject = normalizeMouseEventObject({
+      object: {
+        metadataByIndex: [{ ...markerObject, interactionData: { topic: "/foo/bar", originalMessage: markerObject } }],
+      },
+      instanceIndex: 0,
+    });
     return (
       <SWrapper>
         <PanelSetupWithData title="With instanced interactionData">
-          <Interactions
-            {...sharedProps}
-            interactionsTabType={OBJECT_TAB_TYPE}
-            selectedObject={{
-              object: { metadataByIndex: [{ ...markerObject, interactionData: { topic: "/foo/bar" } }] },
-              instanceIndex: 0,
-            }}
-          />
+          <Interactions {...sharedProps} interactionsTabType={OBJECT_TAB_TYPE} selectedObject={instancedObject} />
         </PanelSetupWithData>
       </SWrapper>
     );
@@ -254,27 +260,27 @@ storiesOf("<Interaction>", module)
         <PanelSetupWithData title="default with point color">
           <Interactions
             {...sharedProps}
-            selectedObject={{
+            selectedObject={normalizeMouseEventObject({
               instanceIndex: 0,
               object: {
                 ...cloud1,
                 type: 102,
-                interactionData: { topic: "/foo/bar", originalMessage: selectedObject.object },
+                interactionData: { topic: "/foo/bar", originalMessage: POINT_CLOUD_MESSAGE },
               },
-            }}
+            })}
           />
         </PanelSetupWithData>
         <PanelSetupWithData title="with additional fields">
           <Interactions
             {...sharedProps}
-            selectedObject={{
+            selectedObject={normalizeMouseEventObject({
               instanceIndex: 0,
               object: {
                 ...cloud2,
                 type: 102,
-                interactionData: { topic: "/foo/bar", originalMessage: selectedObject.object },
+                interactionData: { topic: "/foo/bar", originalMessage: POINT_CLOUD_WITH_ADDITIONAL_FIELDS },
               },
-            }}
+            })}
           />
         </PanelSetupWithData>
       </SWrapper>
@@ -402,67 +408,107 @@ storiesOf("<Interaction>", module)
     );
   });
 
-const selectObject = () => simulateDragClick([468, 340]);
-const deselectObject = () => simulateDragClick([515, 630]);
-
-storiesOf("<Interaction> / open-close behavior", module)
-  .addParameters({ screenshot: { delay: 2500, ...storyParams.screenshot } })
-  .add("auto opens the object details after selectedObject is set", () => {
+storiesOf("<Interaction>", module)
+  .addParameters({ screenshot: { delay: 5000 } })
+  .add("find in topic tree", () => {
     return (
       <ScreenshotSizedContainer>
         <MarkerStory
-          onMount={(_) =>
+          onMount={() => {
             setImmediate(async () => {
-              await delay(250);
-              selectObject();
-            })
-          }
-        />
-      </ScreenshotSizedContainer>
-    );
-  })
-  .add("does not auto open the object details during drawing when it's closed", () => {
-    return (
-      <ScreenshotSizedContainer>
-        <MarkerStory
-          onMount={(_) =>
-            setImmediate(async () => {
-              document.querySelectorAll('[data-test="ExpandingToolbar-Drawing tools"]')[0].click(); // Start drawing
-              await delay(250);
-              selectObject();
-            })
-          }
-        />
-      </ScreenshotSizedContainer>
-    );
-  })
-  .add("auto closes the object details when selectedObject becomes null", () => {
-    return (
-      <ScreenshotSizedContainer>
-        <MarkerStory
-          onMount={(_) =>
-            setImmediate(async () => {
-              await delay(250);
-              selectObject();
-              await tick();
-              deselectObject();
-            })
-          }
-        />
-      </ScreenshotSizedContainer>
-    );
-  })
-  .add("does not open after selectedObject is set if disableAutoOpenClickedObject enabled", () => {
-    return (
-      <ScreenshotSizedContainer>
-        <MarkerStory
-          initialConfigOverride={{ disableAutoOpenClickedObject: true }}
-          onMount={(_) =>
-            setImmediate(async () => {
-              selectObject();
-            })
-          }
+              await delay(1000);
+              simulateDragClick([501, 279]); // Select a marker so the Interactions menu opens
+              await delay(1000);
+              document.querySelectorAll("[data-test='find-in-topic-tree']")[0].click();
+            });
+          }}
         />
       </ScreenshotSizedContainer>
     );
   });
+
+const selectObject = () => simulateDragClick([468, 340]);
+const deselectObject = () => simulateDragClick([515, 630]);
+
+storiesWithEventsOf("<Interaction> / open-close behavior", module)
+  .addParameters({ screenshot: { ...storyParams.screenshot } })
+  .add(
+    "auto opens the object details after selectedObject is set",
+    () => {
+      const renderSignal = use3dPanelRenderEvent();
+      return (
+        <ScreenshotSizedContainer>
+          <MarkerStory
+            onMount={(_) =>
+              setImmediate(async () => {
+                await renderSignal;
+                selectObject();
+              })
+            }
+          />
+        </ScreenshotSizedContainer>
+      );
+    },
+    waitFor3dPanelSelectionEvent()
+  )
+  .add(
+    "does not auto open the object details during drawing when it's closed",
+    () => {
+      const renderSignal = use3dPanelRenderEvent();
+      return (
+        <ScreenshotSizedContainer>
+          <MarkerStory
+            onMount={(_) =>
+              setImmediate(async () => {
+                document.querySelectorAll('[data-test="ExpandingToolbar-Drawing tools"]')[0].click(); // Start drawing
+                await renderSignal;
+                selectObject();
+              })
+            }
+          />
+        </ScreenshotSizedContainer>
+      );
+    },
+    waitFor3dPanelSelectionEvent()
+  )
+  .add(
+    "auto closes the object details when selectedObject becomes null",
+    () => {
+      const renderSignal = use3dPanelRenderEvent();
+      return (
+        <ScreenshotSizedContainer>
+          <MarkerStory
+            onMount={(_) =>
+              setImmediate(async () => {
+                await renderSignal;
+                selectObject();
+                await tick();
+                deselectObject();
+              })
+            }
+          />
+        </ScreenshotSizedContainer>
+      );
+    },
+    waitFor3dPanelSelectionEvent()
+  )
+  .add(
+    "does not open after selectedObject is set if disableAutoOpenClickedObject enabled",
+    () => {
+      const renderSignal = use3dPanelRenderEvent();
+      return (
+        <ScreenshotSizedContainer>
+          <MarkerStory
+            initialConfigOverride={{ disableAutoOpenClickedObject: true }}
+            onMount={(_) =>
+              setImmediate(async () => {
+                await renderSignal;
+                selectObject();
+              })
+            }
+          />
+        </ScreenshotSizedContainer>
+      );
+    },
+    waitFor3dPanelSelectionEvent()
+  );

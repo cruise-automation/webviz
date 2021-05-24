@@ -116,3 +116,6 @@ export const getSourceData = (cls: any): ?BobjectSourceData => classSourceData.g
 // player, and has gone missing in test fixture before as well. Best to just assume it doesn't
 // exist, because it's an annoying denormalization anyway.
 export const isComplex = (typeName: string) => !primitiveList.has(typeName);
+
+const numberList = ["int8", "uint8", "int16", "uint16", "int32", "uint32", "float32", "float64", "int64", "uint64"];
+export const isNumberType = (typeName: string) => numberList.includes(typeName);

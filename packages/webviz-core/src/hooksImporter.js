@@ -191,6 +191,7 @@ export function perPanelHooks() {
       // Duplicated in sceneBuilderHooks
       consumePose: () => {},
       skipTransformFrame: null,
+      useStaticTransformsData: () => null,
 
       ungroupedNodesCategory: "Topics",
       rootTransformFrame: "map",

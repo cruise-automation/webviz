@@ -16,10 +16,10 @@ import uuid from "uuid";
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
 import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type {
   AdvertisePayload,
   Message,
@@ -47,7 +47,6 @@ import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { deepParse, getObjects, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
-import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
@@ -89,11 +88,9 @@ export default class UserNodePlayer implements Player {
   _rosLib: ?string;
   _globalVariables: GlobalVariables = {};
   _pendingResetWorkers: ?Promise<void>;
-  _binaryNodeOutputs: boolean;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
-    this._binaryNodeOutputs = getExperimentalFeature("binaryNodePlaygroundOutputs") || process.env.NODE_ENV === "test";
     const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } = userNodeActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
@@ -120,9 +117,9 @@ export default class UserNodePlayer implements Player {
     (datatypes, nodeRegistrations: NodeRegistration[]) => {
       const userNodeDatatypes = nodeRegistrations.reduce(
         (allDatatypes, { nodeData }) => ({ ...allDatatypes, ...nodeData.datatypes }),
-        { ...basicDatatypes }
+        {}
       );
-      return { ...datatypes, ...userNodeDatatypes };
+      return { ...getGlobalHooks().getBasicDatatypes(), ...datatypes, ...userNodeDatatypes };
     },
     { isEqual }
   );
@@ -221,7 +218,7 @@ export default class UserNodePlayer implements Player {
     // Pass all the nodes a set of basic datatypes that we know how to render.
     // These could be overwritten later by bag datatypes, but these datatype definitions should be very stable.
     const { topics = [], datatypes = {} } = this._lastPlayerStateActiveData || {};
-    const nodeDatatypes = { ...basicDatatypes, ...datatypes };
+    const nodeDatatypes = { ...getGlobalHooks().getBasicDatatypes(), ...datatypes };
 
     const rosLib = await this._getRosLib();
     const { name, sourceCode } = userNode;
@@ -249,7 +246,7 @@ export default class UserNodePlayer implements Player {
         // Register the node within a web worker to be executed.
         if (!bobjectSender || !rpc) {
           rpc = this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4()));
-          bobjectSender = new BobjectRpcSender(rpc);
+          bobjectSender = new BobjectRpcSender(rpc, true);
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             projectCode,
             nodeCode: transpiledCode,
@@ -271,20 +268,15 @@ export default class UserNodePlayer implements Player {
           this._addUserNodeLogs(nodeId, userNodeLogs);
         }
 
-        for (const message of messages) {
-          // We send messages to workers in series to provide an ordering guarantee for stateful
-          // nodes.
-          const addMessageResult = await Promise.race([bobjectSender.send("addMessage", message), terminateSignal]);
-          if (!addMessageResult) {
-            return []; // reset
-          }
+        const addMessagesResult = await Promise.race([bobjectSender.send("addMessages", messages), terminateSignal]);
+        if (!addMessagesResult) {
+          return []; // reset
         }
         // TODO: FUTURE - surface runtime errors / infinite loop errors
         const processMessagesResult = await Promise.race([
           rpc.send<ProcessMessagesOutput>("processMessages", {
             globalVariables,
             outputTopic,
-            binaryOutputs: this._binaryNodeOutputs,
           }),
           terminateSignal,
         ]);
@@ -449,9 +441,11 @@ export default class UserNodePlayer implements Player {
 
     const { topics, datatypes } = this._lastPlayerStateActiveData;
     const transformWorker = this._getTransformWorker();
+    // Add base set of datatypes so nodes can output markers even if the input doesn't have any.
+    // Don't try to supply datatypes from node playground scripts previously compiled.
     const rosLib = await transformWorker.send("generateRosLib", {
       topics,
-      datatypes,
+      datatypes: { ...getGlobalHooks().getBasicDatatypes(), ...datatypes },
     });
     this._setRosLib(rosLib);
 

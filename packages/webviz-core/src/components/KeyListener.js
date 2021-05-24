@@ -13,6 +13,7 @@ type KeyHandlers = {
 
 type Props = {|
   global: true | false,
+  preventDefault: true | false,
   keyDownHandlers?: KeyHandlers,
   keyPressHandlers?: KeyHandlers,
   keyUpHandlers?: KeyHandlers,
@@ -23,6 +24,7 @@ export default class KeyListener extends React.Component<Props> {
 
   static defaultProps = {
     global: false,
+    preventDefault: true,
   };
 
   componentDidMount() {
@@ -46,11 +48,14 @@ export default class KeyListener extends React.Component<Props> {
   }
 
   callHandlers(handlers: ?KeyHandlers, event: KeyboardEvent) {
+    const { preventDefault } = this.props;
     if (!handlers) {
       return;
     }
     if (typeof handlers[event.key] === "function") {
-      event.preventDefault();
+      if (preventDefault) {
+        event.preventDefault();
+      }
       handlers[event.key](event);
     }
   }

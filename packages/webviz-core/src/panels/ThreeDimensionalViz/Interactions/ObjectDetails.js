@@ -6,20 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { first, omit, sortBy } from "lodash";
+import { first, sortBy } from "lodash";
 import * as React from "react";
 import Tree from "react-json-tree";
-import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
 import GlobalVariableLink from "./GlobalVariableLink/index";
-import type { InteractionData } from "./types";
-import Dropdown from "webviz-core/src/components/Dropdown";
-import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
-import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
-import { logEventAction, getEventInfos, getEventTags } from "webviz-core/src/util/logEvent";
 
 // Sort the keys of objects to make their presentation more predictable
 const PREFERRED_OBJECT_KEY_ORDER = [
@@ -39,69 +32,18 @@ const SObjectDetails = styled.div`
   padding: 12px 0 16px 0;
 `;
 
-type CommonProps = $ReadOnly<{| interactionData: ?InteractionData |}>;
+type Props = $ReadOnly<{|
+  selectedObject: any,
+  topic?: ?string,
+|}>;
 
-type WrapperProps = $ReadOnly<
-  CommonProps & {|
-    selectedObject: MouseEventObject,
-  |}
->;
-
-type Props = $ReadOnly<
-  CommonProps & {|
-    objectToDisplay: any,
-  |}
->;
-
-// Used for switching between views of individual and combined objects.
-// TODO(steel): Only show the combined object when the individual objects are semantically related.
-function ObjectDetailsWrapper({ interactionData, selectedObject: { object, instanceIndex } }: WrapperProps) {
-  const [showInstance, setShowInstance] = React.useState(true);
-  const instanceObject = getInstanceObj(object, instanceIndex);
-  const dropdownText = {
-    instance: "Show instance object",
-    full: "Show full object",
-  };
-
-  const updateShowInstance = (shouldShowInstance) => {
-    setShowInstance(shouldShowInstance);
-    logEventAction(getEventInfos()["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"], {
-      [getEventTags().PANEL_TYPE]: Renderer.panelType,
-    });
-  };
-
-  const objectToDisplay = instanceObject && showInstance ? instanceObject : object;
-  const parsedObject = React.useMemo(
-    () => (isBobject(objectToDisplay) ? deepParse(objectToDisplay) : objectToDisplay),
-    [objectToDisplay]
-  );
-  return (
-    <div>
-      {instanceObject && (
-        <Dropdown
-          position="below"
-          value={showInstance}
-          text={showInstance ? dropdownText.instance : dropdownText.full}
-          onChange={updateShowInstance}>
-          <span value={true}>{dropdownText.instance}</span>
-          <span value={false}>{dropdownText.full}</span>
-        </Dropdown>
-      )}
-      <ObjectDetailsBase interactionData={interactionData} objectToDisplay={parsedObject} />
-    </div>
-  );
-}
-
-export function ObjectDetailsBase({ interactionData, objectToDisplay }: Props) {
-  const topic = interactionData?.topic ?? "";
-  const originalObject = omit(objectToDisplay, "interactionData");
-
+function ObjectDetails({ selectedObject, topic }: Props) {
   if (!topic) {
     // show the original object directly if there is no interaction data. e.g. DrawPolygons
     return (
       <SObjectDetails>
         <Tree
-          data={objectToDisplay}
+          data={selectedObject}
           shouldExpandNode={(markerKeyPath, data, level) => level < 2}
           invertTheme={false}
           theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
@@ -112,9 +54,9 @@ export function ObjectDetailsBase({ interactionData, objectToDisplay }: Props) {
   }
 
   const sortedDataObject = Object.fromEntries(
-    sortBy(Object.keys(originalObject), (key) => -PREFERRED_OBJECT_KEY_ORDER.indexOf(key)).map((key) => [
+    sortBy(Object.keys(selectedObject), (key) => -PREFERRED_OBJECT_KEY_ORDER.indexOf(key)).map((key) => [
       key,
-      originalObject[key],
+      selectedObject[key],
     ])
   );
 
@@ -170,4 +112,4 @@ export function ObjectDetailsBase({ interactionData, objectToDisplay }: Props) {
   );
 }
 
-export default ObjectDetailsWrapper;
+export default ObjectDetails;

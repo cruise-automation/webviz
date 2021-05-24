@@ -29,14 +29,14 @@ global.onconnect = (e) => {
   // Just check fetch is blocked on registration, don't slow down message processing.
   rpc.receive("registerNode", enforceFetchIsBlocked(registerNode));
   let messagesToProcess = [];
-  new BobjectRpcReceiver(rpc).receive("addMessage", "parsed", async (message) => {
-    messagesToProcess.push(message);
+  new BobjectRpcReceiver(rpc).receive("addMessages", "parsed", async (messages) => {
+    messagesToProcess = messages;
     return true;
   });
-  rpc.receive("processMessages", ({ binaryOutputs, globalVariables, outputTopic }) => {
+  rpc.receive("processMessages", ({ globalVariables, outputTopic }) => {
     const messages = messagesToProcess;
     messagesToProcess = [];
-    return processMessages({ messages, globalVariables, outputTopic, binaryOutputs });
+    return processMessages({ messages, globalVariables, outputTopic });
   });
   port.start();
 };

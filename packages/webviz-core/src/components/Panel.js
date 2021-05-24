@@ -416,7 +416,8 @@ export default function Panel<Config: PanelConfig>(
             [styles.selected]: isSelected && !isDemoMode,
           })}
           col
-          dataTest={`panel-mouseenter-container ${childId || ""}`}
+          dataAttrs={{ "data-panel-id": `${childId || ""}` }}
+          dataTest={"panel-mouseenter-container"}
           clip>
           {fullScreen ? <div className={styles.notClickable} /> : null}
           {isSelected && !fullScreen && selectedPanelIds.length > 1 && (

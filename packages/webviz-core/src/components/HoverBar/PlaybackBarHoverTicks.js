@@ -9,7 +9,7 @@ import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 
 import Dimensions from "webviz-core/src/components/Dimensions";
-import HoverBar from "webviz-core/src/components/HovarBar";
+import HoverBar from "webviz-core/src/components/HoverBar";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { toSec } from "webviz-core/src/util/time";

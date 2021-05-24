@@ -6,58 +6,59 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import memoizeOne from "memoize-one";
 import { useCallback, useMemo, useRef } from "react";
 
-import * as PanelAPI from "webviz-core/src/PanelAPI";
-import { blockMessageCache } from "webviz-core/src/PanelAPI/useBlocksByTopic";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import { useSubscribeToTopicsForBlocks } from "webviz-core/src/PanelAPI/useBlocksByTopic";
+import type { Topic, BobjectMessage } from "webviz-core/src/players/types";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
-import { useChangeDetector } from "webviz-core/src/util/hooks";
-
-function usePlaybackMessage<T>(topic: string): ?T {
-  // DANGER! We circumvent PanelAPI.useMessageReducer's system of keeping state here.
-  // We should rarely do that, since it's error-prone to implement your own
-  // state management in panels. However, in this case it's really annoying that
-  // the message gets reset to the default whenever a seek happens. (This is a more general
-  // problem with static/latched topics that we should fix, possibly orthogonally to the
-  // use of block message storage.)
-  const lastMessage = useRef<?T>();
-
-  const { playerId } = PanelAPI.useDataSourceInfo();
-  const hasChangedPlayerId = useChangeDetector([playerId], false);
-  if (hasChangedPlayerId) {
-    lastMessage.current = undefined;
-  }
-
-  const newMessage = PanelAPI.useMessageReducer<?T>({
-    topics: [topic],
-    restore: useCallback((prevState) => prevState || lastMessage.current, []),
-    // Use addBobjects here so that we don't have to parse every message.
-    addBobjects: useCallback((prevState, bobjects) => {
-      if (prevState || !bobjects.length) {
-        return prevState;
-      }
-      return deepParse(bobjects[0].message);
-    }, []),
-    preloadingFallback: true,
-  });
-  lastMessage.current = newMessage;
-  return lastMessage.current;
-}
+import { useContextSelector } from "webviz-core/src/util/hooks";
 
 export default function useArbitraryTopicMessage<T>(topic: string): ?T {
-  const blocks = PanelAPI.useBlocksByTopic([topic]);
+  // Subscribe to the topics
+  useSubscribeToTopicsForBlocks(useMemo(() => [topic], [topic]));
 
-  const binaryBlocksMessage = useMemo(() => {
-    const maybeBlockWithMessage = blocks.find((block) => block[topic]?.length);
-    return maybeBlockWithMessage?.[topic]?.[0];
-  }, [blocks, topic]);
+  const lastPlayerIdForProcessedMessageRef = useRef<?string>();
 
-  const parsedBlockMessage =
-    binaryBlocksMessage && blockMessageCache.parseMessages([binaryBlocksMessage], {})[0]?.message;
+  const getIsTopicPreloadable = useCallback(
+    memoizeOne((topicName: string, topics: Topic[]) => topics.find((t) => t.name === topicName)?.preloadable || false),
+    []
+  );
 
-  // Not all players provide blocks, so have a playback fallback.
-  // TODO(steel/jp): Neither subscription should request eagerly-parsed binary messages once
-  // we have an option for that.
-  const playbackMessage = usePlaybackMessage(topic);
-  return parsedBlockMessage || playbackMessage;
+  const { parsedMessage } = useMessagePipeline<{ parsedMessage: ?T }>(
+    useCallback(({ playerState: { progress, playerId, activeData } }) => {
+      // If the player hasn't changed (AKA, no sources have been added or removed), and we already have a message
+      // to send to children, just bail here so that we don't force an update.
+      if (lastPlayerIdForProcessedMessageRef.current === playerId) {
+        return useContextSelector.BAILOUT;
+      }
+
+      let message;
+      if (activeData && getIsTopicPreloadable(topic, activeData.topics)) {
+        // Preloading codepath: read from the blocks
+        const blocks = progress.messageCache?.blocks || [];
+        // Note: allBlocks.find() misbehaves, because allBlocks is initialized like "new Array(...)".
+        for (let i = 0; i < blocks.length; ++i) {
+          const firstBobjectMessage: ?BobjectMessage = blocks[i]?.messagesByTopic?.[topic]?.[0];
+          if (firstBobjectMessage) {
+            message = deepParse(firstBobjectMessage.message);
+            break;
+          }
+        }
+      } else if (activeData) {
+        // Non-preloading codepath: read from the active messages
+        const bobjectMessage = activeData.bobjects.find((_message) => _message.topic === topic);
+        message = bobjectMessage ? deepParse(bobjectMessage.message) : undefined;
+      }
+
+      // Only set the playerId if we have a message. If we don't, we want to search for the message next time.
+      if (message) {
+        lastPlayerIdForProcessedMessageRef.current = playerId;
+      }
+      return { parsedMessage: message };
+    }, [getIsTopicPreloadable, topic])
+  );
+
+  return parsedMessage;
 }

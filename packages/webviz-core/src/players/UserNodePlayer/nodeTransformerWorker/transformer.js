@@ -244,6 +244,18 @@ export const compile = (nodeData: NodeData): NodeData => {
       diagnostics: [...nodeData.diagnostics, error],
     };
   }
+  if (nodeData.name.replace(DEFAULT_WEBVIZ_NODE_PREFIX, "").includes("/")) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message: `Your node "${nodeData.name}" cannot contain more than two forward slashes.`,
+      source: Sources.Other,
+      code: ErrorCodes.Other.FILENAME,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
 
   const options: ts.CompilerOptions = baseCompilerOptions;
   const nodeFileName = `${nodeData.name}.ts`;

@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-
 //  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
@@ -92,7 +91,7 @@ async function main() {
     })();
 
   console.log("Recording video...");
-  const { videoFile: video } = await recordVideo({
+  const { mediaFile: video } = await recordVideo({
     duration,
     speed,
     frameless,

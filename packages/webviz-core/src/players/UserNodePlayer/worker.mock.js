@@ -50,15 +50,15 @@ export default class MockUserNodePlayerWorker {
     receiveAndLog("transform", transform);
     receiveAndLog("registerNode", registerNode);
     let messagesToProcess = [];
-    new BobjectRpcReceiver(receiver).receive("addMessage", "parsed", async (message) => {
-      this.messageSpy("addMessage");
-      messagesToProcess.push(message);
+    new BobjectRpcReceiver(receiver).receive("addMessages", "parsed", async (messages) => {
+      this.messageSpy("addMessages");
+      messagesToProcess = messages;
       return true;
     });
-    receiveAndLog("processMessages", ({ binaryOutputs, globalVariables, outputTopic }) => {
+    receiveAndLog("processMessages", ({ globalVariables, outputTopic }) => {
       const messages = messagesToProcess;
       messagesToProcess = [];
-      return processMessages({ binaryOutputs, messages, globalVariables, outputTopic });
+      return processMessages({ messages, globalVariables, outputTopic });
     });
   }
 

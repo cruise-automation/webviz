@@ -9,7 +9,6 @@ import { max, min, flatten } from "lodash";
 import React, { memo, useEffect, useCallback, useState, useRef, useMemo } from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
-import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import uuid from "uuid";
 
@@ -23,9 +22,9 @@ import {
   filterDatasets,
   useForceRerenderOnVisibilityChange,
 } from "./utils";
-import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
-import HoverBar, { getChartTopAndHeight, SBar } from "webviz-core/src/components/HovarBar";
+import HoverBar, { getChartTopAndHeight, SBar } from "webviz-core/src/components/HoverBar";
+import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
@@ -330,22 +329,14 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   const [hoverComponentId] = useState(() => uuid.v4());
   const { xAxisIsPlaybackTime } = props;
-  const dispatch = useDispatch();
-  const clearGlobalHoverTime = useCallback(() => dispatch(clearHoverValue({ componentId: hoverComponentId })), [
-    dispatch,
-    hoverComponentId,
-  ]);
-  const setGlobalHoverTime = useCallback(
-    (value) =>
-      dispatch(
-        setHoverValue({
-          componentId: hoverComponentId,
-          value,
-          type: xAxisIsPlaybackTime ? "PLAYBACK_SECONDS" : "OTHER",
-        })
-      ),
-    [dispatch, hoverComponentId, xAxisIsPlaybackTime]
-  );
+  const clearHoverValue = useClearHoverValue();
+  const setHoverValue = useSetHoverValue();
+  const clearGlobalHoverTime = useCallback(() => {
+    clearHoverValue(hoverComponentId);
+  }, [clearHoverValue, hoverComponentId]);
+  const setGlobalHoverTime = useCallback((value) => {
+    setHoverValue({ componentId: hoverComponentId, value, type: xAxisIsPlaybackTime ? "PLAYBACK_SECONDS" : "OTHER" });
+  }, [hoverComponentId, setHoverValue, xAxisIsPlaybackTime]);
 
   const onMouseMove = useCallback(async (event: MouseEvent) => {
     const currentChartComponent = chartComponent.current;

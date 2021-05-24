@@ -7,6 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import AlphaR from "@mdi/svg/svg/alpha-r.svg";
+import AlphaT from "@mdi/svg/svg/alpha-t.svg";
+import ArrowCollapseDown from "@mdi/svg/svg/arrow-collapse-down.svg";
+import ArrowCollapseLeft from "@mdi/svg/svg/arrow-collapse-left.svg";
+import ArrowCollapseRight from "@mdi/svg/svg/arrow-collapse-right.svg";
 import ArrowCollapseUp from "@mdi/svg/svg/arrow-collapse-up.svg";
 import ArrowDecision from "@mdi/svg/svg/arrow-decision.svg";
 import ArrowLeft from "@mdi/svg/svg/arrow-left.svg";
@@ -26,6 +30,8 @@ import Help from "@mdi/svg/svg/help.svg";
 import Motorbike from "@mdi/svg/svg/motorbike.svg";
 import Octagon from "@mdi/svg/svg/octagon.svg";
 import RoadVariant from "@mdi/svg/svg/road-variant.svg";
+import RobotOffOutline from "@mdi/svg/svg/robot-off-outline.svg";
+import RobotOutline from "@mdi/svg/svg/robot-outline.svg";
 import SignalOff from "@mdi/svg/svg/signal-off.svg";
 import Train from "@mdi/svg/svg/train.svg";
 import Truck from "@mdi/svg/svg/truck.svg";
@@ -45,27 +51,33 @@ export const LAYER_INDEX_DIFF_MODE_BASE_PER_PASS = 100;
 export const ICON_BY_TYPE = {
   // Supported icons, add more if needed.
   "alpha-r": AlphaR,
+  "alpha-t": AlphaT,
+  "arrow-collapse-down": ArrowCollapseDown,
+  "arrow-collapse-left": ArrowCollapseLeft,
+  "arrow-collapse-right": ArrowCollapseRight,
   "arrow-collapse-up": ArrowCollapseUp,
   "arrow-decision": ArrowDecision,
   "arrow-left": ArrowLeft,
-  "arrow-top-left": ArrowTopLeft,
   "arrow-right": ArrowRight,
+  "arrow-top-left": ArrowTopLeft,
   "arrow-top-right": ArrowTopRight,
-  "car-parking-lights": CarParkingLights,
   "bus-school": BusSchool,
   "car-brake-alert": CarBrakeAlert,
+  "car-parking-lights": CarParkingLights,
   "hazard-lights": HazardLights,
   "help-circle-outline": HelpCircleOutline,
   "road-variant": RoadVariant,
   "signal-off": SignalOff,
+  "robot-outline": RobotOutline,
+  "robot-off-outline": RobotOffOutline,
   bike: Bike,
   bus: Bus,
   car: Car,
+  DEFAULT: CubeOutline,
   help: Help,
   motorbike: Motorbike,
   octagon: Octagon,
   train: Train,
   truck: Truck,
   walk: Walk,
-  DEFAULT: CubeOutline,
 };

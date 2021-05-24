@@ -12,7 +12,7 @@
 using cruise::Definition;
 using cruise::DefinitionRegistry;
 
-DefinitionRegistry::DefinitionRegistry() noexcept
+DefinitionRegistry::DefinitionRegistry()
         : _definitions([] {
             Registry registry;
             registry["bool"] = std::make_unique<Definition>("bool", sizeof(bool));
@@ -35,12 +35,12 @@ DefinitionRegistry::DefinitionRegistry() noexcept
     // no-op
 }
 
-Definition* DefinitionRegistry::createDefinition(const std::string& name) noexcept {
+Definition* DefinitionRegistry::createDefinition(const std::string& name) {
     _definitions[name] = std::make_unique<Definition>(name, 0);
     return _definitions[name].get();
 }
 
-Definition* DefinitionRegistry::getDefinition(const std::string& name) noexcept {
+Definition* DefinitionRegistry::getDefinition(const std::string& name) {
     if (_definitions.count(name) == 0) {
         return nullptr;
     }
@@ -48,7 +48,7 @@ Definition* DefinitionRegistry::getDefinition(const std::string& name) noexcept 
     return _definitions.at(name).get();
 }
 
-bool DefinitionRegistry::finalizeAll() noexcept {
+bool DefinitionRegistry::finalizeAll() {
     for (auto& it : _definitions) {
         if (it.second != nullptr) {
             if (!it.second->finalize(this)) {

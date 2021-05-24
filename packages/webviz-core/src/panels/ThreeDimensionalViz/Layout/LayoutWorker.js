@@ -15,6 +15,7 @@ import type { RenderResult } from "./types";
 import signal, { type Signal } from "webviz-core/shared/signal";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getIconName } from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
+import { DebugStatsCollector, type DebugStats } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { LayoutWorkerDataReceiver } from "webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc";
 import { type MeasurePoints } from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
@@ -23,15 +24,15 @@ import SceneBuilder, {
   type TopicSettingsCollection,
 } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/types";
+import { normalizeMouseEventObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
-import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import Transforms, { type TransformElement } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import { type GLTextMarker } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext, { type WorldContextType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useChangeDetector } from "webviz-core/src/util/hooks";
 import render from "webviz-core/src/util/NoopReactRenderer";
@@ -55,7 +56,7 @@ type WorldRendererState = $ReadOnly<{|
   highlightMarkerMatchers: any,
   linkedGlobalVariables: LinkedGlobalVariables,
   playerId: string,
-  renderSignal: Signal<void>,
+  resolveRenderSignal: () => void,
   rootTf: string,
   searchTextOpen: boolean,
   searchText: string,
@@ -69,6 +70,7 @@ type WorldRendererState = $ReadOnly<{|
   polygons: Polygon[],
   measurePoints: MeasurePoints,
   worldContextValue: WorldContextType,
+  debug: boolean,
 |}>;
 
 type WorldRendererCallbacks = $ReadOnly<{|
@@ -85,10 +87,10 @@ type WorldInterfaceProps = $ReadOnly<{|
   onMouseDown: any,
   onMouseMove: any,
   onMouseUp: any,
-  resolveRenderSignal: (Signal<void>) => void,
   setOverlayIcons: any,
   setSearchTextMatches: any,
   setAvailableNsAndErrors: any,
+  setDebugStats: (DebugStats) => void,
 |}>;
 
 // Sets up props/state and communication callbacks between react and the imperative worker code.
@@ -145,19 +147,18 @@ function useMapElement(sceneBuilder: SceneBuilder, props: WorldRendererProps) {
   const { MapComponent } = props.hooks;
   const memoizedScene = useShallowMemo(sceneBuilder.getScene());
   const mapNamespaces = useShallowMemo(props.selectedNamespacesByTopic["/metadata"] ?? []);
-  // TODO(steel): pass `debug` from main thread
   return React.useMemo(
     () =>
       MapComponent && (
         <MapComponent
           extensions={mapNamespaces}
           scene={memoizedScene}
-          debug={false}
+          debug={props.debug}
           perspective={!!props.cameraState.perspective}
           isDemoMode={props.isDemoMode}
         />
       ),
-    [MapComponent, props.cameraState.perspective, props.isDemoMode, mapNamespaces, memoizedScene]
+    [MapComponent, props.cameraState.perspective, props.isDemoMode, mapNamespaces, memoizedScene, props.debug]
   );
 }
 
@@ -179,11 +180,8 @@ function WorldRenderer(props: WorldRendererProps) {
     rootTf,
     frame,
     setAvailableNsAndErrors,
-    renderSignal,
-    resolveRenderSignal,
+    debug,
   } = props;
-
-  useEffect(() => resolveRenderSignal(renderSignal));
 
   const { sceneBuilder, transformsBuilder } = useMemo(
     () => ({
@@ -264,6 +262,7 @@ function WorldRenderer(props: WorldRendererProps) {
         {...props}>
         {mapElement}
         <DrawPolygons>{props.polygons}</DrawPolygons>
+        {debug && <DebugStatsCollector setDebugStats={props.setDebugStats} />}
       </World>
     </WorldContext.Provider>
   );
@@ -303,10 +302,12 @@ class LayoutWorker {
         onMouseDown={this._mouseEventHandler("onMouseDown")}
         onMouseMove={this._mouseEventHandler("onMouseMove")}
         onMouseUp={this._mouseEventHandler("onMouseUp")}
-        resolveRenderSignal={this.resolveRenderSignal}
         setOverlayIcons={({ renderItems, sceneBuilderDrawables }) => {
           iconDrawables = sceneBuilderDrawables;
           return rpc.send<void>("updateOverlayIcons", renderItems);
+        }}
+        setDebugStats={(stats: DebugStats) => {
+          rpc.send<void>("updateDebugStats", stats);
         }}
         setSearchTextMatches={this.setSearchTextMatches}
         setAvailableNsAndErrors={(availableNamespacesByTopic, errorsByTopic) =>
@@ -321,10 +322,7 @@ class LayoutWorker {
       if (!icon) {
         return;
       }
-      const originalMessage = isBobject(icon.interactionData?.originalMessage)
-        ? deepParse(icon.interactionData.originalMessage)
-        : icon.interactionData.originalMessage;
-      return { ...icon, interactionData: { ...icon.interactionData, originalMessage } };
+      return normalizeMouseEventObject({ object: icon }).object;
     });
   }
 
@@ -351,6 +349,7 @@ class LayoutWorker {
     cleared,
     rootTf,
     playerId,
+    staticTransformsData,
     flattenMarkers,
     frame,
     selectedNamespacesByTopic,
@@ -375,10 +374,12 @@ class LayoutWorker {
     polygons,
     measurePoints,
     worldContextValue,
+    debug,
   }: $ReadOnly<{
     cleared: boolean,
     rootTf: string,
     playerId: string,
+    staticTransformsData: ?$ReadOnlyArray<TransformElement>,
     flattenMarkers: boolean,
     frame: Frame,
     selectedNamespacesByTopic: SelectedNamespacesByTopic,
@@ -403,6 +404,7 @@ class LayoutWorker {
     polygons: Polygon[],
     measurePoints: MeasurePoints,
     worldContextValue: WorldContextType,
+    debug: boolean,
   }>): Promise<RenderResult> => {
     this.hasChangedPlayerId = !shallowequal(this.playerId, playerId);
     this.playerId = playerId;
@@ -414,6 +416,9 @@ class LayoutWorker {
       this.hooks.skipTransformFrame?.frameId,
       this.hooks.consumePose
     );
+    if (staticTransformsData) {
+      this.transforms.consumeStaticData(staticTransformsData);
+    }
 
     if (this._hasOffscreenCanvas) {
       // These attributes exist already (and are read-only) in HTMLCanvasElement.
@@ -424,6 +429,9 @@ class LayoutWorker {
     }
     const renderSignal = signal<void>();
     this._renderSignals.push(renderSignal);
+    const resolveRenderSignal = () => {
+      this.resolveRenderSignal(renderSignal);
+    };
 
     this.rendererCallbacks.setState({
       cameraState,
@@ -440,7 +448,7 @@ class LayoutWorker {
       autoTextBackgroundColor,
       diffModeEnabled,
       playerId,
-      renderSignal,
+      resolveRenderSignal,
       rootTf,
       searchTextOpen,
       searchText,
@@ -454,6 +462,7 @@ class LayoutWorker {
       polygons,
       measurePoints,
       worldContextValue,
+      debug,
     });
     await renderSignal;
 
@@ -462,7 +471,11 @@ class LayoutWorker {
     };
   };
 
-  _mouseEventHandler = (eventName: string) => (e: any, args: any) => {
+  _mouseEventHandler = (eventName: string) => (e: any, inputArgs: any) => {
+    const args =
+      !inputArgs || !inputArgs.objects
+        ? inputArgs
+        : { ...inputArgs, objects: inputArgs.objects.map(normalizeMouseEventObject) };
     const { clientX, clientY, resolve, ctrlKey } = e;
     const payload = { eventName, ev: { clientX, clientY, ctrlKey }, args };
     if (eventName === "onMouseUp") {

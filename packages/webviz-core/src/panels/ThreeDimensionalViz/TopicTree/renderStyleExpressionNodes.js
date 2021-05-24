@@ -24,6 +24,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getDefaultColorOverrideBySourceIdx } from "webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles";
+import type { LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import {
   ColorPickerSettingsPanel,
@@ -58,7 +59,15 @@ export function renderStyleExpressionNodes({
   topicName,
   hasFeatureColumn,
   linkedGlobalVariablesByTopic,
-}: any): TreeUINode[] {
+  visible,
+}: {
+  hasFeatureColumn: boolean,
+  isXSWidth: boolean,
+  linkedGlobalVariablesByTopic: { [string]: LinkedGlobalVariable[] },
+  topicName: string,
+  width: number,
+  visible: boolean,
+}): TreeUINode[] {
   const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2) - OUTER_LEFT_MARGIN;
   const linkedGlobalVariablesByVariableName = groupBy(
     linkedGlobalVariablesByTopic[topicName] || [],
@@ -67,14 +76,13 @@ export function renderStyleExpressionNodes({
   return Object.keys(linkedGlobalVariablesByVariableName).map((variableName, rowIndex) => {
     const title = (
       <StyleExpressionNode
-        {...{
-          linkedGlobalVariables: linkedGlobalVariablesByVariableName[variableName],
-          topic: topicName,
-          hasFeatureColumn,
-          rowWidth,
-          rowIndex,
-          variableName,
-        }}
+        linkedGlobalVariables={linkedGlobalVariablesByVariableName[variableName]}
+        topic={topicName}
+        hasFeatureColumn={hasFeatureColumn}
+        rowWidth={rowWidth}
+        rowIndex={rowIndex}
+        variableName={variableName}
+        visible={visible}
       />
     );
     return { key: `${topicName}~${variableName}`, title };
@@ -101,7 +109,7 @@ const SColorTrigger = styled.span`
 `;
 
 function StyleExpressionNode(props) {
-  const { topic, rowWidth, rowIndex, hasFeatureColumn, linkedGlobalVariables } = props;
+  const { topic, rowWidth, rowIndex, hasFeatureColumn, linkedGlobalVariables, visible } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [editingColorForSourceIdx, setEditingColorForSourceIdx] = useState(false);
 
@@ -174,7 +182,7 @@ function StyleExpressionNode(props) {
 
   return (
     <STreeNodeRow
-      visibleInScene={activeRowActive}
+      visibleInScene={activeRowActive && visible}
       style={{
         width: rowWidth,
         marginLeft: `-${OUTER_LEFT_MARGIN}px`,
@@ -208,7 +216,7 @@ function StyleExpressionNode(props) {
                   overrideColor={color}
                   size="SMALL"
                   unavailableTooltip={""}
-                  visibleInScene={active}
+                  visibleInScene={visible && active}
                   diffModeEnabled={false}
                   columnIndex={sourceIdx}
                   {...mouseEventHandlersByColumnIdx[sourceIdx]}

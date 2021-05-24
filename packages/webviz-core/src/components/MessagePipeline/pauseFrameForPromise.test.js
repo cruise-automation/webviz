@@ -22,7 +22,6 @@ const eventInfos = {
   PAUSE_FRAME_TIMEOUT: {
     category: "Error",
     humanReadableName: "pauseFrameForPromise timed out",
-    eventName: "pause_frame_timeout",
   },
 };
 

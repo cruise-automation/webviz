@@ -13,7 +13,6 @@ import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type PoseSettings = {|
   overrideColor?: ?string,
@@ -27,7 +26,7 @@ type PoseSettings = {|
 |};
 
 export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseStamped, PoseSettings>) {
-  const { message, settings, onFieldChange, onSettingsChange } = props;
+  const { settings, onFieldChange, onSettingsChange } = props;
 
   const settingsByCarType = React.useMemo(() => {
     switch (settings.modelType) {
@@ -93,14 +92,6 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
   }, [onFieldChange, onSettingsChange, settings]);
 
   const badModelTypeSetting = React.useMemo(() => !["car-model", "arrow"].includes(settings.modelType), [settings]);
-
-  if (!message) {
-    return (
-      <div style={{ color: colors.TEXT_MUTED }}>
-        <small>Waiting for messages...</small>
-      </div>
-    );
-  }
 
   return (
     <Flex col>

@@ -72,12 +72,12 @@ describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
 
       const worker = new Rpc(workerChannel);
       setupLogEventHandler(worker);
-      logEventPerformance({ eventName: "test", category: "Usage", humanReadableName: "some use" }, 0, { a: "1" });
+      logEventPerformance({ category: "Usage", humanReadableName: "some use" }, 0, { a: "1" });
 
       expect(logEventMock).toHaveBeenCalledWith({
         type: "logEventPerformance",
         params: [
-          { eventName: "test", category: "Usage", humanReadableName: "some use" },
+          { category: "Usage", humanReadableName: "some use" },
           0,
           "/",
           {},
@@ -100,7 +100,7 @@ describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
       worker.send("logEvent", {
         type: "logEventPerformance",
         params: [
-          { eventName: "test", category: "Usage", humanReadableName: "some use" },
+          { category: "Usage", humanReadableName: "some use" },
           0,
           "/",
           {},
@@ -109,14 +109,11 @@ describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
         ],
       });
 
-      expect(logEventMock).toHaveBeenCalledWith(
-        { eventName: "test", category: "Usage", humanReadableName: "some use" },
-        0,
-        "/",
-        {},
-        "",
-        { a: "1", git_sha: "unknown", node_env: "test" }
-      );
+      expect(logEventMock).toHaveBeenCalledWith({ category: "Usage", humanReadableName: "some use" }, 0, "/", {}, "", {
+        a: "1",
+        git_sha: "unknown",
+        node_env: "test",
+      });
     });
   });
 });

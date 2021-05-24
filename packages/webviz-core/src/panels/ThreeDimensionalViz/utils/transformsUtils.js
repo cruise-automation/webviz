@@ -8,8 +8,15 @@
 
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Frame } from "webviz-core/src/players/types";
+import type { TF } from "webviz-core/src/types/Messages";
 import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+
+const makeTransformElement = (tf: TF) => ({
+  childFrame: tf.child_frame_id,
+  parentFrame: tf.header.frame_id,
+  pose: { position: tf.transform.translation, orientation: tf.transform.rotation },
+});
 
 // Exported because transforms will be maintained both inside and outside the workers.
 export function updateTransforms(
@@ -29,7 +36,7 @@ export function updateTransforms(
       const parsedMessage = isBobject(message) ? deepParse(message) : message;
       for (const tf of parsedMessage.transforms) {
         if (tf.child_frame_id !== skipFrameId) {
-          transforms.consume(tf);
+          transforms.consume(makeTransformElement(tf));
         }
       }
     }
@@ -39,7 +46,7 @@ export function updateTransforms(
     for (const { message } of tfs_static) {
       const parsedMessage = isBobject(message) ? deepParse(message) : message;
       for (const tf of parsedMessage.transforms) {
-        transforms.consume(tf);
+        transforms.consume(makeTransformElement(tf));
       }
     }
   }

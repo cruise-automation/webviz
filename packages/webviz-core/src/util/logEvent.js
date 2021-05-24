@@ -29,7 +29,6 @@ export const eventCategories = {
 export type EventInfo = {|
   category: $Values<typeof eventCategories>,
   humanReadableName: string,
-  eventName: string,
   // Only used in error events.
   errorCode?: number,
   severityRank?: number,

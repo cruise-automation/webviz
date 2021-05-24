@@ -173,12 +173,10 @@ export const processMessage = ({
 };
 
 export const processMessages = ({
-  binaryOutputs,
   messages,
   globalVariables,
   outputTopic,
 }: {
-  binaryOutputs: boolean,
   messages: Message[],
   globalVariables: GlobalVariables,
   outputTopic: string,
@@ -190,7 +188,7 @@ export const processMessages = ({
     .pop();
   const logs = flatten(results.map(({ userNodeLogs }) => userNodeLogs));
   const outputMessages = results.map(({ message }) => message).filter(Boolean);
-  if (binaryOutputs && serializeMessage != null) {
+  if (serializeMessage != null) {
     const localSerialize = serializeMessage; // For flow -- stays non-null.
     try {
       const serializedMessages = outputMessages.map(({ message, receiveTime, topic }) => ({

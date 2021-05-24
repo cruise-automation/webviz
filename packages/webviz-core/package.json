@@ -12,6 +12,7 @@
     "@cruise-automation/tooltip": "0.0.7",
     "@mdi/svg": "5.7.55",
     "@sentry/browser": "5.11.0",
+    "@welldone-software/why-did-you-render": "6.1.1",
     "async-retry": "1.2.3",
     "buffer": "6.0.3",
     "chart.js": "davidswinegar/Chart.js#0785c29a4c57b3e1b4243f8163df7950a00b2a80",

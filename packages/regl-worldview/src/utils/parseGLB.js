@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import decodeCompressedGLB from "./draco";
+
 type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
 
 export type GLBModel = {
@@ -77,6 +79,13 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
 
   // create a TypedArray for each accessor
   const accessors = json.accessors.map((accessorInfo) => {
+    if (accessorInfo.bufferView == null) {
+      // This accessor has no associated bufferView, which happens when the mesh
+      // contains compressed data. This is not an error, though. So, we return
+      // null and let the mesh handles data access later.
+      return null;
+    }
+
     let arrayType;
     // prettier-ignore
     switch (accessorInfo.componentType) {
@@ -115,6 +124,8 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBMod
       accessorInfo.count * numComponents
     );
   });
+
+  await decodeCompressedGLB(json, binary);
 
   // load embedded images
   const images =

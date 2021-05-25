@@ -5,8 +5,9 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import React, { useContext, useRef } from "react";
-import { WorldviewReactContext, type WorldviewContextType } from "regl-worldview";
+import React from "react";
+
+import { type DebugStats } from "./types";
 
 const style = {
   position: "absolute",
@@ -37,28 +38,39 @@ function validate(stats) {
   }
 }
 
+type Props = {|
+  debugStats: DebugStats,
+|};
+
 // Shows debug regl stats in the 3d panel.  Crashes the panel if regl stats drift outside of acceptable ranges.
 // TODO(bmc): move to regl-worldview at some point
-export default function DebugStats() {
-  const context = useContext<WorldviewContextType>(WorldviewReactContext);
-  const renderCount = useRef(0);
-  renderCount.current = renderCount.current + 1;
-  if (context.initializedData.regl) {
-    const { stats } = context.initializedData.regl;
-    validate(stats);
-    const textureSize = (stats.getTotalTextureSize() / (1024 * 1024)).toFixed(1);
-    const bufferSize = (stats.getTotalBufferSize() / (1024 * 1024)).toFixed(1);
+export default function Renderer(props: Props) {
+  const { debugStats } = props;
+  if (debugStats) {
+    validate(debugStats);
+    const {
+      renderCount,
+      bufferCount,
+      textureCount,
+      elementsCount,
+      shaderCount,
+      totalTextureSize,
+      totalBufferSize,
+    } = debugStats;
+    const textureSize = (totalTextureSize / (1024 * 1024)).toFixed(1);
+    const bufferSize = (totalBufferSize / (1024 * 1024)).toFixed(1);
+
     return (
       <div style={style}>
-        <div>renders: {renderCount.current}</div>
+        <div>renders: {renderCount}</div>
         <div>
-          buffers: {stats.bufferCount} ({bufferSize}) Mb
+          buffers: {bufferCount} ({bufferSize}) Mb
         </div>
         <div>
-          textures: {stats.textureCount} ({textureSize}) Mb
+          textures: {textureCount} ({textureSize}) Mb
         </div>
-        <div>elements: {stats.elementsCount}</div>
-        <div>shaders: {stats.shaderCount}</div>
+        <div>elements: {elementsCount}</div>
+        <div>shaders: {shaderCount}</div>
       </div>
     );
   }

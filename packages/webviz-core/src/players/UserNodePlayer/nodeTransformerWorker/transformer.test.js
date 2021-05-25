@@ -216,6 +216,19 @@ describe("pipeline", () => {
       )({ ...baseNodeData, name: "/bad_name" }, []);
       expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
     });
+
+    it("should return an error if nodes contain extra slashes", () => {
+      const { diagnostics } = compile({
+        ...baseNodeData,
+        name: `${DEFAULT_WEBVIZ_NODE_PREFIX}subpath/main`,
+        sourceCode: `
+          import {norm} from "./pointClouds";
+          const x = norm({x:1, y:2, z:3})
+        `,
+      });
+      expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
+    });
+
     it.each(["const x: string = 'hello webviz'", "const num: number = 1222"])("can compile", (sourceCode) => {
       const { diagnostics } = compile({ ...baseNodeData, sourceCode });
       expect(diagnostics.length).toEqual(0);

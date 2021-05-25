@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import type { CommentingActions } from "./commenting";
-import type { HoverValueActions } from "./hoverValue";
 import type { LayoutHistoryActions } from "./layoutHistory";
 import type { MosaicActions } from "./mosaic";
 import type { PanelsActions } from "./panels";
@@ -16,7 +15,6 @@ import type { UserNodesActions } from "./userNodes";
 
 export type ActionTypes =
   | TestsActions
-  | HoverValueActions
   | LayoutHistoryActions
   | MosaicActions
   | PanelsActions

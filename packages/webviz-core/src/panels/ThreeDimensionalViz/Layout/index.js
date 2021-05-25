@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { groupBy, isEqual } from "lodash";
+import { groupBy, isEqual, cloneDeep } from "lodash";
 import React, { type Node, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   Worldview,
@@ -37,7 +37,7 @@ import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
 import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
+import { DebugStatsOverlay, DebugStatsOverlayRpc } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import IconOverlay from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
@@ -53,6 +53,7 @@ import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTool
 import PanelToolbarMenu from "webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { SearchCameraHandler, useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
+import { useStoryEventsContext } from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
 import {
   type MarkerMatcher,
   ThreeDimensionalVizContext,
@@ -62,6 +63,7 @@ import {
   getInteractionData,
   getObject,
   getUpdatedGlobalVariablesBySelectedObject,
+  normalizeMouseEventObject,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { ColorPickerSettingsPanel } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import TopicSettingsModal from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal";
@@ -74,11 +76,10 @@ import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/Transf
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { Color, OverlayIconMarker } from "webviz-core/src/types/Messages";
 import { getField } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
-import { useShallowMemo } from "webviz-core/src/util/hooks";
+import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
@@ -89,6 +90,7 @@ import { joinTopics } from "webviz-core/src/util/topicUtils";
 const {
   sceneBuilderHooks,
   getLayoutWorker,
+  useStaticTransformsData,
   useWorldContextValue,
 } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
 const VIDEO_RECORDING_STYLE = { visibility: inVideoRecordingMode() ? "hidden" : "visible" };
@@ -439,6 +441,12 @@ export default function Layout({
     }, []);
   }, [colorOverrideBySourceIdxByVariable, globalVariables, linkedGlobalVariables]);
 
+  // Toggle scene builder topics based on visible topic nodes in the tree
+  const selectedTopics = useMemo(() => {
+    const topicsByTopicName = getTopicsByTopicName(topics);
+    return filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
+  }, [topics, selectedTopicNames]);
+
   useMemo(() => {
     if (!sceneBuilder) {
       return;
@@ -451,9 +459,6 @@ export default function Layout({
     if (!frame || !rootTf) {
       return;
     }
-    // Toggle scene builder topics based on visible topic nodes in the tree
-    const topicsByTopicName = getTopicsByTopicName(topics);
-    const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
 
     sceneBuilder.setPlayerId(playerId);
     sceneBuilder.setTransforms(transforms, rootTf);
@@ -476,12 +481,11 @@ export default function Layout({
     cleared,
     frame,
     rootTf,
-    topics,
-    selectedTopicNames,
     playerId,
     transforms,
     flattenMarkers,
     selectedNamespacesByTopic,
+    selectedTopics,
     settingsByKey,
     globalVariables,
     linkedGlobalVariables,
@@ -568,6 +572,8 @@ export default function Layout({
     updateGlobalVariablesFromSelection(newSelectedObject);
   }, [updateInteractionsTabVisibility, updateGlobalVariablesFromSelection]);
 
+  const storyEvents = useStoryEventsContext();
+
   const {
     onClick,
     onIconClick,
@@ -583,6 +589,9 @@ export default function Layout({
   } = useMemo(() => {
     return {
       onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
+        if (storyEvents) {
+          storyEvents.selection.resolve();
+        }
         // Don't set any clicked objects when measuring distance or drawing polygons.
         if (callbackInputsRef.current.isDrawing) {
           return;
@@ -655,7 +664,7 @@ export default function Layout({
         }
       },
     };
-  }, [handleEvent, selectObject, selectedNamespacesByTopic, selectedObject, toggleNamespaceChecked]);
+  }, [handleEvent, selectObject, selectedNamespacesByTopic, selectedObject, toggleNamespaceChecked, storyEvents]);
 
   // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
   const worldRef = useRef<?typeof Worldview>(null);
@@ -747,6 +756,9 @@ export default function Layout({
     []
   );
 
+  const frameIndexRef = useRef(0);
+  frameIndexRef.current += 1;
+  const resumeFrames = useRef(new Map<number, () => void>());
   const rpc = useMemo(() => {
     if (!useWorkerIn3DPanel) {
       return null;
@@ -760,8 +772,27 @@ export default function Layout({
         updateWorkerErrorsByTopic(errorsByTopic);
       }
     });
+    ret.receive("finishFrame", ({ frameIndex, frameIsEmpty, searchTextMatches: newSearchMatches }) => {
+      if (stillMounted.current) {
+        updateSearchTextMatches(newSearchMatches);
+        if (!frameIsEmpty && storyEvents) {
+          storyEvents.render.resolve();
+        }
+      }
+      const resumeFrame = resumeFrames.current.get(frameIndex);
+      if (resumeFrame) {
+        resumeFrame();
+        resumeFrames.current.delete(frameIndex);
+      }
+    });
     return ret;
-  }, [updateWorkerAvailableNamespacesByTopic, updateWorkerErrorsByTopic, useWorkerIn3DPanel]);
+  }, [
+    storyEvents,
+    updateSearchTextMatches,
+    updateWorkerAvailableNamespacesByTopic,
+    updateWorkerErrorsByTopic,
+    useWorkerIn3DPanel,
+  ]);
 
   // TODO (useWorkerIn3DPanel): Move worker releated objects and functions to a different file to reduce the complexity of this one.
   const workerDataSender = useMemo(() => {
@@ -780,7 +811,18 @@ export default function Layout({
     useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
   );
 
+  // Continues to return the same `polygons` instance as long as it's not changed by PolygonBuilder.
+  // PolygonBuilder mutates the `polygons` array whenever a new polygons is created.
+  // It also mutates the `points` array of the active polygon when adding new points.
+  // We use deep clone here to keep the polygons instance stable, so we can detect changes
+  // and send it across the worker boundary only when needed.
+  const polygons = useDeepMemo(cloneDeep(polygonBuilder.polygons));
+  const staticTransformsData = useStaticTransformsData();
+  if (staticTransformsData) {
+    transforms.consumeStaticData(staticTransformsData);
+  }
   useMemo(async () => {
+    const frameIndex = frameIndexRef.current;
     if (workerDataSender && canvasRef.current && initialized) {
       // This process is async, so we must use message pipeline to pause/resume playback
       if (!frame || !rootTf) {
@@ -788,12 +830,13 @@ export default function Layout({
       }
 
       const resumeFrame = pauseFrame("3DPanel/Layout");
+      resumeFrames.current.set(frameIndex, resumeFrame);
       const { width, height } = viewport;
-      const topicsByTopicName = getTopicsByTopicName(topics);
-      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
-      const { searchTextMatches: newSearchMatches } = await workerDataSender.renderFrame({
+      const frameSent = await workerDataSender.renderFrame({
         cleared,
+        staticTransformsData,
         frame,
+        frameIndex,
         playerId,
         rootTf,
         flattenMarkers: !!flattenMarkers,
@@ -816,25 +859,27 @@ export default function Layout({
         searchText,
         selectedMatchIndex,
         showCrosshair,
-        polygons: polygonBuilder.polygons,
+        polygons,
         forcedUpdate,
         measurePoints: measureInfo.measurePoints,
         worldContextValue,
+        debug,
       });
-      if (stillMounted.current) {
-        updateSearchTextMatches(newSearchMatches);
+      if (!frameSent) {
+        // Frame was overridden by one coming later.
+        resumeFrame();
+        resumeFrames.current.delete(frameIndex);
       }
-      resumeFrame();
     }
   }, [
+    staticTransformsData,
+    frame,
     workerDataSender,
     initialized,
-    frame,
     rootTf,
     pauseFrame,
     viewport,
-    topics,
-    selectedTopicNames,
+    selectedTopics,
     cleared,
     playerId,
     flattenMarkers,
@@ -855,11 +900,11 @@ export default function Layout({
     searchText,
     selectedMatchIndex,
     showCrosshair,
-    polygonBuilder.polygons,
+    polygons,
     forcedUpdate,
     measureInfo.measurePoints,
     worldContextValue,
-    updateSearchTextMatches,
+    debug,
   ]);
 
   const setCanvasRef = useCallback((canvas) => {
@@ -869,13 +914,22 @@ export default function Layout({
       rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]).then(() => {
         if (stillMounted.current) {
           setInitialized(true);
+          if (storyEvents) {
+            storyEvents.ready.resolve();
+          }
         }
       });
     } else {
       // TODO: handle unmount with `canvas === undefined`
     }
     canvasRef.current = canvas;
-  }, [rpc, initialized, setInitialized]);
+  }, [initialized, rpc, storyEvents]);
+
+  if (!useWorkerIn3DPanel && storyEvents) {
+    // If we're not using workers, both `ready` and `render` events can be resolved immediately
+    storyEvents.ready.resolve();
+    storyEvents.render.resolve();
+  }
 
   const mouseEventHandlers = useShallowMemo({
     onMouseDown,
@@ -933,6 +987,11 @@ export default function Layout({
       });
   }, [initialized, mouseEventHandlers, rpc]);
 
+  const findTopicInTopicTree = React.useCallback((topicName) => {
+    setFilterText(topicName);
+    setShowTopicTree(true);
+  }, [setFilterText]);
+
   const sendMouseUp = useCallback((e) => sendMouseEvent(e, "onMouseUp"), [sendMouseEvent]);
   const sendMouseDown = useCallback((e) => sendMouseEvent(e, "onMouseDown"), [sendMouseEvent]);
   const sendMouseMove = useCallback((e) => sendMouseEvent(e, "onMouseMove"), [sendMouseEvent]);
@@ -947,6 +1006,19 @@ export default function Layout({
     }, cameraState || DEFAULT_CAMERA_STATE);
   }, [cameraState, onCameraStateChange]);
 
+  const normalizedOnClick = useCallback((ev: MouseEvent, inputArgs: ?ReglClickInfo) => {
+    const args =
+      !inputArgs || !inputArgs.objects
+        ? inputArgs
+        : { ...inputArgs, objects: inputArgs.objects.map(normalizeMouseEventObject) };
+    return onClick(ev, args);
+  }, [onClick]);
+  const normalizedOnIconClick = useCallback((
+    iconMarker: Interactive<OverlayIconMarker>,
+    newClickedPosition: ClickedPosition
+  ) => {
+    return onIconClick(normalizeMouseEventObject({ object: iconMarker }).object, newClickedPosition);
+  }, [onIconClick]);
   return (
     <ThreeDimensionalVizContext.Provider value={threeDimensionalVizContextValue}>
       <TopicTreeContext.Provider value={topicTreeData}>
@@ -1009,11 +1081,7 @@ export default function Layout({
                   currentEditingTopic={currentEditingTopic}
                   hasFeatureColumn={hasFeatureColumn}
                   setCurrentEditingTopic={setCurrentEditingTopic}
-                  sceneBuilderMessage={
-                    sceneBuilder &&
-                    sceneBuilder.collectors[currentEditingTopic.name] &&
-                    sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
-                  }
+                  message={frame?.[currentEditingTopic.name]?.[0]?.message}
                   saveConfig={saveConfig}
                   settingsByKey={settingsByKey}
                 />
@@ -1091,6 +1159,7 @@ export default function Layout({
                           targetPose={targetPose}
                           transforms={transforms}
                           isHidden={isHidden}
+                          findTopicInTopicTree={findTopicInTopicTree}
                           {...searchTextProps}
                         />
                       </div>
@@ -1101,7 +1170,7 @@ export default function Layout({
                           selectObject={selectObject}
                         />
                       )}
-                      {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+                      <DebugStatsOverlayRpc debug={debug} rpc={rpc} />
                     </>
                   </Flex>
                 )}
@@ -1117,8 +1186,8 @@ export default function Layout({
                   markerProviders={markerProviders}
                   onCameraStateChange={onCameraStateChange}
                   diffModeEnabled={hasFeatureColumn && diffModeEnabled}
-                  onClick={onClick}
-                  onIconClick={onIconClick}
+                  onClick={normalizedOnClick}
+                  onIconClick={normalizedOnIconClick}
                   onDoubleClick={onDoubleClick}
                   onMouseDown={onMouseDown}
                   onMouseMove={onMouseMove}
@@ -1140,6 +1209,7 @@ export default function Layout({
                       interactionsTabType={interactionsTabType}
                       setInteractionsTabType={setInteractionsTabType}
                       debug={debug}
+                      findTopicInTopicTree={findTopicInTopicTree}
                       followOrientation={followOrientation}
                       followTf={followTf}
                       isPlaying={isPlaying}
@@ -1172,7 +1242,7 @@ export default function Layout({
                       selectObject={selectObject}
                     />
                   )}
-                  {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+                  <DebugStatsOverlay debug={debug} />
                 </World>
               </WorldContext.Provider>
             )}

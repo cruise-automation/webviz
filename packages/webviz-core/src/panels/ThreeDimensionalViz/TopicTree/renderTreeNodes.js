@@ -296,6 +296,7 @@ export default function renderTreeNodes({
             topicName,
             hasFeatureColumn,
             linkedGlobalVariablesByTopic,
+            visible: nodeVisibleInScene,
             width: titleWidth,
           })
         );

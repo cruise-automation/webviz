@@ -19,10 +19,15 @@ import {
 } from "regl-worldview";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import {
+  decodeData as decodePointCloudData,
+  getClickedPointColor,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import type { InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
+import { getField, isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
+import { useDeepMemo } from "webviz-core/src/util/hooks";
 import { emptyPose } from "webviz-core/src/util/Pose";
 
 export type TargetPose = { target: Vec3, targetOrientation: Vec4 };
@@ -96,7 +101,7 @@ export function useTransformedCameraState({
     (objVal, srcVal) => objVal ?? srcVal
   );
 
-  return { transformedCameraState, targetPose: targetPose || lastTargetPose };
+  return useDeepMemo({ transformedCameraState, targetPose: targetPose || lastTargetPose });
 }
 
 export const getInstanceObj = (marker: any, idx: number): any => {
@@ -209,3 +214,42 @@ export function getNewCameraStateOnFollowChange({
 
   return newCameraState;
 }
+
+// Draw-data coming out of Worldview is pretty varied in shape. When we have grouped lines, we
+// really just want to send the individual lines across the worker boundary, so we
+//  - smooth out the instance-object stuff,
+//  - deep-parse any bobjects.
+export const normalizeMouseEventObject = ({ object, instanceIndex }: MouseEventObject): MouseEventObject => {
+  const instanceObject = getInstanceObj(object, instanceIndex) ?? object;
+  const originalMessage = instanceObject.interactionData?.originalMessage ?? instanceObject;
+  const topic = instanceObject.interactionData?.topic ?? object.interactionData?.topic ?? "";
+  const parsedMessage = isBobject(originalMessage) ? deepParse(originalMessage) : originalMessage;
+
+  // Structured information we might use outside of the arbitrary original message display.
+  // These fields are used to display the selection disambiguation picker.
+  // Sometimes these come from bobjects, sometimes from draw-data.
+  const interestingObjectFields = {};
+  for (const field of ["id", "ns"]) {
+    const value = getField(instanceObject, field);
+    if (value != null) {
+      interestingObjectFields[field] = value;
+    }
+  }
+  const interactionData = { topic, originalMessage: parsedMessage };
+
+  // The selection dialog for point-clouds shows additional information:
+  //  - Values for the clicked point (and its color), and
+  //  - Decoded values for all points.
+  //  Because the `originalMessage` might not structurally be a PointCloud2, it's most robust to
+  //  do that from the draw data here, which _is_ of a predictable structure, but is not sent to
+  //   the object details dialog.
+  if (instanceObject.type === 102) {
+    interestingObjectFields.clickedPointDetails = {
+      color: getClickedPointColor(object, instanceIndex),
+      decodedData: decodePointCloudData(instanceObject),
+      index: instanceIndex,
+    };
+  }
+
+  return { object: { ...interestingObjectFields, interactionData } };
+};

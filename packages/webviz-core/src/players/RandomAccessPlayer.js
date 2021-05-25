@@ -36,7 +36,7 @@ import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
-import { getSanitizedTopics } from "webviz-core/src/util/selectors";
+import { getSanitizedTopics, getTopicsByTopicName } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
   clampTime,
@@ -108,6 +108,7 @@ export default class RandomAccessPlayer implements Player {
   _parsedSubscribedTopics: Set<string> = new Set();
   _bobjectSubscribedTopics: Set<string> = new Set();
   _providerTopics: Topic[] = [];
+  _providerTopicsByName: { [topicName: string]: Topic } = {};
   _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
   _initializing: boolean = true;
@@ -235,6 +236,7 @@ export default class RandomAccessPlayer implements Player {
         this._currentTime = initialTime;
         this._providerEnd = end;
         this._providerTopics = topics.map((t) => ({ ...t, preloadable: true }));
+        this._providerTopicsByName = getTopicsByTopicName(this._providerTopics);
         this._providerDatatypes = parsedMessageDefinitions.datatypes;
         this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
         this._initializing = false;
@@ -394,14 +396,14 @@ export default class RandomAccessPlayer implements Player {
     // Update the currentTime when we know a seek didn't happen.
     this._setCurrentTime(end);
 
+    this._messages = this._messages.concat(messages);
+    this._bobjects = this._bobjects.concat(bobjects);
     // if we paused while reading then do not emit messages
-    // and exit the read loop
+    // and exit the read loop. Emit the messages next time
+    // we start playing (unless a seek happens.)
     if (!this._isPlaying) {
       return;
     }
-
-    this._messages = this._messages.concat(messages);
-    this._bobjects = this._bobjects.concat(bobjects);
     this._emitState();
   }
 
@@ -464,7 +466,7 @@ export default class RandomAccessPlayer implements Player {
     }
     const filterMessages = (msgs, topics) =>
       filterMap(msgs, (message) => {
-        if (!topics.includes(message.topic)) {
+        if (!topics.has(message.topic)) {
           sendNotification(
             `Unexpected topic encountered: ${message.topic}; skipped message`,
             `Full message details: ${JSON.stringify(message)}`,
@@ -473,7 +475,7 @@ export default class RandomAccessPlayer implements Player {
           );
           return undefined;
         }
-        const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
+        const topic: ?Topic = this._providerTopicsByName[message.topic];
         if (!topic) {
           sendNotification(
             `Could not find topic for message ${message.topic}; skipped message`,
@@ -500,8 +502,8 @@ export default class RandomAccessPlayer implements Player {
         };
       });
     return {
-      parsedMessages: filterMessages(parsedMessages, parsedTopics),
-      bobjects: filterMessages(bobjects, bobjectTopics),
+      parsedMessages: filterMessages(parsedMessages, new Set(parsedTopics)),
+      bobjects: filterMessages(bobjects, new Set(bobjectTopics)),
     };
   }
 

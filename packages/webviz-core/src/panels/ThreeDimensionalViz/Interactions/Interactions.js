@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import CursorDefault from "@mdi/svg/svg/cursor-default.svg";
+import TextBoxSearchIcon from "@mdi/svg/svg/text-box-search.svg";
 import * as React from "react";
 import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
@@ -18,11 +19,9 @@ import Checkbox from "webviz-core/src/components/Checkbox";
 import ExpandingToolbar, { ToolGroup, ToolGroupFixedSizePane } from "webviz-core/src/components/ExpandingToolbar";
 import Icon from "webviz-core/src/components/Icon";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import ObjectDetails from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails";
 import TopicLink from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import { getInteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -55,6 +54,7 @@ type Props = {|
   interactionsTabType: ?TabType,
   setInteractionsTabType: (?TabType) => void,
   selectedObject: ?MouseEventObject,
+  findTopicInTopicTree: (string) => void,
 |};
 
 type PropsWithConfig = {|
@@ -69,16 +69,13 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
   setInteractionsTabType,
   disableAutoOpenClickedObject,
   saveConfig,
+  findTopicInTopicTree,
 }: PropsWithConfig) {
   const { object } = selectedObject || {};
-  const isPointCloud = object && object.type === 102;
-  const maybeFullyDecodedObject = React.useMemo(
-    () => (isPointCloud ? { ...selectedObject, object: decodeAdditionalFields(object) } : selectedObject),
-    [isPointCloud, object, selectedObject]
-  );
-
+  const { originalMessage, topic } = object?.interactionData ?? {};
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
-  const selectedInteractionData = selectedObject && getInteractionData(selectedObject);
+
+  const findTopic = React.useCallback(() => findTopicInTopicTree(topic), [findTopicInTopicTree, topic]);
 
   return (
     <ExpandingToolbar
@@ -93,19 +90,25 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
       onSelectTab={(newSelectedTab) => setInteractionsTabType(newSelectedTab)}>
       <ToolGroup name={OBJECT_TAB_TYPE}>
         <ToolGroupFixedSizePane>
-          {selectedObject ? (
+          {object && originalMessage ? (
             <>
-              {selectedInteractionData && (
+              {topic && (
                 <SRow>
                   <SValue>
-                    <TopicLink topic={selectedInteractionData.topic} />
+                    <TopicLink topic={topic} />
                   </SValue>
+                  <Icon
+                    fade
+                    onClick={findTopic}
+                    style={{ margin: "0 8px" }}
+                    tooltip="Find in Topic Tree"
+                    dataTest="find-in-topic-tree">
+                    <TextBoxSearchIcon />
+                  </Icon>
                 </SRow>
               )}
-              {isPointCloud && (
-                <PointCloudDetails selectedObject={maybeFullyDecodedObject} interactionData={selectedInteractionData} />
-              )}
-              <ObjectDetails selectedObject={maybeFullyDecodedObject} interactionData={selectedInteractionData} />
+              {object.clickedPointDetails && <PointCloudDetails pointDetails={object.clickedPointDetails} />}
+              <ObjectDetails selectedObject={originalMessage} topic={topic} />
             </>
           ) : (
             <SEmptyState>Click an object in the 3D view to select it.</SEmptyState>

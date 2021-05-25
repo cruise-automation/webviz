@@ -72,6 +72,11 @@ export type ColumnInstance = {
   getResizerProps(): {},
 };
 
+export type ColumnFilter = $ReadOnly<{
+  value: string,
+  comparator: string,
+}>;
+
 export type ColumnOptions = {|
   Header?: any,
   accessor?: string,
@@ -82,7 +87,7 @@ export type ColumnOptions = {|
   minWidth?: number,
   maxWidth?: number,
   sortType?: (aRow: any, bRow: any, columnId: string, desc: boolean) => number,
-  filter?: (rows: Row[], columnIds: string[], filterValue: string) => Row[],
+  filter?: (rows: Row[], columnIds: string[], columnFilter: ColumnFilter) => Row[],
 |};
 
 type HeaderGroup = {
@@ -126,7 +131,7 @@ export type ColumnConfig = {|
   hidden?: boolean,
   conditionalFormats?: ConditionalFormat[],
   isExpanded?: boolean,
-  filter?: string,
+  filter?: ColumnFilter,
   sortDesc?: boolean,
   width?: ?number,
 |};

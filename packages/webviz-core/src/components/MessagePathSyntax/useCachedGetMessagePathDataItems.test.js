@@ -555,6 +555,15 @@ describe("useCachedGetMessagePathDataItems", () => {
         ],
       ]);
     });
+
+    it("is robust to incorrect datatypes", () => {
+      const messages: Message[] = [{ topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { state: 0 } }];
+      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const datatypes: RosDatatypes = { some_datatype: { fields: [] } };
+      expect(addValuesWithPathsToItems(messages, "/some/topic.state", topics, datatypes, useBobjects)).toEqual([
+        [{ value: 0, path: "/some/topic.state" }],
+      ]);
+    });
   });
 });
 

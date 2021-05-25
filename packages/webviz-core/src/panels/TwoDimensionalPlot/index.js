@@ -18,7 +18,7 @@ import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
-import { SBar } from "webviz-core/src/components/HovarBar";
+import { SBar } from "webviz-core/src/components/HoverBar";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";

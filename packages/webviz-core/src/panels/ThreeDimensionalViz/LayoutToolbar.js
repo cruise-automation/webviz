@@ -40,6 +40,7 @@ type Props = {|
   setMeasureInfo: (MeasureInfo) => void,
   showCrosshair: ?boolean,
   isHidden: boolean,
+  findTopicInTopicTree: (string) => void,
   ...SearchTextProps,
 |};
 
@@ -69,6 +70,7 @@ function LayoutToolbar({
   selectedMatchIndex,
   selectedObject,
   selectedPolygonEditFormat,
+  findTopicInTopicTree,
   setInteractionsTabType,
   setMeasureInfo,
   setSearchText,
@@ -129,6 +131,7 @@ function LayoutToolbar({
         />
         {measuringElRef.current && measuringElRef.current.measureDistance}
         <Interactions
+          findTopicInTopicTree={findTopicInTopicTree}
           selectedObject={selectedObject}
           interactionsTabType={interactionsTabType}
           setInteractionsTabType={setInteractionsTabType}

@@ -16,3 +16,8 @@ The message path syntax can be used in several panels to find the exact messages
 When filtering, you can use booleans `{value==true}`; numbers `{value==123}`; and strings `{value="foo"}`.
 
 We don't support escaping quotation marks in strings, but you can use either single or double quotes, which should allow you to express most strings: `{value='string which has "some" double quotes'}`.
+
+The message path algorithm will return values when messages' structure disagrees with the message definitions associated with their topics. This can happen for a couple of reasons:
+
+- Webviz often indexes datatypes by name, and different datatypes can have the same name.
+- Webviz flattens out the ROS "connection" concept, so messages on the same topic can technically have different definitions (and even different datatype names.)

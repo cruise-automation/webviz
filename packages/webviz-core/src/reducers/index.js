@@ -10,7 +10,6 @@ import { connectRouter } from "connected-react-router";
 import type { ActionTypes } from "webviz-core/src/actions";
 import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import commenting from "webviz-core/src/reducers/commenting";
-import hoverValue from "webviz-core/src/reducers/hoverValue";
 import layoutHistory, { type LayoutHistory, initialLayoutHistoryState } from "webviz-core/src/reducers/layoutHistory";
 import mosaic from "webviz-core/src/reducers/mosaic";
 import panels, {
@@ -21,7 +20,6 @@ import recentLayouts, { maybeStoreNewRecentLayout } from "webviz-core/src/reduce
 import tests from "webviz-core/src/reducers/tests";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { Auth as AuthState } from "webviz-core/src/types/Auth";
-import type { HoverValue } from "webviz-core/src/types/hoverValue";
 import type { SetFetchedLayoutPayload } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 
@@ -29,7 +27,6 @@ const getReducers = (history: any) => [
   (state) => ({ ...state, router: connectRouter(history)() }),
   panels,
   mosaic,
-  hoverValue,
   userNodes,
   layoutHistory,
   recentLayouts,
@@ -56,7 +53,6 @@ export type State = {
   persistedState: PersistedState,
   mosaic: { mosaicId: string, selectedPanelIds: string[] },
   auth: AuthState,
-  hoverValue: ?HoverValue,
   userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
@@ -78,7 +74,6 @@ export default function createRootReducer(history: any, args?: { testAuth?: any 
     mosaic: { mosaicId: "", selectedPanelIds: [] },
     auth: Object.freeze(args?.testAuth || { username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),
-    hoverValue: null,
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,

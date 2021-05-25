@@ -9,7 +9,8 @@
 import _ from "lodash";
 import { TimeUtil } from "rosbag";
 
-import type { ConditionalFormat } from "webviz-core/src/panels/Table/types";
+import type { ConditionalFormat, ColumnFilter } from "webviz-core/src/panels/Table/types";
+import { isNumberType } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import { formatFrame } from "webviz-core/src/util/time";
 
 export const getLastAccessor = (accessorPath: string) => {
@@ -33,21 +34,6 @@ export const sortTimestamps = (rowA: any, rowB: any, columnId: string) => {
   return TimeUtil.compare(timeA, timeB);
 };
 
-export const filterTimestamps = (columnId: string, rows: any, columnIds: string[], filterValue: string) => {
-  if (!filterValue) {
-    return rows;
-  }
-
-  return rows.filter((row) => {
-    const time = _.get(row.values, columnId);
-    if (time && time?.sec && time?.nsec) {
-      const stamp = formatFrame(time);
-      return stamp.includes(filterValue);
-    }
-    return false;
-  });
-};
-
 export const COMPARATOR_LIST = ["<", ">", "==", "!=", ">=", "<=", "~"];
 
 const COMPARATOR_FUNCTIONS = {
@@ -55,7 +41,7 @@ const COMPARATOR_FUNCTIONS = {
   ">": (x, y) => x > y,
   "==": (x, y) => x === y,
   "!=": (x, y) => x !== y,
-  "=>": (x, y) => x >= y,
+  ">=": (x, y) => x >= y,
   "<=": (x, y) => x <= y,
   "~": (x, y) => {
     if (typeof y !== "string" || typeof x !== "string") {
@@ -70,10 +56,35 @@ export const evaluateCondition = (value: any, comparator: string, primitive: str
   try {
     return COMPARATOR_FUNCTIONS[comparator](value, primitive);
   } catch (e) {
-    // TODO: Surface this error to users.
-    console.error(e);
+    // TODO(troy): Surface this error case to users.
     return null;
   }
+};
+
+export const filterColumn = (
+  fieldType: string,
+  columnId: string,
+  rows: any,
+  _columnIds: string[],
+  columnFilter: ColumnFilter
+) => {
+  if (!columnFilter.value) {
+    return rows;
+  }
+
+  const isNumberColumn = isNumberType(fieldType);
+  const isBooleanColumn = fieldType === "bool";
+
+  return rows.filter((row) => {
+    const value = _.get(row.values, columnId);
+    const formattedValue = fieldType === "time" || fieldType === "duration" ? formatFrame(value) : value;
+    const filterValue = isNumberColumn
+      ? Number(columnFilter.value)
+      : isBooleanColumn
+      ? columnFilter.value === "true"
+      : columnFilter.value;
+    return evaluateCondition(formattedValue, columnFilter.comparator, filterValue);
+  });
 };
 
 export const getFormattedColor = (value: any, conditionalFormats: ?(ConditionalFormat[])): string => {

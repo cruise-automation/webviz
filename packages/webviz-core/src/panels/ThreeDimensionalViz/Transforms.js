@@ -9,7 +9,7 @@
 import { mat4, vec3, quat } from "gl-matrix";
 import type { Mat4 } from "gl-matrix";
 
-import type { TF, MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
+import type { MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
 import { objectValues } from "webviz-core/src/util";
 
 // allocate some temporary variables
@@ -23,6 +23,13 @@ const tempOrient = [0, 0, 0, 0];
 function stripLeadingSlash(name: string) {
   return name.startsWith("/") ? name.slice(1) : name;
 }
+
+// A simplification of the ROS data format. We usually don't need everything.
+export type TransformElement = $ReadOnly<{|
+  childFrame: string,
+  parentFrame: string,
+  pose: Pose,
+|}>;
 
 export class Transform {
   id: string;
@@ -147,17 +154,25 @@ class TfStore {
 export default class Transforms {
   storage = new TfStore();
   empty = true;
+  _hasStaticTransformsData: boolean = false;
 
-  // consume a tf message
-  consume(tfMessage: TF) {
-    // child_frame_id is the id of the tf
-    const id = tfMessage.child_frame_id;
-    const parentId = tfMessage.header.frame_id;
-    const tf = this.storage.get(id);
-    const { rotation, translation } = tfMessage.transform;
-    tf.set(translation, rotation);
-    tf.parent = this.storage.get(parentId);
+  consume({ childFrame, parentFrame, pose: { position, orientation } }: TransformElement) {
+    const tf = this.storage.get(childFrame);
+    tf.set(position, orientation);
+    tf.parent = this.storage.get(parentFrame);
     this.empty = false;
+  }
+
+  consumeStaticData(data: $ReadOnlyArray<TransformElement>) {
+    if (this._hasStaticTransformsData) {
+      // These transforms never change value. It wouldn't be incorrect to consume them more than
+      // once, though.
+      return;
+    }
+    this._hasStaticTransformsData = true;
+    data.forEach((elem) => {
+      this.consume(elem);
+    });
   }
 
   // Apply the tf hierarchy to the original pose and update the pose supplied in the output parameter.

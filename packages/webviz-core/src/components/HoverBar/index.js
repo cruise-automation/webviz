@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import * as React from "react";
-import { useSelector } from "react-redux";
 import styled from "styled-components";
 
+import { useHoverValue } from "./context";
 import { getChartPx, type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -57,7 +57,7 @@ type Props = {|
   children?: React.Node,
   componentId: string,
   // We don't need to (and shouldn't) rerender when the scale-bounds changes under the cursor -- the
-  // bar should stay under the mouse. Only rerender when the mouse moves (using useSelector).
+  // bar should stay under the mouse. Only rerender when the mouse moves.
   scaleBounds: { current: ?$ReadOnlyArray<ScaleBounds> },
   isTimestampScale: boolean,
 |};
@@ -87,21 +87,9 @@ function showBar(wrapper, position, topPx, heightPx) {
   }
 }
 
-function shouldShowBar(hoverValue, componentId, isTimestampScale) {
-  if (hoverValue == null) {
-    return false;
-  }
-  if (hoverValue.type === "PLAYBACK_SECONDS" && isTimestampScale) {
-    // Always show playback-time hover values for timestamp-based charts.
-    return true;
-  }
-  // Otherwise just show a hover bar when hovering over the panel itself.
-  return hoverValue.componentId === componentId;
-}
-
 export default React.memo<Props>(({ children, componentId, isTimestampScale, scaleBounds }: Props) => {
   const wrapper = React.useRef<?HTMLDivElement>(null);
-  const hoverValue = useSelector((state) => state.hoverValue);
+  const hoverValue = useHoverValue({ componentId, isTimestampScale });
 
   const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
 
@@ -113,7 +101,7 @@ export default React.memo<Props>(({ children, componentId, isTimestampScale, sca
     if (xBounds == null || hoverValue == null) {
       hideBar(current);
     }
-    if (shouldShowBar(hoverValue, componentId, isTimestampScale)) {
+    if (hoverValue != null) {
       const position = getChartPx(xBounds, hoverValue.value);
       const topAndHeight = getChartTopAndHeight(scaleBounds.current);
       if (position == null || topAndHeight == null) {

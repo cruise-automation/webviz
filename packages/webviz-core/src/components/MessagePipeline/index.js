@@ -14,6 +14,7 @@ import shallowequal from "shallowequal";
 import { pauseFrameForPromises, type FramePromise } from "./pauseFrameForPromise";
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
 import signal from "webviz-core/shared/signal";
+import { HoverValueProvider } from "webviz-core/src/components/HoverBar/context";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type {
   AdvertisePayload,
@@ -363,7 +364,7 @@ export function MockMessagePipelineProvider(props: {|
   const playerState = useMemo(
     () => ({
       isPresent: props.isPresent == null ? true : props.isPresent,
-      playerId: props.playerId || "1",
+      playerId: props.playerId == null ? "1" : props.playerId,
       progress: props.progress || {},
       showInitializing: !!props.showInitializing,
       showSpinner: false,
@@ -405,26 +406,28 @@ export function MockMessagePipelineProvider(props: {|
 
   return (
     <StoreSetup store={props.store}>
-      <Context.Provider
-        value={{
-          playerState,
-          frame: groupBy(props.messages || [], "topic"),
-          sortedTopics: (props.topics || []).sort(naturalSort("name")),
-          datatypes: props.datatypes || NO_DATATYPES,
-          subscriptions: flattenedSubscriptions,
-          publishers: [],
-          setSubscriptions: props.setSubscriptions || setSubscriptions,
-          setPublishers: (_, __) => {},
-          publish: (_) => {},
-          startPlayback: props.startPlayback || (() => {}),
-          pausePlayback: props.pausePlayback || (() => {}),
-          setPlaybackSpeed: (_) => {},
-          seekPlayback: props.seekPlayback || ((_) => {}),
-          pauseFrame: props.pauseFrame || (() => () => {}),
-          requestBackfill,
-        }}>
-        {props.children}
-      </Context.Provider>
+      <HoverValueProvider>
+        <Context.Provider
+          value={{
+            playerState,
+            frame: groupBy(props.messages || [], "topic"),
+            sortedTopics: (props.topics || []).sort(naturalSort("name")),
+            datatypes: props.datatypes || NO_DATATYPES,
+            subscriptions: flattenedSubscriptions,
+            publishers: [],
+            setSubscriptions: props.setSubscriptions || setSubscriptions,
+            setPublishers: (_, __) => {},
+            publish: (_) => {},
+            startPlayback: props.startPlayback || (() => {}),
+            pausePlayback: props.pausePlayback || (() => {}),
+            setPlaybackSpeed: (_) => {},
+            seekPlayback: props.seekPlayback || ((_) => {}),
+            pauseFrame: props.pauseFrame || (() => () => {}),
+            requestBackfill,
+          }}>
+          {props.children}
+        </Context.Provider>
+      </HoverValueProvider>
     </StoreSetup>
   );
 }

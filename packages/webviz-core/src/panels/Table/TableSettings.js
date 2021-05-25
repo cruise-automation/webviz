@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ArrowRightIcon from "@mdi/svg/svg/arrow-right.svg";
 import DeleteIcon from "@mdi/svg/svg/delete.svg";
 import PencilIcon from "@mdi/svg/svg/pencil.svg";
 import PlusIcon from "@mdi/svg/svg/plus.svg";
@@ -18,10 +19,11 @@ import Checkbox from "webviz-core/src/components/Checkbox";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
-import { ConfigContext, TableContext, useColumnConfigValue, SHeaderDropdown } from "webviz-core/src/panels/Table";
+import { ConfigContext, TableContext, useColumnConfigValue, SHeaderDropdownItem } from "webviz-core/src/panels/Table";
 import type { ConditionalFormat, ColumnInstance } from "webviz-core/src/panels/Table/types";
 import { COMPARATOR_LIST } from "webviz-core/src/panels/Table/utils";
 import { useContextSelector } from "webviz-core/src/util/hooks";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const RemoveButton = styled.div`
   display: flex;
@@ -35,11 +37,11 @@ const SConditionalFormatInput = styled.div`
   width: 100%;
   > * {
     flex-grow: unset;
-    margin: 0 4px;
+    margin-right: 4px;
   }
 `;
 
-const SColorPickerWrapper = styled.span`
+const SColorPickerWrapper = styled.div`
   .rc-color-picker-trigger {
     border: none;
     box-shadow: none;
@@ -142,25 +144,17 @@ const ConditionalFormatInput = ({
   removeConditionalFormat,
   setConditionalFormat,
 }: ConditionalFormatInputProps) => {
+  const colorPickerRef = React.useRef();
   return (
     <SConditionalFormatInput>
-      <SColorPickerWrapper>
-        <ColorPicker
-          color={color}
-          onChange={(newColor: { color: string, alpha: number }) =>
-            setConditionalFormat({
-              id,
-              color: newColor.color,
-              comparator,
-              primitive,
-            })
-          }
-        />
-      </SColorPickerWrapper>
+      <span style={{ color: colors.TEXT_MUTED }}>if value</span>
       <Dropdown
         value={comparator}
         key={`comparator-${id}`}
-        closeOnChange={false}
+        // Because the parent `ConditionalFormatInput` is rendered inside a
+        // portal, meaning that calls to `node.contains` on click will fail and
+        // close the entire dropdown.
+        noPortal
         onChange={(newComparator) => {
           setConditionalFormat({
             id,
@@ -189,6 +183,29 @@ const ConditionalFormatInput = ({
           });
         }}
       />
+      <Icon style={{ color: colors.TEXT_MUTED }}>
+        <ArrowRightIcon />
+      </Icon>
+      <SColorPickerWrapper ref={colorPickerRef}>
+        <ColorPicker
+          color={color}
+          getCalendarContainer={() => {
+            // Because the parent `ConditionalFormatInput` is rendered inside a
+            // portal, meaning that calls to `node.contains` on click will fail and
+            // close the entire dropdown.
+            return colorPickerRef.current;
+          }}
+          onChange={(newColor: { color: string, alpha: number }) => {
+            setConditionalFormat({
+              id,
+              color: newColor.color,
+              comparator,
+              primitive,
+            });
+          }}
+        />
+      </SColorPickerWrapper>
+
       <RemoveButton>
         <Icon large onClick={() => removeConditionalFormat(id)}>
           <DeleteIcon />
@@ -235,34 +252,24 @@ export const ConditionaFormatsInput = ({ columnId }: {| columnId: string |}) => 
 
   return (
     <>
+      <SHeaderDropdownItem onClick={addConditionalFormat}>
+        <Icon className="menu-item">
+          <PlusIcon />
+        </Icon>
+        Add formatting
+      </SHeaderDropdownItem>
       {conditionalFormats.map((conditionalFormat) => {
         return (
-          <SHeaderDropdown key={conditionalFormat.id}>
+          <SHeaderDropdownItem key={conditionalFormat.id}>
             <ConditionalFormatInput
               columnId={columnId}
               {...conditionalFormat}
               setConditionalFormat={setConditionalFormat}
               removeConditionalFormat={removeConditionalFormat}
             />
-          </SHeaderDropdown>
+          </SHeaderDropdownItem>
         );
       })}
-      <SHeaderDropdown>
-        <button
-          onClick={addConditionalFormat}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "none",
-            padding: "0",
-          }}>
-          <Icon>
-            <PlusIcon />
-          </Icon>
-          Add formatting
-        </button>
-      </SHeaderDropdown>
     </>
   );
 };

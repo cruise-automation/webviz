@@ -619,14 +619,14 @@ export default class SceneBuilder implements MarkerProvider {
       if (message.icon_type != null) {
         marker.icon_type = message.icon_type();
       }
-    }
-
-    // TODO(Matt): show the original message upon marker click instead of parsing metadata upfront.
-    if (message.metadata != null) {
-      marker.metadata = message.metadata();
-      // Replace the text field with parsed icon text. Only replace when the marker type is overlayIcon.
-      if (iconTextTemplate && marker.type === 109) {
-        marker.text = parseStringTemplate(iconTextTemplate, marker.metadata);
+      if (message.metadata != null) {
+        // Downstream code relies on icon_type and icon_types fields from metadata :-(
+        // TODO(steel): Fix up icon types, do not put metadata on drawables.
+        marker.metadata = message.metadata();
+        if (iconTextTemplate) {
+          // Replace the text field with parsed icon text. Only replace when the marker type is overlayIcon.
+          marker.text = parseStringTemplate(iconTextTemplate, marker.metadata);
+        }
       }
     }
 

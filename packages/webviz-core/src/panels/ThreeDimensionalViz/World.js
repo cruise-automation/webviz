@@ -13,6 +13,7 @@ import {
   type CameraState,
   type MouseHandler,
   DEFAULT_CAMERA_STATE,
+  WorldviewReactContext,
 } from "regl-worldview";
 
 import OverlayProjector from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
@@ -32,6 +33,7 @@ import WorldMarkers, {
 } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 type Props = {|
   autoTextBackgroundColor: boolean,
@@ -53,6 +55,7 @@ type Props = {|
   setOverlayIcons: (any) => void,
   showCrosshair: ?boolean,
   measurePoints: MeasurePoints,
+  resolveRenderSignal?: ?() => void,
   ...WorldSearchTextProps,
 |};
 
@@ -97,6 +100,35 @@ function getMarkers(markerProviders: MarkerProvider[], hooks: ThreeDimensionalVi
   return markers;
 }
 
+// When rendering in a worker, we wait until worldview paints before calling resumeFrame.
+function RenderSignalResolver({ resolveRenderSignal }: { resolveRenderSignal: ?() => void }) {
+  const resolveRenderSignalRef = React.useRef(resolveRenderSignal);
+  resolveRenderSignalRef.current = resolveRenderSignal;
+  const resolveLatestSignal = React.useCallback(() => {
+    if (resolveRenderSignalRef.current) {
+      resolveRenderSignalRef.current();
+    }
+  }, []);
+
+  const worldviewContext = React.useContext(WorldviewReactContext);
+  if (useChangeDetector([resolveRenderSignal], true) && worldviewContext) {
+    // If the 3D panel is completely empty, we don't want to block playback if worldview doesn't
+    // paint. Force a worldview paint to occur for every frame, even if it wouldn't normally
+    // schedule one.
+    worldviewContext.onDirty();
+  }
+
+  React.useEffect(() => {
+    if (worldviewContext) {
+      worldviewContext.registerPaintCallback(resolveLatestSignal);
+      return () => {
+        worldviewContext.unregisterPaintCallback(resolveLatestSignal);
+      };
+    }
+  }, [resolveLatestSignal, worldviewContext]);
+  return null;
+}
+
 // Wrap the WorldMarkers in HoC(s)
 const WrappedWorldMarkers = withHighlights(withDiffMode(WorldMarkers));
 
@@ -126,6 +158,7 @@ function World(
     setOverlayIcons,
     showCrosshair,
     measurePoints,
+    resolveRenderSignal,
   }: Props,
   ref: Worldview
 ) {
@@ -169,6 +202,7 @@ function World(
       contextAttributes={{ preserveDrawingBuffer: true }}
       {...offscreenProps}>
       {children}
+      <RenderSignalResolver resolveRenderSignal={resolveRenderSignal} />
       <WrappedWorldMarkers
         {...{
           autoTextBackgroundColor,

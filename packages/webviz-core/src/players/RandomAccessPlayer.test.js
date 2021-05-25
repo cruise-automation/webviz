@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { omit, noop } from "lodash";
+import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
@@ -642,36 +642,37 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
     const store = new MessageStore(2);
 
-    let listenerResolve = noop;
-    let getMessagesResolver = noop;
-    source.setListener(
-      (message: PlayerState) =>
-        new Promise((r) => {
-          listenerResolve = r;
-          return store.add(message);
-        })
-    );
-    const resolveMessages = () => {
-      getMessagesResolver({
-        ...getMessagesResult,
-        parsedMessages: [
-          {
-            topic: "/foo/bar",
-            receiveTime: { sec: 10, nsec: 5 },
-            message: { payload: "foo bar" },
-          },
-        ],
-      });
+    let emitStateCallCount = 0;
+    const emitStateSignals = new Array(3).fill().map((_) => signal());
+
+    let getMessageCallCount = 0;
+    const getMessagesSignals = new Array(3).fill().map((_) => signal());
+
+    const state = {
+      ...getMessagesResult,
+      parsedMessages: [
+        {
+          topic: "/foo/bar",
+          receiveTime: { sec: 10, nsec: 5 },
+          message: { payload: "foo bar" },
+        },
+      ],
     };
-    provider.getMessages = async (): Promise<GetMessagesResult> =>
-      new Promise((resolve) => (getMessagesResolver = resolve));
+
+    source.setListener((message: PlayerState) => {
+      store.add(message);
+      return emitStateSignals[emitStateCallCount++];
+    });
+
+    provider.getMessages = async (): Promise<GetMessagesResult> => {
+      return getMessagesSignals[getMessageCallCount++];
+    };
 
     // Do a "normal" backfill, where everything resolves normally
     source.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     source.requestBackfill(); // Call #1
-    await delay(100);
-    resolveMessages();
-    listenerResolve();
+    getMessagesSignals[0].resolve(state);
+    emitStateSignals[0].resolve();
 
     const done = await store.done;
     expect(done?.[0].activeData).toEqual(undefined);
@@ -680,15 +681,14 @@ describe("RandomAccessPlayer", () => {
 
     // Now we requestBackfill twice, without ever resolving the emitState callback
     source.requestBackfill(); // Call #2
-    await delay(100);
-    resolveMessages();
+    getMessagesSignals[1].resolve(state);
+
     source.requestBackfill(); // Call #3
-    await delay(100);
-    resolveMessages();
+    getMessagesSignals[2].resolve(state);
 
     // Call requestBackfill a third time and finally resolve the listener from call #2
     source.requestBackfill(); // Call #4
-    listenerResolve(); // Resolves the emitState from Call #2
+    emitStateSignals[1].resolve(); // Resolves the emitState from Call #2
 
     // emitState will automatically be called again, debounced from call #3
     // Verify that the messages are never cleared
@@ -1204,6 +1204,78 @@ describe("RandomAccessPlayer", () => {
       }),
     ]);
 
+    player.close();
+  });
+
+  it("does not lose messages when pausing during a getMessages call", async () => {
+    const provider = new TestProvider();
+    const getMessages = jest.fn();
+    provider.getMessages = getMessages;
+
+    const message1 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 10, nsec: 1 },
+      message: { payload: "foo bar 1" },
+    };
+    const message2 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 10, nsec: 2 },
+      message: { payload: "foo bar 2" },
+    };
+
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+
+    const firstGetMessagesReturn = signal();
+    getMessages.mockImplementation(async () => {
+      await firstGetMessagesReturn;
+      return Promise.resolve({ ...getMessagesResult, parsedMessages: [message1] });
+    });
+    const store = new MessageStore(2);
+    await player.setListener(store.add);
+    player.startPlayback();
+    // Before the first call, the player emits twice: Once on construction, once on start.
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [], bobjects: [] }) }),
+    ]);
+    store.reset(1);
+
+    // Pause during getMessages call
+    player.pausePlayback();
+    firstGetMessagesReturn.resolve();
+    // Player should not emit state, but messages are queued up.
+    await delay(10);
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: false, messages: [], bobjects: [] }),
+      }),
+    ]);
+    store.reset(1);
+
+    const secondGetMessagesReturn = signal();
+    getMessages.mockImplementation(async () => {
+      await secondGetMessagesReturn;
+      return Promise.resolve({ ...getMessagesResult, parsedMessages: [message2] });
+    });
+    player.startPlayback();
+
+    // Queued messages are emitted immediately, before another getMessages call is made.
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [message1], bobjects: [] }),
+      }),
+    ]);
+    store.reset(1);
+
+    // Play continues with more getMessages calls.
+    secondGetMessagesReturn.resolve();
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [message2], bobjects: [] }),
+      }),
+    ]);
     player.close();
   });
 

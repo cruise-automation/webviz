@@ -157,6 +157,7 @@ const defaultHooks = {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
   },
   getAdditionalDataProviders: () => {},
+  getBasicDatatypes: () => require("webviz-core/src/util/datatypes").basicDatatypes,
   experimentalFeaturesList() {
     return {
       diskBagCaching: {
@@ -172,6 +173,12 @@ const defaultHooks = {
           "If you have a lot of memory in your computer, and you frequently have to play all the way through large bags, you can turn this on to fully buffer the bag into memory. However, use at your own risk, as this might crash the browser.",
         developmentDefault: false,
         productionDefault: false,
+      },
+      useWorkerIn3DPanel: {
+        name: "Enable Web Worker in 3D Panel",
+        description: "If this flag is on, the 3D Panel will use a web worker for message processing and rendering.",
+        developmentDefault: true,
+        productionDefault: true,
       },
     };
   },

@@ -1535,6 +1535,16 @@ describe("UserNodePlayer", () => {
       expect(deepParse(nodeBobjects[0].message)).toEqual({});
     });
 
+    it("prefers input datatype definitions to basicDatatypes", async () => {
+      const fakePlayer = new FakePlayer();
+      const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
+      const [done] = setListenerHelper(userNodePlayer);
+      fakePlayer.emit({ ...basicPlayerState, datatypes: { "std_msgs/Header": { fields: [] } } });
+
+      const { datatypes } = await done;
+      expect(datatypes?.["std_msgs/Header"].fields).toHaveLength(0);
+    });
+
     it("does not emit twice the number of messages if subscribed to twice", async () => {
       const { messages, bobjects } = await subscribeAndEmitFromPlayer([
         { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "bobjects" },
@@ -1641,7 +1651,7 @@ describe("UserNodePlayer", () => {
 
       // We'll still call registerNode and processMessage for every emit()
       expect(callCount("registerNode")).toBe(5);
-      expect(callCount("addMessage")).toBe(5);
+      expect(callCount("addMessages")).toBe(5);
       expect(callCount("processMessages")).toBe(5);
     });
   });

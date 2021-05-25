@@ -54,29 +54,28 @@ import type {
   TextMarker,
   OverlayIconMarker,
 } from "webviz-core/src/types/Messages";
+import { colorToRgbaString } from "webviz-core/src/util/colorUtils";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const ICON_WRAPPER_SIZE = 24;
 const ICON_SIZE = 16;
-export const BG_COLOR = tinyColor(colors.BLUE)
+export const BG_COLOR = tinyColor(colors.DARK2)
   .setAlpha(0.75)
   .toRgbString();
-
 const ICON_WIDTH = 28;
 
 export const SIconWrapper = styled.div`
   box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.075);
   border-radius: ${ICON_WIDTH / 2}px;
-  color: ${colors.BLUE};
   display: flex;
   overflow: hidden;
   align-items: center;
-  background: ${colors.DARK2};
+  background: ${BG_COLOR};
   position: absolute;
   top: 0;
   left: 0;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.075);
 `;
 
 export const SText = styled.span`
@@ -280,6 +279,7 @@ export default function WorldMarkers({
             return null;
           }
           const {
+            textColor,
             name,
             text,
             markerStyle = {},
@@ -296,6 +296,7 @@ export default function WorldMarkers({
               }}
               style={{
                 ...markerStyle,
+                color: colorToRgbaString(textColor),
                 borderRadius: scaledIconWrapperSize / 2,
                 padding: iconWrapperPadding,
                 transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(

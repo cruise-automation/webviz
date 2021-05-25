@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ArrowCollapseIcon from "@mdi/svg/svg/arrow-collapse.svg";
 import DownArrow from "@mdi/svg/svg/arrow-down.svg";
 import ArrowExpandIcon from "@mdi/svg/svg/arrow-expand.svg";
 import UpArrow from "@mdi/svg/svg/arrow-up.svg";
@@ -53,13 +54,15 @@ import type {
   ColumnConfig,
   ColumnConfigKey,
   ConditionalFormat,
+  ColumnFilter,
 } from "webviz-core/src/panels/Table/types";
 import {
   getFormattedColor,
   getLastAccessor,
   stripLastAccessor,
   sortTimestamps,
-  filterTimestamps,
+  filterColumn,
+  COMPARATOR_LIST,
 } from "webviz-core/src/panels/Table/utils";
 import { type Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
@@ -96,28 +99,9 @@ const STableHeader = styled.div`
   position: relative;
   height: 22px;
   vertical-align: middle;
-`;
-
-const SFilterInput = styled.div`
-  position: relative;
-  padding: 8px 12px;
-
-  input {
-    width: 100%;
-  }
-
-  & > .clear-filter {
-    visibility: hidden;
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
 
   &:hover {
-    & > .clear-filter {
-      visibility: visible;
-    }
+    background-color: ${colors.DARK4};
   }
 `;
 
@@ -145,10 +129,22 @@ const SCell = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   border-bottom: ${({ addBorder }) => (addBorder ? `1px solid ${colors.DARK3}` : "none")};
+  flex-basis: 100%;
+  box-sizing: border-box;
 `;
 
 const SPrimitiveCell = styled(SCell)`
   font-family: ${({ useRoboto }: { useRoboto: boolean }) => (useRoboto ? ROBOTO_MONO : "inherit")};
+`;
+
+const SInnerArray = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  span:last-child {
+    border-bottom: none;
+  }
 `;
 
 const STableContainer = styled.div`
@@ -167,8 +163,8 @@ const SNavigation = styled.div`
 const STableHeaderBorder = styled.div`
   position: absolute;
   right: 0;
-  top: 0px;
-  bottom: 0px;
+  top: 4px;
+  bottom: 4px;
   width: 10px;
   &:after {
     content: "";
@@ -177,22 +173,53 @@ const STableHeaderBorder = styled.div`
     bottom: 0px;
     right: 0px;
     width: 2px;
+    opacity: 0.25;
     background-color: ${colors.TEXT_MUTED};
+  }
+
+  &:hover::after {
+    background-color: ${colors.BLUE};
   }
 `;
 
-export const SHeaderDropdown = styled.div`
+export const SHeaderDropdownItem = styled.div`
   padding: 8px 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
 
-  & > .menu-item {
+  .menu-item {
     margin-right: 4px;
   }
 
   &:hover {
     background-color: ${colors.DARK5};
+  }
+`;
+
+const SFilterInput = styled(SHeaderDropdownItem)`
+  cursor: inherit;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 8px 16px;
+
+  input {
+    width: 100%;
+  }
+
+  & > .clear-filter {
+    visibility: hidden;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &:hover {
+    & > .clear-filter {
+      visibility: visible;
+    }
   }
 `;
 
@@ -207,7 +234,7 @@ const mapValues = (obj: { [columnId: string]: any }, key) => {
 type TableContextProps = {|
   setHideColumn: (columnId: string, hidden: boolean) => void,
   setExpandColumn: (columnId: string, isExpanded: boolean) => void,
-  setColumnFilter: (columnId: string, filter: string) => void,
+  setColumnFilter: (columnId: string, columnFilter: ColumnFilter) => void,
   setColumnWidth: (columnId: string, width: number) => void,
   updateConditionalFormats: (columnId: string, conditionalFormats: ConditionalFormat[]) => void,
 |};
@@ -295,6 +322,7 @@ function updateColumnConfigWrapper<T: ColumnConfigKey>(
   }));
 }
 
+export const DEFAULT_FILTER = { comparator: "==", value: "" };
 type PrimitiveCellProps = {|
   columnId: string,
   value: any,
@@ -337,7 +365,10 @@ const TimeCell = ({
       }}
       addBorder={isNestedArray}
       useRoboto>
-      <Tooltip contents={isWithinRange ? "Seek to time" : "Cannot seek. Time not within range of current bag."}>
+      <Tooltip
+        contents={isWithinRange ? "Seek to time" : "Cannot seek. Time not within range of current bag."}
+        delay={1000}
+        placement={"left"}>
         <span>{renderedValue}</span>
       </Tooltip>
     </SPrimitiveCell>
@@ -361,7 +392,9 @@ const PrimitiveCell = ({ value, type, enumValue, isNestedArray, columnId }: Prim
       style={{ color }}
       addBorder={isNestedArray}
       useRoboto={typeof renderedValue === "number" || type === "time" || type === "duration" || enumValue}>
-      {`${renderedValue}`}
+      <Tooltip contents={renderedValue} delay={1000} placement={"left"}>
+        <span>{`${renderedValue}`}</span>
+      </Tooltip>
     </SPrimitiveCell>
   );
 };
@@ -377,7 +410,7 @@ const ComplexCell = ({ columnId, disableExpansion }: {| columnId: string, disabl
   }, [columnId, disableExpansion, setExpandColumn]);
 
   return (
-    <Tooltip contents={!disableExpansion ? "Expand column" : "Cannot expand nested submessages"}>
+    <Tooltip contents={!disableExpansion ? "Expand column" : "Cannot expand nested submessages"} delay={1000}>
       <span
         style={{
           cursor: !disableExpansion ? "pointer" : "not-allowed",
@@ -399,7 +432,7 @@ type HeaderCellProps = {|
   tableAccessorPath: string,
   setHideColumn: (columnId: string, hidden: boolean) => void,
   toggleExpandColumn: (columnId: string, isExpanded: boolean) => void,
-  setColumnFilter: (columnId: string, filter: string) => void,
+  setColumnFilter: (columnId: string, columnFilter: ColumnFilter) => void,
   setColumnWidth: (columnId: string, width: number) => void,
 |};
 
@@ -430,7 +463,7 @@ function getColumnsFromDatatype(
         if (parentField?.isArray) {
           if (rosPrimitives.includes(field.type)) {
             return (
-              <Flex col>
+              <SInnerArray>
                 {value.map((obj, i) => {
                   const innerValue = obj[field.name];
                   return (
@@ -444,7 +477,7 @@ function getColumnsFromDatatype(
                     />
                   );
                 })}
-              </Flex>
+              </SInnerArray>
             );
           }
           // TODO(troy): Allow for successive nesting.
@@ -453,11 +486,11 @@ function getColumnsFromDatatype(
 
         if (rosPrimitives.includes(field.type) && field.isArray) {
           return (
-            <Flex col>
+            <SInnerArray>
               {value.map((innerValue, i) => {
                 return <PrimitiveCell columnId={columnId} value={innerValue} type={field.type} isNestedArray key={i} />;
               })}
-            </Flex>
+            </SInnerArray>
           );
         }
 
@@ -482,12 +515,16 @@ function getColumnsFromDatatype(
         }
 
         const isColumnExpanded = useColumnConfigValue<"isExpanded">(columnId, "isExpanded");
-        const filterValue = useColumnConfigValue<"filter">(columnId, "filter") || "";
+        const filter = useColumnConfigValue<"filter">(columnId, "filter") || DEFAULT_FILTER;
         const conditionalFormats = useColumnConfigValue<"conditionalFormats">(columnId, "conditionalFormats") || [];
 
-        const setColumnFilterCallback = React.useCallback((e) => {
-          setColumnFilter(columnId, e.target.value);
-        }, [setColumnFilter]);
+        const setFilterValueCallback = React.useCallback((e) => {
+          setColumnFilter(columnId, { ...filter, value: e.target.value });
+        }, [filter, setColumnFilter]);
+
+        const setFilterValueComparator = React.useCallback((newComparator) => {
+          setColumnFilter(columnId, { ...filter, comparator: newComparator });
+        }, [filter, setColumnFilter]);
 
         const renderedHeader = getLastAccessor(columnId);
 
@@ -499,7 +536,7 @@ function getColumnsFromDatatype(
               menuStyle={{ minWidth: "150px" }}
               toggleComponent={
                 <STableHeaderDropdown>
-                  <Tooltip contents={renderedHeader}>
+                  <Tooltip contents={renderedHeader} delay={1000}>
                     <span>{renderedHeader}</span>
                   </Tooltip>
                   {column.isSorted ? <Icon>{column.isSortedDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
@@ -521,39 +558,53 @@ function getColumnsFromDatatype(
               {!isComplexType && !parentField?.isArray ? (
                 <>
                   <SFilterInput>
-                    <input placeholder="filter" value={filterValue} onChange={setColumnFilterCallback} />
-                    {column.filterValue && (
+                    <div style={{ color: colors.TEXT_MUTED, whiteSpace: "nowrap" }}>if value</div>
+                    <Dropdown
+                      value={filter.comparator}
+                      key={"filter-comparator"}
+                      noPortal
+                      onChange={setFilterValueComparator}>
+                      {COMPARATOR_LIST.map((comparator) => (
+                        <option value={comparator} key={comparator}>
+                          {comparator}
+                        </option>
+                      ))}
+                    </Dropdown>
+                    <input placeholder="filter" value={filter.value} onChange={setFilterValueCallback} />
+                    {column?.filterValue?.value && (
                       <Icon
-                        onClick={() => setColumnFilter(columnId, "")}
+                        onClick={() => setColumnFilter(columnId, { ...filter, value: "" })}
                         className="clear-filter"
                         tooltip="Clear filter">
                         <CloseIcon />
                       </Icon>
                     )}
                   </SFilterInput>
-                  <SHeaderDropdown data-test={"sort-column"} {...column.getSortByToggleProps()}>
-                    <Icon className="menu-item">
-                      {column.isSorted ? column.isSortedDesc ? <CloseIcon /> : <DownArrow /> : <UpArrow />}
-                    </Icon>
-                    Sort {column.isSorted ? (column.isSortedDesc ? "(clear)" : "(desc)") : "(asc)"}
-                  </SHeaderDropdown>
+                  <SHeaderDropdownItem data-test={"sort-column"} {...column.getSortByToggleProps()}>
+                    <Tooltip contents={"To multi-sort, hold shift and click."} delay={500}>
+                      <Flex style={{ alignItems: "center" }}>
+                        <Icon className="menu-item">
+                          {column.isSorted ? column.isSortedDesc ? <CloseIcon /> : <DownArrow /> : <UpArrow />}
+                        </Icon>
+                        Sort {column.isSorted ? (column.isSortedDesc ? "(clear)" : "(desc)") : "(asc)"}
+                      </Flex>
+                    </Tooltip>
+                  </SHeaderDropdownItem>
                 </>
               ) : (
                 !parentField?.isArray && (
-                  <SHeaderDropdown
+                  <SHeaderDropdownItem
                     data-test={"toggle-expand-column"}
                     onClick={() => {
                       setExpandColumn(columnId, !isColumnExpanded);
                     }}
                     key={"toggle-expand"}>
-                    <Icon className="menu-item">
-                      <ArrowExpandIcon />
-                    </Icon>
+                    <Icon className="menu-item">{isColumnExpanded ? <ArrowCollapseIcon /> : <ArrowExpandIcon />}</Icon>
                     {isColumnExpanded ? "Collapse" : "Expand"} column
-                  </SHeaderDropdown>
+                  </SHeaderDropdownItem>
                 )
               )}
-              <SHeaderDropdown
+              <SHeaderDropdownItem
                 data-test={"hide-column"}
                 onClick={() => {
                   setHideColumn(columnId, true);
@@ -563,7 +614,7 @@ function getColumnsFromDatatype(
                   <CloseIcon />
                 </Icon>
                 Hide column
-              </SHeaderDropdown>
+              </SHeaderDropdownItem>
               {!isComplexType && <ConditionaFormatsInput columnId={columnId} />}
             </Dropdown>
           </Flex>
@@ -593,11 +644,11 @@ function getColumnsFromDatatype(
         width: columnWidths?.[columnId] ?? 100,
         Cell: isExpanded ? undefined : Cell,
         columns: subColumns,
+        filter: filterColumn.bind(null, field.type, columnId),
       };
 
       if (field.type === "time" || field.type === "duration") {
         columnOptions.sortType = sortTimestamps;
-        columnOptions.filter = filterTimestamps.bind(null, columnId);
       }
 
       return columnOptions;
@@ -708,7 +759,7 @@ const Table = React.memo(
       updateColumnConfig(columnId, "isExpanded", isExpanded);
     }, [updateColumnConfig]);
 
-    const setColumnFilter = React.useCallback((columnId: string, filter: string) => {
+    const setColumnFilter = React.useCallback((columnId: string, filter: ColumnFilter) => {
       setFilter(columnId, filter);
       updateColumnConfig(columnId, "filter", filter);
     }, [setFilter, updateColumnConfig]);

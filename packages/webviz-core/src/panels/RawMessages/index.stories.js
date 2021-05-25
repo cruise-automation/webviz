@@ -328,4 +328,16 @@ storiesOf("<RawMessages>", module)
         />
       </PanelSetup>
     );
+  })
+  .add("fields not in the structural datatype", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }}>
+        <RawMessages
+          config={{
+            topicPath: "/webviz_source_2/changed_datatype.field_name_not_in_datatype",
+            ...noDiffConfig,
+          }}
+        />
+      </PanelSetup>
+    );
   });

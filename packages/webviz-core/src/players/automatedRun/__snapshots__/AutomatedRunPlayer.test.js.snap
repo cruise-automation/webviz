@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AutomatedRunPlayer makes calls to getMessages with the correct frames 1`] = `
+Array [
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 10,
+    },
+    "startTime": Object {
+      "nsec": 0,
+      "sec": 10,
+    },
+  },
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 10,
+    },
+    "startTime": Object {
+      "nsec": 99000000,
+      "sec": 10,
+    },
+  },
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 30,
+    },
+    "startTime": Object {
+      "nsec": 800000000,
+      "sec": 29,
+    },
+  },
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 50,
+    },
+    "startTime": Object {
+      "nsec": 800000000,
+      "sec": 49,
+    },
+  },
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 70,
+    },
+    "startTime": Object {
+      "nsec": 800000000,
+      "sec": 69,
+    },
+  },
+  Object {
+    "endTime": Object {
+      "nsec": 99000000,
+      "sec": 90,
+    },
+    "startTime": Object {
+      "nsec": 800000000,
+      "sec": 89,
+    },
+  },
+]
+`;

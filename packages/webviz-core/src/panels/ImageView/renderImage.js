@@ -117,7 +117,9 @@ async function decodeMessageToBitmap(msg: Message, datatype: string): Promise<Im
         throw new Error(`Unsupported encoding ${encoding}`);
     }
   } else if (["sensor_msgs/CompressedImage", "sensor_msgs/Image"].includes(datatype) || msg.message.format) {
-    image = new Blob([rawData], { type: `image/${msg.message.format}` });
+    // The Blob constructor does not like typed arrays backed by SharedArrayBuffers.
+    const notSharedData = rawData.buffer instanceof SharedArrayBuffer ? new Uint8Array(rawData) : rawData;
+    image = new Blob([notSharedData], { type: `image/${msg.message.format}` });
   } else {
     throw new Error(`Message type is not usable for rendering images.`);
   }

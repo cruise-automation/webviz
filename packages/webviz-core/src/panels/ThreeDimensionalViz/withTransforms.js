@@ -14,29 +14,37 @@ import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils";
 import type { Frame } from "webviz-core/src/players/types";
 
+const panelHooks = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+
+type State = {| transforms: Transforms |};
+
 function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
-  function Component(props: { frame: Frame, cleared: boolean, forwardedRef: any }) {
-    const transforms = React.useRef(new Transforms());
+  class Component extends React.PureComponent<$Shape<{| frame: Frame, cleared: boolean, forwardedRef: any |}>, State> {
+    static displayName = `withTransforms(${ChildComponent.displayName || ChildComponent.name || ""})`;
+    static contextTypes = { store: PropTypes.any };
 
-    const { frame, cleared } = props;
-    transforms.current = updateTransforms(
-      transforms.current,
-      frame,
-      cleared,
-      getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTransformFrame?.frameId,
-      getGlobalHooks().perPanelHooks().ThreeDimensionalViz.consumePose
-    );
+    state: State = { transforms: new Transforms() };
 
-    // $FlowFixMe - can't seem to figure out how to properly type this.
-    return <ChildComponent {...props} ref={props.forwardedRef} transforms={transforms.current} />;
+    static getDerivedStateFromProps(nextProps: Props, prevState: State): ?$Shape<State> {
+      const { frame, cleared } = nextProps;
+      const updatedTransforms = updateTransforms(
+        prevState.transforms,
+        frame,
+        cleared,
+        panelHooks.skipTransformFrame?.frameId,
+        panelHooks.consumePose
+      );
+      return { transforms: updatedTransforms };
+    }
+
+    render() {
+      // $FlowFixMe - can't seem to figure out how to properly type this.
+      return <ChildComponent {...this.props} ref={this.props.forwardedRef} transforms={this.state.transforms} />;
+    }
   }
-  Component.displayName = `withTransforms(${ChildComponent.displayName || ChildComponent.name || ""})`;
-  Component.contextTypes = { store: PropTypes.any };
 
   return hoistNonReactStatics(
-    React.forwardRef((props, ref) => {
-      return <Component {...props} forwardedRef={ref} />;
-    }),
+    React.forwardRef((props, ref) => <Component {...props} forwardedRef={ref} />),
     ChildComponent
   );
 }

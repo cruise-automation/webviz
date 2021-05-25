@@ -13,18 +13,17 @@ import SkipNextOutlineIcon from "@mdi/svg/svg/skip-next-outline.svg";
 import SkipPreviousOutlineIcon from "@mdi/svg/svg/skip-previous-outline.svg";
 import classnames from "classnames";
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 import uuid from "uuid";
 
 import styles from "./index.module.scss";
 import { ProgressPlot } from "./ProgressPlot";
-import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import Flex from "webviz-core/src/components/Flex";
-import PlaybackBarHoverTicks from "webviz-core/src/components/HovarBar/PlaybackBarHoverTicks";
+import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
+import PlaybackBarHoverTicks from "webviz-core/src/components/HoverBar/PlaybackBarHoverTicks";
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
@@ -100,7 +99,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   );
 
   const [hoverComponentId] = useState<string>(uuid.v4());
-  const dispatch = useDispatch();
+  const setHoverValue = useSetHoverValue();
   const onMouseMove = useCallback((e: SyntheticMouseEvent<HTMLDivElement>) => {
     const { activeData } = playerState.current;
     if (!activeData) {
@@ -132,13 +131,14 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
       offset: { x: 0, y: 0 },
       arrow: <div className={tooltipStyles.arrow} />,
     });
-    dispatch(setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) }));
-  }, [playerState, dispatch, hoverComponentId]);
+    setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) });
+  }, [playerState, setHoverValue, hoverComponentId]);
 
+  const clearHoverValue = useClearHoverValue();
   const onMouseLeave = useCallback((_e: SyntheticMouseEvent<HTMLDivElement>) => {
     Tooltip.hide();
-    dispatch(clearHoverValue({ componentId: hoverComponentId }));
-  }, [dispatch, hoverComponentId]);
+    clearHoverValue(hoverComponentId);
+  }, [clearHoverValue, hoverComponentId]);
 
   const { activeData, progress } = player;
   const { isPlaying, startTime, endTime, currentTime } = activeData || {};

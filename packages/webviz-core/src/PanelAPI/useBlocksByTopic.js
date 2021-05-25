@@ -58,7 +58,7 @@ const filterBlockByTopics = memoizeWeak(
   }
 );
 
-const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
+export const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
   const [id] = useState(() => uuid.v4());
   const { type: panelType = undefined } = useContext(PanelContext) || {};
 

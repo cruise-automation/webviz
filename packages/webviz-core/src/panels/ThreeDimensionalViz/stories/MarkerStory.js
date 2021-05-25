@@ -52,7 +52,7 @@ export function MarkerStory(
       onMount={onMount}
       data={data ?? cloneDeep(fixtureData)}
       initialConfig={{
-        checkedKeys: ["name:(Uncategorized)", "t:/smoothed_localized_pose", "t:/viz_markers"],
+        checkedKeys: ["name:(Uncategorized)", "name:Topics", "t:/smoothed_localized_pose", "t:/viz_markers"],
         settingsByKey: { "t:/viz_markers": { overrideColor } },
         followTf: undefined,
         cameraState: {

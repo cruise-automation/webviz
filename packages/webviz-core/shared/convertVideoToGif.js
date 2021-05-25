@@ -13,27 +13,36 @@ const exec = util.promisify(child_process.exec);
 
 type GifOptions = {
   fps: number,
-  scale: number,
 };
 
 const DEFAULT_OPTIONS: GifOptions = {
   fps: 12,
-  scale: 1,
 };
 
+const PALETTE_PATH = "palette.png";
+
 async function convertVideoToGif(inputVideoPath: string, outputGifPath: string, options?: GifOptions) {
-  const { fps, scale } = options || DEFAULT_OPTIONS;
+  const { fps } = options || DEFAULT_OPTIONS;
+  const filters = `fps=${fps}`;
+
+  console.log(`Generating palette from video '${inputVideoPath}'...`);
+  await exec(
+    [
+      `ffmpeg -y`, //
+      `-i ${inputVideoPath}`,
+      `-filter_complex "${filters},palettegen"`,
+      `${PALETTE_PATH}`,
+    ].join(" ")
+  );
 
   console.log(`Converting video '${inputVideoPath}' to gif '${outputGifPath}'...`);
   await exec(
     [
       `ffmpeg -y`,
-      // TODO: Support creating a gif for only a portion of the video
-      // `-ss 61.0`, // start the gif this many seconds into the video
-      // `-t 2.5`, // duration of gif in seconds
       `-i ${inputVideoPath}`,
-      `-filter_complex "[0:v] fps=${fps},scale=iw*${scale}:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse"`,
-      ` ${outputGifPath}`,
+      `-i ${PALETTE_PATH}`,
+      `-filter_complex "${filters},paletteuse"`,
+      `${outputGifPath}`,
     ].join(" ")
   );
   console.info(`Gif saved at ${outputGifPath}`);

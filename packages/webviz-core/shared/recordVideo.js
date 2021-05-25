@@ -7,12 +7,14 @@
 //  You may not use this file except in compliance with the License.
 import child_process from "child_process";
 import fs from "fs";
+import { last } from "lodash";
 import type { Page } from "puppeteer";
 import rmfr from "rmfr";
 import util from "util";
 import uuid from "uuid";
 
 import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
+import convertVideoToGif from "./convertVideoToGif";
 import delay from "./delay";
 import globalEnvVars from "./globalEnvVars";
 import promiseTimeout from "./promiseTimeout";
@@ -25,7 +27,7 @@ const readFile = util.promisify(fs.readFile);
 const log = new ServerLogger(__filename);
 
 const baseUrlObject = new URL("http://localhost:3000/");
-const perFrameTimeoutMs = 3 * 60000; // 3 minutes
+const perFrameTimeoutMs = 1 * 60000; // 1 minute
 const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
@@ -43,6 +45,7 @@ async function recordVideo({
   puppeteerLaunchConfig,
   layout,
   panelLayout,
+  mediaType,
   errorIsWhitelisted,
   experimentalFeaturesSettings,
 }: {
@@ -58,9 +61,10 @@ async function recordVideo({
   duration?: number,
   experimentalFeaturesSettings?: string,
   dimensions?: { width: number, height: number },
+  mediaType?: "mp4" | "gif",
   crop?: { width: number, height: number, top: number, left: number },
   errorIsWhitelisted?: (string) => boolean,
-}): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
+}): Promise<{ mediaFile: Buffer, sampledImageFile: Buffer }> {
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
 
@@ -124,32 +128,40 @@ async function recordVideo({
           // or some action for us to take (throw an error, finish up the video, etc).
           let i = 0;
           let isRunning = true;
+
           while (isRunning) {
             if (hasFailed) {
-              return;
+              throw new Error("Parallel video recording failed: one of the browsers has crashed.");
             }
 
             await promiseTimeout(
               (async () => {
-                for (const error of errors) {
-                  if (errorIsWhitelisted && errorIsWhitelisted(error)) {
-                    log.info(`Encountered whitelisted error: ${error}`);
-                  } else {
-                    const errorMessage = `Encountered error: ${error.toString() || "Unknown error"}`;
-                    log.info(errorMessage);
-                    console.error(errorMessage);
-                    throw new Error(error);
-                  }
+                let actionHandle, errorCheckInterval;
+                try {
+                  // The errors array is populated asynchronously, so check it on a timer while we wait
+                  // for the nextAction so we don't miss any async errors (or page crashes) in the meantime
+                  errorCheckInterval = setInterval(() => {
+                    for (const error of errors) {
+                      if (errorIsWhitelisted && errorIsWhitelisted(error)) {
+                        log.info(`Encountered whitelisted error: ${error}`);
+                        return;
+                      }
+                      throw new Error(error);
+                    }
+                  }, 1000);
+
+                  // `waitForFunction` waits until the return value is truthy, so we won't continue until
+                  // the client is ready with a new action.
+                  actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
+                    timeout: perFrameTimeoutMs - actionTimeDurationMs,
+                  });
+                } catch (error) {
+                  throw new Error(error);
+                } finally {
+                  clearInterval(errorCheckInterval);
                 }
 
-                // `waitForFunction` waits until the return value is truthy, so we won't continue until
-                // the client is ready with a new action. We still have to wrap it in a `promiseTimeout`
-                // function, because if we don't then errors in `page` won't call the promise to either
-                // resolve or reject!.
-                const actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
-                  timeout: perFrameTimeoutMs - actionTimeDurationMs,
-                });
-                const actionObj: ?VideoRecordingAction = await actionHandle.jsonValue();
+                const actionObj: ?VideoRecordingAction = actionHandle && (await actionHandle.jsonValue());
                 if (!actionObj) {
                   return;
                 }
@@ -198,15 +210,15 @@ async function recordVideo({
     if (msPerFrame == null) {
       throw new Error("msPerFrame was not set");
     }
-    const imageCount = fs.readdirSync(screenshotsDir).length;
-    if (imageCount === 0) {
+    const screenshotFileNames = fs.readdirSync(screenshotsDir);
+    if (screenshotFileNames.length === 0) {
       log.error(
         `No screenshots found! Could not create video – the source was likely too short. Try adjusting the URL's start, seek-to, or duration and try again.`
       );
       throw new Error("No screenshots found");
     }
 
-    const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.jpg`);
+    const sampledImageFile = await readFile(`${screenshotsDir}/${last(screenshotFileNames)}`);
     const outputFilename = "out.mp4";
 
     // Once we're finished, we're going to stitch all the individual screenshots together
@@ -217,6 +229,7 @@ async function recordVideo({
         `ffmpeg -y`,
         `-framerate ${framerate}`,
         `-i %d.jpg`,
+        `-vf pad="width=ceil(iw/2)*2:height=ceil(ih/2)*2"`, // Ensure the width and height are divisible by 2
         crop ? `-vf "crop=${crop.width}:${crop.height}:${crop.left}:${crop.top}"` : "",
         `-c:v libx264`,
         `-preset faster`,
@@ -227,13 +240,20 @@ async function recordVideo({
         cwd: screenshotsDir,
       }
     );
-    const videoPath = `${screenshotsDir}/${outputFilename}`;
-    log.info(`Video saved at ${videoPath}`);
+    let mediaPath = `${screenshotsDir}/${outputFilename}`;
+    log.info(`Video saved to ${mediaPath}`);
 
-    const videoFile = await readFile(videoPath);
-    await rmfr(videoPath);
+    // Convert the output to other mediaTypes, if requested
+    if (mediaType === "gif") {
+      const gifPath = `${screenshotsDir}/out.gif`;
+      await convertVideoToGif(mediaPath, gifPath);
+      mediaPath = gifPath;
+    }
 
-    return { videoFile, sampledImageFile };
+    const mediaFile = await readFile(mediaPath);
+    await rmfr(mediaPath);
+
+    return { mediaFile, sampledImageFile };
   } catch (error) {
     hasFailed = true;
     throw error;

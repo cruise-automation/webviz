@@ -6,16 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { useContext, useMemo } from "react";
-import type { Vec3, Dimensions, RGBA, Point, WorldviewContextType } from "regl-worldview";
-import { WorldviewReactContext } from "regl-worldview";
+import React from "react";
+import type { Vec3, Dimensions, RGBA, Color } from "regl-worldview";
+import { Overlay } from "regl-worldview";
 
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import type { OverlayIconMarker } from "webviz-core/src/types/Messages";
+import sendNotification from "webviz-core/src/util/sendNotification";
+
+export const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 
 type IconTypeItem = {| icon_type: number | string, color?: RGBA |};
 export type RenderItemOutput = {|
   text: string,
+  textColor: Color,
   coordinates: Vec3,
   name: string,
   dimension: Dimensions,
@@ -32,18 +36,18 @@ type Props = {
   }) => void,
 };
 
-const projectCoordinate = (point: Point, context: ?WorldviewContextType): ?Vec3 => {
-  if (!context || !context.initializedData) {
-    return;
+let sentNotification = false;
+export function sendIconTypeDeprecatedNotification() {
+  if (!sentNotification) {
+    sendNotification(
+      `Deprecated icon_type usage`,
+      `icon_type has been deprecated. Use 'icon_types' instead. Example format: 'iconTypes: [{icon_type: 'arrow-left', color: {r: 1, g: 1, b: 1, a: 1}}]'`,
+      "user",
+      "warn"
+    );
+    sentNotification = true;
   }
-  const { dimension } = context;
-  const { camera } = context.initializedData;
-
-  const vec = [point.x, point.y, point.z];
-  const { left, top, width, height } = dimension;
-  const viewport = [left, top, width, height];
-  return camera.toScreenCoord(viewport, vec);
-};
+}
 
 export const getIconName = (icon: Interactive<OverlayIconMarker>): string =>
   JSON.stringify([icon.interactionData?.topic, icon.ns, icon.id]);
@@ -71,14 +75,13 @@ export const projectItem = ({
   // TODO[Audrey]: deprecate the support for icon_type in late 2021.
   const iconType = icon_type || metadata.icon_type;
   if (!iconTypes && iconType) {
-    console.warn(
-      `icon_type has been deprecated. Use 'icon_types' instead. Example format: 'iconTypes: [{icon_type: 'arrow-left', color: {r: 1, g: 1, b: 1, a: 1}}]'`
-    );
+    sendIconTypeDeprecatedNotification();
     iconTypes = [{ icon_type: iconType, color: item.color }];
   }
 
   return iconTypes && iconTypes.length > 0
     ? {
+        textColor: item.color || DEFAULT_TEXT_COLOR,
         name,
         coordinates,
         dimension: { width, height },
@@ -92,22 +95,24 @@ export const projectItem = ({
 
 const OverlayProjector = (props: Props) => {
   const { children, setOverlayIcons } = props;
-  const context = useContext(WorldviewReactContext);
-
-  const renderItems = useMemo(() => {
-    const dimension = context && context.dimension;
-    if (!context || !dimension) {
-      return [];
-    }
-    return children
-      .map((item) => {
-        const coordinates = projectCoordinate(item.pose.position, context);
-        return projectItem({ item, coordinates, dimension });
-      })
-      .filter(Boolean);
-  }, [context, children]);
-  setOverlayIcons({ renderItems, sceneBuilderDrawables: children });
-  return null;
+  const renderItems = [];
+  return (
+    <Overlay
+      renderItem={({ item, index, coordinates, dimension }) => {
+        if (index === 0) {
+          renderItems.length = 0;
+        }
+        renderItems.push(projectItem({ item, coordinates, dimension }));
+        if (index === children.length - 1) {
+          // Set icons even if there aren't any, so the main thread knows when the last ones have
+          // disappeared.
+          setOverlayIcons({ renderItems: renderItems.filter(Boolean), sceneBuilderDrawables: children });
+        }
+        return null;
+      }}>
+      {children}
+    </Overlay>
+  );
 };
 
 export default OverlayProjector;

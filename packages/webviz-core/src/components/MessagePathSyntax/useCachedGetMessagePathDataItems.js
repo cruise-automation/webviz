@@ -20,7 +20,7 @@ import type { ReflectiveMessage, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { fieldNames, getField, getIndex } from "webviz-core/src/util/binaryObjects";
 import { useChangeDetector, useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
-import { enumValuesByDatatypeAndField, getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
 export type MessagePathDataItem = {|
   value: mixed, // The actual value.
@@ -167,7 +167,7 @@ export function getMessagePathDataItems(
   bigInt: ?true
 ): ?(MessagePathDataItem[]) {
   const structures = messagePathStructures(datatypes);
-  const topic = getTopicsByTopicName(providerTopics)[filledInPath.topicName];
+  const topic = providerTopics.find(({ name }) => name === filledInPath.topicName);
 
   // We don't care about messages that don't match the topic we're looking for.
   if (!topic || message.topic !== filledInPath.topicName) {
@@ -211,7 +211,10 @@ export function getMessagePathDataItems(
     } else if (pathItem.type === "name" && structureItem.structureType === "message") {
       // If the `pathItem` is a name, we're traversing down using that name.
       const next = structureItem.nextByName[pathItem.name];
-      const nextStructIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
+      // Datatype names can have ambiguous definitions, most commonly when there are multiple input
+      // bags. If a field exists but doesn't appear in the datatype structure, treat it and its
+      // children as free-form JSON.
+      const nextStructIsJson = next == null || (next.structureType === "primitive" && next?.primitiveType === "json");
       traverse(
         getField(value, pathItem.name, bigInt),
         pathIndex + 1,

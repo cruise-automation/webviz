@@ -171,9 +171,13 @@ export default class BinaryMessageWriter {
     // eslint-disable-next-line no-underscore-dangle
     bridge._free(inDataPtr);
 
-    // Copy result data int new arrays so we can access them
+    // Copy result data into new arrays so we can access them
     // after the writer has been deleted (a few lines below).
-    const buffer = new Uint8Array(writer.getBuffer()).buffer;
+    const wasmBuffer: Uint8Array = writer.getBuffer();
+    // Only use SharedArrayBuffers if we can postMessage them to workers. No point otherwise.
+    const BufferType = self.crossOriginIsolated ? SharedArrayBuffer : ArrayBuffer;
+    const buffer = new BufferType(wasmBuffer.length);
+    new Uint8Array(buffer).set(wasmBuffer);
     // Notes:
     //  - TextDecoder overhead makes it more efficient to decode all of the strings in one go, and
     //    split them later (instead of parsing them from binary on access).

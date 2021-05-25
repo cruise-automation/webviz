@@ -20,6 +20,10 @@ if (process.env.WEBVIZ_IN_DOCKER) {
         "--mute-audio",
         "--user-agent=PuppeteerTestingChrome/88.",
         "--disable-gpu", // In CI we don't have GPUs anyway, and on desktops this makes it more stable.
+        // Cross-Origin-Opener-Policy disagrees with video-recording page control.
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins",
+        "--disable-site-isolation-trials",
       ],
     },
   };

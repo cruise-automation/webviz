@@ -84,3 +84,20 @@ describe("formatTime.parseTimeStr", () => {
     expect(timeObjInDifferentTimezone?.sec).not.toEqual(originalTime.sec);
   });
 });
+
+describe("time.getValidatedTimeAndMethodFromString", () => {
+  const commonArgs = { date: "2020-01-01", timezone: "America/Los_Angeles" };
+  it("takes a string and gets a validated ROS or TOD time", () => {
+    expect(formatTime.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "" })).toEqual(undefined);
+    expect(formatTime.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "abc" })).toEqual(undefined);
+    expect(formatTime.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "123abc" })).toEqual(undefined);
+    expect(formatTime.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1598635994.000000000" })).toEqual({
+      time: { nsec: 0, sec: 1598635994 },
+      method: "ROS",
+    });
+    expect(formatTime.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1:30:10.000 PM PST" })).toEqual({
+      time: { nsec: 0, sec: 1577914210 },
+      method: "TOD",
+    });
+  });
+});

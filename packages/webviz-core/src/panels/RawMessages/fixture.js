@@ -19,6 +19,7 @@ export const fixture = {
     { name: "/baz/array/obj", datatype: "baz/array/obj" },
     { name: "/geometry/types", datatype: "geometry/types" },
     { name: "/NaN", datatype: "baz/num" },
+    { name: "/webviz_source_2/changed_datatype", datatype: "std_msgs/String" },
   ],
   frame: {
     "/msgs/big_topic": [
@@ -132,6 +133,13 @@ export const fixture = {
         topic: "/NaN",
         receiveTime: { sec: 123, nsec: 456789013 },
         message: { value: NaN },
+      },
+    ],
+    "/webviz_source_2/changed_datatype": [
+      {
+        topic: "/webviz_source_2/changed_datatype",
+        receiveTime: { sec: 123, nsec: 456789013 },
+        message: { field_name_not_in_datatype: "is visible" },
       },
     ],
   },

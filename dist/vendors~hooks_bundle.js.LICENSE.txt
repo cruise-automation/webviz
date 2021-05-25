@@ -1136,7 +1136,7 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/CopyText.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/Metadata.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require), ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/GlobalVariablesTable.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
 
@@ -1176,6 +1176,8 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/TableSettings.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/index.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/TableSettings.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/constants.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js (referenced with cjs require) */
@@ -1195,8 +1197,6 @@ object-assign
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/MainToolbar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/constants.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require) */
 
@@ -2555,6 +2555,10 @@ object-assign
   \********************************************************************/
 
 /*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/alpha-t.svg ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/hexagon.svg ***!
   \********************************************************************/
 
@@ -3243,6 +3247,10 @@ object-assign
   \**************************************************************************/
 
 /*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/robot-outline.svg ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/atelier-lakeside.js ***!
   \**************************************************************************/
 
@@ -3351,6 +3359,10 @@ object-assign
   \****************************************************************************/
 
 /*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/text-box-search.svg ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/promise.js ***!
   \****************************************************************************/
 
@@ -3443,6 +3455,10 @@ object-assign
   \******************************************************************************/
 
 /*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/robot-off-outline.svg ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/ColorPicker.js ***!
   \******************************************************************************/
 
@@ -3487,6 +3503,14 @@ object-assign
   \********************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-down.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-left.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/is-iterable.js ***!
   \********************************************************************************/
 
@@ -3524,6 +3548,10 @@ object-assign
 
 /*!*********************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_matchesStrictComparable.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-right.svg ***!
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\

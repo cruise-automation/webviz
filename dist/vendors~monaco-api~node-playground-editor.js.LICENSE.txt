@@ -750,45 +750,35 @@
 
 /*! ./wordCharacterClassifier.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/browser.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/browser.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/canIUse.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/canIUse.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/dnd.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/dnd.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/dom.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/dom.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/dom.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/event.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/event.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/fastDomNode.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/event.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/fastDomNode.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/fastDomNode.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/keyboardEvent.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/mouseEvent.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/keyboardEvent.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/mouseEvent.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/touch.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/touch.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/aria/aria.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/aria/aria.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/aria/aria.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codiconLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
@@ -796,21 +786,23 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/highlightedlabel/highlightedLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/highlightedlabel/highlightedLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listView.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/list/listWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/menu/menu.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
 
@@ -818,105 +810,97 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/sash/sash.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/sash/sash.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/sash/sash.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollableElement.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollableElement.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollableElement.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/widget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/widget.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/browser/ui/widget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/actions.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/actions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/arrays.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/arrays.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/format/formatActions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/assert.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/arrays.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/async.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/assert.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/cancellation.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/async.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/codicons.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/links/links.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/async.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/cancellation.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/codicons.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/codicons.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/collections.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/collections.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/collections.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/color.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/decorators.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/color.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/diff/diff.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/decorators.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/diff/diff.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/diff/diff.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/errors.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/errors.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/event.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/errors.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/filters.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/event.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/filters.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/event.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/functional.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/filters.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/glob.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/functional.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/glob.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/glob.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/hash.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/hash.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/hash.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/htmlContent.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/htmlContent.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/links/links.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/htmlContent.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/idGenerator.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/idGenerator.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/iterator.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/iterator.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keyCodes.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keyCodes.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/labels.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/labels.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/lifecycle.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/lifecycle.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/lifecycle.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/linkedList.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/linkedList.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/map.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/map.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/marshalling.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/map.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/marshalling.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/marshalling.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/network.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/network.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/network.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/numbers.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/numbers.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/numbers.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/objects.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/objects.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/path.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
 
@@ -926,37 +910,33 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/range.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/resources.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/resources.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/resources.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/scrollable.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/scrollable.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/scrollable.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/scrollable.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/severity.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/severity.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/stopwatch.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/tokenization/tokenization.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/stopwatch.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/strings.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/stopwatch.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/types.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/strings.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/types.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/types.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/uri.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/types.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickOpenModel.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/uri.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/uri.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickOpenModel.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/configuration.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/configuration.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/configuration.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/elementSizeObserver.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/elementSizeObserver.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/config/elementSizeObserver.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
@@ -966,79 +946,65 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/controller/textAreaState.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/clipboard/clipboard.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/core/editorState.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/core/editorState.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorBrowser.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/core/editorState.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorBrowser.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorBrowser.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorExtensions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorExtensions.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/bulkEditService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/bulkEditService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/bulkEditService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/bulkEditService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/codeEditorService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/services/codeEditorService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/codeEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/codeEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/diffEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/diffNavigator.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/embeddedCodeEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/embeddedCodeEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/commands/replaceCommand.js because of ./node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/embeddedCodeEditorWidget.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/commands/replaceCommand.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/commands/replaceCommand.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/commands/shiftCommand.js because of ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/commands/shiftCommand.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/commonEditorConfig.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/commonEditorConfig.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/commonEditorConfig.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/editorOptions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/editorOptions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/editorZoom.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/editorOptions.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/fontInfo.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/editorZoom.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/fontZoom/fontZoom.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/fontInfo.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/config/fontInfo.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorDeleteOperations.js because of ./node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorDeleteOperations.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorDeleteOperations.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorMoveCommands.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/multicursor/multicursor.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/monaco-vim/lib/cm_adapter.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/wordCharacterClassifier.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/controller/wordCharacterClassifier.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/characterClassifier.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/characterClassifier.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/characterClassifier.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/editOperation.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/editOperation.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/lineTokens.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/lineTokens.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/position.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/position.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/range.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
@@ -1046,29 +1012,25 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/selection.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/stringBuilder.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/stringBuilder.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/stringBuilder.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/core/token.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorAction.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorAction.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorAction.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorCommon.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorContextKeys.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/editorContextKeys.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/cursorUndo/cursorUndo.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/multicursor/multicursor.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/textModel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/textModel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/textModel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/links/links.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/textModelSearch.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
 
@@ -1078,43 +1040,41 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/tokensStore.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/wordHelper.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/model/wordHelper.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfiguration.js because of ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfiguration.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfiguration.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfigurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfigurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfigurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfigurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/modesRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/modesRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/nullMode.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/nullMode.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/nullMode.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports.js because of ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports/richEditBrackets.js because of ./node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports/richEditBrackets.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/supports/richEditBrackets.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/textToHtmlTokenizer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/textToHtmlTokenizer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/textToHtmlTokenizer.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/modes/textToHtmlTokenizer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerServiceImpl.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
@@ -1124,13 +1084,13 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/markersDecorationService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modeService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modeService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modelService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modelService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/modelService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/resolverService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/resolverService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/services/textResourceConfigurationService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
@@ -1142,29 +1102,23 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/standalone/standaloneEnums.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/standaloneStrings.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/editorColorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/standaloneStrings.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/editorColorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/overviewZoneManager.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/editorColorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/overviewZoneManager.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/view/overviewZoneManager.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewLayout/lineDecorations.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewLayout/lineDecorations.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewLayout/viewLineRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewLayout/viewLineRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewLayout/viewLineRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/prefixSumComputer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/prefixSumComputer.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/prefixSumComputer.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/viewModel.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/viewModel.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/viewModel/viewModel.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeAction.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
 
@@ -1200,15 +1154,15 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/markdown/markdownRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/markdown/markdownRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/message/messageController.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/markdown/markdownRenderer.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/message/messageController.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/peekView/peekView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/message/messageController.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/peekView/peekView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/peekView/peekView.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/bracketSelections.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js */
 
@@ -1224,7 +1178,7 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggest.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/simpleServices.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
@@ -1232,105 +1186,99 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/Editor.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/common/standaloneThemeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/common/standaloneThemeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/standalone/common/standaloneThemeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/nls.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/nls.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/accessibility/common/accessibility.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/actions/common/actions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/accessibility/common/accessibility.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/actions/common/actions.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/actions/common/actions.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/clipboard/common/clipboardService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/clipboard/common/clipboardService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/commands/common/commands.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/commands/common/commands.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/commands/common/commands.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/configuration/common/configuration.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/configuration/common/configuration.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/contextkey/common/contextkey.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/contextkey/common/contextkey.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextView.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextView.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/descriptors.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/descriptors.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/extensions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/extensions.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/extensions.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/instantiation.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/format/formatActions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/instantiation.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/instantiation.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/serviceCollection.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.all.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/serviceCollection.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/instantiation/common/serviceCollection.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybinding.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybinding.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybinding.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingResolver.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingResolver.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingsRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingsRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/label/common/label.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/label/common/label.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/label/common/label.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/list/browser/listService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/list/browser/listService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/log/common/log.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/log/common/log.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/log/common/log.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/log/common/log.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/markers/common/markers.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/markers/common/markers.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/markers/common/markers.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/notification/common/notification.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/notification/common/notification.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/notification/common/notification.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/notification/common/notification.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/opener/common/opener.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/opener/common/opener.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/opener/common/opener.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/progress/common/progress.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/progress/common/progress.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/progress/common/progress.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/progress/common/progress.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/registry/common/platform.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/registry/common/platform.js because of ./node_modules/monaco-editor/esm/vs/editor/editor.api.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/registry/common/platform.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/storage/common/storage.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/storage/common/storage.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/storage/common/storage.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/telemetry/common/telemetry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/telemetry/common/telemetry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/colorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/colorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/colorRegistry.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/styler.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/styler.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/styler.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/themeService.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/themeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/theme/common/themeService.js because of ./node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/platform/workspace/common/workspace.js because of ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
 

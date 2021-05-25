@@ -11,6 +11,13 @@ object-assign
  * @license  MIT
  */
 
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -49,13 +56,13 @@ and limitations under the License.
 
 /*! ../types */
 
+/*! ./../../../../../../node_modules/timers-browserify/main.js */
+
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
 
 /*! ./../../../../../../node_modules/webpack/node_modules/process/browser.js */
-
-/*! ./../../../../../node_modules/buffer/index.js */
 
 /*! ./../../../../../node_modules/webpack/buildin/module.js */
 
@@ -87,9 +94,17 @@ and limitations under the License.
 
 /*! ./../webpack/buildin/global.js */
 
+/*! ./../webpack/node_modules/process/browser.js */
+
 /*! ./BagReader */
 
 /*! ./CarModel */
+
+/*! ./Collector */
+
+/*! ./DebugStatsOverlay */
+
+/*! ./DebugStatsOverlayRpc */
 
 /*! ./ExecutionEnvironment */
 
@@ -449,8 +464,6 @@ and limitations under the License.
 
 /*! ./constant */
 
-/*! ./data/packed/latest.json */
-
 /*! ./decodeMarker */
 
 /*! ./defineProperty */
@@ -535,8 +548,6 @@ and limitations under the License.
 
 /*! ./misc */
 
-/*! ./moment-timezone */
-
 /*! ./nmerge */
 
 /*! ./noop */
@@ -571,11 +582,11 @@ and limitations under the License.
 
 /*! ./textureAtlasData.bin */
 
-/*! ./time */
-
 /*! ./toString */
 
 /*! ./types */
+
+/*! ./useDebugStats */
 
 /*! ./utils/glTextAtlasLoader */
 
@@ -600,6 +611,14 @@ and limitations under the License.
 /*! @mapbox/tiny-sdf */
 
 /*! @mdi/svg/svg/alpha-r.svg */
+
+/*! @mdi/svg/svg/alpha-t.svg */
+
+/*! @mdi/svg/svg/arrow-collapse-down.svg */
+
+/*! @mdi/svg/svg/arrow-collapse-left.svg */
+
+/*! @mdi/svg/svg/arrow-collapse-right.svg */
 
 /*! @mdi/svg/svg/arrow-collapse-up.svg */
 
@@ -639,6 +658,10 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/road-variant.svg */
 
+/*! @mdi/svg/svg/robot-off-outline.svg */
+
+/*! @mdi/svg/svg/robot-outline.svg */
+
 /*! @mdi/svg/svg/signal-off.svg */
 
 /*! @mdi/svg/svg/train.svg */
@@ -665,7 +688,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -692,17 +715,6 @@ and limitations under the License.
 /*! ModuleConcatenation bailout: Module uses injected variables (process) */
 
 /*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
-
-/*! Moment Duration Format v2.2.2
- *  https://github.com/jsmreese/moment-duration-format
- *  Date: 2018-02-16
- *
- *  Duration format plugin function for the Moment.js library
- *  http://momentjs.com/
- *
- *  Copyright 2018 John Madhavan-Reese
- *  Released under the MIT license
- */
 
 /*! all exports used */
 
@@ -774,8 +786,6 @@ and limitations under the License.
 
 /*! exports provided: truncate, snipLine, safeJoin, isMatchingPattern */
 
-/*! exports provided: version, zones, links, default */
-
 /*! exports used: ForwardRef, isValidElementType */
 
 /*! exports used: Hub, getCurrentHub, getHubFromCarrier */
@@ -838,6 +848,8 @@ and limitations under the License.
 
 /*! ieee754 */
 
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
 /*! indent-string */
 
 /*! int53 */
@@ -871,12 +883,6 @@ and limitations under the License.
 /*! memoize-weak */
 
 /*! merge-anything */
-
-/*! moment */
-
-/*! moment-duration-format */
-
-/*! moment-timezone */
 
 /*! ms */
 
@@ -936,6 +942,12 @@ and limitations under the License.
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Crosshair */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Renderer */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/useDebugStats */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker */
@@ -980,6 +992,8 @@ and limitations under the License.
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/logger */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/utils/diffModeUtils */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils */
@@ -1014,9 +1028,9 @@ and limitations under the License.
 
 /*! webviz-core/src/util/binaryObjects/messageDefinitionUtils */
 
-/*! webviz-core/src/util/errors */
+/*! webviz-core/src/util/colorUtils */
 
-/*! webviz-core/src/util/formatTime */
+/*! webviz-core/src/util/errors */
 
 /*! webviz-core/src/util/getNewConnection */
 
@@ -1117,10 +1131,6 @@ and limitations under the License.
 /*!*************************************!*\
   !*** ./node_modules/react/index.js ***!
   \*************************************/
-
-/*!**************************************!*\
-  !*** ./node_modules/buffer/index.js ***!
-  \**************************************/
 
 /*!**************************************!*\
   !*** ./node_modules/gl-vec3/copy.js ***!
@@ -1311,7 +1321,7 @@ and limitations under the License.
   \*****************************************************/
 
 /*!*****************************************************!*\
-  !*** ./packages/webviz-core/src/util/formatTime.js ***!
+  !*** ./packages/webviz-core/src/util/colorUtils.js ***!
   \*****************************************************/
 
 /*!******************************************************!*\
@@ -1395,6 +1405,10 @@ and limitations under the License.
   \***********************************************************/
 
 /*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/buffer/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_Hash.js ***!
   \***********************************************************/
 
@@ -1419,6 +1433,10 @@ and limitations under the License.
   \************************************************************/
 
 /*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/ieee754/index.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_Stack.js ***!
   \************************************************************/
 
@@ -1436,10 +1454,6 @@ and limitations under the License.
 
 /*!************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/uniqBy.js ***!
-  \************************************************************/
-
-/*!************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment/moment.js ***!
   \************************************************************/
 
 /*!************************************************************!*\
@@ -1524,6 +1538,10 @@ and limitations under the License.
 
 /*!**************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/isSet.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/base64-js/index.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\
@@ -2403,6 +2421,10 @@ and limitations under the License.
   \********************************************************************/
 
 /*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/alpha-t.svg ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/octagon.svg ***!
   \********************************************************************/
 
@@ -2440,10 +2462,6 @@ and limitations under the License.
 
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_strictIndexOf.js ***!
-  \********************************************************************/
-
-/*!********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/index.js ***!
   \********************************************************************/
 
 /*!********************************************************************!*\
@@ -2879,6 +2897,10 @@ and limitations under the License.
   \**************************************************************************/
 
 /*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/robot-outline.svg ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_baseMatchesProperty.js ***!
   \**************************************************************************/
 
@@ -2959,11 +2981,11 @@ and limitations under the License.
   \******************************************************************************/
 
 /*!******************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_matchesStrictComparable.js ***!
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/robot-off-outline.svg ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/moment-timezone.js ***!
+  !*** ./packages/webviz-core/node_modules/lodash/_matchesStrictComparable.js ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\
@@ -2999,6 +3021,14 @@ and limitations under the License.
   \********************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-down.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-left.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle-outline.svg ***!
   \********************************************************************************/
 
@@ -3008,6 +3038,18 @@ and limitations under the License.
 
 /*!*********************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_matchesStrictComparable.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-collapse-right.svg ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/index.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/types.js ***!
   \*********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -3027,15 +3069,15 @@ and limitations under the License.
   \**********************************************************************************/
 
 /*!***********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/data/packed/latest.json ***!
-  \***********************************************************************************/
-
-/*!***********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index.js ***!
   \***********************************************************************************/
 
 /*!************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/normalizeWheel.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Renderer.js ***!
   \************************************************************************************/
 
 /*!************************************************************************************!*\
@@ -3060,6 +3102,10 @@ and limitations under the License.
 
 /*!*************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Collector.js ***!
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
@@ -3110,6 +3156,14 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/textureAtlasData.bin ***!
   \****************************************************************************************/
 
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/useDebugStats.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils.js ***!
+  \*****************************************************************************************/
+
 /*!******************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/ExecutionEnvironment.js ***!
   \******************************************************************************************/
@@ -3151,6 +3205,10 @@ and limitations under the License.
   \********************************************************************************************/
 
 /*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/DebugStatsOverlay.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/buffers.js ***!
   \*********************************************************************************************/
 
@@ -3171,7 +3229,7 @@ and limitations under the License.
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-duration-format/lib/moment-duration-format.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/DebugStatsOverlayRpc.js ***!
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
@@ -3277,13 +3335,3 @@ and limitations under the License.
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
-//! Copyright (c) JS Foundation and other contributors
-
-//! github.com/moment/moment-timezone
-
-//! license : MIT
-
-//! moment-timezone.js
-
-//! version : 0.5.23

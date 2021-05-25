@@ -72,7 +72,7 @@
     "postcss-flexbugs-fixes": "^4.1.0",
     "postcss-loader": "^3.0.0",
     "prettier": "1.16.0",
-    "puppeteer": "2.0.0",
+    "puppeteer": "7.0.1",
     "quickhull3d": "2.0.4",
     "raw-loader": "^0.5.1",
     "react": "16.10.2",

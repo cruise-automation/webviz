@@ -1,0 +1,23 @@
+{
+  "presets": [
+    "@babel/react",
+    "@babel/flow",
+    [
+      "@babel/preset-env",
+      {
+        "corejs": 3,
+        "useBuiltIns": "usage"
+      }
+    ]
+  ],
+  "plugins": ["@babel/plugin-proposal-class-properties"],
+  "env": {
+    "test": {
+      "presets": [
+        "@babel/react",
+        "@babel/flow",
+        ["@babel/preset-env", { "targets": { "node": "current" } }]
+      ]
+    }
+  }
+}

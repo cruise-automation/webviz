@@ -28,10 +28,10 @@ import type {
   TreeTopicNode,
   VisibleTopicsCountByKey,
 } from "./types";
-import { generateNodeKey } from "./useTopicTree";
 import filterMap from "webviz-core/src/filterMap";
 import type { LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { canEditNamespaceOverrideColorDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index";
+import generateNodeKey from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/generateNodeKey";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
@@ -296,6 +296,7 @@ export default function renderTreeNodes({
             topicName,
             hasFeatureColumn,
             linkedGlobalVariablesByTopic,
+            visible: nodeVisibleInScene,
             width: titleWidth,
           })
         );

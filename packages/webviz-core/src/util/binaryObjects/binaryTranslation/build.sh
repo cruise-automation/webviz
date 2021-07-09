@@ -16,7 +16,7 @@ docker run \
   --rm \
   -v $WORK_DIR:$WORK_DIR \
   webviz:ros_binary_translation \
-  clang-tidy $WORK_DIR/cpp/**/*.cpp $WORK_DIR/cpp/**/*.hpp -- -I$WORK_DIR/cpp/include
+  clang-tidy $WORK_DIR/cpp/**/*.cpp $WORK_DIR/cpp/**/*.hpp -- -I$WORK_DIR/cpp/include -std=c++17
 
 docker run \
   --rm \
@@ -30,6 +30,7 @@ docker run \
     --bind \
     -O3 \
     -g4 \
+    -std=c++17 \
     -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0 `# allows embind to work with rtti disabled` \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s DEMANGLE_SUPPORT=1 \

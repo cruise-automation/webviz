@@ -43,7 +43,7 @@ module.exports = {
         "",
         {
           pattern: "^  Copyright \\(c\\) \\d{4}-present, Cruise LLC$",
-          template: "  Copyright (c) 2020-present, Cruise LLC",
+          template: "  Copyright (c) 2021-present, Cruise LLC",
         },
         "",
         "  This source code is licensed under the Apache License, Version 2.0,",
@@ -55,5 +55,9 @@ module.exports = {
     "react-hooks/exhaustive-deps": "error",
     "no-console": "off",
     "no-unused-vars": ["error", { vars: "all", args: "after-used", varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
+  },
+  globals: {
+    BigInt: true,
+    SharedArrayBuffer: true,
   },
 };

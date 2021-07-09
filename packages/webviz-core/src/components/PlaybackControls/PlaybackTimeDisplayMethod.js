@@ -15,20 +15,24 @@ import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
 import { ndash } from "webviz-core/src/util/entities";
-import { formatDate, formatTime } from "webviz-core/src/util/formatTime";
+import { formatDate, formatTime, getValidatedTimeAndMethodFromString } from "webviz-core/src/util/formatTime";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
-import { formatTimeRaw, isTimeInRangeInclusive, getValidatedTimeAndMethodFromString } from "webviz-core/src/util/time";
+import { formatTimeRaw, isTimeInRangeInclusive } from "webviz-core/src/util/time";
 
 const MAX_WIDTH = 200;
 
 const SInput = styled.input`
+  margin-top: 2px;
   padding: 8px 4px;
   width: calc(100% - 4px);
+  color: ${colors.LIGHT};
 `;
 const STimestamp = styled.span`
+  margin-top: 2px;
   padding: 8px 4px;
   cursor: pointer;
   border-radius: 4px;
+  color: ${colors.LIGHT};
 
   &:hover {
     background-color: ${colors.DARK3};

@@ -11,7 +11,7 @@ import React from "react";
 import styles from "./Toolbar.module.scss";
 
 type Props = {
-  children: Array<React$Element<any>> | React$Element<any>,
+  children: React$Node,
   style?: any,
   className?: string,
 };

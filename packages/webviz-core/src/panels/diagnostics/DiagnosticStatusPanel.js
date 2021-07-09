@@ -136,7 +136,9 @@ class DiagnosticStatusPanel extends React.Component<Props> {
                   </Flex>
                 ) : selectedDisplayName ? (
                   <EmptyState>
-                    Waiting for diagnostics from <code>{selectedDisplayName}</code>
+                    Waiting for diagnostics from <br />
+                    <br />
+                    <code>{selectedDisplayName}</code>
                   </EmptyState>
                 ) : (
                   <EmptyState>No diagnostic node selected</EmptyState>

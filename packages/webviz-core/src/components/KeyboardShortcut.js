@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { type Node } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import { colors, textSize, rounded } from "webviz-core/src/util/sharedStyleConstants";
@@ -21,6 +21,7 @@ const SKeyboardShortcut = styled.div`
 
 const SDescription = styled.div`
   margin-right: 16px;
+  max-width: 320px;
 `;
 
 const SKeyWrapper = styled.div`
@@ -47,7 +48,7 @@ const SKey = styled.kbd`
 `;
 
 type Props = {
-  keys: Node[],
+  keys: string[],
   description?: string,
   descriptionMaxWidth?: number,
 };

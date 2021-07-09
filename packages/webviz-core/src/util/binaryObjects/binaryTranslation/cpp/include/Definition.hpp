@@ -29,11 +29,11 @@ public:
         // to have a constant size.
         int32_t arraySize = -1;
 
-        inline size_t getSize() const noexcept {
+        inline size_t getSize() const {
             return isArray ? 2 * sizeof(uint32_t) : definition->getSize();
         }
 
-        bool finalize(DefinitionRegistry* registry) noexcept;
+        bool finalize(DefinitionRegistry* registry);
     };
 
     struct Command;
@@ -89,75 +89,73 @@ public:
     };
 
 public:
-    Definition(const std::string& name, size_t size, bool isString = false) noexcept;
+    Definition(const std::string& name, size_t size, bool isString = false);
     Definition(
             DefinitionRegistry* registry,
             const std::string& name,
             size_t size,
-            bool isString = false) noexcept;
+            bool isString = false);
     Definition(const Definition&) = delete;
     Definition(Definition&&) = delete;
-    ~Definition() noexcept = default;
+    ~Definition() = default;
 
     Definition& operator=(const Definition&) = delete;
     Definition& operator=(const Definition&&) = delete;
 
-    const std::string& getName() const noexcept {
+    const std::string& getName() const {
         return _name;
     }
 
-    inline size_t getSize() const noexcept {
+    inline size_t getSize() const {
         return _size;
     }
 
-    bool hasFields() const noexcept {
+    bool hasFields() const {
         return !_fields.empty();
     }
 
-    const std::vector<Field>& getFields() const noexcept {
+    const std::vector<Field>& getFields() const {
         return _fields;
     }
 
-    bool isString() const noexcept {
+    bool isString() const {
         return _isString;
     }
 
-    bool isValid() const noexcept {
+    bool isValid() const {
         return _isValid;
     }
 
-    bool hasConstantSize() const noexcept {
+    bool hasConstantSize() const {
         return _hasConstantSize;
     }
 
-    const CommandBuffer& getCommands() const noexcept {
+    const CommandBuffer& getCommands() const {
         return _commands;
     }
 
     // Adds a new field to the definition.
     // Automatically marks the definition as invalid (must call finalize() after adding all fields)
-    bool addField(std::string type, std::string name, bool isArray, int32_t arraySize) noexcept;
+    bool addField(std::string type, std::string name, bool isArray, int32_t arraySize);
 
     // Validates definition and compute the new size for complex types
-    bool finalize(DefinitionRegistry* registry) noexcept;
+    bool finalize(DefinitionRegistry* registry);
 
     // This function is used for testing purposes. It traverses the command buffer
     // and returns a vector with only the commands types (casted to int values so
     // they can be easily bind to JS).
-    std::vector<int> flattenCommands() const noexcept;
+    std::vector<int> flattenCommands() const;
 
 private:
-    CommandBuffer recordDefinitionCommands(const Definition& definition) noexcept;
-    CommandBuffer recordComplexDefinitionCommands(const Definition& definition) noexcept;
-    CommandBuffer
-    recordArrayDefinitionCommands(const Definition& definition, int32_t arraySize) noexcept;
-    CommandBuffer recordStringDefinitionCommands(const Definition& definition) noexcept;
-    CommandBuffer
-    recordNonStringDefinitionCommands(const Definition& definition, size_t count) noexcept;
+    CommandBuffer recordDefinitionCommands(const Definition& definition);
+    CommandBuffer recordComplexDefinitionCommands(const Definition& definition);
+    CommandBuffer recordArrayDefinitionCommands(const Definition& definition, int32_t arraySize);
+    CommandBuffer recordStringDefinitionCommands(const Definition& definition);
+    CommandBuffer recordNonStringDefinitionCommands(const Definition& definition, size_t count);
 
-    CommandBuffer optimizeCommands(const CommandBuffer& input) noexcept;
+    CommandBuffer optimizeCommands(const CommandBuffer& input);
 
-    void flatten(std::vector<int>& out, const CommandBuffer& cmds) const noexcept;
+    void flatten(std::vector<int>& out, const CommandBuffer& cmds) const;
 
 private:
     DefinitionRegistry* _registry = nullptr;

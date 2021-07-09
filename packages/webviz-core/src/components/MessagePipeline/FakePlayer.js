@@ -54,4 +54,5 @@ export default class FakePlayer implements Player {
   seekPlayback() {}
   requestBackfill() {}
   setGlobalVariables() {}
+  setMessageOrder() {}
 }

@@ -220,10 +220,11 @@ describe("time.isTimeInRangeInclusive", () => {
 });
 
 describe("time.parseRosTimeStr", () => {
-  it("returns null if the input string is formatted incorrectly", () => {
-    expect(time.parseRosTimeStr("")).toEqual(null);
-    expect(time.parseRosTimeStr(".12121")).toEqual(null);
-    expect(time.parseRosTimeStr(".")).toEqual(null);
+  it("returns undefined if the input string is formatted incorrectly", () => {
+    expect(time.parseRosTimeStr("")).toEqual(undefined);
+    expect(time.parseRosTimeStr(".12121")).toEqual(undefined);
+    expect(time.parseRosTimeStr(".")).toEqual(undefined);
+    expect(time.parseRosTimeStr("abc")).toEqual(undefined);
   });
 
   it("returns the correct time", () => {
@@ -239,6 +240,47 @@ describe("time.parseRosTimeStr", () => {
     expect(time.parseRosTimeStr("1.0123456789")).toEqual({ sec: 1, nsec: 0.012345679e9 });
     // Too much precision, round seconds up.
     expect(time.parseRosTimeStr("1.999999999999")).toEqual({ sec: 2, nsec: 0 });
+
+    expect(time.parseRosTimeStr("123456.000000000")).toEqual({ sec: 123456, nsec: 0 });
+    expect(time.parseRosTimeStr("123456.100000000")).toEqual({ sec: 123456, nsec: 100000000 });
+    expect(time.parseRosTimeStr("123456.123456789")).toEqual({ sec: 123456, nsec: 123456789 });
+  });
+});
+
+describe("time.getSeekToTime", () => {
+  it("returns the correct seek type and value", () => {
+    expect(time.getSeekToTime("?seek-to=1609746092535")).toEqual({
+      time: { nsec: 535000000, sec: 1609746092 },
+      type: "absolute",
+    });
+    expect(time.getSeekToTime("?seek-to=1609746092.534620523")).toEqual({
+      time: { nsec: 534620523, sec: 1609746092 },
+      type: "absolute",
+    });
+    expect(time.getSeekToTime("?seek-to=1609746092.")).toEqual({
+      time: { nsec: 0, sec: 1609746092 },
+      type: "absolute",
+    });
+    expect(time.getSeekToTime("?seek-to=1609746092.000000002")).toEqual({
+      time: { nsec: 2, sec: 1609746092 },
+      type: "absolute",
+    });
+
+    expect(time.getSeekToTime("?seek-by=101")).toEqual({ startOffset: { nsec: 101000000, sec: 0 }, type: "relative" });
+    expect(time.getSeekToTime("?seek-fraction=0.3")).toEqual({ fraction: 0.3, type: "fraction" });
+  });
+
+  it("returns the default if the seek value is invalid", () => {
+    const defaultResult = { startOffset: { sec: 0, nsec: 99000000 }, type: "relative" };
+    expect(time.getSeekToTime("?seek-to=-1609746092.534620523")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-to=-534620523")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-to=.534620523")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-by=-100")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-fraction=-0.1")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-to=invalid")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-by=abc")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-fraction=.")).toEqual(defaultResult);
+    expect(time.getSeekToTime("?seek-fraction=.d")).toEqual(defaultResult);
   });
 });
 
@@ -265,6 +307,13 @@ describe("time.getTimestampForMessage", () => {
       time.getTimestampForMessage({ ...messageBase, message: { header: { stamp: { sec: 123 } } } }, "headerStamp")
     ).toEqual(undefined);
     expect(time.getTimestampForMessage({ ...messageBase, message: { header: {} } }, "headerStamp")).toEqual(undefined);
+  });
+});
+
+describe("time.rosTimeToUrlTime", () => {
+  it("converts ros time to SEC.NSEC", () => {
+    expect(time.rosTimeToUrlTime({ sec: 2, nsec: 1 })).toBe("2.000000001");
+    expect(time.rosTimeToUrlTime({ sec: 1609746092, nsec: 53462052 })).toBe("1609746092.053462052");
   });
 });
 
@@ -349,32 +398,5 @@ describe("time.getSeekTimeFromSpec", () => {
 
     expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: -1 }, start, end)).toEqual(start);
     expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: 2 }, start, end)).toEqual(end);
-  });
-});
-
-describe("time.getRosTimeFromString", () => {
-  it("takes a stringified number and returns time object", () => {
-    expect(time.getRosTimeFromString("")).toEqual(undefined);
-    expect(time.getRosTimeFromString("abc")).toEqual(undefined);
-    expect(time.getRosTimeFromString("123456.000000000")).toEqual({ sec: 123456, nsec: 0 });
-    expect(time.getRosTimeFromString("123456.100000000")).toEqual({ sec: 123456, nsec: 100000000 });
-    expect(time.getRosTimeFromString("123456.123456789")).toEqual({ sec: 123456, nsec: 123456789 });
-  });
-});
-
-describe("time.getValidatedTimeAndMethodFromString", () => {
-  const commonArgs = { date: "2020-01-01", timezone: "America/Los_Angeles" };
-  it("takes a string and gets a validated ROS or TOD time", () => {
-    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "" })).toEqual(undefined);
-    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "abc" })).toEqual(undefined);
-    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "123abc" })).toEqual(undefined);
-    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1598635994.000000000" })).toEqual({
-      time: { nsec: 0, sec: 1598635994 },
-      method: "ROS",
-    });
-    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1:30:10.000 PM PST" })).toEqual({
-      time: { nsec: 0, sec: 1577914210 },
-      method: "TOD",
-    });
   });
 });

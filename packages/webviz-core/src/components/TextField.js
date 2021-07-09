@@ -20,7 +20,7 @@ export const STextField = styled.div`
 
 export const STextFieldLabel = styled.label`
   margin: 8px 0;
-  color: ${colors.GRAY};
+  color: ${colors.LIGHT};
 `;
 
 export const SError = styled.div`

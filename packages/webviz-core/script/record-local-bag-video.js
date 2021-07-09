@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-
 //  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
@@ -49,27 +48,18 @@ program
   .option("--out <path>", "Output .mp4 video file", parseNonExistingFileString)
   .option("--speed <number>", "Playback speed", parseNumber)
   .option("--framerate <number>", "Framerate", parseNumber)
+  .option("--duration <number>", "Restrict the recording duration specified in milliseconds")
   .option("--width <number>", "Width", parseNumber)
   .option("--height <number>", "Height", parseNumber)
   .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
+  .option("--crop <string>", "Crop the video dimensions: '<width>:<height>:<left>:<top>'")
   .option(
-    "--experimentalFeatureSettings <string>",
+    "--experimentalFeaturesSettings <string>",
     'Stringified JSON of experimental feature settings: \'{"featureName":"alwaysOn"}\''
   )
   .parse(process.argv);
-
-const defaultLayout = {
-  layout: "ImageViewPanel!3fewms6",
-  savedProps: {
-    "ImageViewPanel!3fewms6": {
-      cameraTopic: "/camera_front_medium/compressed",
-      scale: 1,
-      enabledMarkerNames: ["visual_detection_markers"],
-    },
-  },
-};
 
 async function main() {
   try {
@@ -80,21 +70,40 @@ async function main() {
     );
   }
 
+  const {
+    duration,
+    speed,
+    frameless,
+    framerate,
+    parallel,
+    bag,
+    url,
+    experimentalFeaturesSettings,
+    width,
+    height,
+    crop: cropStr,
+  } = program;
+  const crop =
+    cropStr &&
+    (() => {
+      const [cropWidth, cropHeight, cropLeft, cropTop] = cropStr.split(":").map((s) => parseFloat(s) || 0);
+      return { width: cropWidth, height: cropHeight, left: cropLeft, top: cropTop };
+    })();
+
   console.log("Recording video...");
-  const parallelCount = program.parallel || 1;
-  const parallelFrameRate = program.framerate || 30;
-  const { videoFile: video } = await recordVideo({
-    parallel: parallelCount,
-    bagPath: program.bag,
-    experimentalFeatureSettings: program.experimentalFeatureSettings,
-    url: `${program.url}?video-recording-mode${
-      program.frameless ? "&frameless" : ""
-    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${parallelFrameRate}`,
-    puppeteerLaunchConfig: {
-      headless: !process.env.DEBUG_CI,
-      defaultViewport: { width: program.width || 1920, height: program.height || 1080 },
-    },
-    panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : defaultLayout,
+  const { mediaFile: video } = await recordVideo({
+    duration,
+    speed,
+    frameless,
+    framerate,
+    parallel,
+    bagPath: bag,
+    experimentalFeaturesSettings,
+    url,
+    crop,
+    dimensions: width && height ? { width, height } : undefined,
+    puppeteerLaunchConfig: { headless: !process.env.DEBUG_CI },
+    panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : null,
   });
 
   console.log("Saving video...");

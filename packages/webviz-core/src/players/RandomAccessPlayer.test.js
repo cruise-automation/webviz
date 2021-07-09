@@ -24,7 +24,11 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, getSeekToTime, SEEK_ON_START_NS } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
-const playerOptions = { metricsCollector: undefined, seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } } };
+const playerOptions = {
+  metricsCollector: undefined,
+  seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } },
+  notifyPlayerManager: async () => {},
+};
 
 class MessageStore {
   _messages: PlayerState[] = [];
@@ -106,7 +110,10 @@ describe("RandomAccessPlayer", () => {
           messageOrder: "receiveTime",
           speed: 0.2,
           startTime: { sec: 10, nsec: 0 },
-          topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
+          topics: [
+            { datatype: "fooBar", name: "/foo/bar", preloadable: true },
+            { datatype: "baz", name: "/baz", preloadable: true },
+          ],
           parsedMessageDefinitionsByTopic: {},
           playerWarnings: {},
         },
@@ -629,6 +636,66 @@ describe("RandomAccessPlayer", () => {
     await delay(1);
   });
 
+  it("does not emit empty messages if seeking again while a backfill is in progress", async () => {
+    mockDateNow.mockRestore();
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    const store = new MessageStore(2);
+
+    let emitStateCallCount = 0;
+    const emitStateSignals = new Array(3).fill().map((_) => signal());
+
+    let getMessageCallCount = 0;
+    const getMessagesSignals = new Array(3).fill().map((_) => signal());
+
+    const state = {
+      ...getMessagesResult,
+      parsedMessages: [
+        {
+          topic: "/foo/bar",
+          receiveTime: { sec: 10, nsec: 5 },
+          message: { payload: "foo bar" },
+        },
+      ],
+    };
+
+    source.setListener((message: PlayerState) => {
+      store.add(message);
+      return emitStateSignals[emitStateCallCount++];
+    });
+
+    provider.getMessages = async (): Promise<GetMessagesResult> => {
+      return getMessagesSignals[getMessageCallCount++];
+    };
+
+    // Do a "normal" backfill, where everything resolves normally
+    source.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    source.requestBackfill(); // Call #1
+    getMessagesSignals[0].resolve(state);
+    emitStateSignals[0].resolve();
+
+    const done = await store.done;
+    expect(done?.[0].activeData).toEqual(undefined);
+    expect(done?.[1].activeData?.messages.length).toEqual(1);
+    store.reset(1);
+
+    // Now we requestBackfill twice, without ever resolving the emitState callback
+    source.requestBackfill(); // Call #2
+    getMessagesSignals[1].resolve(state);
+
+    source.requestBackfill(); // Call #3
+    getMessagesSignals[2].resolve(state);
+
+    // Call requestBackfill a third time and finally resolve the listener from call #2
+    source.requestBackfill(); // Call #4
+    emitStateSignals[1].resolve(); // Resolves the emitState from Call #2
+
+    // emitState will automatically be called again, debounced from call #3
+    // Verify that the messages are never cleared
+    const done2 = await store.done;
+    expect(done2?.[0].activeData?.messages.length).toEqual(1);
+  });
+
   it("backfills previous messages on seek", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
@@ -1140,6 +1207,78 @@ describe("RandomAccessPlayer", () => {
     player.close();
   });
 
+  it("does not lose messages when pausing during a getMessages call", async () => {
+    const provider = new TestProvider();
+    const getMessages = jest.fn();
+    provider.getMessages = getMessages;
+
+    const message1 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 10, nsec: 1 },
+      message: { payload: "foo bar 1" },
+    };
+    const message2 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 10, nsec: 2 },
+      message: { payload: "foo bar 2" },
+    };
+
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+
+    const firstGetMessagesReturn = signal();
+    getMessages.mockImplementation(async () => {
+      await firstGetMessagesReturn;
+      return Promise.resolve({ ...getMessagesResult, parsedMessages: [message1] });
+    });
+    const store = new MessageStore(2);
+    await player.setListener(store.add);
+    player.startPlayback();
+    // Before the first call, the player emits twice: Once on construction, once on start.
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [], bobjects: [] }) }),
+    ]);
+    store.reset(1);
+
+    // Pause during getMessages call
+    player.pausePlayback();
+    firstGetMessagesReturn.resolve();
+    // Player should not emit state, but messages are queued up.
+    await delay(10);
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: false, messages: [], bobjects: [] }),
+      }),
+    ]);
+    store.reset(1);
+
+    const secondGetMessagesReturn = signal();
+    getMessages.mockImplementation(async () => {
+      await secondGetMessagesReturn;
+      return Promise.resolve({ ...getMessagesResult, parsedMessages: [message2] });
+    });
+    player.startPlayback();
+
+    // Queued messages are emitted immediately, before another getMessages call is made.
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [message1], bobjects: [] }),
+      }),
+    ]);
+    store.reset(1);
+
+    // Play continues with more getMessages calls.
+    secondGetMessagesReturn.resolve();
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [message2], bobjects: [] }),
+      }),
+    ]);
+    player.close();
+  });
+
   describe("metrics collecting", () => {
     class TestMetricsCollector implements PlayerMetricsCollectorInterface {
       _initialized: number = 0;
@@ -1307,7 +1446,6 @@ describe("RandomAccessPlayer", () => {
       [{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, { parsedMessages: ["/foo/bar"], bobjects: [] }],
     ]);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "hidden",
@@ -1323,7 +1461,6 @@ describe("RandomAccessPlayer", () => {
 
     store.reset(1);
 
-    // $FlowFixMe defineProperty's flow type does not accept using `get` instead of `value`
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       get: () => "visible",
@@ -1352,6 +1489,25 @@ describe("RandomAccessPlayer", () => {
       expect.objectContaining({
         activeData: expect.objectContaining({ isPlaying: false, messages: [], bobjects: [] }),
       }),
+    ]);
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
+  it("adjusts the end-time in header-stamp mode", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    player.setMessageOrder("headerStamp");
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+    await player.setListener(store.add);
+    const firstMessages = await store.done;
+    expect(firstMessages).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ endTime: { sec: 101, nsec: 0 } }) }),
     ]);
     expect(provider.getMessages).toHaveBeenCalled();
 

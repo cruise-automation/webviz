@@ -9,17 +9,16 @@
 import * as React from "react";
 import { Command, withPose, pointToVec3, defaultBlend, type CommonCommandProps } from "regl-worldview";
 
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { TextureCache } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
 import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 
-const occupancyGrids = (regl: any) => {
+const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any) => {
   // make a buffer holding the verticies of a 1x1 plane
   // it will be resized in the shader
   const positionBuffer = regl.buffer([0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0]);
 
   const cache = new TextureCache(regl);
-  const paletteTextures = {};
+  const paletteTextures = new Map<Uint8Array, any>();
 
   return withPose({
     primitive: "triangle strip",
@@ -101,15 +100,14 @@ const occupancyGrids = (regl: any) => {
         return [x, y, z, w];
       },
       palette: (context: any, props: OccupancyGridMessage) => {
-        const palette = getGlobalHooks()
-          .perPanelHooks()
-          .ThreeDimensionalViz.getMapPalette(props.map);
+        const palette = getMapPalette(props.map);
         // track which palettes we've uploaded as textures
-        if (paletteTextures[palette]) {
-          return paletteTextures[palette];
+        let texture = paletteTextures.get(palette);
+        if (texture) {
+          return texture;
         }
         // if we haven't already uploaded this palette, upload it to the GPU
-        paletteTextures[palette] = regl.texture({
+        texture = regl.texture({
           format: "rgba",
           type: "uint8",
           mipmap: false,
@@ -117,7 +115,8 @@ const occupancyGrids = (regl: any) => {
           width: 256,
           height: 1,
         });
-        return paletteTextures[palette];
+        paletteTextures.set(palette, texture);
+        return texture;
       },
       data: (context: any, props: any) => {
         return cache.get(props);
@@ -128,9 +127,14 @@ const occupancyGrids = (regl: any) => {
   });
 };
 
-type Props = { ...CommonCommandProps, children: OccupancyGridMessage[] };
+type Props = {
+  ...CommonCommandProps,
+  getMapPalette: (string) => Uint8Array,
+  children: OccupancyGridMessage[],
+};
 
 export default function OccupancyGrids(props: Props) {
   // We can click through OccupancyGrids.
-  return <Command getChildrenForHitmap={null} {...props} reglCommand={occupancyGrids} />;
+  const command = React.useMemo(() => getOccupancyGrids(props.getMapPalette), [props.getMapPalette]);
+  return <Command getChildrenForHitmap={null} {...props} reglCommand={command} />;
 }

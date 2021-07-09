@@ -10,14 +10,14 @@ import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time } from "rosbag";
 
-import { toDate, fromDate } from "./time";
+import { parseRosTimeStr, toDate, fromDate } from "./time";
 
 // All time functions that require `moment` should live in this file.
 
 momentDurationFormatSetup(moment);
 
-export function format(stamp: Time) {
-  return `${formatDate(stamp)} ${formatTime(stamp)}`;
+export function format(stamp: Time, timezone?: ?string) {
+  return `${formatDate(stamp, timezone)} at ${formatTime(stamp, timezone)}`;
 }
 
 export function formatDate(stamp: Time, timezone?: ?string) {
@@ -60,3 +60,29 @@ export function parseTimeStr(str: string, timezone?: ?string): ?Time {
   }
   return result;
 }
+
+const todTimeRegex = /^\d+:\d+:\d+.\d+\s[PpAa][Mm]\s[A-Za-z$]+/;
+export const getValidatedTimeAndMethodFromString = ({
+  text,
+  date,
+  timezone,
+}: {
+  text: ?string,
+  date: string,
+  timezone: ?string,
+}): ?{ time: ?Time, method: "ROS" | "TOD" } => {
+  if (!text) {
+    return;
+  }
+  const isInvalidRosTime = isNaN(text);
+  const isInvalidTodTime = !(todTimeRegex.test(text || "") && parseTimeStr(`${date} ${text || ""}`, timezone));
+
+  if (isInvalidRosTime && isInvalidTodTime) {
+    return;
+  }
+
+  return {
+    time: !isInvalidRosTime ? parseRosTimeStr(text || "") : parseTimeStr(`${date} ${text || ""}`, timezone),
+    method: isInvalidRosTime ? "TOD" : "ROS",
+  };
+};

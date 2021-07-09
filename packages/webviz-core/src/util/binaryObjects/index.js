@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { Buffer } from "buffer";
 import int53 from "int53";
 
 import { cast, type Bobject } from "webviz-core/src/players/types";
@@ -14,9 +15,9 @@ import { type ArrayView, getArrayView } from "webviz-core/src/util/binaryObjects
 import getGetClassForView from "webviz-core/src/util/binaryObjects/binaryWrapperObjects";
 import getJsWrapperClasses from "webviz-core/src/util/binaryObjects/jsWrapperObjects";
 import {
-  associateDatatypes,
+  associateSourceData,
   deepParseSymbol,
-  getDatatypes,
+  getSourceData,
   primitiveList,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 
@@ -27,19 +28,41 @@ const parseJson = (s) => {
     return `Could not parse ${JSON.stringify(s)}`;
   }
 };
-const context = { Buffer, getArrayView, deepParse: deepParseSymbol, int53, associateDatatypes, parseJson };
+const context = {
+  Buffer,
+  getArrayView,
+  deepParse: deepParseSymbol,
+  int53,
+  associateSourceData,
+  parseJson,
+  offsetSymbol: Symbol(),
+};
 
 export type { ArrayView };
 
-type BinaryBobjectData = $ReadOnly<{|
+// Stored for top-level bobjects only.
+const approximateBinarySizes = new WeakMap<any, number>();
+const reverseWrappedBobjects = new WeakSet<any>();
+
+export const getBinaryOffset = (obj: any): number => {
+  const offset = obj[context.offsetSymbol];
+  if (offset == null) {
+    throw new Error("Can't get offset of non-binary bobject.");
+  }
+  return offset;
+};
+
+export const getBinaryArrayView = (
+  typesByName: RosDatatypes,
+  datatype: string,
   buffer: ArrayBuffer,
   bigString: string,
-  offset: number,
-  approximateSize: number,
-|}>;
-const binaryData = new WeakMap<any, BinaryBobjectData>();
-export const getBinaryData = (bobject: any): ?BinaryBobjectData => binaryData.get(bobject);
-const reverseWrappedBobjects = new WeakSet<any>();
+  firstElementOffset: number,
+  length: number
+): ArrayView<any> => {
+  const Class = getGetClassForView(typesByName, datatype, true)(context, new DataView(buffer), bigString, typesByName);
+  return new Class(firstElementOffset, length);
+};
 
 export const getObject = (
   typesByName: RosDatatypes,
@@ -49,7 +72,7 @@ export const getObject = (
 ): Bobject => {
   const Class = getGetClassForView(typesByName, datatype)(context, new DataView(buffer), bigString, typesByName);
   const ret = new Class(0);
-  binaryData.set(ret, { buffer, bigString, offset: 0, approximateSize: buffer.byteLength + bigString.length });
+  approximateBinarySizes.set(ret, buffer.byteLength + bigString.length);
   return ret;
 };
 
@@ -67,8 +90,8 @@ export const getObjects = (
   // we're only actually interested in the sum (which is correct, plus or minus floating point
   // error).
   const approximateSize = (buffer.byteLength + bigString.length) / offsets.length;
-  ret.forEach((bobject, i) => {
-    binaryData.set(bobject, { buffer, bigString, offset: offsets[i], approximateSize });
+  ret.forEach((bobject) => {
+    approximateBinarySizes.set(bobject, approximateSize);
   });
   return ret;
 };
@@ -107,9 +130,9 @@ export const wrapJsObject = <T>(typesByName: RosDatatypes, typeName: string, obj
 // or we might remove this function and just provide access to the identity of the underlying data
 // so the shared storage is clear.
 export const inaccurateByteSize = (obj: any): number => {
-  const data = getBinaryData(obj);
-  if (data != null) {
-    return data.approximateSize;
+  const size = approximateBinarySizes.get(obj);
+  if (size != null) {
+    return size;
   }
   if (reverseWrappedBobjects.has(obj)) {
     // Not ideal: Storing the deep-parsed representation of a reverse-wrapped bobject actually
@@ -121,18 +144,19 @@ export const inaccurateByteSize = (obj: any): number => {
 };
 
 export function bobjectFieldNames(bobject: {}): string[] {
-  const typeInfo = getDatatypes(Object.getPrototypeOf(bobject).constructor);
-  if (!typeInfo) {
+  const sourceData = getSourceData(Object.getPrototypeOf(bobject).constructor);
+  if (!sourceData) {
     throw new Error("Unknown constructor in bobjectFieldNames");
   }
-  const datatype = typeInfo[0][typeInfo[1]];
-  if (datatype == null) {
-    if (typeInfo[1] === "time" || typeInfo[1] === "duration") {
+  const { datatypes, datatype } = sourceData;
+  const definition = datatypes[datatype];
+  if (definition == null) {
+    if (datatype === "time" || datatype === "duration") {
       return ["sec", "nsec"];
     }
-    throw new Error(`Unknown datatype ${typeInfo[1]}`);
+    throw new Error(`Unknown datatype ${datatype}`);
   }
-  return datatype.fields.filter(({ isConstant }) => !isConstant).map(({ name }) => name);
+  return definition.fields.filter(({ isConstant }) => !isConstant).map(({ name }) => name);
 }
 
 export const fieldNames = (o: {}): string[] => {
@@ -151,25 +175,25 @@ export const merge = <T: {}>(bobject: T, overrides: $ReadOnly<{ [field: string]:
   bobjectFieldNames(bobject).forEach((field) => {
     shallow[field] = bobject[field]();
   });
-  const datatypes = getDatatypes(Object.getPrototypeOf(bobject).constructor);
-  if (datatypes == null) {
+  const sourceData = getSourceData(Object.getPrototypeOf(bobject).constructor);
+  if (sourceData == null) {
     throw new Error("Unknown type in merge");
   }
-  return cast<T>(wrapJsObject(datatypes[0], datatypes[1], { ...shallow, ...overrides }));
+  return cast<T>(wrapJsObject(sourceData.datatypes, sourceData.datatype, { ...shallow, ...overrides }));
 };
 
 // For accessing fields that might be in bobjects and might be in JS objects.
-export const getField = (obj: ?any, field: string): any => {
+export const getField = (obj: ?any, field: string, bigInts: ?true): any => {
   if (!obj) {
     return;
   }
   if (isBobject(obj)) {
-    return obj[field] && obj[field]();
+    return obj[field] && obj[field](bigInts);
   }
   return obj[field];
 };
 
-export const getIndex = (obj: any, i: number): ?any => {
+export const getIndex = (obj: any, i: number, bigInt: ?true): ?any => {
   if (!obj) {
     return;
   }
@@ -177,7 +201,7 @@ export const getIndex = (obj: any, i: number): ?any => {
     if (i < 0 || i >= obj.length() || !Number.isInteger(i)) {
       return;
     }
-    return obj.get(i);
+    return obj.get(i, bigInt);
   }
   return obj[i];
 };

@@ -21,6 +21,7 @@ import {
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { HoverValueProvider } from "webviz-core/src/components/HoverBar/context";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import { getRemoteBagGuid } from "webviz-core/src/dataProviders/getRemoteBagGuid";
@@ -82,7 +83,11 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
   if (inPlaybackPerformanceMeasuringMode()) {
     return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), new PerformanceMeasuringClient());
   }
-  return new RandomAccessPlayer(rootDescriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
+  return new RandomAccessPlayer(rootDescriptor, {
+    metricsCollector: undefined,
+    seekToTime: getSeekToTime(),
+    notifyPlayerManager: async () => {},
+  });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
@@ -301,9 +306,11 @@ function PlayerManager({
           </div>
         </DropOverlay>
       </DocumentDropListener>
-      <MessagePipelineProvider player={player} globalVariables={globalVariables}>
-        {children({ inputDescription })}
-      </MessagePipelineProvider>
+      <HoverValueProvider>
+        <MessagePipelineProvider player={player} globalVariables={globalVariables}>
+          {children({ inputDescription })}
+        </MessagePipelineProvider>
+      </HoverValueProvider>
     </>
   );
 }

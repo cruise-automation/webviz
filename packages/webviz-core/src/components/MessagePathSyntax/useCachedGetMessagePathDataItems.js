@@ -20,7 +20,7 @@ import type { ReflectiveMessage, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { fieldNames, getField, getIndex } from "webviz-core/src/util/binaryObjects";
 import { useChangeDetector, useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
-import { enumValuesByDatatypeAndField, getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
 export type MessagePathDataItem = {|
   value: mixed, // The actual value.
@@ -37,7 +37,7 @@ export type MessagePathDataItem = {|
 // reference, as long as topics/datatypes/global variables haven't changed in the meantime.
 export function useCachedGetMessagePathDataItems(
   paths: string[]
-): (path: string, message: ReflectiveMessage) => ?(MessagePathDataItem[]) {
+): (path: string, message: ReflectiveMessage, bigInt: ?true) => ?(MessagePathDataItem[]) {
   const { topics: providerTopics, datatypes } = PanelAPI.useDataSourceInfo();
   const { globalVariables } = useGlobalVariables();
   const memoizedPaths: string[] = useShallowMemo<string[]>(paths);
@@ -77,7 +77,7 @@ export function useCachedGetMessagePathDataItems(
     }
   }
 
-  return useCallback((path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
+  return useCallback((path: string, message: ReflectiveMessage, bigInt: ?true): ?(MessagePathDataItem[]) => {
     if (!memoizedPaths.includes(path)) {
       throw new Error(`path (${path}) was not in the list of cached paths`);
     }
@@ -90,7 +90,7 @@ export function useCachedGetMessagePathDataItems(
     }
     const { weakMap } = cachesByPath.current[path];
     if (!weakMap.has(message)) {
-      const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
+      const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes, bigInt);
       weakMap.set(message, messagePathDataItems);
       return messagePathDataItems;
     }
@@ -163,10 +163,11 @@ export function getMessagePathDataItems(
   message: ReflectiveMessage,
   filledInPath: RosPath,
   providerTopics: $ReadOnlyArray<Topic>,
-  datatypes: RosDatatypes
+  datatypes: RosDatatypes,
+  bigInt: ?true
 ): ?(MessagePathDataItem[]) {
   const structures = messagePathStructures(datatypes);
-  const topic = getTopicsByTopicName(providerTopics)[filledInPath.topicName];
+  const topic = providerTopics.find(({ name }) => name === filledInPath.topicName);
 
   // We don't care about messages that don't match the topic we're looking for.
   if (!topic || message.topic !== filledInPath.topicName) {
@@ -210,9 +211,12 @@ export function getMessagePathDataItems(
     } else if (pathItem.type === "name" && structureItem.structureType === "message") {
       // If the `pathItem` is a name, we're traversing down using that name.
       const next = structureItem.nextByName[pathItem.name];
-      const nextStructIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
+      // Datatype names can have ambiguous definitions, most commonly when there are multiple input
+      // bags. If a field exists but doesn't appear in the datatype structure, treat it and its
+      // children as free-form JSON.
+      const nextStructIsJson = next == null || (next.structureType === "primitive" && next?.primitiveType === "json");
       traverse(
-        getField(value, pathItem.name),
+        getField(value, pathItem.name, bigInt),
         pathIndex + 1,
         `${path}.${pathItem.name}`,
         !nextStructIsJson ? next : { structureType: "primitive", primitiveType: "json", datatype: "" }
@@ -242,7 +246,7 @@ export function getMessagePathDataItems(
       const arrayLength = getField(value, "length");
       for (let i = startIdx; i <= Math.min(endIdx, arrayLength - 1); i++) {
         const index = i >= 0 ? i : arrayLength + i;
-        const arrayElement = getIndex(value, index);
+        const arrayElement = getIndex(value, index, bigInt);
         if (arrayElement == null) {
           continue;
         }
@@ -257,7 +261,7 @@ export function getMessagePathDataItems(
           // See if `arrayElement` has a property that we typically filter on. If so, show that.
           const name = fieldNames(arrayElement).find((key) => isTypicalFilterName(key));
           if (name) {
-            newPath = `${path}[:]{${name}==${getField(arrayElement, name)}}`;
+            newPath = `${path}[:]{${name}==${getField(arrayElement, name, bigInt)}}`;
           } else {
             // Use `i` here instead of `index`, since it's only different when `i` is negative,
             // and in that case it's probably more useful to show to the user how many elements

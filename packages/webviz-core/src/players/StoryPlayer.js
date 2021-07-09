@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { partition } from "lodash";
+import { partition, groupBy } from "lodash";
 
 import { SECOND_SOURCE_PREFIX } from "../util/globalConstants";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
@@ -60,6 +60,7 @@ export default class StoryPlayer implements Player {
         .initialize({
           progressCallback: () => {},
           reportMetadataCallback: () => {},
+          notifyPlayerManager: async () => {},
         })
         .then(async ({ topics, start, end, messageDefinitions }) => {
           const { parsedMessages = [], bobjects = [] } = await provider.getMessages(start, end, {
@@ -79,7 +80,17 @@ export default class StoryPlayer implements Player {
             capabilities: [],
             isPresent: false,
             playerId: "",
-            progress: {},
+            progress: {
+              messageCache: {
+                startTime: start,
+                blocks: [
+                  {
+                    sizeInBytes: 0,
+                    messagesByTopic: groupBy(bobjects, "topic"),
+                  },
+                ],
+              },
+            },
             showInitializing: true,
             showSpinner: true,
             activeData: {
@@ -118,4 +129,5 @@ export default class StoryPlayer implements Player {
   seekPlayback = () => {};
   requestBackfill = () => {};
   setGlobalVariables = () => {};
+  setMessageOrder = () => {};
 }

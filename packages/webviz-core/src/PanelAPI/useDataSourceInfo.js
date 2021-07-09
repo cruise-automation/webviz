@@ -24,16 +24,17 @@ export type DataSourceInfo = {|
 |};
 
 export default function useDataSourceInfo(): DataSourceInfo {
-  const datatypes = useMessagePipeline(useCallback(({ datatypes: pipelineDatatypes }) => pipelineDatatypes, []));
-  const topics = useMessagePipeline(useCallback(({ sortedTopics }) => sortedTopics, []));
-  const startTime = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => activeData && activeData.startTime, [])
-  );
-  const capabilities = useMessagePipeline(
-    useCallback(({ playerState: { capabilities: playerStateCapabilities } }) => playerStateCapabilities, [])
-  );
-  const playerId = useMessagePipeline(
-    useCallback(({ playerState: { playerId: playerStatePlayerId } }) => playerStatePlayerId, [])
+  const { topics, datatypes, capabilities, startTime, playerId } = useMessagePipeline(
+    useCallback(
+      (messagePipeline) => ({
+        datatypes: messagePipeline.datatypes,
+        topics: messagePipeline.sortedTopics,
+        startTime: messagePipeline.playerState.activeData?.startTime,
+        capabilities: messagePipeline.playerState.capabilities,
+        playerId: messagePipeline.playerState.playerId,
+      }),
+      []
+    )
   );
 
   return {

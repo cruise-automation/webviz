@@ -19,4 +19,5 @@ export type { RequestedTopic } from "./useMessageReducer";
 
 export { useMessagesByTopic } from "./useMessagesByTopic";
 export type { MessagesByTopic } from "./useMessagesByTopic";
+export { default as useArbitraryTopicMessage } from "./useArbitraryTopicMessage";
 export { useBlocksByTopic } from "./useBlocksByTopic";

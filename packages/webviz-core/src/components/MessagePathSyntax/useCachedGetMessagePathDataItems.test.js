@@ -211,7 +211,11 @@ describe("useCachedGetMessagePathDataItems", () => {
     describe("JSON", () => {
       it("traverses JSON fields", () => {
         const messages: Message[] = [
-          { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { someJson: { someId: 10 } } },
+          {
+            topic: "/some/topic",
+            receiveTime: { sec: 0, nsec: 0 },
+            message: { someJson: { someId: 10, anotherId: 9 } },
+          },
           {
             topic: "/some/topic",
             receiveTime: { sec: 0, nsec: 0 },
@@ -224,7 +228,7 @@ describe("useCachedGetMessagePathDataItems", () => {
         };
 
         expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes, useBobjects)).toEqual([
-          [{ value: { someId: 10 }, path: "/some/topic.someJson", constantName: undefined }],
+          [{ value: { someId: 10, anotherId: 9 }, path: "/some/topic.someJson", constantName: undefined }],
           [{ value: { someId: 11, anotherId: 12 }, path: "/some/topic.someJson", constantName: undefined }],
         ]);
         expect(
@@ -549,6 +553,15 @@ describe("useCachedGetMessagePathDataItems", () => {
             constantName: "ON",
           },
         ],
+      ]);
+    });
+
+    it("is robust to incorrect datatypes", () => {
+      const messages: Message[] = [{ topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { state: 0 } }];
+      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const datatypes: RosDatatypes = { some_datatype: { fields: [] } };
+      expect(addValuesWithPathsToItems(messages, "/some/topic.state", topics, datatypes, useBobjects)).toEqual([
+        [{ value: 0, path: "/some/topic.state" }],
       ]);
     });
   });

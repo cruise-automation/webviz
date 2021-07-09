@@ -12,8 +12,8 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import WavesIcon from "@mdi/svg/svg/waves.svg";
 import cx from "classnames";
-import { last, uniq } from "lodash";
-import * as React from "react";
+import { last, uniq, keyBy, partition } from "lodash";
+import React, { useMemo, useCallback, type Node } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
@@ -37,11 +37,13 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
+import IconTextMenu from "webviz-core/src/panels/ImageView/IconTextMenu";
 import type { Message, TypedMessage } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import { WEBVIZ_2D_ICON_ARRAY_DATATYPE } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -50,22 +52,23 @@ import { getSynchronizingReducers } from "webviz-core/src/util/synchronizeMessag
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
 
-const { useMemo, useCallback } = React;
-
 type DefaultConfig = {|
   cameraTopic: string,
   enabledMarkerTopics: string[],
   customMarkerTopicOptions?: string[],
   scale: number,
   synchronize: boolean,
+  // Use template string to create icon text from the metadata fields of the icon msg.
+  iconTextTemplate?: string,
 |};
 
-export type ImageViewPanelHooks = {
+type ImageViewPanelHooks = {
   defaultConfig: DefaultConfig,
   imageMarkerDatatypes: string[],
 };
 const DEFAULT_PANEL_HOOKS = { imageMarkerDatatypes: [] };
 
+// const IMAGE_ICON_MARKER_DATATYPES = [WEBVIZ_2D_ICON_ARRAY_DATATYPE];
 export type Config = {|
   ...DefaultConfig,
   panelHooks?: ImageViewPanelHooks,
@@ -94,7 +97,7 @@ const SEmptyStateWrapper = styled.div`
   height: 100%;
   position: absolute;
   z-index: 200;
-  background: ${sharedColors.DARK2};
+  background: ${sharedColors.DARK};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,7 +106,7 @@ const SEmptyStateWrapper = styled.div`
 const TopicTimestamp = ({ text, style: styleObj }: { text: string, style?: { [string]: string } }) =>
   text === "" ? null : <TopicTimestampSpan style={styleObj}>{text}</TopicTimestampSpan>;
 
-const BottomBar = ({ children, containsOpen }: { children?: React.Node, containsOpen: boolean }) => (
+const BottomBar = ({ children, containsOpen }: { children?: Node, containsOpen: boolean }) => (
   <div
     className={cx(imageCanvasStyles["bottom-bar"], {
       [imageCanvasStyles.containsOpen]: inScreenshotTests ? true : containsOpen,
@@ -143,6 +146,8 @@ function renderEmptyState(
     <SEmptyStateWrapper>
       <EmptyState>
         Waiting for images {markerTopics.length > 0 && "and markers"} on:
+        <br />
+        <br />
         <ul>
           <li>
             <code>{cameraTopic}</code>
@@ -155,9 +160,7 @@ function renderEmptyState(
         </ul>
         {shouldSynchronize && (
           <>
-            <p>
-              Synchronization is enabled, so all messages with <code>header.stamp</code>s must match exactly.
-            </p>
+            <p>Synchronization is enabled, so all messages with `header.stamp`s must match exactly.</p>
             <ul>
               {Object.keys(messagesByTopic).map((topic) => (
                 <li key={topic}>
@@ -235,8 +238,11 @@ function ImageView(props: Props) {
     panelHooks,
     transformMarkers,
     customMarkerTopicOptions = NO_CUSTOM_OPTIONS,
+    iconTextTemplate,
   } = config;
   const { topics } = PanelAPI.useDataSourceInfo();
+  // For looking up datatype by topic name.
+  const topicsKeyByTopicName = useMemo(() => keyBy(topics, "name"), [topics]);
   const isDemoMode = useExperimentalFeature("demoMode");
   const cameraTopicFullObject = useMemo(() => getTopicsByTopicName(topics)[cameraTopic], [cameraTopic, topics]);
 
@@ -250,9 +256,13 @@ function ImageView(props: Props) {
   }, [topics]);
 
   const { imageMarkerDatatypes } = panelHooks || getGlobalHooks().perPanelHooks().ImageView || DEFAULT_PANEL_HOOKS;
+
+  const combinedImageMarkerDataTypes = useMemo(() => [...imageMarkerDatatypes, WEBVIZ_2D_ICON_ARRAY_DATATYPE], [
+    imageMarkerDatatypes,
+  ]);
   const defaultAvailableMarkerTopics = useMemo(
-    () => getMarkerOptions(cameraTopic, topics, allCameraNamespaces, imageMarkerDatatypes),
-    [cameraTopic, topics, allCameraNamespaces, imageMarkerDatatypes]
+    () => getMarkerOptions(cameraTopic, topics, allCameraNamespaces, combinedImageMarkerDataTypes),
+    [cameraTopic, topics, allCameraNamespaces, combinedImageMarkerDataTypes]
   );
   const availableAndEnabledMarkerTopics = useShallowMemo(
     uniq([...defaultAvailableMarkerTopics, ...customMarkerTopicOptions, ...enabledMarkerTopics]).sort()
@@ -266,7 +276,7 @@ function ImageView(props: Props) {
       newCameraTopic,
       topics,
       allCameraNamespaces,
-      imageMarkerDatatypes
+      combinedImageMarkerDataTypes
     );
 
     const newEnabledMarkerTopics = getRelatedMarkerTopics(enabledMarkerTopics, newAvailableMarkerTopics);
@@ -278,15 +288,15 @@ function ImageView(props: Props) {
 
       enabledMarkerTopics: newEnabledMarkerTopics,
     });
-  }, [topics, allCameraNamespaces, imageMarkerDatatypes, enabledMarkerTopics, saveConfig]);
+  }, [topics, allCameraNamespaces, combinedImageMarkerDataTypes, enabledMarkerTopics, saveConfig]);
 
   const onChangeScale = useCallback((newScale: number) => {
     saveConfig({ scale: newScale });
   }, [saveConfig]);
 
   const onToggleSynchronize = useCallback(() => {
-    saveConfig({ synchronize: !config.synchronize });
-  }, [saveConfig, config.synchronize]);
+    saveConfig({ synchronize: !synchronize });
+  }, [saveConfig, synchronize]);
 
   const imageTopicDropdown = useMemo(() => {
     const cameraNamespace = getCameraNamespace(cameraTopic);
@@ -342,32 +352,41 @@ function ImageView(props: Props) {
     addMessage: useCallback((value, { message }: TypedMessage<CameraInfo>) => message, []),
   });
 
-  const shouldSynchronize = config.synchronize && enabledMarkerTopics.length > 0;
+  const shouldSynchronize = synchronize && enabledMarkerTopics.length > 0;
   const imageAndMarkerTopics = useShallowMemo([{ topic: cameraTopic, imageScale: scale }, ...enabledMarkerTopics]);
   const { messagesByTopic, synchronizedMessages } = useOptionallySynchronizedMessages(
     shouldSynchronize,
     imageAndMarkerTopics
   );
 
-  const markersToRender: Message[] = useMemo(
-    () =>
-      shouldSynchronize
-        ? synchronizedMessages
-          ? enabledMarkerTopics.map((topic) => synchronizedMessages[topic])
-          : []
-        : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic])),
-    [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages]
-  );
+  const { iconMarkersToRender, nonIconMarkersToRender } = useMemo(() => {
+    const synchronizedFrame = synchronizedMessages ?? {};
+    const combinedMarkers: Message[] = shouldSynchronize
+      ? filterMap(enabledMarkerTopics, (topic) => synchronizedFrame[topic])
+      : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic]));
+
+    const [iconMarkers, nonIconMarkers] = partition(combinedMarkers, (item) => {
+      return topicsKeyByTopicName[item.topic].datatype === WEBVIZ_2D_ICON_ARRAY_DATATYPE;
+    });
+    return { iconMarkersToRender: iconMarkers, nonIconMarkersToRender: nonIconMarkers };
+  }, [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages, topicsKeyByTopicName]);
 
   // Timestamps are displayed for informational purposes in the markers menu
   const renderedMarkerTimestamps = useMemo(() => {
     const stamps = {};
-    for (const { topic, message } of markersToRender) {
+    for (const { topic, message } of nonIconMarkersToRender) {
       // In some cases, a user may have subscribed to a topic that does not include a header stamp.
       stamps[topic] = message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ not available ]";
     }
     return stamps;
-  }, [markersToRender]);
+  }, [nonIconMarkersToRender]);
+
+  const rawMarkerData = {
+    markers: nonIconMarkersToRender,
+    scale,
+    transformMarkers,
+    cameraInfo: nonIconMarkersToRender.length > 0 ? cameraInfo : null,
+  };
 
   const addTopicsMenu = useMemo(
     () => (
@@ -386,7 +405,6 @@ function ImageView(props: Props) {
 
   const markerDropdown = useMemo(() => {
     const missingRequiredCameraInfo = scale !== 1 && !cameraInfo;
-
     return (
       <Dropdown
         dataTest={"markers-dropdown"}
@@ -437,12 +455,18 @@ function ImageView(props: Props) {
     scale,
   ]);
 
+  const onIconTextChange = useCallback((newVal: string) => {
+    saveConfig({ iconTextTemplate: newVal });
+  }, [saveConfig]);
+
   const menuContent = useMemo(
     () => (
       <>
         <Item icon={synchronize ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />} onClick={onToggleSynchronize}>
           <span>Synchronize images and markers</span>
         </Item>
+        <IconTextMenu value={iconTextTemplate || ""} onChange={onIconTextChange} />
+
         <hr />
         <SubMenu direction="right" text={`Image resolution: ${(scale * 100).toFixed()}%`}>
           {[0.2, 0.5, 1].map((value) => {
@@ -455,7 +479,7 @@ function ImageView(props: Props) {
         </SubMenu>
       </>
     ),
-    [scale, onChangeScale, synchronize, onToggleSynchronize]
+    [synchronize, onToggleSynchronize, iconTextTemplate, onIconTextChange, scale, onChangeScale]
   );
 
   const imageMessage = messagesByTopic?.[cameraTopic]?.[0];
@@ -467,7 +491,9 @@ function ImageView(props: Props) {
   // Improve perf by hiding the ImageCanvas while seeking, instead of unmounting and remounting it.
   const imageMessageToRender = imageMessage || lastImageMessageRef.current;
 
-  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+  const { pauseFrame } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
+  );
   const onStartRenderImage = useCallback(() => {
     const resumeFrame = pauseFrame("ImageView");
     const onFinishRenderImage = () => {
@@ -475,13 +501,6 @@ function ImageView(props: Props) {
     };
     return onFinishRenderImage;
   }, [pauseFrame]);
-
-  const rawMarkerData = {
-    markers: markersToRender,
-    scale,
-    transformMarkers,
-    cameraInfo: markersToRender.length > 0 ? cameraInfo : null,
-  };
 
   const toolbar = useMemo(() => {
     return (
@@ -544,10 +563,10 @@ function ImageView(props: Props) {
       {/* Always render the ImageCanvas because it's expensive to unmount and start up. */}
       {imageMessageToRender && (
         <ImageCanvas
-          panelHooks={panelHooks}
           topic={cameraTopicFullObject}
           image={imageMessageToRender}
           rawMarkerData={rawMarkerData}
+          iconMarkers={iconMarkersToRender}
           config={config}
           saveConfig={saveConfig}
           onStartRenderImage={onStartRenderImage}
@@ -560,5 +579,9 @@ function ImageView(props: Props) {
 
 ImageView.panelType = "ImageViewPanel";
 ImageView.defaultConfig = getGlobalHooks().perPanelHooks().ImageView.defaultConfig;
-
+ImageView.shortcuts = [
+  { description: "Zoom in", keys: ["="] },
+  { description: "Zoom out", keys: ["-"] },
+  { description: "Zoom to percentage (10% - 100%)", keys: ["⌘", "1|2|...|9|0"] },
+];
 export default hot(Panel<Config>(ImageView));

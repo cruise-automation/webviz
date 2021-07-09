@@ -97,7 +97,7 @@ describe("NodePlayer", () => {
     expect(activeData.topics).toEqual([
       { name: "/input/foo", datatype: "foo" },
       { name: "/input/bar", datatype: "bar" },
-      { name: "/webviz/test", datatype: "test" },
+      { name: "/webviz/test", datatype: "test", inputTopics: ["/input/foo", "/input/bar"] },
     ]);
   });
 
@@ -178,7 +178,7 @@ describe("NodePlayer", () => {
     expect(activeData.topics).toEqual([
       { name: "/input/foo", datatype: "foo" },
       { name: "/input/bar", datatype: "bar" },
-      { name: "/webviz/test", datatype: "test" },
+      { name: "/webviz/test", datatype: "test", inputTopics: ["/input/foo", "/unavailable_topic"] },
     ]);
   });
 

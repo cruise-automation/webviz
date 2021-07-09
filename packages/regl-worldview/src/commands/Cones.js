@@ -17,7 +17,7 @@ import { createCylinderGeometry } from "./Cylinders";
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
-const cones = withRenderStateOverrides(fromGeometry(points, sideFaces.concat(endCapFaces)));
+export const cones = withRenderStateOverrides(fromGeometry(points, sideFaces.concat(endCapFaces)));
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Cones(props: { ...CommonCommandProps, children: Cone[] }) {

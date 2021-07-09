@@ -40,11 +40,10 @@ export const SGlobalVariableLink = styled.span`
   }
   .link-icon {
     opacity: 0.2;
-    display: none;
+    display: inline;
   }
   .highlight {
     opacity: 1;
-    display: inline;
   }
   &:hover {
     .link-icon {

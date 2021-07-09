@@ -26,6 +26,12 @@ export default function(state: State, action: CommentingActions): State {
     case "SET_SOURCE_TO_SHOW":
       return { ...state, commenting: { ...state.commenting, sourceToShow: action.payload } };
 
+    case "SET_IS_SIDEBAR_OPEN":
+      return { ...state, commenting: { ...state.commenting, isSidebarOpen: action.payload } };
+
+    case "SET_IS_EDITOR_OPEN":
+      return { ...state, commenting: { ...state.commenting, isEditorOpen: action.payload } };
+
     default:
       return { ...state, commenting: state.commenting };
   }

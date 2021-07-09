@@ -6,8 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useCallback } from "react";
-import { type Color } from "regl-worldview";
+import React, { useCallback, useMemo } from "react";
 import styled from "styled-components";
 
 import { CommonPointSettings, CommonDecaySettings, type TopicSettingsEditorProps } from ".";
@@ -18,36 +17,15 @@ import GradientPicker from "webviz-core/src/components/GradientPicker";
 import Radio from "webviz-core/src/components/Radio";
 import SegmentedControl from "webviz-core/src/components/SegmentedControl";
 import { Select, Option } from "webviz-core/src/components/Select";
+import {
+  type ColorMode,
+  DEFAULT_FLAT_COLOR,
+  DEFAULT_MIN_COLOR,
+  DEFAULT_MAX_COLOR,
+  type PointCloudSettings,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/types";
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
-
-export type ColorMode =
-  | {| mode: "rgb" |}
-  | {| mode: "flat", flatColor: Color |}
-  | {|
-      mode: "gradient",
-      colorField: string,
-      minColor: Color,
-      maxColor: Color,
-      minValue?: number,
-      maxValue?: number,
-    |}
-  | {|
-      mode: "rainbow",
-      colorField: string,
-      minValue?: number,
-      maxValue?: number,
-    |};
-
-export const DEFAULT_FLAT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
-export const DEFAULT_MIN_COLOR = { r: 0, g: 0, b: 1, a: 1 };
-export const DEFAULT_MAX_COLOR = { r: 1, g: 0, b: 0, a: 1 };
-
-export type PointCloudSettings = {|
-  pointSize?: ?number,
-  pointShape?: ?string,
-  decayTime?: ?number,
-  colorMode: ?ColorMode,
-|};
+import { deepParse, getField, isBobject } from "webviz-core/src/util/binaryObjects";
 
 const SValueRangeInput = styled(SInput).attrs({ type: "number", placeholder: "auto" })`
   width: 0px;
@@ -84,8 +62,16 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
     }));
   }, [onSettingsChange]);
 
-  const hasRGB = message && message.fields && message.fields.some(({ name }) => name === "rgb");
-  const defaultColorField = message && message.fields && message.fields.find(({ name }) => name !== "rgb")?.name;
+  const fields =
+    useMemo(() => {
+      if (!message) {
+        return;
+      }
+      const maybeBobjectFields = getField(message, "fields");
+      return isBobject(maybeBobjectFields) ? deepParse(maybeBobjectFields) : maybeBobjectFields;
+    }, [message]) ?? [];
+  const hasRGB = fields.some(({ name }) => name === "rgb");
+  const defaultColorField = fields.find(({ name }) => name !== "rgb")?.name;
   const colorMode: ColorMode = settings.colorMode
     ? settings.colorMode
     : hasRGB
@@ -148,13 +134,11 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
                   }
                 )
               }>
-              {!message
-                ? []
-                : message.fields.map(({ name }) => (
-                    <Option key={name} value={name}>
-                      {name}
-                    </Option>
-                  ))}
+              {fields.map(({ name }) => (
+                <Option key={name} value={name}>
+                  {name}
+                </Option>
+              ))}
             </Select>
           )}
         </Flex>

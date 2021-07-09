@@ -28,7 +28,7 @@ import {
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Typescript is required since the `import` syntax breaks VSCode, presumably
@@ -141,7 +141,11 @@ export const getOutputTopic = (nodeData: NodeData): NodeData => {
 };
 
 export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeData => {
-  const badInputTopic = nodeData.inputTopics.find((topic) => topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX));
+  const badInputTopic = nodeData.inputTopics.find(
+    (topic) =>
+      topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX) ||
+      topic.startsWith(`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
+  );
   if (badInputTopic) {
     const error = {
       severity: DiagnosticSeverity.Error,
@@ -163,16 +167,40 @@ export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeDa
     if (!activeTopics.includes(inputTopic)) {
       diagnostics.push({
         severity: DiagnosticSeverity.Error,
-        message: `Input "${inputTopic}" is not yet available`,
+        message: `Input "${inputTopic}" is not yet available.`,
         source: Sources.InputTopicsChecker,
         code: ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL,
       });
+    }
+
+    if (nodeData.enableSecondSource) {
+      const prefixedTopic = `${SECOND_SOURCE_PREFIX}${inputTopic}`;
+      if (!activeTopics.includes(prefixedTopic)) {
+        diagnostics.push({
+          severity: DiagnosticSeverity.Warning,
+          message: `Input "${prefixedTopic}" is not yet available.`,
+          source: Sources.InputTopicsChecker,
+          code: ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL,
+        });
+      }
     }
   }
 
   return {
     ...nodeData,
     diagnostics: [...nodeData.diagnostics, ...diagnostics],
+  };
+};
+
+export const checkForMultiSourceSupport = (nodeData: NodeData, topics: Topic[]): NodeData => {
+  // Only add support if there's at least one source two topic available from the Player
+  const secondSourceTopicsPresent = topics.some((topic) => topic.name.startsWith(SECOND_SOURCE_PREFIX));
+  const enableSecondSource =
+    secondSourceTopicsPresent && !nodeData.inputTopics.some((topicName) => topicName.startsWith(SECOND_SOURCE_PREFIX));
+
+  return {
+    ...nodeData,
+    enableSecondSource,
   };
 };
 
@@ -208,6 +236,18 @@ export const compile = (nodeData: NodeData): NodeData => {
     const error: Diagnostic = {
       severity: DiagnosticSeverity.Error,
       message: `The filename of your node "${nodeData.name}" must start with "/webviz_node/."`,
+      source: Sources.Other,
+      code: ErrorCodes.Other.FILENAME,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
+  if (nodeData.name.replace(DEFAULT_WEBVIZ_NODE_PREFIX, "").includes("/")) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message: `Your node "${nodeData.name}" cannot contain more than two forward slashes.`,
       source: Sources.Other,
       code: ErrorCodes.Other.FILENAME,
     };
@@ -425,6 +465,7 @@ const transform = ({
     validateOutputTopic,
     compile,
     getInputTopics,
+    checkForMultiSourceSupport,
     validateInputTopics,
     extractDatatypes,
     extractGlobalVariables
@@ -445,6 +486,7 @@ const transform = ({
       datatypes,
       sourceFile: undefined,
       typeChecker: undefined,
+      enableSecondSource: false,
     },
     topics
   );

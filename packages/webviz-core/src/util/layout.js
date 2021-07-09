@@ -185,7 +185,9 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   if (!relatedConfigs) {
     return { configs: [{ id, config }] };
   }
-  const templateIds = getPanelIdsInsideTabPanels([id], { [id]: config });
+  const configIds = getPanelIdsInsideTabPanels([id], { [id]: config });
+  // Make sure to add in the relatedConfigs ids here or else nested tab configs won't be set properly
+  const templateIds = uniq([...Object.keys(relatedConfigs), ...configIds]);
   const panelIdMap = mapTemplateIdsToNewIds(templateIds);
   let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
   newConfigs = [...newConfigs, { id, config }]

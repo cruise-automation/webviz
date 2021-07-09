@@ -15,7 +15,7 @@ export const joinTopics = (...topics: string[]) => {
   return joinedTopics.startsWith("/") ? joinedTopics : `/${joinedTopics}`;
 };
 
-export const addTopicPrefix = (topics: string[], prefix: string): string[] => {
+export const addTopicPrefix = (topics: string[] | $ReadOnlyArray<string>, prefix: string): string[] => {
   return topics.map<string>((topic) => joinTopics(prefix, topic));
 };
 

@@ -68,7 +68,7 @@ describe("inferDatatypes", () => {
     expect(inferDatatypes(unknown, value)).toEqual({
       isArray: false,
       type: "message",
-      object: { arr: { isArray: true, type: "float64" } },
+      object: { arr: { isArray: true, type: "int8" } },
     });
   });
 });

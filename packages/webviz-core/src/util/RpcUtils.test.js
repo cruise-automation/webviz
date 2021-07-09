@@ -10,7 +10,7 @@ import Rpc, { createLinkedChannels } from "./Rpc";
 import { setupReceiveReportErrorHandler, setupReceiveLogEventHandler } from "./RpcMainThreadUtils";
 import { setupSendReportNotificationHandler, setupLogEventHandler } from "./RpcWorkerUtils";
 import delay from "webviz-core/shared/delay";
-import logEvent, { initializeLogEvent, resetLogEventForTests } from "webviz-core/src/util/logEvent";
+import { initializeLogEvent, resetLogEventForTests, logEventPerformance } from "webviz-core/src/util/logEvent";
 import sendNotification, { setNotificationHandler } from "webviz-core/src/util/sendNotification";
 
 describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
@@ -64,6 +64,7 @@ describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
 
   describe("logEvent", () => {
     it("sends a logged event", () => {
+      resetLogEventForTests();
       const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
       const main = new Rpc(mainChannel);
       const logEventMock = jest.fn();
@@ -71,24 +72,48 @@ describe("RpcWorkerUtils and RpcMainThreadUtils", () => {
 
       const worker = new Rpc(workerChannel);
       setupLogEventHandler(worker);
-      logEvent({ name: "test", tags: { a: "1" } });
+      logEventPerformance({ category: "Usage", humanReadableName: "some use" }, 0, { a: "1" });
 
-      expect(logEventMock).toHaveBeenCalledWith({ name: "test", tags: { a: "1" } });
-      resetLogEventForTests();
+      expect(logEventMock).toHaveBeenCalledWith({
+        type: "logEventPerformance",
+        params: [
+          { category: "Usage", humanReadableName: "some use" },
+          0,
+          "/",
+          {},
+          "",
+          { a: "1", git_sha: "unknown", node_env: "test" },
+        ],
+      });
     });
 
     it("receives a logged event", () => {
+      resetLogEventForTests();
       const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
       const main = new Rpc(mainChannel);
       const logEventMock = jest.fn();
-      initializeLogEvent(logEventMock);
+      // $FlowFixMe
+      initializeLogEvent({ logEventPerformance: logEventMock });
       setupReceiveLogEventHandler(main);
 
       const worker = new Rpc(workerChannel);
-      worker.send("logEvent", { name: "test", tags: { a: "1" } });
+      worker.send("logEvent", {
+        type: "logEventPerformance",
+        params: [
+          { category: "Usage", humanReadableName: "some use" },
+          0,
+          "/",
+          {},
+          "",
+          { a: "1", git_sha: "unknown", node_env: "test" },
+        ],
+      });
 
-      expect(logEventMock).toHaveBeenCalledWith({ name: "test", tags: { a: "1" } });
-      resetLogEventForTests();
+      expect(logEventMock).toHaveBeenCalledWith({ category: "Usage", humanReadableName: "some use" }, 0, "/", {}, "", {
+        a: "1",
+        git_sha: "unknown",
+        node_env: "test",
+      });
     });
   });
 });

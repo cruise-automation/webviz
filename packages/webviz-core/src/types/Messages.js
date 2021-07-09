@@ -9,6 +9,7 @@
 // All message types supported by Rviz
 // http://wiki.ros.org/rviz/DisplayTypes
 
+import type { RGBA } from "regl-worldview";
 import type { Time } from "rosbag";
 
 export type Namespace = $ReadOnly<{|
@@ -142,14 +143,19 @@ export type ArrowMarker = $ReadOnly<
   }
 >;
 
-type IconMetadata = {
-  markerStyle: { [att: string]: string | number },
-  name: string,
-  iconOffset: { x: number, y: number },
+export type IconTypeItem = {| icon_type: number | string, color?: RGBA |};
+export type IconMetadata = {
+  id?: number,
+  icon_type?: string, // Deprecated, use icon_types instead
+  icon_types?: IconTypeItem[],
+  iconOffset?: { x: number, y: number },
+  markerStyle?: { [attr: string]: string | number },
 };
 export type OverlayIconMarker = $ReadOnly<
   BaseMarker & {
     type: 109,
+    text: string,
+    icon_type?: string,
     metadata: IconMetadata,
   }
 >;
@@ -346,7 +352,7 @@ export type ImageMarker = $ReadOnly<{|
   header: Header,
   ns: string,
   id: number,
-  type: 0 | 1 | 2 | 3 | 4 | 5,
+  type: 0 | 1 | 2 | 3 | 4 | 5 | 109,
   action: 0 | 1,
   position: Point,
   scale: number,
@@ -390,3 +396,20 @@ export type MapMetaData = $ReadOnly<{|
   height: number,
   origin: Pose,
 |}>;
+
+export type Icon2dMarker = $ReadOnly<{|
+  ...ImageMarker,
+  text: string,
+  type: 109,
+  icon_type: number,
+  metadata?: $ReadOnly<any>,
+|}>;
+
+export type Icon2dMarkersMessage = $ReadOnly<{
+  header: Header,
+  markers: Icon2dMarker[],
+}>;
+export type Icon3dMarkersMessage = $ReadOnly<{
+  header: Header,
+  markers: OverlayIconMarker[],
+}>;

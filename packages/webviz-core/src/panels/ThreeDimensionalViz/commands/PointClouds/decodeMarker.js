@@ -9,19 +9,19 @@
 import {
   getFieldOffsetsAndReaders,
   createPositionBuffer,
+  type CreatePointCloudPositionBuffer,
   createColorBuffer,
   getVertexCount,
   getVertexValue,
 } from "./buffers";
-import type { PointCloudMarker } from "./types";
-import {
-  DEFAULT_FLAT_COLOR,
-  type ColorMode,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import { type PointCloudMarker, DEFAULT_FLAT_COLOR, type ColorMode } from "./types";
 
 // Decode a marker and generate position and color buffers for rendering
 // The resulting marker should be memoized for better performance
-export function decodeMarker(marker: PointCloudMarker) {
+export function decodeMarker(
+  marker: PointCloudMarker,
+  createPointCloudPositionBuffer: ?CreatePointCloudPositionBuffer
+) {
   const { fields = [], settings = {}, point_step: stride, width, height, hitmapColors, data } = marker;
   const offsetsAndReaders = getFieldOffsetsAndReaders(fields);
   const { rgb: { offset: rgbOffset } = {} } = offsetsAndReaders;
@@ -43,6 +43,7 @@ export function decodeMarker(marker: PointCloudMarker) {
     fields: offsetsAndReaders,
     pointCount,
     stride,
+    createPointCloudPositionBuffer,
   });
 
   // If hitmapColors are provided, we don't need a colorBuffer

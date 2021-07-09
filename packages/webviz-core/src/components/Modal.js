@@ -60,6 +60,7 @@ type Props = {|
   children: React.Node,
   onRequestClose: () => void,
   contentStyle?: { [string]: any },
+  closeIconStyle?: { [string]: any },
 |};
 
 export default class Modal extends React.PureComponent<Props> {
@@ -85,7 +86,7 @@ export default class Modal extends React.PureComponent<Props> {
             fade
             dataTest="modal-close-icon"
             xsmall
-            style={{ position: "absolute", right: 25, top: 25, cursor: "pointer" }}
+            style={{ position: "absolute", right: 25, top: 25, cursor: "pointer", ...this.props.closeIconStyle }}
             onClick={this.props.onRequestClose}>
             <CloseIcon />
           </Icon>

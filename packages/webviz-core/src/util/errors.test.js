@@ -40,7 +40,6 @@ describe("errors", () => {
       expect(message.includes("[ Either cyclic object or object with BigInt(s) ]")).toBeTruthy();
     });
     it("catches BigInt values in extraInfo", () => {
-      // $FlowFixMe - flow does not support BigInt https://github.com/facebook/flow/issues/6639
       const { message } = new AppError("internal error", { val: BigInt(10) }); // eslint-disable-line no-undef
       expect(message.includes("[ Either cyclic object or object with BigInt(s) ]")).toBeTruthy();
     });

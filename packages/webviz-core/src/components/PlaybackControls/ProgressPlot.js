@@ -10,6 +10,7 @@ import React, { Component } from "react";
 
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
 import type { Progress } from "webviz-core/src/players/types";
+import { hexToRgbString } from "webviz-core/src/util/colorUtils";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const BAR_HEIGHT = 28;
@@ -31,7 +32,7 @@ export class ProgressPlot extends Component<ProgressProps> {
     context.clearRect(0, 0, width, height);
 
     if (progress.fullyLoadedFractionRanges) {
-      context.fillStyle = colors.DARK5;
+      context.fillStyle = hexToRgbString(colors.DARK4, 0.5);
       const invertedRanges = complement({ start: 0, end: 1 }, progress.fullyLoadedFractionRanges);
       for (const range of invertedRanges) {
         const start = width * range.start;

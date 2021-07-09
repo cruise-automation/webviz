@@ -18,8 +18,8 @@ import type {
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-const defaultStart = { sec: 10, nsec: 0 };
-const defaultEnd = { sec: 100, nsec: 0 };
+export const defaultStart = { sec: 10, nsec: 0 };
+export const defaultEnd = { sec: 100, nsec: 0 };
 const datatypes: RosDatatypes = {
   fooBar: {
     fields: [

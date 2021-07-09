@@ -39,11 +39,15 @@ type Props = {|
   onMouseEnter?: (MouseEvent) => void,
   onMouseLeave?: (MouseEvent) => void,
   onMouseMove?: (MouseEvent) => void,
+  ref?: React.Ref<?HTMLDivElement>,
+
+  // supports arbitrary data-* attributes
+  dataAttrs?: { [string]: string },
   // for storybook screenshots tests
   dataTest?: string,
 |};
 
-const Flex = (props: Props) => {
+const Flex = React.forwardRef<Props, ?HTMLDivElement>((props: Props, forwardedRef) => {
   const {
     col,
     row,
@@ -63,6 +67,7 @@ const Flex = (props: Props) => {
     onMouseEnter,
     onMouseLeave,
     onMouseMove,
+    dataAttrs,
     dataTest,
   } = props;
   if (col != null && col === row) {
@@ -88,19 +93,21 @@ const Flex = (props: Props) => {
   const flexStyle = amount ? { flex: `0 0 ${amount}` } : {};
   // only copy combine flex & custom style if we were passed custom style
   const fullStyle = style ? { ...flexStyle, ...style } : flexStyle;
+  const allDataAttrs = { "data-test": dataTest, ...dataAttrs };
   return (
     <div
-      data-test={dataTest}
       className={combinedClasses}
       style={fullStyle}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onMouseMove={onMouseMove}>
+      onMouseMove={onMouseMove}
+      ref={forwardedRef}
+      {...allDataAttrs}>
       {children}
     </div>
   );
-};
+});
 
 Flex.displayName = "Flex";
 export default Flex;

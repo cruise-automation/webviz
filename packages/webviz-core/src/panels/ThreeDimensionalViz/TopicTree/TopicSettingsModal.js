@@ -84,7 +84,7 @@ function getSettingsByColumnWithDefaults(topicName: string, settingsByColumn: ?(
 
 function MainEditor({
   datatype,
-  collectorMessage,
+  message,
   columnIndex,
   onFieldChange,
   onSettingsChange,
@@ -92,7 +92,7 @@ function MainEditor({
   topicName,
 }: {|
   datatype: string,
-  collectorMessage: any,
+  message: any,
   columnIndex: number,
   onFieldChange: (fieldName: string, value: any) => void,
   onSettingsChange: (settings: any | ((prevSettings: {}) => {})) => void,
@@ -108,7 +108,7 @@ function MainEditor({
     <ErrorBoundary>
       <SEditorWrapper>
         <Editor
-          message={collectorMessage}
+          message={message}
           onFieldChange={onFieldChange}
           settings={settings}
           onSettingsChange={onSettingsChange}
@@ -130,8 +130,8 @@ function MainEditor({
 type Props = {|
   currentEditingTopic: Topic,
   hasFeatureColumn: boolean,
+  message: any,
   saveConfig: Save3DConfig,
-  sceneBuilderMessage: any,
   setCurrentEditingTopic: (?Topic) => void,
   settingsByKey: { [topic: string]: any },
 |};
@@ -140,8 +140,8 @@ function TopicSettingsModal({
   currentEditingTopic,
   currentEditingTopic: { datatype, name: topicName },
   hasFeatureColumn,
+  message,
   saveConfig,
-  sceneBuilderMessage,
   setCurrentEditingTopic,
   settingsByKey,
 }: Props) {
@@ -169,9 +169,9 @@ function TopicSettingsModal({
 
   const editorElem = (
     <MainEditor
-      collectorMessage={sceneBuilderMessage}
       columnIndex={columnIndex}
       datatype={datatype}
+      message={message}
       onFieldChange={onFieldChange}
       onSettingsChange={onSettingsChange}
       settings={settingsByKey[topicSettingsKey] || {}}

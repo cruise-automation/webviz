@@ -80,7 +80,7 @@ function validateDatatypes({ output, datatypes }: NodeDefinition<*>) {
 
 export function validateNodeDefinitions(nodeDefinitions: NodeDefinition<*>[]): void {
   for (const nodeDefinition of nodeDefinitions) {
-    // Validate otuput topic names
+    // Validate output topic names
     if (!isWebvizNodeTopic(nodeDefinition.output.name)) {
       throw new Error(
         `Webviz node: ${nodeDefinition.output.name} must output topics prefixed with ${WEBVIZ_NODE_PREFIX}`

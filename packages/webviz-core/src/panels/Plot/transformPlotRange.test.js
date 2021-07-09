@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { derivative, applyToDataOrTooltips, mathFunctions } from "./transformPlotRange";
-import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart/utils";
 
 describe("transformPlotRange", () => {
   describe("derivative", () => {

@@ -17,18 +17,20 @@ import {
   vec4ToRGBA,
 } from "regl-worldview";
 
-import { FLOAT_SIZE } from "./buffers";
+import { FLOAT_SIZE, type CreatePointCloudPositionBuffer } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
 import { updateMarkerCache } from "./memoization";
-import type { MemoizedMarker, MemoizedVertexBuffer, VertexBuffer } from "./types";
-import VertexBufferCache from "./VertexBufferCache";
-import filterMap from "webviz-core/src/filterMap";
-import { toRgba } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import {
+  type MemoizedMarker,
+  type MemoizedVertexBuffer,
+  type VertexBuffer,
   DEFAULT_FLAT_COLOR,
   DEFAULT_MIN_COLOR,
   DEFAULT_MAX_COLOR,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+} from "./types";
+import VertexBufferCache from "./VertexBufferCache";
+import filterMap from "webviz-core/src/filterMap";
+import { toRgba } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import type { PointCloud } from "webviz-core/src/types/Messages";
 
 const COLOR_MODE_FLAT = 0;
@@ -343,15 +345,20 @@ function instancedGetChildrenForHitmap<
   });
 }
 
-type Props = { ...CommonCommandProps, children: PointCloud[], clearCachedMarkers?: boolean };
+type Props = {
+  ...CommonCommandProps,
+  children: PointCloud[],
+  clearCachedMarkers?: boolean,
+  createPointCloudPositionBuffer: CreatePointCloudPositionBuffer,
+};
 
-export default function PointClouds({ children, clearCachedMarkers, ...rest }: Props) {
+export default function PointClouds({ children, clearCachedMarkers, createPointCloudPositionBuffer, ...rest }: Props) {
   const [command] = useState(() => makePointCloudCommand());
   const markerCache = useRef(new Map<Uint8Array, MemoizedMarker>());
-  markerCache.current = updateMarkerCache(markerCache.current, children);
+  markerCache.current = updateMarkerCache(markerCache.current, children, createPointCloudPositionBuffer);
   const decodedMarkers = !clearCachedMarkers
     ? [...markerCache.current.values()].map((decoded) => decoded.marker)
-    : children.map((m) => decodeMarker(m));
+    : children.map((m) => decodeMarker(m, createPointCloudPositionBuffer));
   return (
     <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={command}>
       {decodedMarkers}

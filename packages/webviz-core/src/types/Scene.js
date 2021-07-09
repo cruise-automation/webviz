@@ -26,11 +26,10 @@ import type {
   InstancedLineListMarker,
   OverlayIconMarker,
 } from "webviz-core/src/types/Messages";
-import Bounds from "webviz-core/src/util/Bounds";
 
 export type Scene = {|
   flattenedZHeightPose: ?Pose,
-  bounds: Bounds,
+  minZ: number,
 |};
 
 export interface MarkerCollector {

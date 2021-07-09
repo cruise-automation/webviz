@@ -7,35 +7,59 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { type Node, forwardRef } from "react";
-import { Worldview, type CameraState, type MouseHandler, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import {
+  Worldview,
+  OffscreenWorldview,
+  type CameraState,
+  type MouseHandler,
+  DEFAULT_CAMERA_STATE,
+  WorldviewReactContext,
+} from "regl-worldview";
 
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import OverlayProjector from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import { LAYER_INDEX_DEFAULT_BASE } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
-import { type WorldSearchTextProps, useGLText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
+import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
+import MeasureMarker, { type MeasurePoints } from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
+import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/types";
 import { withDiffMode } from "webviz-core/src/panels/ThreeDimensionalViz/utils/diffModeUtils";
+import {
+  TextHighlighter,
+  type WorldSearchTextProps,
+} from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import withHighlights from "webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js";
-import WorldMarkers, { type InteractiveMarkersByType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
+import WorldMarkers, {
+  type InteractiveMarkersByType,
+  type OnIconClick,
+} from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 type Props = {|
   autoTextBackgroundColor: boolean,
   cameraState: CameraState,
   children?: Node,
+  hooks: ThreeDimensionalVizHooks,
   isPlaying: boolean,
   isDemoMode: boolean,
   markerProviders: MarkerProvider[],
   onCameraStateChange: (CameraState) => void,
   onClick: MouseHandler,
+  onIconClick: OnIconClick,
   onDoubleClick: MouseHandler,
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
   diffModeEnabled: boolean,
+  canvas?: HTMLCanvasElement,
+  setOverlayIcons: (any) => void,
+  showCrosshair: ?boolean,
+  measurePoints: MeasurePoints,
+  resolveRenderSignal?: ?() => void,
   ...WorldSearchTextProps,
 |};
 
-function getMarkers(markerProviders: MarkerProvider[]): InteractiveMarkersByType {
+function getMarkers(markerProviders: MarkerProvider[], hooks: ThreeDimensionalVizHooks): InteractiveMarkersByType {
   const markers: InteractiveMarkersByType = {
     arrow: [],
     cube: [],
@@ -60,14 +84,12 @@ function getMarkers(markerProviders: MarkerProvider[]): InteractiveMarkersByType
   };
 
   const collector = {};
-  getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.allSupportedMarkers.forEach((field) => {
-      if (!markers[field]) {
-        markers[field] = [];
-      }
-      collector[field] = (o) => markers[field].push(o);
-    });
+  hooks.allSupportedMarkers.forEach((field) => {
+    if (!markers[field]) {
+      markers[field] = [];
+    }
+    collector[field] = (o) => markers[field].push(o);
+  });
 
   markerProviders.forEach((provider) => {
     if (provider) {
@@ -76,6 +98,35 @@ function getMarkers(markerProviders: MarkerProvider[]): InteractiveMarkersByType
   });
 
   return markers;
+}
+
+// When rendering in a worker, we wait until worldview paints before calling resumeFrame.
+function RenderSignalResolver({ resolveRenderSignal }: { resolveRenderSignal: ?() => void }) {
+  const resolveRenderSignalRef = React.useRef(resolveRenderSignal);
+  resolveRenderSignalRef.current = resolveRenderSignal;
+  const resolveLatestSignal = React.useCallback(() => {
+    if (resolveRenderSignalRef.current) {
+      resolveRenderSignalRef.current();
+    }
+  }, []);
+
+  const worldviewContext = React.useContext(WorldviewReactContext);
+  if (useChangeDetector([resolveRenderSignal], true) && worldviewContext) {
+    // If the 3D panel is completely empty, we don't want to block playback if worldview doesn't
+    // paint. Force a worldview paint to occur for every frame, even if it wouldn't normally
+    // schedule one.
+    worldviewContext.onDirty();
+  }
+
+  React.useEffect(() => {
+    if (worldviewContext) {
+      worldviewContext.registerPaintCallback(resolveLatestSignal);
+      return () => {
+        worldviewContext.unregisterPaintCallback(resolveLatestSignal);
+      };
+    }
+  }, [resolveLatestSignal, worldviewContext]);
+  return null;
 }
 
 // Wrap the WorldMarkers in HoC(s)
@@ -89,10 +140,12 @@ function World(
     onCameraStateChange,
     diffModeEnabled,
     cameraState,
+    hooks,
     isPlaying,
     isDemoMode,
     markerProviders,
     onDoubleClick,
+    onIconClick,
     onMouseDown,
     onMouseMove,
     onMouseUp,
@@ -101,17 +154,22 @@ function World(
     searchTextOpen,
     selectedMatchIndex,
     searchTextMatches,
+    canvas,
+    setOverlayIcons,
+    showCrosshair,
+    measurePoints,
+    resolveRenderSignal,
   }: Props,
   ref: Worldview
 ) {
-  const markersByType = getMarkers(markerProviders);
+  const markersByType = getMarkers(markerProviders, hooks);
   const { text = [] } = markersByType;
+  const textHighlighter = React.useMemo(() => new TextHighlighter(setSearchTextMatches), [setSearchTextMatches]);
   const processedMarkersByType = {
     ...markersByType,
     text: [],
-    glText: useGLText({
+    glText: textHighlighter.highlightText({
       text,
-      setSearchTextMatches,
       searchText,
       searchTextOpen,
       selectedMatchIndex,
@@ -119,8 +177,13 @@ function World(
     }),
   };
 
+  const WorldviewImpl = canvas ? OffscreenWorldview : Worldview;
+  const offscreenProps = canvas ? { canvas, width: canvas.width, height: canvas.height, top: 0, left: 0 } : {};
+
+  const { overlayIcon } = processedMarkersByType;
+
   return (
-    <Worldview
+    <WorldviewImpl
       cameraState={cameraState}
       enableStackedObjectEvents={!isPlaying}
       hideDebug={inScreenshotTests()}
@@ -136,8 +199,10 @@ function World(
       onMouseUp={onMouseUp}
       resolutionScale={isDemoMode ? 2 : 1}
       ref={ref}
-      contextAttributes={{ preserveDrawingBuffer: true }}>
+      contextAttributes={{ preserveDrawingBuffer: true }}
+      {...offscreenProps}>
       {children}
+      <RenderSignalResolver resolveRenderSignal={resolveRenderSignal} />
       <WrappedWorldMarkers
         {...{
           autoTextBackgroundColor,
@@ -147,9 +212,14 @@ function World(
           isDemoMode,
           cameraDistance: cameraState.distance || DEFAULT_CAMERA_STATE.distance,
           diffModeEnabled,
+          hooks,
+          onIconClick,
         }}
       />
-    </Worldview>
+      {!!canvas && <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>}
+      {!cameraState.perspective && showCrosshair && <Crosshair cameraState={cameraState} hooks={hooks} />}
+      <MeasureMarker measurePoints={measurePoints} />
+    </WorldviewImpl>
   );
 }
 

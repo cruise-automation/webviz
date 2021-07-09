@@ -76,9 +76,9 @@ export default function TopicTreeSwitcher({
           tooltipProps={{ placement: "top", contents: <KeyboardShortcut keys={["T"]} /> }}
           dataTest="open-topic-picker"
           active={renderTopicTree}
-          fade
           medium
-          onClick={onClick}>
+          onClick={onClick}
+          style={{ color: colors.LIGHT }}>
           <LayersIcon />
         </Icon>
       </SIconWrapper>
@@ -92,7 +92,6 @@ export default function TopicTreeSwitcher({
         <Icon
           tooltipProps={{ placement: "top", contents: "Pin topic picker" }}
           small
-          fade
           active={pinTopics}
           onClick={() => {
             // Keep TopicTree open after unpin.

@@ -213,13 +213,12 @@ export default class CombinedDataProvider implements DataProvider {
     this._extensionPoint = extensionPoint;
 
     const providerInitializePromises = this._providers.map(async (provider, idx) => {
-      const childExtensionPoint = {
+      return provider.initialize({
+        ...extensionPoint,
         progressCallback: (progress: Progress) => {
           this._updateProgressForChild(idx, progress);
         },
-        reportMetadataCallback: extensionPoint.reportMetadataCallback,
-      };
-      return provider.initialize(childExtensionPoint);
+      });
     });
     const initializeOutcomes = await allSettled(providerInitializePromises);
     const results = initializeOutcomes.filter(({ status }) => status === "fulfilled").map(({ value }) => value);

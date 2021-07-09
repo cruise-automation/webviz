@@ -9,5 +9,5 @@
 export type HoverValue = {|
   value: number,
   componentId: string,
-  type: "PLAYBACK_SECONDS" | "OTHER",
+  type: "PLAYBACK_SECONDS" | "OTHER" | "BOOKMARK",
 |};

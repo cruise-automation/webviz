@@ -10,13 +10,14 @@ import { vec3, quat } from "gl-matrix";
 import React from "react";
 import { cameraStateSelectors, Lines, type CameraState } from "regl-worldview";
 
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/types";
 
 type Props = {
   cameraState: CameraState,
+  hooks: ThreeDimensionalVizHooks,
 };
 
-export default function Crosshair({ cameraState }: Props) {
+export default function Crosshair({ cameraState, hooks }: Props) {
   const { target, targetOffset, distance, thetaOffset } = cameraState;
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
   // move the crosshair to the center of the camera's viewport: the target + targetOffset rotated by heading
@@ -34,7 +35,7 @@ export default function Crosshair({ cameraState }: Props) {
     const thickness = 0.004 * distance * (1 + extraThickness);
     return {
       header: {
-        frame_id: getGlobalHooks().rootTransformFrame,
+        frame_id: hooks.rootTransformFrame,
         stamp: { sec: 0, nsec: 0 },
       },
       type: 5,

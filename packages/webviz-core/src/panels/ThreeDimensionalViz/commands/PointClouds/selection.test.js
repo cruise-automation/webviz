@@ -5,11 +5,11 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import type { MouseEventObject } from "regl-worldview";
 
 import { decodeMarker } from "./decodeMarker";
 import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixture/pointCloudData";
-import { getClickedInfo, getAllPoints, decodeAdditionalFields } from "./selection";
-import type { PointCloud2 } from "webviz-core/src/types/Messages";
+import { getClickedPointColor, decodeData } from "./selection";
 
 describe("<PointClouds />", () => {
   // $FlowFixMe - Flow doesn't like that we're overwriting this.
@@ -17,37 +17,29 @@ describe("<PointClouds />", () => {
     // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU
   };
 
-  describe("getClickedInfo", () => {
+  describe("getClickedPointColor", () => {
     it("returns undefined when points field is empty", () => {
-      const partiallyDecodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
-      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
-      fullyDecodedMarker.positionBuffer = [];
-      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+      const decodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): MouseEventObject);
+      decodedMarker.positionBuffer = [];
+      expect(getClickedPointColor(decodedMarker, 1000)).toBe(undefined);
     });
 
     it("returns undefined when instanceIndex does not match any point", () => {
-      const partiallyDecodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
-      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
-      expect(getClickedInfo(fullyDecodedMarker, null)).toEqual(undefined);
-      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+      const decodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): MouseEventObject);
+      expect(getClickedPointColor(decodedMarker, null)).toBe(undefined);
+      expect(getClickedPointColor(decodedMarker, 1000)).toBe(undefined);
     });
 
     it("returns selected point positions and colors", () => {
       const marker = decodeMarker(POINT_CLOUD_MESSAGE);
-      const clickInfo = getClickedInfo(marker, 1);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([127, 255, 255, 1]);
-      expect(clickInfo?.additionalFieldValues).toBeUndefined();
+      const color = getClickedPointColor(marker, 1);
+      expect((color || []).map((v) => Math.floor(v))).toStrictEqual([127, 255, 255, 1]);
     });
 
     it("returns selected point positions and colors when instanceIndex is zero", () => {
       const marker = decodeMarker(POINT_CLOUD_MESSAGE);
-      const clickInfo = getClickedInfo(marker, 0);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([127, 225, 255, 1]);
-      expect(clickInfo?.additionalFieldValues).toBeUndefined();
+      const color = getClickedPointColor(marker, 0);
+      expect((color || []).map((v) => Math.floor(v))).toStrictEqual([127, 225, 255, 1]);
     });
 
     it("handles endianness", () => {
@@ -56,11 +48,8 @@ describe("<PointClouds />", () => {
         settings: { colorMode: { mode: "rgb" } },
         is_bigendian: true,
       });
-      const clickInfo = getClickedInfo(marker, 1);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([255, 255, 127, 1]);
-      expect(clickInfo?.additionalFieldValues).toBeUndefined();
+      const color = getClickedPointColor(marker, 1);
+      expect((color || []).map((v) => Math.floor(v))).toStrictEqual([255, 255, 127, 1]);
     });
 
     it("handles rainbow colors", () => {
@@ -69,11 +58,8 @@ describe("<PointClouds />", () => {
         settings: { colorMode: { mode: "rainbow", colorField: "y" } },
       };
       const marker = decodeMarker(input);
-      const clickInfo = getClickedInfo(marker, 1);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([255, 0, 255, 1]);
-      expect(clickInfo?.additionalFieldValues).toBeUndefined();
+      const color = getClickedPointColor(marker, 1);
+      expect((color || []).map((v) => Math.floor(v))).toStrictEqual([255, 0, 255, 1]);
     });
 
     it("handles gradient colors", () => {
@@ -89,11 +75,8 @@ describe("<PointClouds />", () => {
         },
       };
       const marker = decodeMarker(input);
-      const clickInfo = getClickedInfo(marker, 1);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([0, 1, 2]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([0, 0, 255, 1]);
-      expect(clickInfo?.additionalFieldValues).toStrictEqual({});
+      const color = getClickedPointColor(marker, 1);
+      expect((color ?? []).map((v) => Math.floor(v))).toStrictEqual([0, 0, 255, 1]);
     });
 
     it("handles additional fields", () => {
@@ -102,34 +85,20 @@ describe("<PointClouds />", () => {
         settings: { colorMode: { mode: "rainbow", colorField: "bar" } },
       };
       const marker = decodeMarker(input);
-      const clickInfo = getClickedInfo(decodeAdditionalFields(marker), 1);
-      expect(clickInfo).not.toBeNull();
-      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([0, 1, 2]);
-      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([255, 0, 255, 1]);
-      expect(clickInfo?.additionalFieldValues).toStrictEqual({
-        bar: 8,
-        baz: 7,
-        foo: 9,
-        foo16_some_really_really_long_name: 2,
-      });
+      const pointColor = getClickedPointColor(marker, 1);
+      expect(pointColor).not.toBeNull();
+      expect((pointColor || []).map((v) => Math.floor(v))).toStrictEqual([255, 0, 255, 1]);
+      const data = decodeData(marker);
+      expect(data[1]).toEqual({ x: 0, y: 1, z: 2, bar: 8, baz: 7, foo: 9, foo16_some_really_really_long_name: 2 });
     });
   });
 
-  describe("getAllPoints", () => {
-    it("converts float array to numbers", () => {
-      const marker = decodeMarker(POINT_CLOUD_MESSAGE);
-      const points = getAllPoints(marker);
-      expect(points.map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3, -2239, -706, -3]);
-    });
-  });
-
-  describe("decodeAdditionalFields", () => {
+  describe("decodeData", () => {
     it("decodes additional fields", () => {
-      const fullyDecodedMarker = decodeAdditionalFields(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
-      expect(fullyDecodedMarker.bar).toEqual([6, 8]);
-      expect(fullyDecodedMarker.baz).toEqual([5, 7]);
-      expect(fullyDecodedMarker.foo).toEqual([7, 9]);
-      expect(fullyDecodedMarker.foo16_some_really_really_long_name).toEqual([265, 2]);
+      expect(decodeData(POINT_CLOUD_WITH_ADDITIONAL_FIELDS)).toEqual([
+        { bar: 6, baz: 5, foo: 7, foo16_some_really_really_long_name: 265, x: 0, y: 1, z: 2 },
+        { bar: 8, baz: 7, foo: 9, foo16_some_really_really_long_name: 2, x: 0, y: 1, z: 2 },
+      ]);
     });
   });
 });

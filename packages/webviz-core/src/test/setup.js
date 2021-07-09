@@ -72,6 +72,12 @@ global.WebSocket = global.WebSocket || ws;
 // $FlowFixMe - Flow does not recognize that `TextEncoder` has been in the util module since v8.3.0.
 global.TextEncoder = util.TextEncoder;
 
+if (global.FinalizationRegistry == null) {
+  global.FinalizationRegistry = class {
+    register() {}
+  };
+}
+
 // Override lazy load components
 require("../hooksImporter").testSetup();
 

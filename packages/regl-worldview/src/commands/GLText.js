@@ -11,6 +11,13 @@ import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitm
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
+// HACK: TinySDF doesn't agree with workers. Until support is added, hack this to make it work.
+// TODO(steel): Upstream the fix in memoizedCreateCanvas.
+if (!self.document) {
+  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
+  self.document = { createElement: () => new OffscreenCanvas(0, 0) };
+}
+
 // The GLText command renders text from a Signed Distance Field texture.
 // There are many external resources about SDFs and text rendering in WebGL, including:
 // https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
@@ -53,14 +60,20 @@ type TextMarkerProps = TextMarker & {
   highlightedIndices?: Array<number>,
   highlightColor?: ?Color,
 };
-type Props = {
-  ...CommonCommandProps,
-  children: $ReadOnlyArray<TextMarkerProps>,
+
+type GLTextProps = {|
   autoBackgroundColor?: boolean,
   scaleInvariantFontSize?: number,
   resolution?: number,
   alphabet?: string[],
   textAtlas?: GeneratedAtlas,
+|};
+
+type Props = {
+  // $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
+  ...CommonCommandProps,
+  ...GLTextProps,
+  children: $ReadOnlyArray<TextMarkerProps>,
 };
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -74,7 +87,8 @@ const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
 const memoizedCreateCanvas = memoizeOne((font) => {
-  const canvas = document.createElement("canvas");
+  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
+  const canvas: HTMLCanvasElement = self.OffscreenCanvas ? new OffscreenCanvas(0, 0) : document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   ctx.font = font;
   return ctx;
@@ -330,6 +344,10 @@ function makeTextCommand(alphabet?: string[]) {
   const memoizedDrawAtlasTexture = createMemoizedDrawAtlasTexture();
 
   const command = (regl: any) => {
+    if (!regl) {
+      throw new Error("Invalid regl instance");
+    }
+
     const atlasTexture = regl.texture();
 
     const drawText = regl({
@@ -559,8 +577,8 @@ function makeTextCommand(alphabet?: string[]) {
   return command;
 }
 
-export default function GLText(props: Props) {
-  const [command] = useState(() => makeTextCommand(props.alphabet));
+export const makeGLTextCommand = (props: GLTextProps) => {
+  const command = makeTextCommand(props.alphabet);
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
@@ -568,6 +586,11 @@ export default function GLText(props: Props) {
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
   command.textAtlas = props.textAtlas;
+  return command;
+};
+
+export default function GLText(props: Props) {
+  const [command] = useState(() => makeGLTextCommand(props));
   const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 
   return <Command getChildrenForHitmap={getChildrenForHitmap} reglCommand={command} {...props} />;

@@ -128,10 +128,6 @@ textarea {
   @include monospace;
   border: 2px solid $text-normal;
   color: $text-normal;
-  background-color: $dark;
-  &:focus {
-    background-color: black;
-  }
 }
 
 div::-webkit-scrollbar {

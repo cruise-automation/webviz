@@ -16,17 +16,17 @@ class Definition;
 
 class DefinitionRegistry {
 public:
-    DefinitionRegistry() noexcept;
+    DefinitionRegistry();
     DefinitionRegistry(const DefinitionRegistry&) = delete;
     DefinitionRegistry(DefinitionRegistry&&) = delete;
-    ~DefinitionRegistry() noexcept = default;
+    ~DefinitionRegistry() = default;
 
     DefinitionRegistry& operator=(const DefinitionRegistry&) = delete;
     DefinitionRegistry& operator=(const DefinitionRegistry&&) = delete;
 
-    Definition* createDefinition(const std::string& name) noexcept;
-    Definition* getDefinition(const std::string& name) noexcept;
-    bool finalizeAll() noexcept;
+    Definition* createDefinition(const std::string& name);
+    Definition* getDefinition(const std::string& name);
+    bool finalizeAll();
 
 private:
     using Registry = std::unordered_map<std::string, std::unique_ptr<Definition>>;

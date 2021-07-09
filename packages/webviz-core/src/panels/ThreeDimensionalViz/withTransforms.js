@@ -11,9 +11,10 @@ import * as React from "react";
 
 import { getGlobalHooks } from "../../loadWebviz";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils";
 import type { Frame } from "webviz-core/src/players/types";
-import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
-import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+
+const panelHooks = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
 
 type State = {| transforms: Transforms |};
 
@@ -26,39 +27,14 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
 
     static getDerivedStateFromProps(nextProps: Props, prevState: State): ?$Shape<State> {
       const { frame, cleared } = nextProps;
-      let { transforms } = prevState;
-      if (cleared) {
-        transforms = new Transforms();
-      }
-
-      getGlobalHooks()
-        .perPanelHooks()
-        .ThreeDimensionalViz.consumePose(frame, transforms);
-
-      const tfs = frame[TRANSFORM_TOPIC];
-      if (tfs) {
-        const skipFrameId = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.sceneBuilderHooks.skipTransformFrame
-          ?.frameId;
-        for (const { message } of tfs) {
-          const parsedMessage = isBobject(message) ? deepParse(message) : message;
-          for (const tf of parsedMessage.transforms) {
-            if (tf.child_frame_id !== skipFrameId) {
-              transforms.consume(tf);
-            }
-          }
-        }
-      }
-      const tfs_static = frame[TRANSFORM_STATIC_TOPIC];
-      if (tfs_static) {
-        for (const { message } of tfs_static) {
-          const parsedMessage = isBobject(message) ? deepParse(message) : message;
-          for (const tf of parsedMessage.transforms) {
-            transforms.consume(tf);
-          }
-        }
-      }
-
-      return { transforms };
+      const updatedTransforms = updateTransforms(
+        prevState.transforms,
+        frame,
+        cleared,
+        panelHooks.skipTransformFrame?.frameId,
+        panelHooks.consumePose
+      );
+      return { transforms: updatedTransforms };
     }
 
     render() {
@@ -66,10 +42,9 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
       return <ChildComponent {...this.props} ref={this.props.forwardedRef} transforms={this.state.transforms} />;
     }
   }
+
   return hoistNonReactStatics(
-    React.forwardRef((props, ref) => {
-      return <Component {...props} forwardedRef={ref} />;
-    }),
+    React.forwardRef((props, ref) => <Component {...props} forwardedRef={ref} />),
     ChildComponent
   );
 }

@@ -17,6 +17,7 @@ import type {
   ParsedMessageDefinitionsByTopic,
   TypedMessage,
 } from "webviz-core/src/players/types";
+import { type NotifyPlayerManager } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // `DataProvider` describes a more specific kind of data ingesting than `Player`, namely ingesting
@@ -137,6 +138,7 @@ export type ExtensionPoint = {|
   // TODO(JP): this is a bit of an odd one out. Maybe we should unify this with the
   // `progressCallback` and have one type of "status" object?
   reportMetadataCallback: (DataProviderMetadata) => void,
+  notifyPlayerManager: NotifyPlayerManager,
 |};
 
 export type InitializationPerformanceMetadata = $ReadOnly<{|

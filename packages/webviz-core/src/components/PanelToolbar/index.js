@@ -13,6 +13,7 @@ import CodeJsonIcon from "@mdi/svg/svg/code-json.svg";
 import CogIcon from "@mdi/svg/svg/cog.svg";
 import DragIcon from "@mdi/svg/svg/drag.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
+import ImageIcon from "@mdi/svg/svg/image-frame.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
@@ -34,11 +35,13 @@ import { Item, SubMenu } from "webviz-core/src/components/Menu";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { getPanelTypeFromMosaic } from "webviz-core/src/components/PanelToolbar/utils";
 import renderToBody from "webviz-core/src/components/renderToBody";
+import { ScreenshotsContext } from "webviz-core/src/components/Screenshots/ScreenshotsContext";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
-import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
+import { getPanelTypeFromId } from "webviz-core/src/util/layout";
+import { logEventAction, getEventInfos, getEventTags } from "webviz-core/src/util/logEvent";
 
 type Props = {|
   children?: React.Node,
@@ -55,6 +58,7 @@ type Props = {|
 // separated into a sub-component so it can always skip re-rendering
 // it never changes after it initially mounts
 function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknownPanel: boolean }) {
+  const panelContext = useContext(PanelContext);
   const { mosaicActions } = useContext(MosaicContext);
   const { mosaicWindowActions } = useContext(MosaicWindowContext);
   const savedProps = useSelector((state) => state.persistedState.panels.savedProps);
@@ -70,7 +74,7 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
   ]);
 
   const close = useCallback(() => {
-    logEvent({ name: getEventNames().PANEL_REMOVE, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
+    logEventAction(getEventInfos().PANEL_REMOVE, { [getEventTags().PANEL_TYPE]: getPanelType() });
     actions.closePanel({ tabId, root: mosaicActions.getRoot(), path: mosaicWindowActions.getPath() });
   }, [actions, getPanelType, mosaicActions, mosaicWindowActions, tabId]);
 
@@ -79,7 +83,7 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
     if (!id || !type) {
       throw new Error("Trying to split unknown panel!");
     }
-    logEvent({ name: getEventNames().PANEL_SPLIT, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
+    logEventAction(getEventInfos().PANEL_SPLIT, { [getEventTags().PANEL_TYPE]: getPanelType() });
 
     const config = savedProps[id];
     actions.splitPanel({
@@ -103,7 +107,10 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
         config,
         relatedConfigs,
       });
-      logEvent({ name: getEventNames().PANEL_SWAP, tags: { [getEventTags().PANEL_TYPE]: type } });
+      logEventAction(getEventInfos().PANEL_SWAP, {
+        [getEventTags().PANEL_TYPE]: type,
+        ...(id ? { previous_panel_type: getPanelTypeFromId(id) } : {}),
+      });
     },
     [actions, mosaicActions, mosaicWindowActions, tabId]
   );
@@ -123,6 +130,28 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
     );
   }, [actions]);
 
+  const { downloadScreenshot, copyScreenshotToClipboard } = useContext(ScreenshotsContext);
+
+  const getScreenshotElement = useCallback(() => {
+    const panelId = panelContext?.id;
+    const element = panelId && document.querySelector(`[data-panel-id="${panelId}"]`);
+    return { panelId, element };
+  }, [panelContext]);
+
+  const takePanelScreenshot = useCallback(() => {
+    const { panelId, element } = getScreenshotElement();
+    if (panelId && element) {
+      downloadScreenshot(element, `${panelId}.jpg`);
+    }
+  }, [downloadScreenshot, getScreenshotElement]);
+
+  const copyPanelImageToClipboard = useCallback(() => {
+    const { element } = getScreenshotElement();
+    if (element) {
+      copyScreenshotToClipboard(element);
+    }
+  }, [copyScreenshotToClipboard, getScreenshotElement]);
+
   const type = getPanelType();
   if (!type) {
     return null;
@@ -131,56 +160,56 @@ function StandardMenuItems({ tabId, isUnknownPanel }: { tabId?: string, isUnknow
   return (
     <ReactReduxContext.Consumer>
       {({ store }) => (
-        <PanelContext.Consumer>
-          {(panelContext) => (
+        <>
+          <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />} dataTest="panel-settings-change">
+            <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap(panelContext?.id)} />
+          </SubMenu>
+          {!isUnknownPanel && (
             <>
-              <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />} dataTest="panel-settings-change">
-                <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap(panelContext?.id)} />
-              </SubMenu>
-              {!isUnknownPanel && (
-                <>
-                  <Item
-                    icon={<FullscreenIcon />}
-                    onClick={panelContext?.enterFullscreen}
-                    dataTest="panel-settings-fullscreen"
-                    tooltip="(shortcut: ` or ~)">
-                    Fullscreen
-                  </Item>
-                  <Item
-                    icon={<ArrowSplitHorizontalIcon />}
-                    onClick={() => split(store, panelContext?.id, "column")}
-                    dataTest="panel-settings-hsplit"
-                    tooltip="(shortcut: ` or ~)">
-                    Split horizontal
-                  </Item>
-                  <Item
-                    icon={<ArrowSplitVerticalIcon />}
-                    onClick={() => split(store, panelContext?.id, "row")}
-                    dataTest="panel-settings-vsplit"
-                    tooltip="(shortcut: ` or ~)">
-                    Split vertical
-                  </Item>
-                </>
-              )}
               <Item
-                icon={<TrashCanOutlineIcon />}
-                onClick={close}
-                dataTest="panel-settings-remove"
+                icon={<FullscreenIcon />}
+                onClick={panelContext?.enterFullScreen}
+                dataTest="panel-settings-fullscreen"
                 tooltip="(shortcut: ` or ~)">
-                Remove panel
+                Fullscreen
               </Item>
-              {!isUnknownPanel && (
-                <Item
-                  icon={<CodeJsonIcon />}
-                  onClick={() => onImportClick(store, panelContext?.id)}
-                  disabled={type === TAB_PANEL_TYPE}
-                  dataTest="panel-settings-config">
-                  Import/export panel settings
-                </Item>
-              )}
+              <Item
+                icon={<ArrowSplitHorizontalIcon />}
+                onClick={() => split(store, panelContext?.id, "column")}
+                dataTest="panel-settings-hsplit"
+                tooltip="(shortcut: ` or ~)">
+                Split horizontal
+              </Item>
+              <Item
+                icon={<ArrowSplitVerticalIcon />}
+                onClick={() => split(store, panelContext?.id, "row")}
+                dataTest="panel-settings-vsplit"
+                tooltip="(shortcut: ` or ~)">
+                Split vertical
+              </Item>
             </>
           )}
-        </PanelContext.Consumer>
+          <Item
+            icon={<TrashCanOutlineIcon />}
+            onClick={close}
+            dataTest="panel-settings-remove"
+            tooltip="(shortcut: ` or ~)">
+            Remove panel
+          </Item>
+          {!isUnknownPanel && (
+            <Item
+              icon={<CodeJsonIcon />}
+              onClick={() => onImportClick(store, panelContext?.id)}
+              disabled={type === TAB_PANEL_TYPE}
+              dataTest="panel-settings-config">
+              Import/export panel settings
+            </Item>
+          )}
+          <SubMenu text="Capture as image" icon={<ImageIcon />} dataTest="panel-settings-screenshot">
+            <Item onClick={takePanelScreenshot}>Download as jpeg</Item>
+            <Item onClick={copyPanelImageToClipboard}>Copy to clipboard</Item>
+          </SubMenu>
+        </>
       )}
     </ReactReduxContext.Consumer>
   );

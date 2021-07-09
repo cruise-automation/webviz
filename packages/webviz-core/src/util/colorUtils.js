@@ -42,3 +42,7 @@ export const rgbStrToReglRGB = (numberStr: string, alpha?: number): ReglColor =>
     numberStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,?\s*(\d+\.?\d+)?\s*\)/) ?? [];
   return [parseFloat(r) / 255, parseFloat(g) / 255, parseFloat(b) / 255, alpha ?? parseFloat(a) ?? 1];
 };
+
+export function colorToRgbaString({ r, g, b, a }: Color): string {
+  return `rgba(${r * 255},${g * 255},${b * 255},${a})`;
+}

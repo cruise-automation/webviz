@@ -9,6 +9,7 @@
 import { renderHook } from "@testing-library/react-hooks";
 import { mount } from "enzyme";
 import React from "react";
+import shallowequal from "shallowequal";
 
 import {
   useChangeDetector,
@@ -21,6 +22,7 @@ import {
   type SelectableContext,
   useReducedValue,
   useDeepMemo,
+  type MemoResolver,
 } from "./hooks";
 
 describe("useChangeDetector", () => {
@@ -194,9 +196,13 @@ describe("useShouldNotChangeOften", () => {
 });
 
 describe("createSelectableContext/useContextSelector", () => {
-  function createTestConsumer<T, U>(ctx: SelectableContext<T>, selector: (T) => U) {
+  function createTestConsumer<T, U>(
+    ctx: SelectableContext<T>,
+    selector: (T) => U,
+    options: ?{| memoResolver: MemoResolver<U> |}
+  ) {
     function Consumer() {
-      const value = useContextSelector(ctx, Consumer.selectorFn);
+      const value = useContextSelector(ctx, Consumer.selectorFn, options);
       return Consumer.renderFn(value);
     }
     Consumer.selectorFn = jest.fn().mockImplementation(selector);
@@ -314,6 +320,40 @@ describe("createSelectableContext/useContextSelector", () => {
     expect(Consumer1.renderFn.mock.calls).toEqual([[1], [11]]);
     expect(Consumer2.selectorFn).toHaveBeenCalledTimes(3);
     expect(Consumer2.renderFn.mock.calls).toEqual([[2], [22]]);
+
+    root.unmount();
+  });
+
+  it("uses shallowequals when `enableShallowMemo` is set to true", () => {
+    const C = createSelectableContext();
+    const Consumer1 = createTestConsumer(C, ({ one }) => ({ one }), { memoResolver: shallowequal });
+    const Consumer2 = createTestConsumer(C, ({ two }) => ({ two }), { memoResolver: shallowequal });
+
+    const root = mount(
+      <C.Provider value={{ one: 1, two: 2 }}>
+        <Consumer1 />
+        <div>
+          <Consumer2 />
+        </div>
+      </C.Provider>
+    );
+
+    expect(Consumer1.selectorFn).toHaveBeenCalledTimes(1);
+    expect(Consumer1.renderFn.mock.calls).toEqual([[{ one: 1 }]]);
+    expect(Consumer2.selectorFn).toHaveBeenCalledTimes(1);
+    expect(Consumer2.renderFn.mock.calls).toEqual([[{ two: 2 }]]);
+
+    root.setProps({ value: { one: 1, two: 22 } });
+    expect(Consumer1.selectorFn).toHaveBeenCalledTimes(2);
+    expect(Consumer1.renderFn.mock.calls).toEqual([[{ one: 1 }]]);
+    expect(Consumer2.selectorFn).toHaveBeenCalledTimes(2);
+    expect(Consumer2.renderFn.mock.calls).toEqual([[{ two: 2 }], [{ two: 22 }]]);
+
+    root.setProps({ value: { one: 11, two: 22 } });
+    expect(Consumer1.selectorFn).toHaveBeenCalledTimes(3);
+    expect(Consumer1.renderFn.mock.calls).toEqual([[{ one: 1 }], [{ one: 11 }]]);
+    expect(Consumer2.selectorFn).toHaveBeenCalledTimes(3);
+    expect(Consumer2.renderFn.mock.calls).toEqual([[{ two: 2 }], [{ two: 22 }]]);
 
     root.unmount();
   });

@@ -43,12 +43,23 @@ function CopyMessageButton({ text, onClick }) {
   );
 }
 
+const maybeParseValue = (data) => {
+  // Data may be
+  //  - A bobject,
+  //  - A primitive,
+  //  - An array of bobjects or primitives when the message-path algorithm returns an array.
+  if (Array.isArray(data)) {
+    return data.map((x) => (isBobject(x) ? deepParse(x) : x));
+  }
+  return isBobject(data) ? deepParse(data) : data;
+};
+
 export default function Metadata({ data, diffData, diff, datatype, message, diffMessage }: Props) {
   const onClickCopy = useCallback(
     (maybeBobject) => (e: SyntheticMouseEvent<HTMLSpanElement>) => {
       e.stopPropagation();
       e.preventDefault();
-      const dataToCopy = isBobject(maybeBobject) ? deepParse(maybeBobject) : maybeBobject;
+      const dataToCopy = maybeParseValue(maybeBobject);
       const dataWithoutLargeArrays = cloneDeepWith(dataToCopy, (value) => {
         if (typeof value === "object" && value.buffer) {
           return "<buffer>";

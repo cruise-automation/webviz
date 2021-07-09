@@ -18,6 +18,7 @@ import PanelLayout from "webviz-core/src/components/PanelLayout";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
 import ThreeDimensionalViz, { type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
+import { use3dPanelReadyEvent } from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import createRootReducer from "webviz-core/src/reducers";
 import Store from "webviz-core/src/store";
@@ -37,7 +38,6 @@ export type FixtureExampleData = {
 };
 
 function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
-  const { SUPPORTED_BOBJECT_MARKER_DATATYPES } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
@@ -46,13 +46,11 @@ function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
   const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
   topicsArray.forEach(({ name: topicName, datatype }) => {
     if (frame[topicName]) {
-      newFrame[topicName] = frame[topicName].map((msg) => {
-        const message =
-          SUPPORTED_BOBJECT_MARKER_DATATYPES.has(datatype) && !isBobject(msg.message)
-            ? wrapJsObject(datatypes, datatype, msg.message)
-            : msg.message;
-        return { topic: msg.topic, receiveTime: msg.receiveTime, message };
-      });
+      newFrame[topicName] = frame[topicName].map(({ topic, receiveTime, message }) => ({
+        topic,
+        receiveTime,
+        message: !isBobject(message) ? wrapJsObject(datatypes, datatype, message) : message,
+      }));
     }
   });
   return { ...fixture, frame: newFrame };
@@ -157,10 +155,12 @@ export const ThreeDimPanelSetupWithBag = ({
   threeDimensionalConfig,
   globalVariables = {},
   bag,
+  onMount,
 }: {
   threeDimensionalConfig: $Shape<ThreeDimensionalVizConfig>,
   globalVariables: {},
   bag: string,
+  onMount?: () => Promise<void>,
 }) => {
   const store: Store = configureStore(createRootReducer(createMemoryHistory()));
   const topics = uniq(
@@ -169,6 +169,12 @@ export const ThreeDimPanelSetupWithBag = ({
       .map((topic) => topic.substring(2))
       .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics)
   );
+
+  const [_, forceUpdate] = React.useState(false);
+  const readyEvent = use3dPanelReadyEvent();
+  React.useEffect(() => {
+    readyEvent.then(() => forceUpdate(true));
+  }, [readyEvent]);
 
   return (
     <ScreenshotSizedContainer>
@@ -182,6 +188,9 @@ export const ThreeDimPanelSetupWithBag = ({
             await delay(500); // Wait for the panel to finish resizing
             // Select the panel so we can control with the keyboard
             store.dispatch(selectAllPanelIds());
+            if (onMount) {
+              onMount();
+            }
           });
         }}
         getMergedFixture={(bagFixture) => ({

@@ -10,6 +10,21 @@ import * as Sentry from "@sentry/browser";
 import React from "react";
 import ReactDOM from "react-dom";
 
+const getEnableWhyDidYouRender = () => {
+  try {
+    return JSON.parse(process.env.ENABLE_WHY_DID_YOU_RENDER || "false");
+  } catch {
+    return false;
+  }
+};
+
+if (process.env.NODE_ENV === "development" && getEnableWhyDidYouRender()) {
+  const whyDidYouRender = require("@welldone-software/why-did-you-render");
+  whyDidYouRender(React, {
+    trackAllPureComponents: true,
+  });
+}
+
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
 let importedPanelsByCategory;
@@ -135,13 +150,14 @@ const defaultHooks = {
     }
     window.ga("send", "pageview");
 
-    const { initializeLogEvent } = require("webviz-core/src/util/logEvent");
-    initializeLogEvent(() => undefined, {}, {});
+    const { disableLogEvent } = require("webviz-core/src/util/logEvent");
+    disableLogEvent();
   },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
   },
   getAdditionalDataProviders: () => {},
+  getBasicDatatypes: () => require("webviz-core/src/util/datatypes").basicDatatypes,
   experimentalFeaturesList() {
     return {
       diskBagCaching: {
@@ -158,6 +174,12 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
+      useWorkerIn3DPanel: {
+        name: "Enable Web Worker in 3D Panel",
+        description: "If this flag is on, the 3D Panel will use a web worker for message processing and rendering.",
+        developmentDefault: true,
+        productionDefault: true,
+      },
     };
   },
   linkMessagePathSyntaxToHelpPage: () => true,
@@ -168,14 +190,6 @@ const defaultHooks = {
   updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
     // Persist the layout state in URL or remote storage if needed.
     await Promise.resolve();
-  },
-  getPoseErrorScaling() {
-    const scaling = {
-      x: 1,
-      y: 1,
-    };
-
-    return { originalScaling: scaling, updatedScaling: scaling };
   },
 };
 

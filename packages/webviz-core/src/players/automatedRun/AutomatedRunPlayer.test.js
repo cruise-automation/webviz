@@ -6,7 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import TestProvider from "../TestProvider";
+import { TimeUtil } from "rosbag";
+
+import TestProvider, { defaultStart, defaultEnd } from "../TestProvider";
 import AutomatedRunPlayer, { type AutomatedRunClient, AUTOMATED_RUN_START_DELAY } from "./AutomatedRunPlayer";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
@@ -137,14 +139,31 @@ describe("AutomatedRunPlayer", () => {
       previousEmitSignal.resolve();
       await delay(1);
     }
-    expect(frames).toEqual([
-      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 10, nsec: 0 } },
-      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 30, nsec: 0 } },
-      { startTime: { sec: 30, nsec: 1 }, endTime: { sec: 50, nsec: 1 } },
-      { startTime: { sec: 50, nsec: 2 }, endTime: { sec: 70, nsec: 2 } },
-      { startTime: { sec: 70, nsec: 3 }, endTime: { sec: 90, nsec: 3 } },
-      { startTime: { sec: 90, nsec: 4 }, endTime: { sec: 100, nsec: 0 } },
-    ]);
+    expect(frames).toMatchSnapshot();
+  });
+
+  it("makes calls to getMessages within the provider's range", async () => {
+    const provider = new TestProvider({
+      getMessages: async (startTime, endTime) => {
+        expect(TimeUtil.compare(startTime, defaultStart) >= 0).toBeTruthy();
+        expect(TimeUtil.compare(endTime, defaultEnd) <= 0).toBeTruthy();
+        return getMessagesResult;
+      },
+    });
+    const client = new TestRunClient();
+    client.msPerFrame = 500;
+    const player = new AutomatedRunPlayer(provider, client);
+    player.setMessageOrder("headerStamp");
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    const listener = { signal: signal() };
+    player.setListener(() => listener.signal);
+    while (!client.finished) {
+      // Resolve the previous emit promise, then go to the next frame.
+      const previousEmitSignal = listener.signal;
+      listener.signal = signal();
+      previousEmitSignal.resolve();
+      await delay(1);
+    }
   });
 
   async function setupEventLoopTest() {

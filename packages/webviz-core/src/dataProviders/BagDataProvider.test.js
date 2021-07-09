@@ -15,6 +15,7 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
+  notifyPlayerManager: async () => {},
 };
 
 describe("BagDataProvider", () => {

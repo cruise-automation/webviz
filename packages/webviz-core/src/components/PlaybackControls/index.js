@@ -13,17 +13,17 @@ import SkipNextOutlineIcon from "@mdi/svg/svg/skip-next-outline.svg";
 import SkipPreviousOutlineIcon from "@mdi/svg/svg/skip-previous-outline.svg";
 import classnames from "classnames";
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 import uuid from "uuid";
 
 import styles from "./index.module.scss";
-import PlaybackBarHoverTicks from "./PlaybackBarHoverTicks";
 import { ProgressPlot } from "./ProgressPlot";
-import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import Flex from "webviz-core/src/components/Flex";
+import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
+import PlaybackBarHoverTicks from "webviz-core/src/components/HoverBar/PlaybackBarHoverTicks";
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
@@ -50,8 +50,8 @@ export const StyledFullWidthBar = styled.div`
   height: 4px;
 `;
 
-export const StyledMarker = styled.div.attrs(({ width }) => ({
-  style: { left: `calc(${(width || 0) * 100}% - 2px)` },
+export const StyledMarker = styled.div.attrs(({ value }) => ({
+  style: { transform: `translateX(${value}px) translateX(-2px)` },
 }))`
   background-color: white;
   position: absolute;
@@ -59,6 +59,7 @@ export const StyledMarker = styled.div.attrs(({ width }) => ({
   border: 1px solid ${colors.divider};
   width: 2px;
   top: 32%;
+  will-change: transform;
 `;
 
 export type PlaybackControlProps = {|
@@ -98,7 +99,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   );
 
   const [hoverComponentId] = useState<string>(uuid.v4());
-  const dispatch = useDispatch();
+  const setHoverValue = useSetHoverValue();
   const onMouseMove = useCallback((e: SyntheticMouseEvent<HTMLDivElement>) => {
     const { activeData } = playerState.current;
     if (!activeData) {
@@ -130,13 +131,14 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
       offset: { x: 0, y: 0 },
       arrow: <div className={tooltipStyles.arrow} />,
     });
-    dispatch(setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) }));
-  }, [playerState, dispatch, hoverComponentId]);
+    setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) });
+  }, [playerState, setHoverValue, hoverComponentId]);
 
+  const clearHoverValue = useClearHoverValue();
   const onMouseLeave = useCallback((_e: SyntheticMouseEvent<HTMLDivElement>) => {
     Tooltip.hide();
-    dispatch(clearHoverValue({ componentId: hoverComponentId }));
-  }, [dispatch, hoverComponentId]);
+    clearHoverValue(hoverComponentId);
+  }, [clearHoverValue, hoverComponentId]);
 
   const { activeData, progress } = player;
   const { isPlaying, startTime, endTime, currentTime } = activeData || {};
@@ -170,6 +172,23 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
     [activeData, seek]
   );
 
+  const sliderCallback = useCallback(
+    ({ width }) => (
+      <Slider
+        ref={slider}
+        min={min || 0}
+        max={max || 100}
+        disabled={min == null || max == null}
+        step={step}
+        value={value}
+        draggable
+        onChange={onChange}
+        renderSlider={(val) => (val == null ? null : <StyledMarker value={val * width} />)}
+      />
+    ),
+    [max, min, onChange, step, value]
+  );
+
   return (
     <Flex row className={styles.container}>
       <KeyListener global keyDownHandlers={keyDownHandlers} />
@@ -186,17 +205,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
           <ProgressPlot progress={progress} />
         </div>
         <div ref={el} className={styles.sliderContainer} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
-          <Slider
-            ref={slider}
-            min={min || 0}
-            max={max || 100}
-            disabled={min == null || max == null}
-            step={step}
-            value={value}
-            draggable
-            onChange={onChange}
-            renderSlider={(val) => (val == null ? null : <StyledMarker width={val} />)}
-          />
+          <Dimensions>{sliderCallback}</Dimensions>
         </div>
         <PlaybackBarHoverTicks componentId={hoverComponentId} />
       </div>

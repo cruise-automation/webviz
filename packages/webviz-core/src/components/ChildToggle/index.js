@@ -49,7 +49,7 @@ type Props = {|
   // set to true to display the content component
   isOpen: boolean,
   // fired when the trigger component is clicked
-  onToggle: () => void,
+  onToggle: (node?: HTMLElement) => void,
   // requires exactly 2 components: a toggle trigger & a content component
   children: [React$Element<any>, React$Element<any>],
   style?: { [string]: any },
@@ -119,7 +119,10 @@ export default class ChildToggle extends React.Component<Props> {
     } else {
       // allow any nested child toggle click events to reach their dom node before removing
       // the expanded toggle portion from the dom
-      setImmediate(onToggle);
+      setImmediate(() => {
+        // Passing 'node' here is useful for nested portal issues.
+        onToggle(node);
+      });
     }
   };
 

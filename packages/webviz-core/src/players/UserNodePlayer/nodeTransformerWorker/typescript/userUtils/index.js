@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import colors from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/colors.ts";
 import markers from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/markers.ts";
 import pointClouds from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts";
 import readers from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts";
@@ -20,4 +21,5 @@ export default [
   { fileName: "types.ts", sourceCode: types },
   { fileName: "vectors.ts", sourceCode: vectors },
   { fileName: "markers.ts", sourceCode: markers },
+  { fileName: "colors.ts", sourceCode: colors },
 ];

@@ -115,7 +115,9 @@ export function UnconnectedPlaybackPerformance({ timestamp, activeData }: Unconn
 
 function PlaybackPerformance(): React.Node {
   const timestamp = Date.now();
-  const activeData = useMessagePipeline(React.useCallback(({ playerState }) => playerState.activeData, []));
+  const { activeData } = useMessagePipeline(
+    React.useCallback(({ playerState }) => ({ activeData: playerState.activeData }), [])
+  );
   return <UnconnectedPlaybackPerformance timestamp={timestamp} activeData={activeData} />;
 }
 

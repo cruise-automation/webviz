@@ -12,16 +12,12 @@
 using cruise::Definition;
 using cruise::DefinitionRegistry;
 
-Definition::Definition(const std::string& name, size_t size, bool isString) noexcept
+Definition::Definition(const std::string& name, size_t size, bool isString)
         : _name(name), _size(size), _isString(isString), _hasConstantSize(!isString) {
     // no-op
 }
 
-bool Definition::addField(
-        std::string type,
-        std::string name,
-        bool isArray,
-        int32_t arraySize) noexcept {
+bool Definition::addField(std::string type, std::string name, bool isArray, int32_t arraySize) {
     auto field = Field{
             .type = type,
             .name = name,
@@ -34,7 +30,7 @@ bool Definition::addField(
     return true;
 }
 
-bool Definition::Field::finalize(DefinitionRegistry* registry) noexcept {
+bool Definition::Field::finalize(DefinitionRegistry* registry) {
     if (definition == nullptr) {
         definition = registry->getDefinition(type);
     }
@@ -46,7 +42,7 @@ bool Definition::Field::finalize(DefinitionRegistry* registry) noexcept {
     return definition->finalize(registry);
 }
 
-bool Definition::finalize(DefinitionRegistry* registry) noexcept {
+bool Definition::finalize(DefinitionRegistry* registry) {
     if (_isValid) {
         // The definition is already valid. No need to recalculate size either.
         return true;
@@ -85,8 +81,7 @@ bool Definition::finalize(DefinitionRegistry* registry) noexcept {
     return _isValid;
 }
 
-Definition::CommandBuffer
-Definition::recordDefinitionCommands(const Definition& definition) noexcept {
+Definition::CommandBuffer Definition::recordDefinitionCommands(const Definition& definition) {
     if (definition.hasFields()) {
         return recordComplexDefinitionCommands(definition);
     } else if (definition.isString()) {
@@ -101,7 +96,7 @@ Definition::recordDefinitionCommands(const Definition& definition) noexcept {
 }
 
 Definition::CommandBuffer
-Definition::recordComplexDefinitionCommands(const Definition& definition) noexcept {
+Definition::recordComplexDefinitionCommands(const Definition& definition) {
     CommandBuffer ret;
 
     for (const auto& f : definition.getFields()) {
@@ -123,9 +118,8 @@ Definition::recordComplexDefinitionCommands(const Definition& definition) noexce
     return ret;
 }
 
-Definition::CommandBuffer Definition::recordArrayDefinitionCommands(
-        const Definition& definition,
-        int32_t arraySize) noexcept {
+Definition::CommandBuffer
+Definition::recordArrayDefinitionCommands(const Definition& definition, int32_t arraySize) {
 
     CommandBuffer ret;
 
@@ -186,8 +180,7 @@ Definition::CommandBuffer Definition::recordArrayDefinitionCommands(
     return ret;
 }
 
-Definition::CommandBuffer
-Definition::recordStringDefinitionCommands(const Definition& definition) noexcept {
+Definition::CommandBuffer Definition::recordStringDefinitionCommands(const Definition& definition) {
     return {
             Command{
                     .type = Command::Type::READ_STRING,
@@ -197,7 +190,7 @@ Definition::recordStringDefinitionCommands(const Definition& definition) noexcep
 }
 
 Definition::CommandBuffer
-Definition::recordNonStringDefinitionCommands(const Definition& definition, size_t count) noexcept {
+Definition::recordNonStringDefinitionCommands(const Definition& definition, size_t count) {
     return {
             Command{
                     .type = Command::Type::READ_FIXED_SIZE_DATA,
@@ -207,7 +200,7 @@ Definition::recordNonStringDefinitionCommands(const Definition& definition, size
     };
 }
 
-Definition::CommandBuffer Definition::optimizeCommands(const CommandBuffer& input) noexcept {
+Definition::CommandBuffer Definition::optimizeCommands(const CommandBuffer& input) {
     CommandBuffer ret;
 
     for (const auto& cmd : input) {
@@ -248,13 +241,13 @@ Definition::CommandBuffer Definition::optimizeCommands(const CommandBuffer& inpu
     return ret;
 }
 
-std::vector<int> Definition::flattenCommands() const noexcept {
+std::vector<int> Definition::flattenCommands() const {
     std::vector<int> ret;
     flatten(ret, _commands);
     return ret;
 }
 
-void Definition::flatten(std::vector<int>& out, const CommandBuffer& cmds) const noexcept {
+void Definition::flatten(std::vector<int>& out, const CommandBuffer& cmds) const {
     for (const auto& cmd : cmds) {
         out.push_back(int(cmd.type));
         flatten(out, cmd.subcommands);

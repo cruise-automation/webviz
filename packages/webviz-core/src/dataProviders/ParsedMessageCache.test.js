@@ -13,15 +13,16 @@ import ParsedMessageCache, { CACHE_SIZE_BYTES } from "webviz-core/src/dataProvid
 import { cast } from "webviz-core/src/players/types";
 import type { BinaryHeader } from "webviz-core/src/types/BinaryMessages";
 import { getObject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { definitions } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils.test";
+import { definitions } from "webviz-core/src/util/binaryObjects/testUtils";
 
 describe("parsedMessageCache", () => {
   it("does some basic caching of messages", async () => {
     const file = `${__dirname}/../../public/fixtures/example.bag`;
     const provider = new BagDataProvider({ bagPath: { type: "file", file } }, []);
     const { messageDefinitions } = await provider.initialize({
-      progressCallback() {},
-      reportMetadataCallback() {},
+      progressCallback: () => {},
+      reportMetadataCallback: () => {},
+      notifyPlayerManager: async () => {},
     });
     if (messageDefinitions.type !== "raw") {
       throw new Error("BagDataProvider should have raw message definitions");

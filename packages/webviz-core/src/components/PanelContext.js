@@ -24,7 +24,7 @@ export type PanelContextType<T> = {|
   // TODO(PanelAPI): move to usePanelActions()
   updatePanelConfig: UpdatePanelConfig<T>,
   openSiblingPanel: OpenSiblingPanel,
-  enterFullscreen: () => void,
+  enterFullScreen: () => void,
 
   isHovered: boolean,
   isFocused: boolean,

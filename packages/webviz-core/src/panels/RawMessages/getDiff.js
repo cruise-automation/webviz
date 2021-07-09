@@ -22,6 +22,14 @@ export const diffLabels = {
 // $FlowFixMe - Flow doesn't understand `Object.values`.
 export const diffLabelsByLabelText = keyBy(Object.values(diffLabels), "labelText");
 
+const stringify = (value: mixed) => {
+  if (typeof value === "number") {
+    // NaN, -0.0, Infinity etc to not go through JSON.stringify cleanly.
+    return value.toString();
+  }
+  return JSON.stringify(value);
+};
+
 export default function getDiff(
   before: mixed,
   after: mixed,
@@ -109,7 +117,7 @@ export default function getDiff(
     return diff;
   }
 
-  if (before === after) {
+  if (Object.is(before, after)) {
     return undefined;
   }
   if (before === undefined) {
@@ -129,6 +137,6 @@ export default function getDiff(
     return { [diffLabels.DELETED.labelText]: { ...idLabelObj, ...before } };
   }
   return {
-    [diffLabels.CHANGED.labelText]: `${JSON.stringify(before) || ""} ${diffArrow} ${JSON.stringify(after) || ""}`,
+    [diffLabels.CHANGED.labelText]: `${stringify(before) || ""} ${diffArrow} ${stringify(after) || ""}`,
   };
 }

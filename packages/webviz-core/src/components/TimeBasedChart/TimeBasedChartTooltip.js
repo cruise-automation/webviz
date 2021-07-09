@@ -8,8 +8,8 @@
 
 import * as React from "react";
 
-import type { TimeBasedChartTooltipData } from "./index";
 import styles from "./TimeBasedChartTooltip.module.scss";
+import type { TimeBasedChartTooltipData } from "./utils";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { formatTime } from "webviz-core/src/util/formatTime";
 import { subtractTimes, toSec, formatTimeRaw } from "webviz-core/src/util/time";

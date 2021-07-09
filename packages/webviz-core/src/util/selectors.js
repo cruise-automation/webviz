@@ -69,10 +69,12 @@ export function extractTypeFromWebizEnumAnnotation(name: string) {
   return undefined;
 }
 
-// returns a map of the form {datatype -> {field -> {value -> name}}}
+// A map of the form {datatype -> {field -> {value -> name}}}
+export type EnumMap = { [string]: { [string]: { [mixed]: string } } };
+
 export const enumValuesByDatatypeAndField = createSelector<*, *, *, _>(
   (datatypes: RosDatatypes) => datatypes,
-  (datatypes: RosDatatypes): { [string]: { [string]: { [mixed]: string } } } => {
+  (datatypes: RosDatatypes): EnumMap => {
     const results = {};
     for (const datatype of Object.keys(datatypes)) {
       const currentResult = {};

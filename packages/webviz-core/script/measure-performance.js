@@ -55,7 +55,7 @@ program
   )
   .option("--speed <number>", "Speed to play back bag at", parsePositiveNumber)
   .option("--testName <string>", "A descriptor of the kind of test you are running")
-  .option("--experimentalFeatureSettings <string>", "Experimental feature settings in JSON")
+  .option("--experimentalFeaturesSettings <string>", "Experimental feature settings in JSON")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
   .option("--waitForEventName <event>", "Recording stops when this event is seen", "perf.playback.time_to_first_msgs")
   .parse(process.argv);
@@ -100,8 +100,8 @@ async function doPlaybackPerformanceMeasurements() {
         filePaths: program.bag,
         url,
         panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout)) : {},
-        experimentalFeatureSettings: program.experimentalFeatureSettings
-          ? program.experimentalFeatureSettings
+        experimentalFeaturesSettings: program.experimentalFeaturesSettings
+          ? program.experimentalFeaturesSettings
           : undefined,
       })
     );
@@ -196,8 +196,8 @@ async function doLoadPerformanceMeasurements() {
             layoutOptions: {
               bagPath: program.bag,
               panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout)) : {},
-              experimentalFeatureSettings: program.experimentalFeatureSettings
-                ? program.experimentalFeatureSettings
+              experimentalFeaturesSettings: program.experimentalFeaturesSettings
+                ? program.experimentalFeaturesSettings
                 : undefined,
             },
             onBeforeUnloadPage: isWarmupRun ? recordNetworkActivity : null,

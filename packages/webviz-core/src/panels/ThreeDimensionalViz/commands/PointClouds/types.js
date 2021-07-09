@@ -6,8 +6,38 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type PointCloudSettings } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import { type Color } from "regl-worldview";
+
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
+
+export type ColorMode =
+  | {| mode: "rgb" |}
+  | {| mode: "flat", flatColor: Color |}
+  | {|
+      mode: "gradient",
+      colorField: string,
+      minColor: Color,
+      maxColor: Color,
+      minValue?: number,
+      maxValue?: number,
+    |}
+  | {|
+      mode: "rainbow",
+      colorField: string,
+      minValue?: number,
+      maxValue?: number,
+    |};
+
+export const DEFAULT_FLAT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
+export const DEFAULT_MIN_COLOR = { r: 0, g: 0, b: 1, a: 1 };
+export const DEFAULT_MAX_COLOR = { r: 1, g: 0, b: 0, a: 1 };
+
+export type PointCloudSettings = {|
+  pointSize?: ?number,
+  pointShape?: ?string,
+  decayTime?: ?number,
+  colorMode: ?ColorMode,
+|};
 
 export const DATATYPE = {
   uint8: 2,

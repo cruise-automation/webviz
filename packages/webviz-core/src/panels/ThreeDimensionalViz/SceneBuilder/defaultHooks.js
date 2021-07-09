@@ -7,18 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import type { ThreeDimensionalVizHooks } from "./types";
+import PoseMarkers from "webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers";
+import { defaultMapPalette } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
+import LaserScanVert from "webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert";
 import { TF_DATATYPE } from "webviz-core/src/util/globalConstants";
 
 const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   getSelectionState: () => {},
   getTopicsToRender: () => new Set(),
-  consumeMessage: (topic, datatype, msg, consumeMethods, { errors }) => {
-    // TF messages are consumed by TransformBuilder, not SceneBuilder.
-    if (datatype === TF_DATATYPE) {
-      return;
-    }
-    errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);
-  },
   consumeBobject: (topic, datatype, msg, consumeMethods, { errors }) => {
     // TF messages are consumed by TransformBuilder, not SceneBuilder.
     if (datatype === TF_DATATYPE) {
@@ -31,7 +27,44 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   getFlattenedPose: () => undefined,
   getOccupancyGridValues: (_topic) => [0.5, "map"],
   getMarkerColor: (topic, markerColor) => markerColor,
+
+  // Duplicated in top-level 3D panel hooks
+  consumePose: () => {},
   skipTransformFrame: null,
+  MapComponent: null,
+  renderAdditionalMarkers: () => {},
+  LaserScanVert,
+  getMapPalette() {
+    return defaultMapPalette;
+  },
+  useWorldspacePointSize: true,
+  createPointCloudPositionBuffer: () => null,
+  allSupportedMarkers: [
+    "arrow",
+    "cube",
+    "cubeList",
+    "cylinder",
+    "filledPolygon",
+    "grid",
+    "instancedLineList",
+    "laserScan",
+    "linedConvexHull",
+    "lineList",
+    "lineStrip",
+    "overlayIcon",
+    "pointcloud",
+    "points",
+    "poseMarker",
+    "sphere",
+    "sphereList",
+    "text",
+    "triangleList",
+  ],
+  originalPoseScaling: { x: 1, y: 1 },
+  updatedPoseScaling: { x: 1, y: 1 },
+  PoseMarkers,
+  rootTransformFrame: "map",
+  getStaticallyAvailableNamespacesByTopic: () => ({}),
 };
 
 export default sceneBuilderHooks;

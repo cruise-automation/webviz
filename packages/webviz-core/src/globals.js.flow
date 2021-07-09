@@ -6,6 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+type FlowPrimitives = ?(string | number | boolean | null | Symbol);
+
+// A deep-recursive version of $ReadOnly<T>
+declare function makeReadonlyRecursive<O: {} | FlowPrimitives>(O): $RecursiveReadOnly<O>;
+type $RecursiveReadOnly<O: { [key: string]: any }> = $ReadOnly<$ObjMap<O, typeof makeReadonlyRecursive>>;
+
+// A deep-recursive helper to make an object mutable using { ...T }
+declare function makeMutableRecursive<O: {} | FlowPrimitives>(O): $RecursiveMutable<O>;
+type $RecursiveMutable<O: $ReadOnly<{}>> = { ...$ObjMap<O, typeof makeMutableRecursive> };
+
 declare type GitInfo = {
   hash: string,
   dirty: ?boolean,
@@ -22,6 +32,13 @@ declare class AbortController {
   abort(): void;
   signal: AbortSignal;
 }
+
+declare class FinalizationRegistry {
+  constructor(finalizer: (any) => void): FinalizationRegistry;
+  register(obj: any, heldItem: any): void;
+}
+
+declare function BigInt(arg: string | number): typeof BigInt;
 
 declare type WebvizExpectType = {
   toContainOnly(arr: Array<any>): void,
@@ -58,4 +75,11 @@ declare class IDBKeyRange {
   static lowerBound(any, open?: boolean): IDBKeyRange;
   static upperBound(any, open?: boolean): IDBKeyRange;
   static bound(start: any, end: any): IDBKeyRange;
+}
+
+// Our version of flow doesn't have SharedArrayBuffer, and the most recent version (that does have
+// SharedArrayBuffer) has very incomplete support. For our purposes they're interchangeable with
+// regular ArrayBuffers -- we just use them to smuggle bobjects across worker boundaries.
+declare class SharedArrayBuffer {
+  constructor(byteLength: number): ArrayBuffer;
 }

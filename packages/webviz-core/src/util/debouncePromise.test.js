@@ -13,12 +13,11 @@ import signal from "webviz-core/shared/signal";
 
 describe("debouncePromise", () => {
   it("debounces with resolved and rejected promises", async () => {
-    const promises = [Promise.resolve(), Promise.reject(), Promise.reject(), Promise.resolve()];
+    const promises = [signal(), signal(), signal(), signal()];
 
     let calls = 0;
     const debouncedFn = debouncePromise(() => {
-      ++calls;
-      return promises.shift();
+      return promises[calls++];
     });
 
     expect(calls).toBe(0);
@@ -29,20 +28,24 @@ describe("debouncePromise", () => {
     debouncedFn();
     expect(calls).toBe(1);
 
-    await Promise.resolve();
+    await promises[0].resolve();
+
     expect(calls).toBe(2);
-    expect(debouncedFn.currentPromise).toBeUndefined();
+    expect(debouncedFn.currentPromise).toBeDefined();
 
     debouncedFn();
+    debouncedFn();
+    await promises[1].reject();
     expect(calls).toBe(3);
     expect(debouncedFn.currentPromise).toBeDefined();
 
     debouncedFn();
     expect(calls).toBe(3);
-    await Promise.resolve();
+    await promises[2].reject();
+    
     expect(calls).toBe(4);
+    await promises[3].resolve();
     expect(debouncedFn.currentPromise).toBeUndefined();
-    expect(promises).toHaveLength(0);
   });
 
   it("provides currentPromise to wait on the current call", async () => {

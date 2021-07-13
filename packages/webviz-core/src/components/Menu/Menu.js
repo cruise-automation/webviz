@@ -9,25 +9,73 @@
 import cx from "classnames";
 import * as React from "react";
 
+import "react-resizable/css/styles.css";
+
 import styles from "./index.module.scss";
+import Resizable, { type ResizeHandleAxis, type ContainerSize } from "webviz-core/src/components/Resizable";
 
 type Props = {
   children: any,
   className?: string,
   style?: { [string]: any },
+  // React-resizable props
+  resizable?: boolean,
+  resizeHandles?: ?(ResizeHandleAxis[]),
+  maxConstraints?: [number, number],
+  minConstraints?: [number, number],
+  initialSize?: ?[number, number],
+  onResize?: (size: ContainerSize) => void,
 };
 
 // a small component which wraps its children in menu styles
 // and provides a helper { Item } component which can be used
 // to render typical menu items with text & an icon
-export default class Menu extends React.PureComponent<Props> {
-  render() {
-    const { children, className, style } = this.props;
-    const classes = cx(styles.container, className);
+const Menu = ({
+  children,
+  className,
+  style,
+  resizable,
+  resizeHandles,
+  maxConstraints,
+  minConstraints,
+  initialSize,
+  onResize,
+}: Props) => {
+  const classes = cx(styles.container, className);
+
+  if (!resizable) {
     return (
       <div className={classes} style={style}>
         {children}
       </div>
     );
   }
-}
+
+  return (
+    <Resizable
+      resizeHandles={resizeHandles}
+      maxConstraints={maxConstraints}
+      minConstraints={minConstraints}
+      initialSize={initialSize}
+      onResize={onResize}>
+      {({ ref, width, height, minWidth, minHeight }) => (
+        <div
+          className={classes}
+          ref={ref}
+          style={{
+            ...style,
+            ...{
+              width,
+              height,
+              minWidth,
+              minHeight,
+            },
+          }}>
+          {children}
+        </div>
+      )}
+    </Resizable>
+  );
+};
+
+export default Menu;

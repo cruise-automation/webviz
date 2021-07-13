@@ -126,7 +126,7 @@ describe("OrderedStampPlayer", () => {
     ]);
   });
 
-  it("filters and reorders bobjects and updates topics by header stamp", async () => {
+  it("filters and reorders bobjects by header stamp", async () => {
     const { player, fakePlayer } = makePlayers("headerStamp");
     const states = [];
     player.setListener(async (playerState) => {
@@ -180,7 +180,7 @@ describe("OrderedStampPlayer", () => {
         },
       },
     ]);
-    expect(topics).toEqual(oldTopics.filter(({ name }) => name !== "/dummy_no_header_topic"));
+    expect(topics).toEqual(oldTopics);
   });
 
   it("filters and reorders messages and updates topics by header stamp", async () => {
@@ -219,7 +219,7 @@ describe("OrderedStampPlayer", () => {
         }),
       }),
     ]);
-    expect(states[0]?.activeData?.topics).toEqual(oldTopics.filter(({ name }) => name !== "/dummy_no_header_topic"));
+    expect(states[0]?.activeData?.topics).toEqual(oldTopics);
   });
 
   it("sets time correctly", async () => {

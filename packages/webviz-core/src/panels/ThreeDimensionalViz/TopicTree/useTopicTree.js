@@ -11,7 +11,14 @@ import { useMemo, useCallback, useRef, createContext } from "react";
 import { useDebounce } from "use-debounce";
 
 import generateNodeKey from "./generateNodeKey";
-import type { TreeNode, TopicTreeConfig, UseTreeInput, UseTreeOutput, DerivedCustomSettingsByKey } from "./types";
+import type {
+  TreeNode,
+  TopicTreeConfig,
+  UseTreeInput,
+  NamespacesByTopic,
+  UseTreeOutput,
+  DerivedCustomSettingsByKey,
+} from "./types";
 import filterMap from "webviz-core/src/filterMap";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
@@ -27,11 +34,13 @@ export function generateTreeNode(
     parentKey,
     datatypesByTopic,
     hasFeatureColumn,
+    staticallyAvailableNamespacesByTopic,
   }: {|
     availableTopicsNamesSet: Set<string>,
     datatypesByTopic: { [topicName: string]: string },
     parentKey: ?string,
     hasFeatureColumn: boolean,
+    staticallyAvailableNamespacesByTopic: NamespacesByTopic,
   |}
 ): TreeNode {
   const key = generateNodeKey({ name, topicName });
@@ -40,14 +49,22 @@ export function generateTreeNode(
 
   if (topicName) {
     const datatype = datatypesByTopic[topicName] || datatypesByTopic[`${SECOND_SOURCE_PREFIX}${topicName}`];
+    // Statically available namespace topics are always available to turn on or off.
+    const isAlwaysAvailable = !!staticallyAvailableNamespacesByTopic[topicName];
+    let availableByColumn;
+    if (isAlwaysAvailable) {
+      availableByColumn = hasFeatureColumn ? [true, true] : [true];
+    } else {
+      availableByColumn = hasFeatureColumn
+        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${SECOND_SOURCE_PREFIX}${topicName}`)]
+        : [availableTopicsNamesSet.has(topicName)];
+    }
     return {
       type: "topic",
       key,
       featureKey,
       topicName,
-      availableByColumn: hasFeatureColumn
-        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${SECOND_SOURCE_PREFIX}${topicName}`)]
-        : [availableTopicsNamesSet.has(topicName)],
+      availableByColumn,
       providerAvailable,
       ...(parentKey ? { parentKey } : undefined),
       ...(name ? { name } : undefined),
@@ -63,6 +80,7 @@ export function generateTreeNode(
         parentKey: name === "root" ? undefined : key,
         datatypesByTopic,
         hasFeatureColumn,
+        staticallyAvailableNamespacesByTopic,
       })
     );
     return {
@@ -106,7 +124,7 @@ const parseNamespaceKey = (key: string): { topicName: string, namespace: string 
   return { topicName, namespace: namespaceParts.join(":") };
 };
 
-export default function useTree({
+export default function useTopicTree({
   availableNamespacesByTopic,
   checkedKeys,
   defaultTopicSettings,
@@ -120,6 +138,7 @@ export default function useTree({
   settingsByKey,
   topicTreeConfig,
   uncategorizedGroupName,
+  staticallyAvailableNamespacesByTopic,
 }: UseTreeInput): UseTreeOutput {
   const topicTreeTopics = useMemo(
     () =>
@@ -153,9 +172,22 @@ export default function useTree({
     // Generate the rootTreeNode. Don't mutate the original treeConfig, just make a copy with newChildren.
     return generateTreeNode(
       { ...topicTreeConfig, children: newChildren },
-      { parentKey: undefined, datatypesByTopic, availableTopicsNamesSet, hasFeatureColumn }
+      {
+        parentKey: undefined,
+        datatypesByTopic,
+        availableTopicsNamesSet,
+        hasFeatureColumn,
+        staticallyAvailableNamespacesByTopic,
+      }
     );
-  }, [hasFeatureColumn, providerTopics, topicTreeConfig, topicTreeTopics, uncategorizedGroupName]);
+  }, [
+    hasFeatureColumn,
+    providerTopics,
+    staticallyAvailableNamespacesByTopic,
+    topicTreeConfig,
+    topicTreeTopics,
+    uncategorizedGroupName,
+  ]);
 
   const nodesByKey: { [key: string]: TreeNode } = useMemo(() => {
     const flattenNodes = Array.from(flattenNode(rootTreeNode));

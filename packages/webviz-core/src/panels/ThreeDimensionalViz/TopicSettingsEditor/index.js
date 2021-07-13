@@ -24,15 +24,15 @@ import { Select, Option } from "webviz-core/src/components/Select";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Topic } from "webviz-core/src/players/types";
 import {
-  POINT_CLOUD_DATATYPE,
-  POSE_STAMPED_DATATYPE,
-  SENSOR_MSGS_LASER_SCAN_DATATYPE,
-  WEBVIZ_MARKER_DATATYPE,
-  WEBVIZ_3D_ICON_ARRAY_DATATYPE,
-  WEBVIZ_MARKER_ARRAY_DATATYPE,
-  VISUALIZATION_MSGS_MARKER_DATATYPE,
-  VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
-  NAV_MSGS_PATH_DATATYPE,
+  SENSOR_MSGS$POINT_CLOUD_2,
+  GEOMETRY_MSGS$POSE_STAMPED,
+  SENSOR_MSGS$LASER_SCAN,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER,
+  WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  VISUALIZATION_MSGS$MARKER,
+  VISUALIZATION_MSGS$MARKER_ARRAY,
+  NAV_MSGS$PATH,
 } from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
@@ -127,15 +127,15 @@ export type TopicSettingsEditorProps<Msg, Settings: {}> = {|
 
 export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
   const editors = {
-    [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
-    [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
-    [SENSOR_MSGS_LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
-    [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
-    [WEBVIZ_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
-    [VISUALIZATION_MSGS_MARKER_DATATYPE]: MarkerSettingsEditor,
-    [VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE]: MarkerSettingsEditor,
-    [WEBVIZ_3D_ICON_ARRAY_DATATYPE]: IconMarkerSettingsEditor,
-    [NAV_MSGS_PATH_DATATYPE]: MarkerOverrideColorSettingsEditor,
+    [SENSOR_MSGS$POINT_CLOUD_2]: PointCloudSettingsEditor,
+    [GEOMETRY_MSGS$POSE_STAMPED]: PoseSettingsEditor,
+    [SENSOR_MSGS$LASER_SCAN]: LaserScanSettingsEditor,
+    [VISUALIZATION_MSGS$WEBVIZ_MARKER]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS$MARKER]: MarkerSettingsEditor,
+    [VISUALIZATION_MSGS$MARKER_ARRAY]: MarkerSettingsEditor,
+    [WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY]: IconMarkerSettingsEditor,
+    [NAV_MSGS$PATH]: MarkerOverrideColorSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,
   };
   return editors[datatype];

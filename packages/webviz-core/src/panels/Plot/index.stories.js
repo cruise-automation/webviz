@@ -24,6 +24,15 @@ uint32 seq
 time stamp
 string frame_id`;
 
+const float64ArrayStampedDefinition = `std_msgs/Header header
+float64[] data
+
+================================================================================
+MSG: std_msgs/Header
+uint32 seq
+time stamp
+string frame_id`;
+
 const locationMessages = [
   { header: { stamp: { sec: 0, nsec: 574635076 } }, pose: { acceleration: -0.00116662939, velocity: 1.184182664 } },
   { header: { stamp: { sec: 0, nsec: 673758203 } }, pose: { acceleration: -0.0072101709, velocity: 1.182555127 } },
@@ -104,6 +113,12 @@ const datatypes = {
     ],
   },
   "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
+  "nonstd_msgs/Float64Array": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
+      { name: "data", type: "float64", isArray: true },
+    ],
+  },
   "nonstd_msgs/Float64Stamped": {
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
@@ -121,12 +136,22 @@ const getPreloadedMessage = (seconds) => ({
   }),
 });
 
+const getArrayMessage = (seconds) => ({
+  topic: "/array_topic",
+  receiveTime: fromSec(seconds),
+  message: wrapJsObject(datatypes, "nonstd_msgs/Float64Array", {
+    data: new Array(Math.round(seconds * 10)).fill(0),
+    header: { stamp: fromSec(seconds - 0.5), frame_id: "", seq: 0 },
+  }),
+});
+
 const messageCache = {
   blocks: [
     ...[0.6, 0.7, 0.8, 0.9, 1.0].map((seconds) => ({
       sizeInBytes: 0,
       messagesByTopic: {
         "/preloaded_topic": [getPreloadedMessage(seconds)],
+        "/array_topic": [getArrayMessage(seconds)],
       },
     })),
     undefined, // 1.1
@@ -137,6 +162,7 @@ const messageCache = {
       sizeInBytes: 0,
       messagesByTopic: {
         "/preloaded_topic": [getPreloadedMessage(seconds)],
+        "/array_topic": [getArrayMessage(seconds)],
       },
     })),
   ],
@@ -151,13 +177,17 @@ export const fixture = {
     { name: "/some_topic/state", datatype: "msgs/State" },
     { name: "/boolean_topic", datatype: "std_msgs/Bool" },
     { name: "/preloaded_topic", datatype: "nonstd_msgs/Float64Stamped" },
+    { name: "/array_topic", datatype: "nonstd_msgs/Float64Array" },
   ],
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
     endTime: { sec: 24, nsec: 999997069 },
     currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
-    parsedMessageDefinitionsByTopic: { "/preloaded_topic": parseMessageDefinition(float64StampedDefinition) },
+    parsedMessageDefinitionsByTopic: {
+      "/preloaded_topic": parseMessageDefinition(float64StampedDefinition),
+      "/array_topic": parseMessageDefinition(float64ArrayStampedDefinition),
+    },
     speed: 0.2,
   },
   frame: {
@@ -616,6 +646,18 @@ storiesOf("<Plot>", module)
               { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
               { value: "/preloaded_topic.data.@abs", enabled: true, timestampMethod: "receiveTime" },
             ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("array data with the .@length modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [{ value: "/array_topic.data.@length", enabled: true, timestampMethod: "receiveTime" }],
           }}
         />
       </PanelSetup>

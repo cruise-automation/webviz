@@ -18,10 +18,13 @@ export const STextField = styled.div`
   flex-direction: column;
 `;
 
-export const STextFieldLabel = styled.label`
+export const STextFieldLabel = styled.label(
+  ({ disabled }) => `
   margin: 8px 0;
   color: ${colors.LIGHT};
-`;
+  opacity: ${disabled ? 0.5 : 1};
+`
+);
 
 export const SError = styled.div`
   color: ${colors.RED};

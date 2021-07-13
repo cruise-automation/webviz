@@ -13,9 +13,11 @@ import rmfr from "rmfr";
 import util from "util";
 import uuid from "uuid";
 
+import type { VideoMetadata } from "../src/players/automatedRun/AutomatedRunPlayer";
 import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
 import convertVideoToGif from "./convertVideoToGif";
 import delay from "./delay";
+import { withTempDirectory } from "./fileUtils";
 import globalEnvVars from "./globalEnvVars";
 import promiseTimeout from "./promiseTimeout";
 import runInBrowser from "./runInBrowser";
@@ -32,23 +34,7 @@ const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
 
-async function recordVideo({
-  speed = 1,
-  framerate = 30,
-  frameless = false,
-  dimensions = { width: 1920, height: 1080 },
-  crop,
-  parallel = 2,
-  duration,
-  bagPath,
-  url,
-  puppeteerLaunchConfig,
-  layout,
-  panelLayout,
-  mediaType,
-  errorIsWhitelisted,
-  experimentalFeaturesSettings,
-}: {
+type VideoConfig = {
   bagPath?: ?string,
   url: string,
   puppeteerLaunchConfig?: any,
@@ -64,7 +50,50 @@ async function recordVideo({
   mediaType?: "mp4" | "gif",
   crop?: { width: number, height: number, top: number, left: number },
   errorIsWhitelisted?: (string) => boolean,
-}): Promise<{ mediaFile: Buffer, sampledImageFile: Buffer }> {
+};
+
+type RecordingOptions = {| outputDirectory: string |};
+
+// Delegates to recordVideo, but returns the resulting video as a Buffer.
+// *PERFORMANCE NOTE* This should only be used for short videos since it reads
+// the entire video into memory. For long videos, use recordVideo directly
+// without reading the video into a Buffer.
+export async function recordVideoAsBuffer(
+  config: VideoConfig
+): Promise<{ mediaBuffer: Buffer, sampledImageFile: Buffer, metadata: VideoMetadata }> {
+  return withTempDirectory(async (tmpDir) => {
+    const { mediaPath, sampledImageFile, metadata } = await recordVideo(config, { outputDirectory: tmpDir });
+
+    const mediaBuffer = await readFile(mediaPath);
+    await rmfr(mediaPath);
+
+    return { mediaBuffer, sampledImageFile, metadata };
+  });
+}
+
+// Records a video with the specified configuration.
+// Writes the resulting media file (mp4/gif) into the specified directory.
+export async function recordVideo(
+  config: VideoConfig,
+  options: RecordingOptions
+): Promise<{ mediaPath: string, sampledImageFile: Buffer, metadata: VideoMetadata }> {
+  const {
+    speed = 1,
+    framerate = 30,
+    frameless = false,
+    dimensions = { width: 1920, height: 1080 },
+    crop,
+    parallel = 2,
+    duration,
+    bagPath,
+    url,
+    puppeteerLaunchConfig,
+    layout,
+    panelLayout,
+    mediaType,
+    errorIsWhitelisted,
+    experimentalFeaturesSettings,
+  } = config;
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
 
@@ -73,7 +102,7 @@ async function recordVideo({
 
   let hasFailed = false;
   try {
-    let msPerFrame;
+    let metadata: ?VideoMetadata;
     const promises = new Array(parallel).fill().map(async (_, parallelIndex) => {
       const urlObject = url ? new URL(url) : baseUrlObject;
       // Update the base url to point to localhost if it's set to something else.
@@ -175,7 +204,7 @@ async function recordVideo({
                 } else if (actionObj.action === "finish") {
                   log.info("Finished!");
                   isRunning = false;
-                  msPerFrame = actionObj.msPerFrame;
+                  metadata = actionObj.metadata;
                 } else if (actionObj.action === "screenshot") {
                   await waitForXhrRequests(pendingRequestUrls);
 
@@ -207,8 +236,8 @@ async function recordVideo({
 
     await Promise.all(promises);
 
-    if (msPerFrame == null) {
-      throw new Error("msPerFrame was not set");
+    if (metadata == null) {
+      throw new Error("metadata was not set. The recording must have failed.");
     }
     const screenshotFileNames = fs.readdirSync(screenshotsDir);
     if (screenshotFileNames.length === 0) {
@@ -219,11 +248,12 @@ async function recordVideo({
     }
 
     const sampledImageFile = await readFile(`${screenshotsDir}/${last(screenshotFileNames)}`);
-    const outputFilename = "out.mp4";
+    const outputDirectory = options.outputDirectory;
 
     // Once we're finished, we're going to stitch all the individual screenshots together
     // into a video, with the framerate specified by the client (via `msPerFrame`).
-    log.info(`Creating video with framerate ${framerate}fps (${msPerFrame}ms per frame)`);
+    let mediaPath = `${outputDirectory}/out.mp4`;
+    log.info(`Creating video with framerate ${framerate}fps (${metadata.msPerFrame}ms per frame)`);
     await exec(
       [
         `ffmpeg -y`,
@@ -234,26 +264,20 @@ async function recordVideo({
         `-c:v libx264`,
         `-preset faster`,
         `-r ${framerate}`,
-        outputFilename,
+        mediaPath,
       ].join(" "),
-      {
-        cwd: screenshotsDir,
-      }
+      { cwd: screenshotsDir }
     );
-    let mediaPath = `${screenshotsDir}/${outputFilename}`;
     log.info(`Video saved to ${mediaPath}`);
 
     // Convert the output to other mediaTypes, if requested
     if (mediaType === "gif") {
-      const gifPath = `${screenshotsDir}/out.gif`;
+      const gifPath = `${outputDirectory}/out.gif`;
       await convertVideoToGif(mediaPath, gifPath);
       mediaPath = gifPath;
     }
 
-    const mediaFile = await readFile(mediaPath);
-    await rmfr(mediaPath);
-
-    return { mediaFile, sampledImageFile };
+    return { mediaPath, sampledImageFile, metadata };
   } catch (error) {
     hasFailed = true;
     throw error;
@@ -297,5 +321,3 @@ export async function waitForXhrRequests(pendingRequestUrls: Set<string>) {
     timeout = true;
   }
 }
-
-export default recordVideo;

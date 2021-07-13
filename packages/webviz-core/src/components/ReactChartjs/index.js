@@ -25,14 +25,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Hammer from "hammerjs";
-import React from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import uuid from "uuid";
 
+import { useMessagePipeline } from "../MessagePipeline";
 import type { ScaleOptions as ManagerScaleOptions } from "./ChartJSManager";
 import ChartJSWorker from "./ChartJSWorker.worker";
 import { type ScaleBounds, type ZoomOptions, type PanOptions, wheelZoomHandler } from "./zoomAndPanHelpers";
 import { objectValues } from "webviz-core/src/util";
 import { getFakeRpcs, type RpcLike } from "webviz-core/src/util/FakeRpc";
+import { useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
@@ -40,9 +42,14 @@ const getMainThreadChartJSWorker = () => import(/* webpackChunkName: "main-threa
 
 export type HoveredElement = any;
 export type ScaleOptions = ManagerScaleOptions;
-type OnEndChartUpdate = () => void;
 
-type Props = {|
+export type ChartCallbacks = $ReadOnly<{|
+  canvasRef: $ReadOnly<{ current: ?HTMLCanvasElement }>,
+  getElementAtXAxis: (event: SyntheticMouseEvent<any> | MouseEvent) => Promise<?HoveredElement>,
+  resetZoom: () => Promise<void>,
+|}>;
+
+export type Props = {|
   id?: string,
   data: any,
   height: number,
@@ -57,146 +64,135 @@ type Props = {|
   onClick?: (SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => void,
   forceDisableWorkerRendering?: ?boolean,
   scaleOptions?: ?ScaleOptions,
-  onChartUpdate?: () => OnEndChartUpdate,
+  callbacksRef: { current: ?ChartCallbacks },
 |};
 
 const devicePixelRatio = window.devicePixelRatio || 1;
 
 const webWorkerManager = new WebWorkerManager(ChartJSWorker, 4);
 
-class ChartComponent extends React.PureComponent<Props> {
-  canvas: ?HTMLCanvasElement;
-  _chartRpc: ?RpcLike;
-  // $FlowFixMe
-  _node: OffscreenCanvas;
-  _id = uuid.v4();
-  _scaleBoundsByScaleId = {};
-  _usingWebWorker = false;
-  _onEndChartUpdateCallbacks = {};
+export const DEFAULT_PROPS = {
+  legend: {
+    display: true,
+    position: "bottom",
+  },
+  type: "doughnut",
+  height: 150,
+  width: 300,
+  options: {},
+  zoomOptions: { mode: "xy", enabled: true, sensitivity: 3, speed: 0.1 },
+  panOptions: { mode: "xy", enabled: true, speed: 20, threshold: 10 },
+};
 
-  constructor(props: Props) {
-    super(props);
-    this._getRpc();
-  }
+export default function ChartComponent({
+  forceDisableWorkerRendering,
+  type,
+  data,
+  options,
+  scaleOptions,
+  height = DEFAULT_PROPS.height,
+  width = DEFAULT_PROPS.width,
+  onScaleBoundsUpdate,
+  onPanZoom,
+  panOptions = DEFAULT_PROPS.panOptions,
+  zoomOptions = DEFAULT_PROPS.zoomOptions,
+  onClick: onClickHandler,
+  callbacksRef,
+}: Props) {
+  const [id] = useState<string>(uuid);
 
-  static defaultProps = {
-    legend: {
-      display: true,
-      position: "bottom",
-    },
-    type: "doughnut",
-    height: 150,
-    width: 300,
-    options: {},
-    zoomOptions: { mode: "xy", enabled: true, sensitivity: 3, speed: 0.1 },
-    panOptions: { mode: "xy", enabled: true, speed: 20, threshold: 10 },
-  };
+  const usingWebWorker = useRef<boolean>(false);
+  const chartRpc = useRef<?RpcLike>();
+  const canvasRef = useRef<?HTMLCanvasElement>(null);
+  const initialized = useRef(false);
+  const panning = useRef(false);
+  const currentDeltaX = useRef();
+  const currentDeltaY = useRef();
+  const currentPinchScaling = useRef(1);
+  const nodeRef = useRef();
 
-  _getRpc = async (): Promise<RpcLike> => {
-    if (this._chartRpc) {
-      return this._chartRpc;
+  const getRpc = useCallback(async (): Promise<RpcLike> => {
+    if (chartRpc.current) {
+      return chartRpc.current;
     }
 
-    if (!this.props.forceDisableWorkerRendering && supportsOffscreenCanvas()) {
+    if (!forceDisableWorkerRendering && supportsOffscreenCanvas()) {
       // Only use a real chart worker if we support offscreenCanvas.
-      this._chartRpc = webWorkerManager.registerWorkerListener(this._id);
-      this._usingWebWorker = true;
-    } else {
-      // Otherwise use a fake RPC so that we don't have to maintain two separate APIs.
-      const { mainThreadRpc, workerRpc } = getFakeRpcs();
-      const { default: MainThreadChartJSWorker } = await getMainThreadChartJSWorker();
-      new MainThreadChartJSWorker(workerRpc);
-      this._chartRpc = mainThreadRpc;
-      this._usingWebWorker = false;
+      const rpc = webWorkerManager.registerWorkerListener(id);
+      chartRpc.current = rpc;
+      usingWebWorker.current = true;
+      return rpc;
     }
-    return this._chartRpc;
-  };
 
-  _sendToRpc = async (event: string, data: any, transferrables?: any[]): Promise<ScaleBounds[]> => {
-    const rpc = await this._getRpc();
-    return rpc.send(event, data, transferrables);
-  };
+    // Otherwise use a fake RPC so that we don't have to maintain two separate APIs.
+    const { mainThreadRpc, workerRpc } = getFakeRpcs();
+    const { default: MainThreadChartJSWorker } = await getMainThreadChartJSWorker();
+    new MainThreadChartJSWorker(workerRpc);
+    chartRpc.current = mainThreadRpc;
+    usingWebWorker.current = false;
+    return mainThreadRpc;
+  }, [forceDisableWorkerRendering, id]);
 
-  componentDidMount() {
-    const { type, data, options, scaleOptions, width, height } = this.props;
+  const sendToRpc = useCallback(async (
+    event: string,
+    dataToSend: any,
+    transferrables?: any[]
+  ): Promise<ScaleBounds[]> => {
+    const rpc = await getRpc();
+    return rpc.send(event, dataToSend, transferrables);
+  }, [getRpc]);
 
-    this._setupPanAndPinchHandlers();
-
-    let node = this.canvas;
-    if (!this.props.forceDisableWorkerRendering && supportsOffscreenCanvas()) {
-      // $FlowFixMe
-      node = this.canvas.transferControlToOffscreen();
+  const handleScaleBoundsUpdate = useCallback((scaleBoundsUpdate) => {
+    if (onScaleBoundsUpdate && scaleBoundsUpdate) {
+      onScaleBoundsUpdate(scaleBoundsUpdate);
     }
-    this._node = node;
-    this._sendToRpc(
-      "initialize",
-      {
-        node,
-        id: this._id,
-        type,
-        data,
-        options,
-        scaleOptions,
-        devicePixelRatio,
-        width,
-        height,
-      },
-      [node]
-    ).then((scaleBoundsUpdate) => this._onUpdateScaleBounds(scaleBoundsUpdate));
-  }
+  }, [onScaleBoundsUpdate]);
 
-  componentDidUpdate() {
-    const { data, options, scaleOptions, width, height, onChartUpdate } = this.props;
-    let chartUpdateId;
-    if (onChartUpdate) {
-      const onEndChartUpdate = onChartUpdate();
-      chartUpdateId = uuid.v4();
-      this._onEndChartUpdateCallbacks[chartUpdateId] = onEndChartUpdate;
+  const handlePanZoom = useCallback((scaleBoundsUpdate) => {
+    if (onPanZoom && scaleBoundsUpdate) {
+      onPanZoom(scaleBoundsUpdate);
     }
-    this._sendToRpc("update", {
-      id: this._id,
-      data,
-      options,
-      scaleOptions,
-      width,
-      height,
-    })
-      .then((scaleBoundsUpdate) => {
-        this._onUpdateScaleBounds(scaleBoundsUpdate);
-      })
-      .finally(() => {
-        if (this._onEndChartUpdateCallbacks[chartUpdateId]) {
-          this._onEndChartUpdateCallbacks[chartUpdateId]();
-          delete this._onEndChartUpdateCallbacks[chartUpdateId];
-        }
-      });
-  }
+  }, [onPanZoom]);
 
-  componentWillUnmount() {
-    // If this component will unmount, resolve any pending update callbacks.
-    objectValues(this._onEndChartUpdateCallbacks).forEach((callback) => callback());
-    this._onEndChartUpdateCallbacks = {};
-
-    if (this._chartRpc) {
-      this._chartRpc.send("destroy", { id: this._id });
-      this._chartRpc = null;
-
-      if (this._usingWebWorker) {
-        webWorkerManager.unregisterWorkerListener(this._id);
-      }
+  const onWheel = useCallback(async (event: SyntheticWheelEvent<HTMLCanvasElement>) => {
+    if (!zoomOptions.enabled) {
+      return;
     }
-  }
+    const { percentZoomX, percentZoomY, focalPoint } = wheelZoomHandler(event, zoomOptions);
+    const scaleBoundsUpdate = await sendToRpc("doZoom", {
+      id,
+      zoomOptions,
+      percentZoomX,
+      percentZoomY,
+      focalPoint,
+      whichAxesParam: "xy",
+    });
 
-  _ref = (element: ?HTMLCanvasElement) => {
-    this.canvas = element;
-  };
+    handleScaleBoundsUpdate(scaleBoundsUpdate);
+    handlePanZoom(scaleBoundsUpdate);
+  }, [zoomOptions, sendToRpc, id, handleScaleBoundsUpdate, handlePanZoom]);
 
-  getElementAtXAxis = async (event: SyntheticMouseEvent<any> | MouseEvent): Promise<?HoveredElement> => {
-    if (!this.canvas) {
+  const onClick = useCallback(async (event: SyntheticMouseEvent<HTMLCanvasElement>) => {
+    if (!panning.current && onClickHandler && canvasRef.current) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const newEvent = { x, y };
+      // Since our next call is asynchronous, we have to persist the event so that React doesn't clear it.
+      event.persist();
+      const datalabel = await sendToRpc("getDatalabelAtEvent", { id, event: newEvent });
+      onClickHandler(event, datalabel);
+    }
+  }, [id, onClickHandler, sendToRpc]);
+
+  const getElementAtXAxis = useCallback(async (
+    event: SyntheticMouseEvent<any> | MouseEvent
+  ): Promise<?HoveredElement> => {
+    if (!canvasRef.current) {
       return Promise.resolve(undefined);
     }
 
-    const boundingRect = this.canvas.getBoundingClientRect();
+    const boundingRect = canvasRef.current.getBoundingClientRect();
     if (
       event.clientX < boundingRect.left ||
       event.clientX > boundingRect.right ||
@@ -211,60 +207,61 @@ class ChartComponent extends React.PureComponent<Props> {
       x: event.clientX - boundingRect.left,
       y: event.clientY - boundingRect.top,
     };
-    return this._sendToRpc("getElementAtXAxis", { id: this._id, event: newEvent });
-  };
+    return sendToRpc("getElementAtXAxis", { id, event: newEvent });
+  }, [id, sendToRpc]);
 
   // Pan/zoom section
 
-  resetZoom = async () => {
-    const scaleBoundsUpdate = await this._sendToRpc("resetZoom", { id: this._id });
-    this._onUpdateScaleBounds(scaleBoundsUpdate);
-  };
+  const resetZoom = useCallback(async () => {
+    const scaleBoundsUpdate = await sendToRpc("resetZoom", { id });
+    handleScaleBoundsUpdate(scaleBoundsUpdate);
+  }, [handleScaleBoundsUpdate, id, sendToRpc]);
 
-  _panning = false;
-  _currentDeltaX = null;
-  _currentDeltaY = null;
-  _currentPinchScaling = 1;
+  callbacksRef.current = useShallowMemo({
+    canvasRef,
+    getElementAtXAxis,
+    resetZoom,
+  });
 
-  _setupPanAndPinchHandlers() {
-    const { threshold } = this.props.panOptions;
-    const hammerManager = new Hammer.Manager(this.canvas);
+  const setupPanAndPinchHandlers = useCallback(() => {
+    const { threshold } = panOptions;
+    const hammerManager = new Hammer.Manager(canvasRef.current);
     hammerManager.add(new Hammer.Pinch());
     hammerManager.add(new Hammer.Pan({ threshold }));
 
     const hammerPanHandler = async (event: any) => {
-      if (!this.props.panOptions.enabled) {
+      if (!panOptions.enabled) {
         return;
       }
-      if (this._currentDeltaX != null && this._currentDeltaY != null) {
-        const deltaX = event.deltaX - this._currentDeltaX;
-        const deltaY = event.deltaY - this._currentDeltaY;
-        this._currentDeltaX = event.deltaX;
-        this._currentDeltaY = event.deltaY;
-        const scaleBoundsUpdate = await this._sendToRpc("doPan", {
-          id: this._id,
-          panOptions: this.props.panOptions,
+      if (currentDeltaX.current != null && currentDeltaY.current != null) {
+        const deltaX = event.deltaX - currentDeltaX.current;
+        const deltaY = event.deltaY - currentDeltaY.current;
+        currentDeltaX.current = event.deltaX;
+        currentDeltaY.current = event.deltaY;
+        const scaleBoundsUpdate = await sendToRpc("doPan", {
+          id,
+          panOptions,
           deltaX,
           deltaY,
         });
-        this._onPanZoom(scaleBoundsUpdate);
-        this._onUpdateScaleBounds(scaleBoundsUpdate);
+        handlePanZoom(scaleBoundsUpdate);
+        handleScaleBoundsUpdate(scaleBoundsUpdate);
       }
     };
 
     hammerManager.on("panstart", (event) => {
-      this._panning = true;
-      this._currentDeltaX = 0;
-      this._currentDeltaY = 0;
+      panning.current = true;
+      currentDeltaX.current = 0;
+      currentDeltaY.current = 0;
       hammerPanHandler(event);
     });
     hammerManager.on("panmove", hammerPanHandler);
     hammerManager.on("panend", () => {
-      this._currentDeltaX = null;
-      this._currentDeltaY = null;
-      this._sendToRpc("resetPanDelta", this._id);
+      currentDeltaX.current = null;
+      currentDeltaY.current = null;
+      sendToRpc("resetPanDelta", id);
       setTimeout(() => {
-        this._panning = false;
+        panning.current = false;
       }, 500);
     });
 
@@ -272,10 +269,10 @@ class ChartComponent extends React.PureComponent<Props> {
     // aggressive. Figure out why this is happening and fix it. This is almost identical to the original plugin that
     // does not have this problem.
     const handlePinch = async (e) => {
-      if (!this.props.panOptions.enabled) {
+      if (!panOptions.enabled) {
         return;
       }
-      const diff = (1 / this._currentPinchScaling) * e.scale;
+      const diff = (1 / currentPinchScaling.current) * e.scale;
       const rect = e.target.getBoundingClientRect();
       const offsetX = e.center.x - rect.left;
       const offsetY = e.center.y - rect.top;
@@ -300,89 +297,146 @@ class ChartComponent extends React.PureComponent<Props> {
       }
 
       // Keep track of overall scale
-      this._currentPinchScaling = e.scale;
+      currentPinchScaling.current = e.scale;
 
-      const scaleBoundsUpdate = await this._sendToRpc("doZoom", {
-        id: this._id,
-        zoomOptions: this.props.zoomOptions,
+      const scaleBoundsUpdate = await sendToRpc("doZoom", {
+        id,
+        zoomOptions,
         percentZoomX: diff,
         percentZoomY: diff,
         focalPoint: center,
         whichAxesParam: xy,
       });
-      this._onPanZoom(scaleBoundsUpdate);
-      this._onUpdateScaleBounds(scaleBoundsUpdate);
+      handlePanZoom(scaleBoundsUpdate);
+      handleScaleBoundsUpdate(scaleBoundsUpdate);
     };
 
     hammerManager.on("pinchstart", () => {
-      this._currentPinchScaling = 1; // reset tracker
+      currentPinchScaling.current = 1; // reset tracker
     });
     hammerManager.on("pinch", handlePinch);
     hammerManager.on("pinchend", (e) => {
       handlePinch(e);
-      this._currentPinchScaling = 1; // reset
-      this._sendToRpc("resetZoomDelta", { id: this._id });
+      currentPinchScaling.current = 1; // reset
+      sendToRpc("resetZoomDelta", { id });
     });
-  }
+  }, [handlePanZoom, handleScaleBoundsUpdate, id, panOptions, sendToRpc, zoomOptions]);
 
-  _onWheel = async (event: SyntheticWheelEvent<HTMLCanvasElement>) => {
-    if (!this.props.zoomOptions.enabled) {
+  // Initialization
+  useEffect(() => {
+    if (initialized.current) {
       return;
     }
-    const { percentZoomX, percentZoomY, focalPoint } = wheelZoomHandler(event, this.props.zoomOptions);
-    const scaleBoundsUpdate = await this._sendToRpc("doZoom", {
-      id: this._id,
-      zoomOptions: this.props.zoomOptions,
-      percentZoomX,
-      percentZoomY,
-      focalPoint,
-      whichAxesParam: "xy",
-    });
-    this._onUpdateScaleBounds(scaleBoundsUpdate);
-    this._onPanZoom(scaleBoundsUpdate);
-  };
 
-  _onPanZoom = (scaleBoundsUpdate: ScaleBounds[]) => {
-    if (this.props.onPanZoom) {
-      this.props.onPanZoom(scaleBoundsUpdate);
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
     }
-  };
 
-  _onUpdateScaleBounds = (scaleBoundsUpdate: ScaleBounds[]) => {
-    if (this.props.onScaleBoundsUpdate && scaleBoundsUpdate) {
-      this.props.onScaleBoundsUpdate(scaleBoundsUpdate);
+    setupPanAndPinchHandlers();
+
+    let node = canvas;
+    if (!forceDisableWorkerRendering && supportsOffscreenCanvas()) {
+      // $FlowFixMe
+      node = canvas.transferControlToOffscreen();
     }
-  };
+    initialized.current = true;
+    nodeRef.current = node;
+    sendToRpc(
+      "initialize",
+      {
+        node,
+        id,
+        type,
+        data,
+        options,
+        scaleOptions,
+        devicePixelRatio,
+        width,
+        height,
+      },
+      [node]
+    ).then(handleScaleBoundsUpdate);
+  }, [
+    data,
+    forceDisableWorkerRendering,
+    handleScaleBoundsUpdate,
+    height,
+    id,
+    onScaleBoundsUpdate,
+    options,
+    scaleOptions,
+    sendToRpc,
+    setupPanAndPinchHandlers,
+    type,
+    width,
+  ]);
 
-  _onClick = async (event: SyntheticMouseEvent<HTMLCanvasElement>) => {
-    const { onClick } = this.props;
-    if (!this._panning && onClick && this.canvas) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const newEvent = { x, y };
-      // Since our next call is asynchronous, we have to persist the event so that React doesn't clear it.
-      event.persist();
-      const datalabel = await this._sendToRpc("getDatalabelAtEvent", { id: this._id, event: newEvent });
-      onClick(event, datalabel);
-    }
-  };
+  const memoizedData = useDeepMemo(data);
+  const memoizedOptions = useDeepMemo(options);
+  const memoizedScaleOptions = useDeepMemo(scaleOptions);
 
-  render() {
-    const { height, width, id } = this.props;
+  const { pauseFrame } = useMessagePipeline(
+    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
+  );
 
-    return (
-      <canvas
-        ref={this._ref}
-        height={height / devicePixelRatio}
-        width={width / devicePixelRatio}
-        id={id}
-        onWheel={this._onWheel}
-        onClick={this._onClick}
-        style={{ width, height }}
-      />
-    );
-  }
+  // Keep track of playback callbacks in order to resume them in case this
+  // component is unmounted during the update step in workers.
+  const resumeFrameRefs = useRef({});
+
+  useEffect(() => {
+    (async () => {
+      if (!initialized.current) {
+        return;
+      }
+
+      const chartUpdateId = uuid.v4();
+      resumeFrameRefs.current[chartUpdateId] = pauseFrame("ReactChartjs");
+
+      const scales = await sendToRpc("update", {
+        id,
+        data: memoizedData,
+        options: memoizedOptions,
+        scaleOptions: memoizedScaleOptions,
+      });
+
+      // Prevent forwarding scales if the component was unmounted during the update call.
+      if (initialized.current) {
+        handleScaleBoundsUpdate(scales);
+      }
+
+      // Resume frame playback
+      const resumeFrame = resumeFrameRefs.current[chartUpdateId];
+      resumeFrame();
+      delete resumeFrameRefs.current[chartUpdateId];
+    })();
+  }, [handleScaleBoundsUpdate, id, memoizedData, memoizedOptions, memoizedScaleOptions, pauseFrame, sendToRpc]);
+
+  useEffect(() => {
+    const resumeFrameCallbacks = resumeFrameRefs.current;
+    return () => {
+      // If this component will unmount, resolve any pending playback callback.
+      objectValues(resumeFrameCallbacks).forEach((callback) => callback());
+      if (chartRpc.current) {
+        chartRpc.current.send("destroy", { id });
+        chartRpc.current = null;
+        if (usingWebWorker.current) {
+          webWorkerManager.unregisterWorkerListener(id);
+        }
+      }
+      initialized.current = false;
+    };
+  }, [id]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      height={height / devicePixelRatio}
+      width={width / devicePixelRatio}
+      id={id}
+      onWheel={onWheel}
+      onClick={onClick}
+      style={{ width, height }}
+    />
+  );
 }
-
-export default ChartComponent;

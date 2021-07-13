@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import colors from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/colors.ts";
+import lodash from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/lodash.ts";
 import markers from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/markers.ts";
 import pointClouds from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts";
 import readers from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts";
@@ -15,11 +16,12 @@ import types from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/
 import vectors from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts";
 
 export default [
+  { fileName: "colors.ts", sourceCode: colors },
+  { fileName: "lodash.ts", sourceCode: lodash },
+  { fileName: "markers.ts", sourceCode: markers },
   { fileName: "pointClouds.ts", sourceCode: pointClouds },
   { fileName: "readers.ts", sourceCode: readers },
   { fileName: "time.ts", sourceCode: time },
   { fileName: "types.ts", sourceCode: types },
   { fileName: "vectors.ts", sourceCode: vectors },
-  { fileName: "markers.ts", sourceCode: markers },
-  { fileName: "colors.ts", sourceCode: colors },
 ];

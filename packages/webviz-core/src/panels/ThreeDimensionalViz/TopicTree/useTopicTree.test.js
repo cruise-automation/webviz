@@ -41,6 +41,7 @@ const sharedProps = {
   settingsByKey: {},
   topicTreeConfig: TREE_CONFIG,
   uncategorizedGroupName: "(Uncategorized)",
+  staticallyAvailableNamespacesByTopic: {},
 };
 
 function makeTopics(topicNames: string[]): Topic[] {
@@ -85,6 +86,36 @@ describe("useTopicTree", () => {
         children: [
           {
             availableByColumn: [false],
+            featureKey: "t:/webviz_source_2/foo",
+            key: "t:/foo",
+            providerAvailable: false,
+            topicName: "/foo",
+            type: "topic",
+          },
+        ],
+        featureKey: "name_2:root",
+        key: "name:root",
+        name: "root",
+        providerAvailable: false,
+        type: "group",
+      });
+    });
+
+    it("simple tree with statically available topic / namespace", () => {
+      const Test = createTest();
+      mount(
+        <Test
+          {...sharedProps}
+          staticallyAvailableNamespacesByTopic={{ "/foo": ["ns1", "ns2"] }}
+          topicTreeConfig={{ name: "root", children: [{ topicName: "/foo" }] }}
+        />
+      );
+
+      expect(Test.result.mock.calls[0][0].rootTreeNode).toEqual({
+        availableByColumn: [true],
+        children: [
+          {
+            availableByColumn: [true],
             featureKey: "t:/webviz_source_2/foo",
             key: "t:/foo",
             providerAvailable: false,

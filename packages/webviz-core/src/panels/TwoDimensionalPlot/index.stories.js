@@ -132,6 +132,19 @@ function zoomOut(keyObj) {
   }
 }
 
+function resetZoom(el, N = 5) {
+  // It might be possible that the reset zoom button is not available
+  // right away, so try a couple of times before throwing an error.
+  const resetZoomBtn = el.querySelector("button");
+  if (resetZoomBtn) {
+    resetZoomBtn.click();
+  } else if (N > 0) {
+    setTimeout(() => resetZoom(el, N - 1), 200);
+  } else {
+    throw new Error("Cannot find reset zoom button");
+  }
+}
+
 storiesOf("<TwoDimensionalPlot>", module)
   .addParameters({
     screenshot: {
@@ -242,12 +255,7 @@ storiesOf("<TwoDimensionalPlot>", module)
       fixture={fixture}
       onMount={(el) => {
         setTimeout(zoomOut, 200);
-        setTimeout(() => {
-          const resetZoomBtn = el.querySelector("button");
-          if (resetZoomBtn) {
-            resetZoomBtn.click();
-          }
-        }, 400);
+        setTimeout(() => resetZoom(el), 400);
       }}>
       <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
     </PanelSetup>

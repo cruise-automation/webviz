@@ -43,7 +43,7 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import { WEBVIZ_2D_ICON_ARRAY_DATATYPE } from "webviz-core/src/util/globalConstants";
+import { WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -68,7 +68,7 @@ type ImageViewPanelHooks = {
 };
 const DEFAULT_PANEL_HOOKS = { imageMarkerDatatypes: [] };
 
-// const IMAGE_ICON_MARKER_DATATYPES = [WEBVIZ_2D_ICON_ARRAY_DATATYPE];
+// const IMAGE_ICON_MARKER_DATATYPES = [WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY];
 export type Config = {|
   ...DefaultConfig,
   panelHooks?: ImageViewPanelHooks,
@@ -257,7 +257,7 @@ function ImageView(props: Props) {
 
   const { imageMarkerDatatypes } = panelHooks || getGlobalHooks().perPanelHooks().ImageView || DEFAULT_PANEL_HOOKS;
 
-  const combinedImageMarkerDataTypes = useMemo(() => [...imageMarkerDatatypes, WEBVIZ_2D_ICON_ARRAY_DATATYPE], [
+  const combinedImageMarkerDataTypes = useMemo(() => [...imageMarkerDatatypes, WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY], [
     imageMarkerDatatypes,
   ]);
   const defaultAvailableMarkerTopics = useMemo(
@@ -366,7 +366,7 @@ function ImageView(props: Props) {
       : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic]));
 
     const [iconMarkers, nonIconMarkers] = partition(combinedMarkers, (item) => {
-      return topicsKeyByTopicName[item.topic].datatype === WEBVIZ_2D_ICON_ARRAY_DATATYPE;
+      return topicsKeyByTopicName[item.topic].datatype === WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY;
     });
     return { iconMarkersToRender: iconMarkers, nonIconMarkersToRender: nonIconMarkers };
   }, [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages, topicsKeyByTopicName]);

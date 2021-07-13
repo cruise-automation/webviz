@@ -18,6 +18,8 @@ You can also enter an arbitrary number, which will add a horizontal line at that
 
 To take the derivative of a value (change per second), use the special `.@derivative` modifier. This does not work with scatter plots (when using slices).
 
+To plot the length of an array, use the `.@length` modifier at the end of the queried array.
+
 To switch the sign of a value, use the special `.@negative` modifier at the end of the topic path syntax. The following math functions are also available: `.@abs`, `.@acos`, `.@asin`, `.@atan`, `.@ceil`, `.@cos`, `.@log`, `.@log1p`, `.@log2`, `.@log10`, `.@round`, `.@sign`, `.@sin`, `.@sqrt`, `.@tan`, and `.@trunc`. See the [Javascript Math documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math) for details on each one.
 
 ## Array Index as X-Axis

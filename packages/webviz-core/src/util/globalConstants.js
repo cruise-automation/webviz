@@ -36,26 +36,26 @@ export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
 export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
-export const GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE = "geometry_msgs/PolygonStamped";
-export const NAV_MSGS_OCCUPANCY_GRID_DATATYPE = "nav_msgs/OccupancyGrid";
-export const NAV_MSGS_PATH_DATATYPE = "nav_msgs/Path";
-export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
-export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
-export const SENSOR_MSGS_LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
-export const WEBVIZ_MARKER_DATATYPE = "visualization_msgs/WebvizMarker";
-export const WEBVIZ_MARKER_ARRAY_DATATYPE = "visualization_msgs/WebvizMarkerArray";
-export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerArray";
-export const TF_DATATYPE = "tf2_msgs/TFMessage";
-export const VISUALIZATION_MSGS_MARKER_DATATYPE = "visualization_msgs/Marker";
-export const VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE = "visualization_msgs/MarkerArray";
+export const GEOMETRY_MSGS$POLYGON_STAMPED = "geometry_msgs/PolygonStamped";
+export const NAV_MSGS$OCCUPANCY_GRID = "nav_msgs/OccupancyGrid";
+export const NAV_MSGS$PATH = "nav_msgs/Path";
+export const SENSOR_MSGS$POINT_CLOUD_2 = "sensor_msgs/PointCloud2";
+export const GEOMETRY_MSGS$POSE_STAMPED = "geometry_msgs/PoseStamped";
+export const SENSOR_MSGS$LASER_SCAN = "sensor_msgs/LaserScan";
+export const VISUALIZATION_MSGS$WEBVIZ_MARKER = "visualization_msgs/WebvizMarker";
+export const VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY = "visualization_msgs/WebvizMarkerArray";
+export const FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY = "future_visualization_msgs/WebvizMarkerArray";
+export const TF2_MSGS$TF_MESSAGE = "tf2_msgs/TFMessage";
+export const VISUALIZATION_MSGS$MARKER = "visualization_msgs/Marker";
+export const VISUALIZATION_MSGS$MARKER_ARRAY = "visualization_msgs/MarkerArray";
 
-export const WEBVIZ_2D_ICON_ARRAY_DATATYPE = "webviz_icon_msgs/WebViz2dIconArray";
-export const WEBVIZ_3D_ICON_ARRAY_DATATYPE = "webviz_icon_msgs/WebViz3dIconArray";
+export const WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY = "webviz_icon_msgs/WebViz2dIconArray";
+export const WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY = "webviz_icon_msgs/WebViz3dIconArray";
 
 export const MARKER_ARRAY_DATATYPES = [
-  "visualization_msgs/MarkerArray",
-  FUTURE_VIZ_MSGS_DATATYPE,
-  WEBVIZ_MARKER_ARRAY_DATATYPE,
+  VISUALIZATION_MSGS$MARKER_ARRAY,
+  FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
 ];
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
@@ -105,8 +105,9 @@ export const MARKER_MSG_TYPES = {
 export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };
 
 // Planning
-export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 0.44703;
 export const METERS_PER_SECOND_TO_MILES_PER_HOUR = 2.23694;
+export const METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR = 3.6;
+export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 1 / METERS_PER_SECOND_TO_MILES_PER_HOUR;
 
 export const jsonTreeTheme = {
   base00: "transparent", // bg
@@ -126,4 +127,4 @@ export const PANEL_LAYOUT_ROOT_ID = "PanelLayout-root";
 
 // Feature announcements
 export const FEATURE_ANNOUNCEMENTS_LOCAL_STORAGE_KEY = "webvizFeatureAnnouncements";
-export const TIMELINE_COMMENTING_ANNOUNCEMENT_KEY = "timelineCommenting";
+export const RECORDING_SERVICE_ANNOUNCEMENT_KEY = "recordingService";

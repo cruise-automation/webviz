@@ -41,17 +41,17 @@ import {
   MARKER_ARRAY_DATATYPES,
   TRANSFORM_STATIC_TOPIC,
   TRANSFORM_TOPIC,
-  WEBVIZ_MARKER_DATATYPE,
-  WEBVIZ_MARKER_ARRAY_DATATYPE,
-  VISUALIZATION_MSGS_MARKER_DATATYPE,
-  VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
-  POSE_STAMPED_DATATYPE,
-  NAV_MSGS_PATH_DATATYPE,
-  NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
-  POINT_CLOUD_DATATYPE,
-  SENSOR_MSGS_LASER_SCAN_DATATYPE,
-  GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
-  WEBVIZ_3D_ICON_ARRAY_DATATYPE,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  VISUALIZATION_MSGS$MARKER,
+  VISUALIZATION_MSGS$MARKER_ARRAY,
+  GEOMETRY_MSGS$POSE_STAMPED,
+  NAV_MSGS$PATH,
+  NAV_MSGS$OCCUPANCY_GRID,
+  SENSOR_MSGS$POINT_CLOUD_2,
+  SENSOR_MSGS$LASER_SCAN,
+  GEOMETRY_MSGS$POLYGON_STAMPED,
+  WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
   MARKER_MSG_TYPES,
 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
@@ -752,16 +752,16 @@ export default class SceneBuilder implements MarkerProvider {
   _consumeMessage = (topic: string, datatype: string, msg: BobjectMessage): void => {
     const { message } = msg;
     switch (datatype) {
-      case WEBVIZ_MARKER_DATATYPE:
-      case VISUALIZATION_MSGS_MARKER_DATATYPE:
+      case VISUALIZATION_MSGS$WEBVIZ_MARKER:
+      case VISUALIZATION_MSGS$MARKER:
         this._consumeMarker(topic, cast<BinaryMarker>(message));
         break;
-      case WEBVIZ_3D_ICON_ARRAY_DATATYPE:
-      case WEBVIZ_MARKER_ARRAY_DATATYPE:
-      case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
+      case WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY:
+      case VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY:
+      case VISUALIZATION_MSGS$MARKER_ARRAY:
         this._consumeMarkerArray(topic, message);
         break;
-      case POSE_STAMPED_DATATYPE: {
+      case GEOMETRY_MSGS$POSE_STAMPED: {
         // make synthetic arrow marker from the stamped pose
         const pose = deepParse(cast<BinaryPoseStamped>(msg.message).pose());
         this.collectors[topic].addNonMarker(
@@ -770,11 +770,11 @@ export default class SceneBuilder implements MarkerProvider {
         );
         break;
       }
-      case NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
+      case NAV_MSGS$OCCUPANCY_GRID:
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
-      case NAV_MSGS_PATH_DATATYPE: {
+      case NAV_MSGS$PATH: {
         const pathStamped = cast<BinaryPath>(message);
         if (pathStamped.poses().length() === 0) {
           break;
@@ -793,13 +793,13 @@ export default class SceneBuilder implements MarkerProvider {
         this._consumeNonMarkerMessage(topic, newMessage, MARKER_MSG_TYPES.LINE_STRIP, message);
         break;
       }
-      case POINT_CLOUD_DATATYPE:
+      case SENSOR_MSGS$POINT_CLOUD_2:
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;
-      case SENSOR_MSGS_LASER_SCAN_DATATYPE:
+      case SENSOR_MSGS$LASER_SCAN:
         this._consumeNonMarkerMessage(topic, deepParse(message), 104);
         break;
-      case GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
+      case GEOMETRY_MSGS$POLYGON_STAMPED: {
         // convert Polygon to a line strip
         const polygonStamped = cast<BinaryPolygonStamped>(message);
         const polygon = polygonStamped.polygon();

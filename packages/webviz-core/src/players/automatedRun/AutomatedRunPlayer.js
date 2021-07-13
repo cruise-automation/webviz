@@ -45,6 +45,12 @@ import {
   type TimestampMethod,
 } from "webviz-core/src/util/time";
 
+export type VideoMetadata = {|
+  startTimeMs: number, // time of first message in millis (inclusive)
+  endTimeMs: number, // time of last message in millis (inclusive)
+  msPerFrame: number, // millis per frame
+|};
+
 export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
@@ -61,7 +67,7 @@ export interface AutomatedRunClient {
   markPreloadStart(): void;
   markPreloadEnd(): number;
   onFrameFinished(): Promise<void>;
-  finish(): any;
+  finish(VideoMetadata): any;
 }
 
 export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
@@ -398,7 +404,11 @@ export default class AutomatedRunPlayer implements Player {
       await this._client.onFrameFinished();
     }
 
-    await this._client.finish();
+    await this._client.finish({
+      startTimeMs: toMillis(this._startTime),
+      endTimeMs: toMillis(endTime),
+      msPerFrame: this._msPerFrame,
+    });
     const totalDuration = (Date.now() - startEpoch) / 1000;
     console.log(`AutomatedRunPlayer finished in ${formatSeconds(totalDuration)}`);
   }

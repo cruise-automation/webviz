@@ -10,14 +10,14 @@ import type { ThreeDimensionalVizHooks } from "./types";
 import PoseMarkers from "webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers";
 import { defaultMapPalette } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
 import LaserScanVert from "webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert";
-import { TF_DATATYPE } from "webviz-core/src/util/globalConstants";
+import { TF2_MSGS$TF_MESSAGE } from "webviz-core/src/util/globalConstants";
 
 const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   getSelectionState: () => {},
   getTopicsToRender: () => new Set(),
   consumeBobject: (topic, datatype, msg, consumeMethods, { errors }) => {
     // TF messages are consumed by TransformBuilder, not SceneBuilder.
-    if (datatype === TF_DATATYPE) {
+    if (datatype === TF2_MSGS$TF_MESSAGE) {
       return;
     }
     errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);

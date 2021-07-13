@@ -80,14 +80,15 @@ export default class ChildToggle extends React.Component<Props> {
   }
 
   addDocListener() {
-    // add a document listener to hide the dropdown body if
-    // it is expanded and the document is clicked on
-    document.addEventListener("click", this.onDocumentClick, true);
+    // add a document listener to hide the dropdown body if it is expanded and
+    // the document is clicked on. Using 'mousedown' here instead of 'click'
+    // since we don't want click-and-drag interactions to close the toggle.
+    document.addEventListener("mousedown", this.onDocumentClick, true);
   }
 
   removeDocListener() {
     // cleanup the document listener
-    document.removeEventListener("click", this.onDocumentClick, true);
+    document.removeEventListener("mousedown", this.onDocumentClick, true);
   }
 
   componentDidUpdate(prevProps: Props) {

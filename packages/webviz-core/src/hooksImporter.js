@@ -16,6 +16,7 @@ lazily importing this file at runtime.
 */
 
 export function panelsByCategory() {
+  const Audio = require("webviz-core/src/panels/Audio").default;
   const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
   const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
   const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
@@ -43,6 +44,7 @@ export function panelsByCategory() {
   const ros = [
     { title: "2D Plot", component: TwoDimensionalPlot },
     { title: "3D", component: ThreeDimensionalViz },
+    { title: "Audio", component: Audio },
     { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
     { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
     { title: "Image", component: ImageViewPanel },
@@ -84,18 +86,18 @@ export function perPanelHooks() {
   const RadarIcon = require("@mdi/svg/svg/radar.svg").default;
   const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
   const {
-    GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
-    NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
-    NAV_MSGS_PATH_DATATYPE,
-    POINT_CLOUD_DATATYPE,
-    POSE_STAMPED_DATATYPE,
-    SENSOR_MSGS_LASER_SCAN_DATATYPE,
-    TF_DATATYPE,
-    VISUALIZATION_MSGS_MARKER_DATATYPE,
-    VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
-    WEBVIZ_MARKER_DATATYPE,
-    WEBVIZ_MARKER_ARRAY_DATATYPE,
-    WEBVIZ_3D_ICON_ARRAY_DATATYPE,
+    GEOMETRY_MSGS$POLYGON_STAMPED,
+    NAV_MSGS$OCCUPANCY_GRID,
+    NAV_MSGS$PATH,
+    SENSOR_MSGS$POINT_CLOUD_2,
+    GEOMETRY_MSGS$POSE_STAMPED,
+    SENSOR_MSGS$LASER_SCAN,
+    TF2_MSGS$TF_MESSAGE,
+    VISUALIZATION_MSGS$MARKER,
+    VISUALIZATION_MSGS$MARKER_ARRAY,
+    VISUALIZATION_MSGS$WEBVIZ_MARKER,
+    VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+    WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
     DIAGNOSTIC_TOPIC,
   } = require("webviz-core/src/util/globalConstants");
 
@@ -105,21 +107,22 @@ export function perPanelHooks() {
 
   const SUPPORTED_MARKER_DATATYPES = {
     // generally supported datatypes
-    VISUALIZATION_MSGS_MARKER_DATATYPE,
-    VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
-    WEBVIZ_MARKER_DATATYPE,
-    WEBVIZ_MARKER_ARRAY_DATATYPE,
-    WEBVIZ_3D_ICON_ARRAY_DATATYPE,
-    POSE_STAMPED_DATATYPE,
-    POINT_CLOUD_DATATYPE,
-    SENSOR_MSGS_LASER_SCAN_DATATYPE,
-    NAV_MSGS_PATH_DATATYPE,
-    NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
-    GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
-    TF_DATATYPE,
+    VISUALIZATION_MSGS$MARKER,
+    VISUALIZATION_MSGS$MARKER_ARRAY,
+    VISUALIZATION_MSGS$WEBVIZ_MARKER,
+    VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+    WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
+    GEOMETRY_MSGS$POSE_STAMPED,
+    SENSOR_MSGS$POINT_CLOUD_2,
+    SENSOR_MSGS$LASER_SCAN,
+    NAV_MSGS$PATH,
+    NAV_MSGS$OCCUPANCY_GRID,
+    GEOMETRY_MSGS$POLYGON_STAMPED,
+    TF2_MSGS$TF_MESSAGE,
   };
 
   return {
+    Audio: { defaultTopic: null },
     DiagnosticSummary: {
       defaultConfig: {
         pinnedIds: [],
@@ -163,16 +166,16 @@ export function perPanelHooks() {
       BLACKLIST_TOPICS: [],
       topics: [],
       iconsByDatatype: {
-        [VISUALIZATION_MSGS_MARKER_DATATYPE]: HexagonIcon,
-        [VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE]: HexagonMultipleIcon,
-        [NAV_MSGS_OCCUPANCY_GRID_DATATYPE]: GridIcon,
-        [NAV_MSGS_PATH_DATATYPE]: ChartIcon,
-        [SENSOR_MSGS_LASER_SCAN_DATATYPE]: RadarIcon,
-        [GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE]: PentagonOutlineIcon,
-        [POINT_CLOUD_DATATYPE]: BlurIcon,
-        [POSE_STAMPED_DATATYPE]: RobotIcon,
-        [WEBVIZ_MARKER_DATATYPE]: HexagonIcon,
-        [WEBVIZ_MARKER_ARRAY_DATATYPE]: HexagonMultipleIcon,
+        [VISUALIZATION_MSGS$MARKER]: HexagonIcon,
+        [VISUALIZATION_MSGS$MARKER_ARRAY]: HexagonMultipleIcon,
+        [NAV_MSGS$OCCUPANCY_GRID]: GridIcon,
+        [NAV_MSGS$PATH]: ChartIcon,
+        [SENSOR_MSGS$LASER_SCAN]: RadarIcon,
+        [GEOMETRY_MSGS$POLYGON_STAMPED]: PentagonOutlineIcon,
+        [SENSOR_MSGS$POINT_CLOUD_2]: BlurIcon,
+        [GEOMETRY_MSGS$POSE_STAMPED]: RobotIcon,
+        [VISUALIZATION_MSGS$WEBVIZ_MARKER]: HexagonIcon,
+        [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: HexagonMultipleIcon,
       },
       // TODO(Audrey): remove icons config after topic group release
       icons: {},

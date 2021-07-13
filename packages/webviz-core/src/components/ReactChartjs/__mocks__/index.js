@@ -8,12 +8,14 @@
 
 import React from "react";
 
+export const DEFAULT_PROPS = {
+  zoomOptions: { mode: "xy", enabled: true, sensitivity: 3, speed: 0.1 },
+};
+
 export default class ReactChartjs extends React.PureComponent<any> {
   static onUpdate = jest.fn<any, any>();
 
-  static defaultProps = {
-    zoomOptions: {},
-  };
+  static defaultProps = DEFAULT_PROPS;
 
   componentDidUpdate() {
     ReactChartjs.onUpdate();

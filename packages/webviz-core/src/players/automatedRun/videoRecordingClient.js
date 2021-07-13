@@ -8,6 +8,7 @@
 
 import delay from "webviz-core/shared/delay";
 import signal, { type Signal } from "webviz-core/shared/signal";
+import { type VideoMetadata } from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
 
 // This is the interface between the video recording server (recordVideo.js) and
 // the client (whomever uses `videoRecordingClient`). The idea is that the server opens a webpage
@@ -20,15 +21,26 @@ import signal, { type Signal } from "webviz-core/shared/signal";
 //
 
 let screenshotResolve: ?() => void;
-let finishedMsPerFrame: ?number;
+let finishedVideoMetadata: ?VideoMetadata;
 let error: ?Error;
 let errorSignal: ?Signal<void>;
 
-export type VideoRecordingAction = {
-  action: "error" | "finish" | "screenshot",
-  error?: string,
-  msPerFrame?: number,
+export type VideoRecordingFinishAction = {
+  action: "finish",
+  metadata: VideoMetadata,
 };
+export type VideoRecordingScreenshotAction = {
+  action: "screenshot",
+};
+
+export type VideoRecordingErrorAction = {
+  action: "error",
+  error: string,
+};
+export type VideoRecordingAction =
+  | VideoRecordingFinishAction
+  | VideoRecordingScreenshotAction
+  | VideoRecordingErrorAction;
 
 window.videoRecording = {
   nextAction(): ?VideoRecordingAction {
@@ -47,8 +59,8 @@ window.videoRecording = {
       }
       return payload;
     }
-    if (finishedMsPerFrame) {
-      return { action: "finish", msPerFrame: finishedMsPerFrame };
+    if (finishedVideoMetadata) {
+      return { action: "finish", metadata: finishedVideoMetadata };
     }
     if (screenshotResolve) {
       return { action: "screenshot" };
@@ -131,9 +143,9 @@ class VideoRecordingClient {
     }): Promise<void>);
   }
 
-  finish() {
-    console.log("videoRecordingClient.finish()");
-    finishedMsPerFrame = msPerFrame;
+  finish(metadata: VideoMetadata) {
+    console.log("videoRecordingClient.finish()", finishedVideoMetadata);
+    finishedVideoMetadata = metadata;
   }
 }
 

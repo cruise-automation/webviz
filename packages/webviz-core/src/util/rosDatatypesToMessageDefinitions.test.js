@@ -10,15 +10,18 @@ import { uniqBy } from "lodash";
 
 import { basicDatatypes } from "./datatypes";
 import rosDatatypesToMessageDefinition from "./rosDatatypesToMessageDefinition";
-import { WEBVIZ_MARKER_ARRAY_DATATYPE, WEBVIZ_MARKER_DATATYPE } from "webviz-core/src/util/globalConstants";
+import {
+  VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER,
+} from "webviz-core/src/util/globalConstants";
 
 describe("rosDatatypesToMessageDefinition", () => {
   it(`Includes all of the definitions for "visualization_msgs/WebvizMarkerArray"`, () => {
-    expect(rosDatatypesToMessageDefinition(basicDatatypes, WEBVIZ_MARKER_ARRAY_DATATYPE)).toMatchSnapshot();
+    expect(rosDatatypesToMessageDefinition(basicDatatypes, VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY)).toMatchSnapshot();
   });
 
   it("produces a correct message definition", () => {
-    const definitions = rosDatatypesToMessageDefinition(basicDatatypes, WEBVIZ_MARKER_ARRAY_DATATYPE);
+    const definitions = rosDatatypesToMessageDefinition(basicDatatypes, VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY);
     // Should have 1 definition without a name, the root datatype.
     expect(definitions.filter(({ name }) => !name).length).toEqual(1);
     // Should not duplicate definitions.
@@ -27,14 +30,14 @@ describe("rosDatatypesToMessageDefinition", () => {
 
   it("Errors if it can't find the definition", () => {
     const datatypes = {
-      [WEBVIZ_MARKER_ARRAY_DATATYPE]: {
+      [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
         fields: [
           {
             isArray: true,
             isComplex: true,
             arrayLength: undefined,
             name: "markers",
-            type: WEBVIZ_MARKER_DATATYPE,
+            type: VISUALIZATION_MSGS$WEBVIZ_MARKER,
           },
           {
             isArray: false,
@@ -45,7 +48,7 @@ describe("rosDatatypesToMessageDefinition", () => {
         ],
       },
     };
-    expect(() => rosDatatypesToMessageDefinition(datatypes, WEBVIZ_MARKER_ARRAY_DATATYPE)).toThrow(
+    expect(() => rosDatatypesToMessageDefinition(datatypes, VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY)).toThrow(
       `While searching datatypes for "visualization_msgs/WebvizMarkerArray", could not find datatype "std_msgs/Header"`
     );
   });

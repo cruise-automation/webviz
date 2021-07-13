@@ -10,9 +10,9 @@ import type { MessageDefinitionsByTopic, ParsedMessageDefinitionsByTopic } from 
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { isComplex } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import {
-  FUTURE_VIZ_MSGS_DATATYPE,
-  WEBVIZ_MARKER_DATATYPE,
-  WEBVIZ_MARKER_ARRAY_DATATYPE,
+  FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER,
+  VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
 } from "webviz-core/src/util/globalConstants";
 
 // Returns the subset of allDatatypes needed to fully define datatypes.
@@ -79,26 +79,26 @@ const markerFields = [
 ];
 
 export const basicDatatypes: RosDatatypes = {
-  [FUTURE_VIZ_MSGS_DATATYPE]: {
+  [FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
     fields: [
       { type: "std_msgs/Header", name: "header", isArray: false, isComplex: true },
       {
         isArray: true,
         isComplex: true,
         name: "allMarkers",
-        type: WEBVIZ_MARKER_DATATYPE,
+        type: VISUALIZATION_MSGS$WEBVIZ_MARKER,
         arrayLength: undefined,
       },
     ],
   },
-  [WEBVIZ_MARKER_ARRAY_DATATYPE]: {
+  [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
     fields: [
       {
         isArray: true,
         isComplex: true,
         arrayLength: undefined,
         name: "markers",
-        type: WEBVIZ_MARKER_DATATYPE,
+        type: VISUALIZATION_MSGS$WEBVIZ_MARKER,
       },
       {
         isArray: false,
@@ -122,7 +122,7 @@ export const basicDatatypes: RosDatatypes = {
   "visualization_msgs/Marker": { fields: markerFields },
   // This is a special marker type that has a string instead of an int ID field and an additional JSON "metadata" field.
   // For use internally to webviz, when we need to add extra data to markers.
-  [WEBVIZ_MARKER_DATATYPE]: {
+  [VISUALIZATION_MSGS$WEBVIZ_MARKER]: {
     fields: markerFields
       .filter(({ name }) => name !== "id")
       .concat([

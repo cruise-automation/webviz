@@ -26,12 +26,12 @@ type Props = {
   onChange: (topic: string) => void,
   topicToRender: string,
   topics: $ReadOnlyArray<Topic>,
-  // Use either one of these:
+  // Use either one of these (or neither, to expose all topics):
   // singleTopicDatatype only supports a single datatype (search and select based on datatype)
   // topicsGroups selects the "parent" path of a group of topics (if either of the group topics suffixes+datatypes match)
   singleTopicDatatype?: string,
   topicsGroups?: TopicGroup[],
-  defaultTopicToRender: string,
+  defaultTopicToRender: ?string,
 };
 
 const SDiv = styled.div`
@@ -67,9 +67,6 @@ export default function TopicToRenderMenu({
   if (topicsGroups && singleTopicDatatype) {
     throw new Error("Cannot set both topicsGroups and singleTopicDatatype");
   }
-  if (!topicsGroups && !singleTopicDatatype) {
-    throw new Error("Must set either topicsGroups or singleTopicDatatype");
-  }
   const availableTopics: string[] = [];
   for (const topic of topics) {
     if (topicsGroups) {
@@ -79,14 +76,15 @@ export default function TopicToRenderMenu({
           availableTopics.push(parentTopic);
         }
       }
-    } else {
-      if (topic.datatype === singleTopicDatatype) {
-        availableTopics.push(topic.name);
-      }
+    } else if (singleTopicDatatype == null || topic.datatype === singleTopicDatatype) {
+      availableTopics.push(topic.name);
     }
   }
   // Keeps only the first occurrence of each topic.
-  const renderTopics: string[] = uniq([defaultTopicToRender, ...availableTopics, topicToRender]);
+  // $FlowFixMe: Flow only understands .filter(Boolean), but we want to keep empty strings.
+  const renderTopics: string[] = uniq(
+    [defaultTopicToRender, ...availableTopics, topicToRender].filter((t) => t != null)
+  );
   const parentTopicSpan = (topic: string, available: boolean) => {
     const topicDiv = topic ? topic : <span style={{ fontStyle: "italic" }}>Default</span>;
     return (
@@ -97,16 +95,17 @@ export default function TopicToRenderMenu({
     );
   };
 
+  const tooltip = topicsGroups
+    ? `Parent topics selected by topic suffixes:\n ${topicsGroups.map((group) => group.suffix).join("\n")}`
+    : singleTopicDatatype != null
+    ? `Topics selected by datatype: ${singleTopicDatatype}`
+    : "Select topic:";
   return (
     <Dropdown
       toggleComponent={
         <Icon
           fade
-          tooltip={
-            topicsGroups
-              ? `Parent topics selected by topic suffixes:\n ${topicsGroups.map((group) => group.suffix).join("\n")}`
-              : `Topics selected by datatype: ${singleTopicDatatype || ""}` // add || "" is to fix flow here
-          }
+          tooltip={tooltip}
           tooltipProps={{ placement: "top" }}
           style={{ color: topicToRender === defaultTopicToRender ? colors.LIGHT1 : colors.ORANGE }}
           dataTest={"topic-set"}>

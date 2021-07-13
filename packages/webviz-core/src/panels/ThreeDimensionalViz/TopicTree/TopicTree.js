@@ -47,7 +47,10 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 const CONTAINER_SPACING = 15;
 const DEFAULT_WIDTH = 360;
 const DEFAULT_XS_WIDTH = 240;
+// Computed height--not actually set to the search bar component.
 const SEARCH_BAR_HEIGHT = 40;
+// Computed height--not actually set to diff mode.
+const DIFF_MODE_HEIGHT = 42;
 const SWITCHER_ICON_SIZE = 20;
 export const TREE_SPACING = 8;
 const MAX_CONTAINER_WIDTH_RATIO = 0.9;
@@ -227,6 +230,7 @@ type Props = {|
 
 type BaseProps = {|
   ...SharedProps,
+  showDiffMode: boolean,
   treeWidth: number,
   treeHeight: number,
 |};
@@ -254,6 +258,7 @@ function TopicTree({
   setShowTopicTree,
   shouldExpandAllKeys,
   showTopicTree,
+  showDiffMode,
   topicDisplayMode,
   treeHeight,
   treeWidth,
@@ -342,7 +347,7 @@ function TopicTree({
           </Icon>
         )}
       </STopicTreeHeader>
-      {hasFeatureColumn && <DiffModeSettings enabled={diffModeEnabled} saveConfig={saveConfig} />}
+      {showDiffMode && <DiffModeSettings enabled={diffModeEnabled} saveConfig={saveConfig} />}
       <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
         {showNoMatchesState ? (
           <SNoMatches>
@@ -401,7 +406,14 @@ function TopicTree({
 }
 
 // A wrapper that can be resized horizontally, and it dynamically calculates the width of the base topic tree component.
-function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopicTree, ...rest }: Props) {
+function TopicTreeWrapper({
+  containerWidth,
+  containerHeight,
+  pinTopics,
+  showTopicTree,
+  hasFeatureColumn,
+  ...rest
+}: Props) {
   const defaultTreeWidth = clamp(containerWidth, DEFAULT_XS_WIDTH, DEFAULT_WIDTH);
   const renderTopicTree = pinTopics || showTopicTree;
   const { sceneErrorsByKey, saveConfig, setShowTopicTree, isPlaying } = rest;
@@ -414,6 +426,12 @@ function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopi
     to: { opacity: renderTopicTree ? 1 : 0, transformX: renderTopicTree ? 0 : -20 },
     config: { tension: 340, friction: 26, clamp: true },
   });
+
+  const showDiffMode = hasFeatureColumn;
+  // TODO(troy): Remove hardcoded heights. We could use the <Dimension />
+  // component on top of the topic tree for a cleaner result.
+  const treeHeightRaw = containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2;
+  const treeHeight = showDiffMode ? treeHeightRaw - DIFF_MODE_HEIGHT : treeHeightRaw;
 
   return (
     <STopicTreeWrapper style={{ height: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
@@ -450,7 +468,9 @@ function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopi
                   pinTopics={pinTopics}
                   showTopicTree={showTopicTree}
                   treeWidth={width}
-                  treeHeight={containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2}
+                  treeHeight={treeHeight}
+                  showDiffMode={showDiffMode}
+                  hasFeatureColumn={hasFeatureColumn}
                 />
               )}
             </STopicTree>

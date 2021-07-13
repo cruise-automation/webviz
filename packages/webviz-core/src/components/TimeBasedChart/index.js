@@ -23,11 +23,16 @@ import {
   useForceRerenderOnVisibilityChange,
 } from "./utils";
 import Button from "webviz-core/src/components/Button";
+import GLChart from "webviz-core/src/components/GLChart";
 import HoverBar, { getChartTopAndHeight, SBar } from "webviz-core/src/components/HoverBar";
 import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
 import KeyListener from "webviz-core/src/components/KeyListener";
-import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
-import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
+import ReactChartjs, {
+  type HoveredElement,
+  type ChartCallbacks,
+  type ScaleOptions,
+  DEFAULT_PROPS,
+} from "webviz-core/src/components/ReactChartjs";
 import {
   getChartValue,
   inBounds,
@@ -123,6 +128,7 @@ type Props = {|
   scaleOptions?: ?ScaleOptions,
   currentTime?: ?number,
   defaultView?: ChartDefaultView,
+  renderPath?: "webgl" | "chartjs",
 |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
@@ -131,7 +137,7 @@ type Props = {|
 // standard tooltips.
 export default memo<Props>(function TimeBasedChart(props: Props) {
   const { data, defaultView, currentTime, linesToHide, isSynced } = props;
-  const chartComponent = useRef<?ChartComponent>(null);
+  const chartCallbacks = React.useRef<?ChartCallbacks>(null);
   const tooltip = useRef<?HTMLDivElement>(null);
   const hasUnmounted = useRef<boolean>(false);
 
@@ -141,16 +147,6 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const [followPlaybackState, setFollowPlaybackState] = useState<?FollowPlaybackState>(null);
 
   useForceRerenderOnVisibilityChange();
-
-  const { pauseFrame } = useMessagePipeline(
-    useCallback((messagePipeline) => ({ pauseFrame: messagePipeline.pauseFrame }), [])
-  );
-  const onChartUpdate = useCallback(() => {
-    const resumeFrame = pauseFrame("TimeBasedChart");
-    return () => {
-      resumeFrame();
-    };
-  }, [pauseFrame]);
 
   const { saveCurrentView, yAxes } = props;
   const forceUpdate = useForceUpdate();
@@ -221,8 +217,8 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   }, []);
 
   const onResetZoom = useCallback(() => {
-    if (chartComponent.current) {
-      chartComponent.current.resetZoom();
+    if (chartCallbacks.current) {
+      chartCallbacks.current.resetZoom();
       setHasUserPannedOrZoomed(false);
     }
     setFollowPlaybackState(null);
@@ -282,11 +278,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const tooltips = props.tooltips || [];
   // We use a custom tooltip so we can style it more nicely, and so that it can break
   // out of the bounds of the canvas, in case the panel is small.
-  const updateTooltip = useCallback((
-    currentChartComponent: ChartComponent,
-    canvas: HTMLCanvasElement,
-    tooltipItem: ?HoveredElement
-  ) => {
+  const updateTooltip = useCallback((canvas: HTMLCanvasElement, tooltipItem: ?HoveredElement) => {
     // This is an async callback, so it can fire after this component is unmounted. Make sure that we remove the
     // tooltip if this fires after unmount.
     if (!tooltipItem || hasUnmounted.current) {
@@ -339,13 +331,12 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   }, [hoverComponentId, setHoverValue, xAxisIsPlaybackTime]);
 
   const onMouseMove = useCallback(async (event: MouseEvent) => {
-    const currentChartComponent = chartComponent.current;
-    if (!currentChartComponent || !currentChartComponent.canvas) {
+    const canvas = chartCallbacks.current && chartCallbacks.current.canvasRef.current;
+    if (!canvas) {
       removeTooltip();
       clearGlobalHoverTime();
       return;
     }
-    const { canvas } = currentChartComponent;
     const canvasRect = canvas.getBoundingClientRect();
     const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
     const yBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "yAxes");
@@ -365,9 +356,9 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       clearGlobalHoverTime();
     }
 
-    if (tooltips && tooltips.length) {
-      const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
-      updateTooltip(currentChartComponent, canvas, tooltipElement);
+    if (tooltips && tooltips.length && chartCallbacks.current) {
+      const tooltipElement = await chartCallbacks.current.getElementAtXAxis(event);
+      updateTooltip(canvas, tooltipElement);
     } else {
       removeTooltip();
     }
@@ -533,7 +524,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   const zoomOptions = useMemo(
     () => ({
-      ...ChartComponent.defaultProps.zoomOptions,
+      ...DEFAULT_PROPS.zoomOptions,
       enabled: props.zoom,
       mode: zoomMode,
     }),
@@ -542,6 +533,8 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   const currentTimePx: ?number = currentTime != null ? getChartPx(xBounds, currentTime) : undefined;
   const chartTopAndHeight = getChartTopAndHeight(scaleBounds.current);
+
+  const ChartComponent = props.renderPath === "webgl" ? GLChart : ReactChartjs;
 
   return (
     <div style={{ display: "flex", width: "100%" }}>
@@ -564,15 +557,15 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
             width={width}
             height={height}
             key={`${width}x${height}`}
-            ref={chartComponent}
             data={filteredData}
             onScaleBoundsUpdate={onScaleBoundsUpdate}
             onPanZoom={onPanZoom}
             onClick={onClickAddingValues}
             zoomOptions={zoomOptions}
             scaleOptions={scaleOptions}
-            onChartUpdate={onChartUpdate}
             options={chartJsOptions}
+            panOptions={DEFAULT_PROPS.panOptions}
+            callbacksRef={chartCallbacks}
           />
 
           {hasUserPannedOrZoomed && (

@@ -1132,9 +1132,9 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/Grid.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Checkbox.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Publish/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticSummary.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Checkbox.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/Audio/AudioToolbar.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Publish/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticSummary.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/CopyText.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/Metadata.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/CopyText.js (referenced with cjs require), ./packages/webviz-core/src/panels/Audio/AudioPlayer.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/Metadata.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require), ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require) */
 
@@ -1147,6 +1147,10 @@ object-assign
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/RawMessagesIcons.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatus.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Audio/AudioToolbar.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Audio/VolumeControl.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/GlobalVariableDropdown/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/Plot/PlotLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js (referenced with cjs require) */
 
@@ -2715,6 +2719,10 @@ object-assign
   \*********************************************************************/
 
 /*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/download.svg ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/video-3d.svg ***!
   \*********************************************************************/
 
@@ -2975,6 +2983,14 @@ object-assign
   \***********************************************************************/
 
 /*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/volume-low.svg ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/audiobuffer-to-wav/index.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/atelier-heath.js ***!
   \***********************************************************************/
 
@@ -3048,6 +3064,10 @@ object-assign
 
 /*!************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/lead-pencil.svg ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/volume-high.svg ***!
   \************************************************************************/
 
 /*!************************************************************************!*\

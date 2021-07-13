@@ -966,7 +966,9 @@ and limitations under the License.
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Transforms */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder */
+/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/World */
 
@@ -997,8 +999,6 @@ and limitations under the License.
 /*! webviz-core/src/panels/ThreeDimensionalViz/utils/diffModeUtils */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js */
 
@@ -2928,10 +2928,6 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/dataProviders/MemoryCacheDataProvider.js ***!
   \***************************************************************************/
 
-/*!***************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms.js ***!
-  \***************************************************************************/
-
 /*!****************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_isStrictComparable.js ***!
   \****************************************************************************/
@@ -3052,16 +3048,20 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/types.js ***!
   \*********************************************************************************/
 
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/index.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils.js ***!
+  \*********************************************************************************/
+
 /*!**********************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/memoize-one/dist/memoize-one.esm.js ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
-  \**********************************************************************************/
-
-/*!**********************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder.js ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -3130,10 +3130,6 @@ and limitations under the License.
 
 /*!**************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils.js ***!
-  \**************************************************************************************/
-
-/*!**************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils.js ***!
   \**************************************************************************************/
 
 /*!***************************************************************************************!*\
@@ -3206,6 +3202,10 @@ and limitations under the License.
 
 /*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/DebugStatsOverlay.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder.js ***!
   \*********************************************************************************************/
 
 /*!*********************************************************************************************!*\

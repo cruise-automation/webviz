@@ -40,6 +40,8 @@ object-assign
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/dist/cjs.js??ref--16!./index.module.scss */
 
+/*! !../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../node_modules/postcss-loader/src??postcss!./styles.css */
+
 /*! !../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../node_modules/postcss-loader/src??postcss!../../../../node_modules/sass-loader/dist/cjs.js??ref--16!./Confirm.module.scss */
 
 /*! !../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../node_modules/postcss-loader/src??postcss!../../../../node_modules/sass-loader/dist/cjs.js??ref--16!./Flex.module.scss */
@@ -338,6 +340,10 @@ and limitations under the License.
 
 /*! ./DndContext */
 
+/*! ./Draggable */
+
+/*! ./DraggableCore */
+
 /*! ./ErrorBoundary */
 
 /*! ./ExpandButton */
@@ -413,6 +419,8 @@ and limitations under the License.
 /*! ./ReplaceButton */
 
 /*! ./RequireObjectCoercible */
+
+/*! ./Resizable */
 
 /*! ./Root.module.scss */
 
@@ -956,6 +964,10 @@ and limitations under the License.
 
 /*! ./build/ReactDocumentEvents.js */
 
+/*! ./build/Resizable */
+
+/*! ./build/ResizableBox */
+
 /*! ./buttons/ExpandButton */
 
 /*! ./buttons/MosaicButton */
@@ -1036,6 +1048,8 @@ and limitations under the License.
 
 /*! ./des/utils */
 
+/*! ./domFns */
+
 /*! ./ecb */
 
 /*! ./edwards */
@@ -1077,6 +1091,8 @@ and limitations under the License.
 /*! ./get-indentation */
 
 /*! ./getNewConnection */
+
+/*! ./getPrefix */
 
 /*! ./ghash */
 
@@ -1264,6 +1280,8 @@ and limitations under the License.
 
 /*! ./privateDecrypt */
 
+/*! ./propTypes */
+
 /*! ./property */
 
 /*! ./publicEncrypt */
@@ -1313,6 +1331,8 @@ and limitations under the License.
 /*! ./shams */
 
 /*! ./shim */
+
+/*! ./shims */
 
 /*! ./short */
 
@@ -1430,6 +1450,14 @@ and limitations under the License.
 
 /*! ./utils */
 
+/*! ./utils/domFns */
+
+/*! ./utils/log */
+
+/*! ./utils/positionFns */
+
+/*! ./utils/shims */
+
 /*! ./v1 */
 
 /*! ./v4 */
@@ -1526,6 +1554,8 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/radiobox-marked.svg */
 
+/*! @mdi/svg/svg/resize-bottom-right.svg */
+
 /*! @mdi/svg/svg/script-text-outline.svg */
 
 /*! @mdi/svg/svg/skip-next-outline.svg */
@@ -1568,21 +1598,17 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/@cruise-automation/tooltip/node_modules/warning/browser.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router/esm/react-router.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router/esm/react-router.js */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/inheritsLoose.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/asap/dist/esm/browser/raw.js (<- Module uses injected variables (global)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-touch-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/index.js */
 
@@ -1600,7 +1626,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1628,7 +1654,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd-preview/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js (<- Module uses injected variables (global)) */
 
@@ -1704,7 +1730,11 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Audio/AudioToolbar.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Radio.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Resizable.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Root.js (referenced with cjs require) */
 
@@ -2259,6 +2289,8 @@ and limitations under the License.
 
 /*! react-dom */
 
+/*! react-draggable */
+
 /*! react-hot-loader/root */
 
 /*! react-is */
@@ -2272,6 +2304,10 @@ and limitations under the License.
 /*! react-popper */
 
 /*! react-redux */
+
+/*! react-resizable */
+
+/*! react-resizable/css/styles.css */
 
 /*! react-router */
 
@@ -2524,6 +2560,8 @@ and limitations under the License.
 /*! webviz-core/src/components/Radio */
 
 /*! webviz-core/src/components/ReactChartjs/zoomAndPanHelpers */
+
+/*! webviz-core/src/components/Resizable */
 
 /*! webviz-core/src/components/Root */
 
@@ -4056,6 +4094,10 @@ and limitations under the License.
   \**********************************************************/
 
 /*!**********************************************************!*\
+  !*** ./packages/webviz-core/src/components/Resizable.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
   !*** ./packages/webviz-core/src/store/configureStore.js ***!
   \**********************************************************/
 
@@ -5424,6 +5466,10 @@ and limitations under the License.
   \********************************************************************/
 
 /*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/index.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/rosbag/dist/web/index.js ***!
   \********************************************************************/
 
@@ -5876,6 +5922,14 @@ and limitations under the License.
   \**************************************************************************/
 
 /*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/build/utils.js ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/css/styles.css ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/remark-parse/lib/locate/tag.js ***!
   \**************************************************************************/
 
@@ -6104,6 +6158,14 @@ and limitations under the License.
   \******************************************************************************/
 
 /*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/build/Resizable.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/build/propTypes.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/remark-parse/lib/tokenize/break.js ***!
   \******************************************************************************/
 
@@ -6232,6 +6294,10 @@ and limitations under the License.
   \********************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/resize-bottom-right.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/script-text-outline.svg ***!
   \********************************************************************************/
 
@@ -6301,6 +6367,10 @@ and limitations under the License.
 
 /*!*********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-markdown/lib/wrap-table-rows.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/build/ResizableBox.js ***!
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\
@@ -7231,6 +7301,10 @@ and limitations under the License.
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/es6.string.iterator.js ***!
   \*********************************************************************************************************/
 
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/cjs.js ***!
+  \*********************************************************************************************************/
+
 /*!**********************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/core-js/object/define-property.js ***!
   \**********************************************************************************************************/
@@ -7295,6 +7369,14 @@ and limitations under the License.
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/es7.symbol.async-iterator.js ***!
   \***************************************************************************************************************/
 
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/Draggable.js ***!
+  \***************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/utils/log.js ***!
+  \***************************************************************************************************************/
+
 /*!****************************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/es6.object.define-property.js ***!
   \****************************************************************************************************************/
@@ -7323,6 +7405,14 @@ and limitations under the License.
   !*** ./packages/webviz-core/node_modules/react-dnd-preview/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
   \*****************************************************************************************************************/
 
+/*!*****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/utils/shims.js ***!
+  \*****************************************************************************************************************/
+
+/*!******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/utils/domFns.js ***!
+  \******************************************************************************************************************/
+
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors.js ***!
   \*******************************************************************************************************************/
@@ -7331,12 +7421,20 @@ and limitations under the License.
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js ***!
   \*******************************************************************************************************************/
 
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/DraggableCore.js ***!
+  \*******************************************************************************************************************/
+
 /*!********************************************************************************************************************!*\
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables.js ***!
   \********************************************************************************************************************/
 
 /*!*********************************************************************************************************************!*\
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects.js ***!
+  \*********************************************************************************************************************/
+
+/*!*********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/utils/getPrefix.js ***!
   \*********************************************************************************************************************/
 
 /*!**********************************************************************************************************************!*\
@@ -7349,6 +7447,10 @@ and limitations under the License.
 
 /*!***********************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-1!./packages/webviz-core/node_modules/rc-color-picker/assets/index.css ***!
+  \***********************************************************************************************************************/
+
+/*!***********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-resizable/node_modules/react-draggable/build/cjs/utils/positionFns.js ***!
   \***********************************************************************************************************************/
 
 /*!**************************************************************************************************************************!*\
@@ -7374,6 +7476,10 @@ and limitations under the License.
 /*!*********************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js ***!
   \*********************************************************************************************************************************/
+
+/*!****************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/react-resizable/css/styles.css ***!
+  \****************************************************************************************************************************************************************/
 
 /*!***********************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/react-mosaic-component/react-mosaic-component.css ***!

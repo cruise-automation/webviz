@@ -133,11 +133,11 @@ export function applyPatchToLayout(patch: ?string, layout: PanelsState): PanelsS
     sendNotification(
       "Failed to apply patch on top of the layout.",
       `Ignoring the patch "${patch}".\n\n${e}`,
-      "user",
-      "warn"
+      "app",
+      "error"
     );
-    return layout;
   }
+  return layout;
 }
 
 export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {

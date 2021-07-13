@@ -40,6 +40,19 @@ type Orientation = {|
   w(): number,
 |};
 
+export type BinaryTransformStamped = $ReadOnly<{|
+  header(): BinaryHeader,
+  child_frame_id(): string,
+  transform(): $ReadOnly<{|
+    rotation(): Orientation,
+    translation(): BinaryPoint,
+  |}>,
+|}>;
+
+export type BinaryTfMessage = $ReadOnly<{|
+  transforms(): ArrayView<BinaryTransformStamped>,
+|}>;
+
 export type BinaryPose = $ReadOnly<{|
   position(): BinaryPoint,
   orientation(): Orientation,

@@ -12,6 +12,7 @@ import { Overlay } from "regl-worldview";
 
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import type { OverlayIconMarker } from "webviz-core/src/types/Messages";
+import { emptyPose } from "webviz-core/src/util/Pose";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 export const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
@@ -96,21 +97,26 @@ export const projectItem = ({
 const OverlayProjector = (props: Props) => {
   const { children, setOverlayIcons } = props;
   const renderItems = [];
+  // We call setOverlayIcons after the last child has been processed. If there are no children, we
+  // still want to delay calling setOverlayIcons until regl renders, so add a dummy child.
+  const nonEmptyChildren = children.length === 0 ? [{ pose: emptyPose(), dummy: true }] : children;
   return (
     <Overlay
       renderItem={({ item, index, coordinates, dimension }) => {
         if (index === 0) {
           renderItems.length = 0;
         }
-        renderItems.push(projectItem({ item, coordinates, dimension }));
-        if (index === children.length - 1) {
+        if (!("dummy" in item)) {
+          renderItems.push(projectItem({ item, coordinates, dimension }));
+        }
+        if (index === nonEmptyChildren.length - 1) {
           // Set icons even if there aren't any, so the main thread knows when the last ones have
           // disappeared.
           setOverlayIcons({ renderItems: renderItems.filter(Boolean), sceneBuilderDrawables: children });
         }
         return null;
       }}>
-      {children}
+      {nonEmptyChildren}
     </Overlay>
   );
 };

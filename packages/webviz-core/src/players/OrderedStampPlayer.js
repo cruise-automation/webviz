@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { partition, uniq } from "lodash";
-import microMemoize from "micro-memoize";
 import { type Time, TimeUtil } from "rosbag";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
@@ -20,7 +19,6 @@ import {
   type Player,
   type PlayerState,
   type PlayerWarnings,
-  type Topic,
 } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import type { BinaryStampedMessage } from "webviz-core/src/types/BinaryMessages";
@@ -38,13 +36,6 @@ import {
 // play near the ends of bags), we assume messages' headers are always between 0s and 1s earlier
 // than their receive times.
 export const BUFFER_DURATION_SECS = 1.0;
-
-const getTopicsWithHeaer = microMemoize((topics: Topic[], datatypes) => {
-  return topics.filter(({ datatype }) => {
-    const fields = datatypes[datatype]?.fields;
-    return fields && fields.find((field) => field.type === "std_msgs/Header");
-  });
-});
 
 export default class OrderedStampPlayer implements Player {
   _player: UserNodePlayer;
@@ -137,12 +128,10 @@ export default class OrderedStampPlayer implements Player {
       });
       const currentTime = clampTime(thresholdTime, activeData.startTime, activeData.endTime);
       this._currentTime = currentTime;
-      const topicsWithHeader = getTopicsWithHeaer(activeData.topics, activeData.datatypes);
       return listener({
         ...state,
         activeData: {
           ...activeData,
-          topics: topicsWithHeader,
           messages,
           bobjects,
           messageOrder: "headerStamp",

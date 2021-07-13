@@ -9,7 +9,7 @@
 import { mat4 } from "gl-matrix";
 
 import { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import { getArrowToParentMarkers } from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
+import { getArrowToParentMarkers } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder";
 
 describe("TransformBuilder", () => {
   describe("getArrowToParentMarkers", () => {

@@ -88,6 +88,7 @@ export type UseTreeInput = {|
   settingsByKey: { [topicOrNamespaceKey: string]: any },
   topicTreeConfig: TopicTreeConfig, // Never changes!
   uncategorizedGroupName: string,
+  staticallyAvailableNamespacesByTopic: NamespacesByTopic,
 |};
 
 export type GetIsTreeNodeVisibleInScene = (topicNode: TreeNode, columnIndex: number, namespaceKey?: string) => boolean;

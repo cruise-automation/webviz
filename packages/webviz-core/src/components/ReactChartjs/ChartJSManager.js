@@ -39,14 +39,34 @@ function hideAllTicksScaleCallback() {
   return "";
 }
 
+// exported for tests
+export function printShortNumber(value: number) {
+  if (value === 0) {
+    return "0";
+  }
+  if (Math.abs(value) >= 100000 || Math.abs(value) < 0.00001) {
+    // Force scientific notation for large and small numbers. Don't allow too many significant
+    // figures.
+    return Number.parseFloat(value.toPrecision(3))
+      .toExponential()
+      .replace("+", ""); // The "+" in "1.0e+10" just takes up space.
+  }
+  // Truncate the decimal representation based on the length of the whole-number part.
+  // For implementation simplicity don't count an extra digit for a leading "-".
+  const truncatedLength = Math.trunc(Math.abs(value)).toString().length;
+  // Values with length more than 6 will be in scientific notation, but clamp to zero just to be
+  // safe.
+  const decimalDigits = Math.max(0, 6 - truncatedLength);
+  return `${Math.round(value * 10 ** decimalDigits) / 10 ** decimalDigits}`;
+}
+
 function hideFirstAndLastTicksScaleCallback(value: number, index: number, values: number[]) {
   if (index === 0 || index === values.length - 1) {
     // First and last labels sometimes get super long rounding errors when zooming.
     // This fixes that.
     return "";
   }
-  // Also round the scale value.
-  return `${Math.round(value * 1000) / 1000}`;
+  return printShortNumber(value);
 }
 
 function displayTicksInSecondsCallback(value: number) {

@@ -129,12 +129,12 @@ function getCombinedDataProvider(data: any[]) {
 
 describe("CombinedDataProvider", () => {
   describe("error handling", () => {
-    it("throws if two providers have the same topics without a prefix", async () => {
+    it("does not throw if two providers have the same topics without a prefix", async () => {
       const combinedProvider = getCombinedDataProvider([{ provider: provider1() }, { provider: provider1Duplicate() }]);
-      await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
+      await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
     });
 
-    it("should not allow duplicate topics", async () => {
+    it("allows duplicate topics", async () => {
       const p1 = new MemoryDataProvider({
         messages: {
           parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
@@ -147,7 +147,9 @@ describe("CombinedDataProvider", () => {
       });
       const p2 = new MemoryDataProvider({
         messages: {
-          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          parsedMessages: [
+            { topic: "/generic_topic/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+          ],
           bobjects: undefined,
           rosBinaryMessages: undefined,
         },
@@ -156,7 +158,17 @@ describe("CombinedDataProvider", () => {
         providesParsedMessages: true,
       });
       const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/generic_topic" }, { provider: p2 }]);
-      await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
+      await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+      // Merges messages on the same topic from child providers.
+      const data = await combinedProvider.getMessages(
+        { sec: 100, nsec: 0 },
+        { sec: 102, nsec: 0 },
+        { parsedMessages: ["/generic_topic/some_topic"] }
+      );
+      expect(data.parsedMessages).toEqual([
+        { topic: "/generic_topic/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+        { topic: "/generic_topic/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+      ]);
     });
 
     it("should not allow conflicting datatypes", async () => {
@@ -203,7 +215,7 @@ describe("CombinedDataProvider", () => {
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
     });
 
-    it("should not allow overlapping topics in messageDefinitionsByTopic", async () => {
+    it("allows overlapping topics in messageDefinitionsByTopic", async () => {
       const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
       const p1 = new MemoryDataProvider({
         messages: {
@@ -229,9 +241,7 @@ describe("CombinedDataProvider", () => {
         providesParsedMessages: true,
       });
       const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }]);
-      await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow(
-        "Duplicate topic found"
-      );
+      await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
     });
 
     it("should not mixed parsed and unparsed messaages", async () => {

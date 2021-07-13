@@ -17,7 +17,7 @@ const rmfr = require("rmfr");
 const util = require("util");
 
 require("@babel/register")();
-const recordVideo = require("../shared/recordVideo").default;
+const { recordVideoAsBuffer } = require("../shared/recordVideo");
 
 const exec = util.promisify(child_process.exec);
 
@@ -91,7 +91,7 @@ async function main() {
     })();
 
   console.log("Recording video...");
-  const { mediaFile: video } = await recordVideo({
+  const { mediaBuffer } = await recordVideoAsBuffer({
     duration,
     speed,
     frameless,
@@ -99,6 +99,7 @@ async function main() {
     parallel,
     bagPath: bag,
     experimentalFeaturesSettings,
+    errorIsWhitelisted: () => true, // Ignore errors for local recordings
     url,
     crop,
     dimensions: width && height ? { width, height } : undefined,
@@ -109,7 +110,7 @@ async function main() {
   console.log("Saving video...");
   if (program.mp3) {
     const tmpVideoFile = `${__dirname}/tmp-video.mp4`;
-    fs.writeFileSync(tmpVideoFile, video);
+    fs.writeFileSync(tmpVideoFile, mediaBuffer);
 
     await exec(`ffmpeg -y -i tmp-video.mp4 -i ${program.mp3} -vcodec copy -b:a 320k -shortest ${program.out}`, {
       cwd: __dirname,
@@ -117,7 +118,7 @@ async function main() {
 
     await rmfr(tmpVideoFile);
   } else {
-    fs.writeFileSync(program.out, video);
+    fs.writeFileSync(program.out, mediaBuffer);
   }
 
   console.log("Done!");

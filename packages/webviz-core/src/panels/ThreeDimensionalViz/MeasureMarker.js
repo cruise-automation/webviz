@@ -7,44 +7,51 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import { Lines, Spheres, type Point } from "regl-worldview";
+import { Lines, Spheres, WorldviewReactContext, type Point } from "regl-worldview";
 
 export type MeasurePoints = {|
   start: ?Point,
   end: ?Point,
 |};
 
-type Props = {
+type Props = {|
   measurePoints: MeasurePoints,
-};
+  cameraDistance: number,
+|};
 
-const sphereSize: number = 0.3;
-const lineSize: number = 0.1;
+const SPHERE_SIZE_PX = 13;
 
+const defaultPose: any = Object.freeze({ orientation: { x: 0, y: 0, z: 0, w: 1 } });
 const defaultSphere: any = Object.freeze({
   type: 2,
   action: 0,
-  scale: { x: sphereSize, y: sphereSize, z: 0.1 },
-  color: { r: 1, g: 0.2, b: 0, a: 1 },
+  color: { r: 1, g: 0.2, b: 0, a: 0.75 },
 });
-const defaultPose: any = Object.freeze({ orientation: { x: 0, y: 0, z: 0, w: 1 } });
 
-export default function MeasureMarker({ measurePoints: { start, end } }: Props) {
+export default function MeasureMarker({ measurePoints: { start, end }, cameraDistance }: Props) {
+  const { dimension } = React.useContext(WorldviewReactContext);
+  const sphere = React.useMemo(() => {
+    const size = (cameraDistance / dimension.height) * SPHERE_SIZE_PX;
+    return {
+      ...defaultSphere,
+      scale: { x: size, y: size, z: 0.1 },
+    };
+  }, [cameraDistance, dimension]);
+  const lineSize: number = sphere.scale.x / 3;
+
   const spheres = [];
   const lines = [];
   if (start) {
-    const startPoint = { ...start };
-
     spheres.push({
-      ...defaultSphere,
+      ...sphere,
       id: "_measure_start",
-      pose: { position: startPoint, ...defaultPose },
+      pose: { position: start, ...defaultPose },
     });
 
     if (end) {
       const endPoint = { ...end };
       lines.push({
-        ...defaultSphere,
+        ...sphere,
         id: "_measure_line",
         points: [start, end],
         pose: { ...defaultPose, position: { x: 0, y: 0, z: 0 } },
@@ -53,7 +60,7 @@ export default function MeasureMarker({ measurePoints: { start, end } }: Props) 
       });
 
       spheres.push({
-        ...defaultSphere,
+        ...sphere,
         id: "_measure_end",
         pose: { position: endPoint, ...defaultPose },
       });

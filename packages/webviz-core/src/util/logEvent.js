@@ -122,7 +122,7 @@ function getQuery() {
   return location.search;
 }
 
-type LogData = { +[string]: string | number | boolean | typeof undefined | null };
+type LogData = { +[string]: string | number | boolean | typeof undefined | null | LogData };
 
 export function logEventAction(uniqueActionInfo: EventInfo, logData?: LogData) {
   if (isLogEventDisabled) {

@@ -181,6 +181,7 @@ function World(
   const offscreenProps = canvas ? { canvas, width: canvas.width, height: canvas.height, top: 0, left: 0 } : {};
 
   const { overlayIcon } = processedMarkersByType;
+  const cameraDistance = cameraState.distance || DEFAULT_CAMERA_STATE.distance;
 
   return (
     <WorldviewImpl
@@ -210,7 +211,7 @@ function World(
           layerIndex: LAYER_INDEX_DEFAULT_BASE,
           clearCachedMarkers: false,
           isDemoMode,
-          cameraDistance: cameraState.distance || DEFAULT_CAMERA_STATE.distance,
+          cameraDistance,
           diffModeEnabled,
           hooks,
           onIconClick,
@@ -218,7 +219,7 @@ function World(
       />
       {!!canvas && <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>}
       {!cameraState.perspective && showCrosshair && <Crosshair cameraState={cameraState} hooks={hooks} />}
-      <MeasureMarker measurePoints={measurePoints} />
+      <MeasureMarker measurePoints={measurePoints} cameraDistance={cameraDistance} />
     </WorldviewImpl>
   );
 }

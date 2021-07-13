@@ -12,7 +12,7 @@ import type { TF } from "webviz-core/src/types/Messages";
 import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
-const makeTransformElement = (tf: TF) => ({
+export const makeTransformElement = (tf: TF) => ({
   childFrame: tf.child_frame_id,
   parentFrame: tf.header.frame_id,
   pose: { position: tf.transform.translation, orientation: tf.transform.rotation },

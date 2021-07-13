@@ -39,6 +39,7 @@ import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import Tooltip from "webviz-core/src/components/Tooltip";
+import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import { useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
 import { ColumnDropdown, ConditionaFormatsInput } from "webviz-core/src/panels/Table/TableSettings";
 import type {
@@ -886,6 +887,7 @@ function TablePanel({ config, saveConfig }: Props) {
   }, [saveConfig]);
 
   const { topics, datatypes } = useDataSourceInfo();
+
   const topicRosPath: ?RosPath = React.useMemo(() => parseRosPath(topicPath), [topicPath]);
   const topic: ?Topic = React.useMemo(
     () => topicRosPath && topics.find(({ name }) => name === topicRosPath.topicName),
@@ -940,7 +942,22 @@ function TablePanel({ config, saveConfig }: Props) {
     <ConfigContext.Provider value={config}>
       <Flex col clip style={{ position: "relative" }}>
         <Flex col style={{ flexGrow: "unset" }}>
-          <PanelToolbar helpContent={helpContent}>
+          <PanelToolbar
+            helpContent={helpContent}
+            additionalIcons={
+              <TopicToRenderMenu
+                topicToRender={topicName}
+                onChange={(_topic) => {
+                  // Maintain the path syntax so switching between base and feature topics is easy for users
+                  const path = topicPath.match(/\.(.+)/);
+                  const newTopicPath = path && path[1] ? `${_topic}.${path[1]}` : _topic;
+                  saveConfig({ topicPath: newTopicPath });
+                }}
+                topics={topics}
+                singleTopicDatatype={topic?.datatype}
+                defaultTopicToRender={""}
+              />
+            }>
             <Flex row style={{ width: "100%", lineHeight: "20px", marginLeft: "16px" }}>
               <MessagePathInput
                 index={0}

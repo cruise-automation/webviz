@@ -23,3 +23,9 @@ export default function quaternionFromEuler({ x, y, z }: { x: number, y: number,
     w: c1 * c2 * c3 - s1 * s2 * s3,
   };
 }
+
+export function quaternionFromRpy({ roll, pitch, yaw }: { roll: number, pitch: number, yaw: number }) {
+  // Adapted from https://github.com/iory/scikit-robot/blob/master/skrobot/coordinates/math.py#L857
+  const { x, y, z, w } = quaternionFromEuler({ x: -roll, y: -pitch, z: -yaw });
+  return { x: -x, y: -y, z: -z, w };
+}

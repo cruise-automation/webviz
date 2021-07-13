@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { assign, flatten, isEqual } from "lodash";
+import { assign, flatten, isEqual, uniqBy } from "lodash";
 import memoizeWeak from "memoize-weak";
 import allSettled from "promise.allsettled";
 import { TimeUtil, type Time, type RosMsgField } from "rosbag";
@@ -99,14 +99,6 @@ const mergeAllMessageTypes = (result1: GetMessagesResult, result2: GetMessagesRe
   rosBinaryMessages: merge(result1.rosBinaryMessages, result2.rosBinaryMessages),
 });
 
-const throwOnDuplicateTopics = (topics: string[]) => {
-  [...topics].sort().forEach((topicName, i, sortedTopics) => {
-    if (sortedTopics[i + 1] && topicName === sortedTopics[i + 1]) {
-      throw new Error(`Duplicate topic found: ${topicName}`);
-    }
-  });
-};
-
 const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {
   datatypes
     .sort((a, b) => (a[0] && b[0] ? +(a[0][0] > b[0][0]) || -1 : 0))
@@ -131,16 +123,6 @@ function mergeMessageDefinitions(messageDefinitionArr: MessageDefinitions[], top
   );
   // $FlowFixMe - flow does not work with Object.entries :(
   throwOnUnequalDatatypes(flatten(parsedMessageDefinitionArr.map(({ datatypes }) => Object.entries(datatypes))));
-  throwOnDuplicateTopics(
-    flatten(parsedMessageDefinitionArr.map(({ messageDefinitionsByTopic }) => Object.keys(messageDefinitionsByTopic)))
-  );
-  throwOnDuplicateTopics(
-    flatten(
-      parsedMessageDefinitionArr.map(({ parsedMessageDefinitionsByTopic }) =>
-        Object.keys(parsedMessageDefinitionsByTopic)
-      )
-    )
-  );
 
   return {
     type: "parsed",
@@ -243,8 +225,7 @@ export default class CombinedDataProvider implements DataProvider {
     const end = sortTimes(results.map((result) => result.end)).pop();
 
     // Error handling
-    const mergedTopics = flatten(results.map(({ topics }) => topics));
-    throwOnDuplicateTopics(mergedTopics.map(({ name }) => name));
+    const mergedTopics = uniqBy(flatten(results.map(({ topics }) => topics)), ({ name }) => name);
     throwOnMixedParsedMessages(results.map(({ providesParsedMessages }) => providesParsedMessages));
     const combinedMessageDefinitions = mergeMessageDefinitions(
       results.map(({ messageDefinitions }) => messageDefinitions),

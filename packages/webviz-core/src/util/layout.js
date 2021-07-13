@@ -487,17 +487,19 @@ const stateKeyMap = {
 const layoutKeyMap = { direction: "d", first: "f", second: "se", row: "r", column: "c", splitPercentage: "sp" };
 export const dictForPatchCompression = { ...layoutKeyMap, ...stateKeyMap };
 
+export function deflatePatch(jsObj: {}) {
+  const diffBuffer = Buffer.from(CBOR.encode(jsObj));
+  const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
+  return zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
+}
+
 export function getUpdatedURLWithPatch(search: string, diff: string): string {
   // Return the original search directly if the diff is empty.
   if (!diff) {
     return search;
   }
   const params = new URLSearchParams(search);
-
-  const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(diff)));
-  const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
-  const zlibPatch = zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
-
+  const zlibPatch = deflatePatch(JSON.parse(diff));
   params.set(PATCH_QUERY_KEY, zlibPatch);
   return stringifyParams(params);
 }

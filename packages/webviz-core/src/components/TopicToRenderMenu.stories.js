@@ -179,4 +179,24 @@ storiesOf("<TopicToRenderMenu>", module)
         />
       </PanelSetup>
     );
+  })
+  .add("no defaultTopicToRender", () => {
+    return (
+      <PanelSetup
+        fixture={{ topics: [], datatypes: {}, frame: {} }}
+        onMount={(el) => {
+          const topicSet = el.querySelector("[data-test=topic-set]");
+          if (topicSet) {
+            topicSet.click();
+          }
+        }}>
+        <TopicToRenderMenu
+          onChange={() => {}}
+          topicToRender=""
+          topics={[]}
+          singleTopicDatatype={"abc_msgs/foo"}
+          defaultTopicToRender={null}
+        />
+      </PanelSetup>
+    );
   });

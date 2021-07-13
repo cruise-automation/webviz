@@ -17,7 +17,9 @@ import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelTo
 import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
+import GLChart from "webviz-core/src/components/GLChart";
 import { SBar } from "webviz-core/src/components/HoverBar";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
@@ -25,12 +27,16 @@ import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/Messa
 import { useLatestMessageDataItem } from "webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import ChartComponent, { type HoveredElement } from "webviz-core/src/components/ReactChartjs";
+import ReactChartjs, {
+  type HoveredElement,
+  type ChartCallbacks,
+  DEFAULT_PROPS,
+} from "webviz-core/src/components/ReactChartjs";
 import { type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { cast } from "webviz-core/src/players/types";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
-import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
+import { useDeepChangeDetector, useShallowMemo } from "webviz-core/src/util/hooks";
 import { colors, ROBOTO_MONO } from "webviz-core/src/util/sharedStyleConstants";
 
 const SResetZoom = styled.div`
@@ -300,7 +306,7 @@ function TwoDimensionalPlot(props: Props) {
   const [hasVerticalExclusiveZoom, setHasVerticalExclusiveZoom] = React.useState<boolean>(false);
   const [hasBothAxesZoom, setHasBothAxesZoom] = React.useState<boolean>(false);
   const tooltip = React.useRef<?HTMLDivElement>(null);
-  const chartComponent = React.useRef<?ChartComponent>(null);
+  const chartCallbacks = React.useRef<?ChartCallbacks>(null);
 
   const [mousePosition, updateMousePosition] = React.useState<?{ x: number, y: number }>(null);
 
@@ -441,12 +447,11 @@ function TwoDimensionalPlot(props: Props) {
   }, [scaleBounds]);
 
   const onMouseMove = React.useCallback(async (event: MouseEvent) => {
-    const currentChartComponent = chartComponent.current;
-    if (!currentChartComponent || !currentChartComponent.canvas) {
+    const canvas = chartCallbacks.current && chartCallbacks.current.canvasRef.current;
+    if (!canvas) {
       removeTooltip();
       return;
     }
-    const { canvas } = currentChartComponent;
     const canvasRect = canvas.getBoundingClientRect();
     const isTargetingCanvas = event.target === canvas;
     const xMousePosition = event.pageX - canvasRect.left;
@@ -467,7 +472,8 @@ function TwoDimensionalPlot(props: Props) {
     const newMousePosition = { x: xMousePosition, y: yMousePosition };
     updateMousePosition(newMousePosition);
 
-    const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+    // $FlowFixMe flow doesn't like function calls in optional chains
+    const tooltipElement = await chartCallbacks.current?.getElementAtXAxis(event);
     if (!tooltipElement) {
       removeTooltip();
       return;
@@ -509,8 +515,8 @@ function TwoDimensionalPlot(props: Props) {
   }, [datasets, removeTooltip, xAxisLabel]);
 
   const onResetZoom = React.useCallback(() => {
-    if (chartComponent.current) {
-      chartComponent.current.resetZoom();
+    if (chartCallbacks.current) {
+      chartCallbacks.current.resetZoom();
       setHasUserPannedOrZoomed(false);
     }
   }, [setHasUserPannedOrZoomed]);
@@ -539,7 +545,7 @@ function TwoDimensionalPlot(props: Props) {
       v: () => setHasVerticalExclusiveZoom(true),
       b: () => setHasBothAxesZoom(true),
     }),
-    []
+    [setHasVerticalExclusiveZoom, setHasBothAxesZoom]
   );
 
   const keyUphandlers = React.useMemo(
@@ -558,7 +564,12 @@ function TwoDimensionalPlot(props: Props) {
     throw new Error("2D Plot datasets do not have unique labels");
   }
 
+  const zoomOptions = useShallowMemo({ ...DEFAULT_PROPS.zoomOptions, mode: zoomMode });
+
   const onChange = React.useCallback((newValue) => saveConfig({ path: { value: newValue } }), [saveConfig]);
+
+  const ChartComponent = useExperimentalFeature("useGLChartIn2dPlot") ? GLChart : ReactChartjs;
+
   return (
     <SContainer>
       <PanelToolbar helpContent={helpContent} menuContent={menuContent}>
@@ -584,7 +595,6 @@ function TwoDimensionalPlot(props: Props) {
                   <SBar xAxisIsPlaybackTime ref={hoverBar} />
                 </HoverBar>
                 <ChartComponent
-                  ref={chartComponent}
                   type="scatter"
                   width={width}
                   height={height}
@@ -593,10 +603,9 @@ function TwoDimensionalPlot(props: Props) {
                   onPanZoom={onPanZoom}
                   onScaleBoundsUpdate={onScaleBoundsUpdate}
                   data={{ datasets }}
-                  zoomOptions={{
-                    ...ChartComponent.defaultProps.zoomOptions,
-                    mode: zoomMode,
-                  }}
+                  zoomOptions={zoomOptions}
+                  panOptions={DEFAULT_PROPS.panOptions}
+                  callbacksRef={chartCallbacks}
                 />
                 {hasUserPannedOrZoomed && (
                   <SResetZoom>

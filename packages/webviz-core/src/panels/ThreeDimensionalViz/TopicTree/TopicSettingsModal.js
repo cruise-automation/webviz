@@ -17,6 +17,7 @@ import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Modal from "webviz-core/src/components/Modal";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { useArbitraryTopicMessage } from "webviz-core/src/PanelAPI";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import type { Topic } from "webviz-core/src/players/types";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
@@ -130,7 +131,6 @@ function MainEditor({
 type Props = {|
   currentEditingTopic: Topic,
   hasFeatureColumn: boolean,
-  message: any,
   saveConfig: Save3DConfig,
   setCurrentEditingTopic: (?Topic) => void,
   settingsByKey: { [topic: string]: any },
@@ -140,7 +140,6 @@ function TopicSettingsModal({
   currentEditingTopic,
   currentEditingTopic: { datatype, name: topicName },
   hasFeatureColumn,
-  message,
   saveConfig,
   setCurrentEditingTopic,
   settingsByKey,
@@ -166,6 +165,7 @@ function TopicSettingsModal({
 
   const columnIndex = topicName.startsWith(SECOND_SOURCE_PREFIX) ? 1 : 0;
   const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+  const message = useArbitraryTopicMessage(topicName);
 
   const editorElem = (
     <MainEditor

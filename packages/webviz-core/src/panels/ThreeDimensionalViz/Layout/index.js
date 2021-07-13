@@ -72,7 +72,7 @@ import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/
 import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
 import useTopicTree, { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
+import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
@@ -84,6 +84,7 @@ import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
@@ -361,6 +362,7 @@ export default function Layout({
     settingsByKey,
     topicTreeConfig,
     uncategorizedGroupName,
+    staticallyAvailableNamespacesByTopic,
   });
   const {
     allKeys,
@@ -721,19 +723,19 @@ export default function Layout({
 
   const { MapComponent } = sceneBuilderHooks;
   const memoizedScene = useShallowMemo(sceneBuilder ? sceneBuilder.getScene() : null);
-  const mapNamespaces = useShallowMemo(selectedNamespacesByTopic["/metadata"] || []);
+  const metadataTopicNamespaces = useShallowMemo(selectedNamespacesByTopic["/metadata"] || []);
   const mapElement = useMemo(
     () =>
       MapComponent && (
         <MapComponent
-          extensions={mapNamespaces}
+          metadataTopicNamespaces={metadataTopicNamespaces}
           scene={memoizedScene}
           debug={debug}
           perspective={!!cameraState.perspective}
           isDemoMode={isDemoMode}
         />
       ),
-    [MapComponent, cameraState.perspective, debug, isDemoMode, mapNamespaces, memoizedScene]
+    [MapComponent, cameraState.perspective, debug, isDemoMode, memoizedScene, metadataTopicNamespaces]
   );
 
   // Memoize the threeDimensionalVizContextValue to avoid returning a new object every time
@@ -911,14 +913,19 @@ export default function Layout({
     if (canvas && !initialized && rpc) {
       // $FlowFixMe: flow does not recognize `transferControlToOffscreen`
       const transferableCanvas = supportsOffscreenCanvas() ? canvas.transferControlToOffscreen() : canvas;
-      rpc.send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas]).then(() => {
-        if (stillMounted.current) {
-          setInitialized(true);
-          if (storyEvents) {
-            storyEvents.ready.resolve();
+      rpc
+        .send<void>("initialize", { canvas: transferableCanvas }, [transferableCanvas])
+        .then(() => {
+          if (stillMounted.current) {
+            setInitialized(true);
+            if (storyEvents) {
+              storyEvents.ready.resolve();
+            }
           }
-        }
-      });
+        })
+        .catch((error) => {
+          sendNotification("Error initializing 3D Panel", error, "app", "error");
+        });
     } else {
       // TODO: handle unmount with `canvas === undefined`
     }
@@ -1081,7 +1088,6 @@ export default function Layout({
                   currentEditingTopic={currentEditingTopic}
                   hasFeatureColumn={hasFeatureColumn}
                   setCurrentEditingTopic={setCurrentEditingTopic}
-                  message={frame?.[currentEditingTopic.name]?.[0]?.message}
                   saveConfig={saveConfig}
                   settingsByKey={settingsByKey}
                 />

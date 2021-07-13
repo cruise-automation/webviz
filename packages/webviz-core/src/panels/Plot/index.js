@@ -46,6 +46,8 @@ export const plotableRosTypes = [
   "duration",
   "string",
   "json",
+  // We plot the length of arrays.
+  "array",
 ];
 
 // X-axis values:

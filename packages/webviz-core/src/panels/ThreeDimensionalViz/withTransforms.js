@@ -11,7 +11,7 @@ import * as React from "react";
 
 import { getGlobalHooks } from "../../loadWebviz";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils";
+import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils";
 import type { Frame } from "webviz-core/src/players/types";
 
 const panelHooks = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;

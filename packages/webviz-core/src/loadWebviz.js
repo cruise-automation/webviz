@@ -180,6 +180,18 @@ const defaultHooks = {
         developmentDefault: true,
         productionDefault: true,
       },
+      useGLChartIn2dPlot: {
+        name: "Enable WebGL-based charts for the 2D plot panel",
+        description: "Replaces the Chartjs-based charts with a new implementation using WebGL instead.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      useGLChartInPlotPanel: {
+        name: "Enable WebGL-based charts for the Plot panel",
+        description: "Replaces the Chartjs-based charts with a new implementation using WebGL instead.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
     };
   },
   linkMessagePathSyntaxToHelpPage: () => true,

@@ -27,9 +27,9 @@ import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimen
 import { normalizeMouseEventObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
 import Transforms, { type TransformElement } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
+import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder";
+import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils";
 import { type GLTextMarker } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
-import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/utils/transformsUtils";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext, { type WorldContextType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
@@ -146,19 +146,19 @@ type WorldRendererProps = {|
 function useMapElement(sceneBuilder: SceneBuilder, props: WorldRendererProps) {
   const { MapComponent } = props.hooks;
   const memoizedScene = useShallowMemo(sceneBuilder.getScene());
-  const mapNamespaces = useShallowMemo(props.selectedNamespacesByTopic["/metadata"] ?? []);
+  const metadataTopicNamespaces = useShallowMemo(props.selectedNamespacesByTopic["/metadata"] ?? []);
   return React.useMemo(
     () =>
       MapComponent && (
         <MapComponent
-          extensions={mapNamespaces}
+          metadataTopicNamespaces={metadataTopicNamespaces}
           scene={memoizedScene}
           debug={props.debug}
           perspective={!!props.cameraState.perspective}
           isDemoMode={props.isDemoMode}
         />
       ),
-    [MapComponent, props.cameraState.perspective, props.isDemoMode, mapNamespaces, memoizedScene, props.debug]
+    [MapComponent, metadataTopicNamespaces, memoizedScene, props.debug, props.cameraState.perspective, props.isDemoMode]
   );
 }
 

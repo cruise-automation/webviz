@@ -14,6 +14,7 @@ import uuid from "uuid";
 import type { PlotXAxisVal } from "./index";
 import styles from "./PlotChart.module.scss";
 import Dimensions from "webviz-core/src/components/Dimensions";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import TimeBasedChart, { type ChartDefaultView } from "webviz-core/src/components/TimeBasedChart";
 import { type TimeBasedChartTooltipData, type TooltipItem } from "webviz-core/src/components/TimeBasedChart/utils";
 import filterMap from "webviz-core/src/filterMap";
@@ -90,11 +91,12 @@ function getPointsAndTooltipsForMessagePathItem(
   xItem: ?TooltipItem,
   startTime: Time,
   timestampMethod,
+  path: string,
   xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath,
   xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   datasetKey: string
-) {
+): { points: PlotChartPoint[], tooltips: TimeBasedChartTooltipData[], hasMismatchedData: boolean } {
   const points = [];
   const tooltips = [];
   const timestamp = timestampMethod === "headerStamp" ? yItem.headerStamp : yItem.receiveTime;
@@ -131,6 +133,24 @@ function getPointsAndTooltipsForMessagePathItem(
       };
       points.push({ x, y });
       tooltips.push(tooltip);
+    } else if (path.endsWith(".@length") && typeof (value: any)?.length === "number") {
+      const valueNum: number = Number((value: any)?.length);
+      if (!isNaN(valueNum)) {
+        const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, xAxisRanges, xItem, xAxisPath);
+        const y = valueNum;
+        const tooltip: TimeBasedChartTooltipData = {
+          x,
+          y,
+          datasetKey,
+          item: yItem,
+          path: queriedPath,
+          value: valueNum,
+          constantName,
+          startTime,
+        };
+        points.push({ x, y });
+        tooltips.push(tooltip);
+      }
     }
   }
   const hasMismatchedData =
@@ -172,6 +192,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
         xItem,
         startTime,
         path.timestampMethod,
+        path.value,
         xAxisVal,
         xAxisPath,
         xAxisRanges,
@@ -349,6 +370,8 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
     ];
   }, [maxYValue, minYValue]);
 
+  const chartRenderPath = useExperimentalFeature("useGLChartInPlotPanel") ? "webgl" : "chartjs";
+
   return (
     <div className={styles.root}>
       <Dimensions>
@@ -371,6 +394,7 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
             currentTime={currentTime}
             defaultView={defaultView}
             onClick={onClick}
+            renderPath={chartRenderPath}
           />
         )}
       </Dimensions>

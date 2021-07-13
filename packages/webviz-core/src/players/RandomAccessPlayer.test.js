@@ -613,7 +613,7 @@ describe("RandomAccessPlayer", () => {
     }));
     expect(messagesAndIsPlaying).toEqual([
       // Initial emit for playing.
-      { progress: {}, messages: [], isPlaying: true },
+      { progress: progressDuringPlayback, messages: [], isPlaying: true },
       // We should not get an emit from the progress callback.
       {
         progress: progressDuringPlayback,

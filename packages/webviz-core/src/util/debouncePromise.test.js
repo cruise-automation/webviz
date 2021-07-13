@@ -35,14 +35,14 @@ describe("debouncePromise", () => {
 
     debouncedFn();
     debouncedFn();
-    await promises[1].reject();
+    await promises[1].reject(new Error("rejected"));
     expect(calls).toBe(3);
     expect(debouncedFn.currentPromise).toBeDefined();
 
     debouncedFn();
     expect(calls).toBe(3);
-    await promises[2].reject();
-    
+    await promises[2].reject(new Error("rejected"));
+
     expect(calls).toBe(4);
     await promises[3].resolve();
     expect(debouncedFn.currentPromise).toBeUndefined();

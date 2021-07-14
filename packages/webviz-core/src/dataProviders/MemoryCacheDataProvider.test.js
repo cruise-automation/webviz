@@ -252,7 +252,7 @@ describe("MemoryCacheDataProvider", () => {
     // from 10s to 16.1s.
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
-        fullyLoadedFractionRanges: [{ start: 0, end: 10 / 201 }, { start: 100 / 201, end: 161 / 201 }],
+        fullyLoadedFractionRanges: [{ start: 0, end: 11 / 201 }, { start: 100 / 201, end: 161 / 201 }],
         messageCache: {
           startTime: { sec: 0, nsec: 0 },
           blocks: expect.arrayContaining([]),

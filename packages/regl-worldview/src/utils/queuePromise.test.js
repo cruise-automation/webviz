@@ -40,6 +40,7 @@ describe("queuePromise", () => {
 
     expect(calls).toBe(3);
     expect(callArgs).toEqual([[1, 2], [3, 4], [5, 6]]);
+    await Promise.resolve();
     expect(queuedFn.currentPromise).toBeUndefined();
   });
 

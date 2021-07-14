@@ -31,9 +31,7 @@ describe("waitForXhrRequests", () => {
     let done = false;
     waitForXhrRequests(pendingUrls).then(() => (done = true));
     expect(done).toBeFalsy();
-
-    await delayBy(1);
-    expect(done).toBeTruthy();
+    expect(async () => done).toBeTruthy();
   });
 
   it("waits for requests", async () => {
@@ -50,11 +48,8 @@ describe("waitForXhrRequests", () => {
     expect(done).toBeFalsy();
 
     pendingUrls.delete("2");
-    // We wait for one more cycle before resolving, so we need a few extra delays here
     await delayBy(1000);
-    await delayBy(1000);
-    await delayBy(1000);
-    expect(done).toBeTruthy();
+    expect(async () => done).toBeTruthy();
   });
 
   it("clears the pending urls if they timeout", async () => {
@@ -64,6 +59,7 @@ describe("waitForXhrRequests", () => {
     expect(done).toBeFalsy();
 
     await delayBy(40000);
+    await Promise.resolve();
     expect(done).toBeTruthy();
     expect(pendingUrls.size).toBe(0);
   });

@@ -16,6 +16,7 @@
     "package.json"
   ],
   "scripts": {
+    "prepack": "npm run build",
     "build": "rollup -c",
     "build:watch": "rollup -c --watch",
     "clean": "rimraf dist",

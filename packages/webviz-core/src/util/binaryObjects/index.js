@@ -27,6 +27,7 @@ const parseJson = (s) => {
     return `Could not parse ${JSON.stringify(s)}`;
   }
 };
+const buffer = new Buffer([])
 const context = { Buffer, getArrayView, deepParse: deepParseSymbol, int53, associateDatatypes, parseJson };
 
 export type { ArrayView };

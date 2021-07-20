@@ -1,4 +1,5 @@
 import { $Shape, $Diff } from "utility-types";
+import * as REGL from "regl";
 import { Regl } from "regl";
 
 export class Ray {
@@ -279,9 +280,15 @@ export type Props = $Diff<
   JSX.LibraryManagedAttributes<typeof WorldviewBase, React.ComponentProps<typeof WorldviewBase>>,
   Dimensions
 >;
+export declare function shouldConvert(point: Point | Vec4): boolean;
+export declare function pointToVec3(point: Point): Vec3;
+export declare function withPose<A, B, C, D, E>(
+  drawConfig: REGL.DrawConfig<A, B, C, D, E>
+): REGL.DrawConfig<A, B, C, D, E>;
 
 export declare class Command<T> extends React.PureComponent<{
   reglCommand: RawCommand<T>;
+  layerIndex?: number;
   children: T;
 }> {
   render(): JSX.Element;

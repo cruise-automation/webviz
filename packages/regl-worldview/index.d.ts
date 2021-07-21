@@ -289,7 +289,13 @@ export declare function withPose<A, B, C, D, E>(
 export declare class Command<T> extends React.PureComponent<{
   reglCommand: RawCommand<T>;
   layerIndex?: number;
-  children: T;
+  drawProps?: T;
+  children?: T;
 }> {
   render(): JSX.Element;
 }
+
+export declare const defaultBlend: REGL.BlendingOptions;
+export declare const defaultReglDepth: REGL.BlendingOptions;
+export declare const defaultReglBlend: REGL.BlendingOptions;
+export declare function toRGBA(color: Color): Vec4;

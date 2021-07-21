@@ -296,6 +296,10 @@ export declare class Command<T> extends React.PureComponent<{
 }
 
 export declare const defaultBlend: REGL.BlendingOptions;
+export declare const defaultDepth: REGL.DepthTestOptions;
 export declare const defaultReglDepth: REGL.BlendingOptions;
 export declare const defaultReglBlend: REGL.BlendingOptions;
 export declare function toRGBA(color: Color): Vec4;
+export declare function vec4ToOrientation(point: Vec4): Orientation;
+export declare function vec3ToPoint(point: Vec3): Point;
+export declare function vec4ToRGBA(point: Vec4): Color;

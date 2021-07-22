@@ -144,6 +144,8 @@ export type Pose = {
   orientation: Orientation;
 };
 export type BaseShape = {
+  id?: string | number;
+  frame_id?: string;
   pose: Pose;
   scale: Scale;
   color?: Color;
@@ -166,6 +168,7 @@ export type Cylinder = BaseShape & {
   points?: Points;
 };
 export type Line = BaseShape & {
+  primitive?: REGL.PrimitiveType;
   points: Points;
   poses?: Pose[];
 };
@@ -294,6 +297,94 @@ export declare class Command<T> extends React.PureComponent<{
 }> {
   render(): JSX.Element;
 }
+export declare type TextMarker = {
+  name?: string;
+  pose: Pose;
+  scale: Scale;
+  color?: Color | Vec4;
+  colors?: (Color | Vec4)[];
+  text: string;
+};
+
+type ShapeComponent<T> = React.ComponentType<{
+  children: T[];
+}>;
+export declare const Arrows: ShapeComponent<Arrow>;
+export declare const Cubes: ShapeComponent<Cube>;
+export declare const Cylinders: ShapeComponent<Cylinder>;
+export declare const Axes: React.ComponentType<{}>;
+export declare const Lines: ShapeComponent<Line>;
+export declare const Spheres: ShapeComponent<Sphere>;
+export declare const Text: React.ComponentType<{
+  children: TextMarker[];
+  autoBackgroundColor?: boolean;
+}>;
+export declare const Triangles: ShapeComponent<Triangle>;
+export declare const Text: React.ComponentType<{
+  children: TextMarker[];
+  autoBackgroundColor?: boolean;
+}>;
+export declare const GLTFScene: React.ComponentType<{
+  model: string | ((arg0: string) => Promise<GLBModel>);
+  onClick?: MouseHandler;
+  onDoubleClick?: MouseHandler;
+  onMouseDown?: MouseHandler;
+  onMouseMove?: MouseHandler;
+  onMouseUp?: MouseHandler;
+  children: {
+    pose?: Pose;
+    poseMatrix?: Mat4;
+    scale: Scale;
+    alpha?: ?number;
+    localTransform?: Mat4;
+    color?: Color | Vec4;
+  };
+}>;
+
+declare const Worldview: React.ComponentType<{
+  keyMap?: CameraKeyMap;
+  shiftKeys?: boolean;
+  useFrames?: boolean;
+  backgroundColor?: Vec4;
+  // (Deprecated) rendering the hitmap on mouse move is expensive, so disable it by default
+  hitmapOnMouseMove?: boolean;
+  // Disable hitmap generation for specific mouse events
+  // For example, if you want to disable hitmap generating on drag, use: ["onMouseDown", "onMouseMove", "onMouseUp"]
+  disableHitmapForEvents?: MouseEventEnum[];
+  // getting events for objects stacked on top of each other is expensive, so disable it by default
+  enableStackedObjectEvents?: boolean;
+  // allow users to specify the max stacked object count
+  maxStackedObjectCount?: number;
+  showDebug?: boolean;
+  children?: React.Node;
+  style?: { [styleAttribute: string]: number | string };
+
+  cameraState?: $Shape<CameraState>;
+  onCameraStateChange?: (CameraState) => void;
+  defaultCameraState?: $Shape<CameraState>;
+
+  // Pass in custom camera matrices
+  cameraView?: Mat4;
+  cameraProjection?: Mat4;
+
+  // FBO passes
+  fboCommand?: ReglFBOFn;
+
+  // interactions
+  onDoubleClick?: MouseHandler;
+  onMouseDown?: MouseHandler;
+  onMouseUp?: MouseHandler;
+  onMouseMove?: MouseHandler;
+  onClick?: MouseHandler;
+
+  // Used to scale the canvas resolution and provide a higher image quality
+  resolutionScale?: number;
+
+  // Context attributes passed into canvas.getContext.
+  contextAttributes?: ?Record<string, any>;
+  canvas?: HTMLCanvasElement;
+}>;
+export default Worldview;
 
 export declare const defaultBlend: REGL.BlendingOptions;
 export declare const defaultDepth: REGL.DepthTestOptions;
@@ -301,6 +392,7 @@ export declare const defaultReglDepth: REGL.BlendingOptions;
 export declare const defaultReglBlend: REGL.BlendingOptions;
 export declare function toRGBA(color: Color): Vec4;
 export declare function vec4ToOrientation(point: Vec4): Orientation;
+export declare function orientationToVec4(point: Orientation): Vec4;
 export declare function vec3ToPoint(point: Vec3): Point;
 export declare function vec4ToRGBA(point: Vec4): Color;
 export declare function fromGeometry(

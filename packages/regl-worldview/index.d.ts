@@ -303,3 +303,9 @@ export declare function toRGBA(color: Color): Vec4;
 export declare function vec4ToOrientation(point: Vec4): Orientation;
 export declare function vec3ToPoint(point: Vec3): Point;
 export declare function vec4ToRGBA(point: Vec4): Color;
+export declare function fromGeometry(
+  positions: Vec3[],
+  elements: Vec3[]
+): RawCommand<{
+  color?: Vec4;
+}>;

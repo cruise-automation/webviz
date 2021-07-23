@@ -13,15 +13,15 @@ import rmfr from "rmfr";
 import util from "util";
 import uuid from "uuid";
 
-import type { VideoMetadata } from "../src/players/automatedRun/AutomatedRunPlayer";
-import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
-import convertVideoToGif from "./convertVideoToGif";
-import delay from "./delay";
-import { withTempDirectory } from "./fileUtils";
-import globalEnvVars from "./globalEnvVars";
-import promiseTimeout from "./promiseTimeout";
-import runInBrowser from "./runInBrowser";
-import ServerLogger from "./ServerLogger";
+import convertVideoToGif from "webviz-core/shared/convertVideoToGif";
+import delay from "webviz-core/shared/delay";
+import { withTempDirectory } from "webviz-core/shared/fileUtils";
+import globalEnvVars from "webviz-core/shared/globalEnvVars";
+import promiseTimeout from "webviz-core/shared/promiseTimeout";
+import runInBrowser from "webviz-core/shared/runInBrowser";
+import ServerLogger from "webviz-core/shared/ServerLogger";
+import type { VideoMetadata } from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
+import type { VideoRecordingAction } from "webviz-core/src/players/automatedRun/videoRecordingClient";
 
 const exec = util.promisify(child_process.exec);
 const mkdir = util.promisify(fs.mkdir);

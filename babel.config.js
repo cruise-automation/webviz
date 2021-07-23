@@ -13,5 +13,7 @@ module.exports = {
     "@babel/plugin-proposal-optional-chaining",
     "@babel/plugin-syntax-dynamic-import",
     ["@babel/plugin-proposal-object-rest-spread", { useBuiltIns: true }],
+    // module-resolver allows us to use absolute import paths
+    ["module-resolver", { root: ["packages"] }],
   ],
 };

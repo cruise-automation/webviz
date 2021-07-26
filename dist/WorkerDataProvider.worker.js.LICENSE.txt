@@ -27,13 +27,53 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
+/*! ../../players/types */
+
 /*! ../BagReader */
+
+/*! ../Logger */
 
 /*! ../bag */
 
+/*! ../dataProviders/MemoryCacheDataProvider */
+
+/*! ../filterMap */
+
 /*! ../index */
 
+/*! ../players/types */
+
 /*! ../types */
+
+/*! ../util */
+
+/*! ../util/CachedFilelike */
+
+/*! ../util/Logger */
+
+/*! ../util/Rpc */
+
+/*! ../util/RpcWorkerUtils */
+
+/*! ../util/bagConnectionsHelper */
+
+/*! ../util/bags */
+
+/*! ../util/binaryObjects */
+
+/*! ../util/corsError */
+
+/*! ../util/getNewConnection */
+
+/*! ../util/indexeddb/Database */
+
+/*! ../util/indexeddb/MetaDatabase */
+
+/*! ../util/ranges */
+
+/*! ../util/sendNotification */
+
+/*! ../util/time */
 
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
@@ -81,19 +121,35 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./../webpack/node_modules/process/browser.js */
 
+/*! ./ApiCheckerDataProvider */
+
+/*! ./ArrayViews */
+
 /*! ./BWT */
+
+/*! ./BagDataProvider */
 
 /*! ./BagReader */
 
 /*! ./BitStream */
 
+/*! ./BrowserHttpReader */
+
 /*! ./CRC32 */
 
+/*! ./Database */
+
 /*! ./DbWriter */
+
+/*! ./FetchReader */
 
 /*! ./HuffmanAllocator */
 
 /*! ./IdbCacheDataProviderDatabase */
+
+/*! ./IdbCacheWriterDataProvider */
+
+/*! ./MeasureDataProvider */
 
 /*! ./MessageReader */
 
@@ -102,6 +158,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./ReadResult */
 
 /*! ./Rpc */
+
+/*! ./RpcDataProviderRemote */
 
 /*! ./Stream */
 
@@ -121,13 +179,27 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./bag */
 
+/*! ./binaryObjects */
+
+/*! ./binaryWrapperObjects */
+
+/*! ./constants */
+
+/*! ./createGetDataProvider */
+
+/*! ./errors */
+
 /*! ./fields */
 
 /*! ./freeze */
 
 /*! ./getNewConnection */
 
+/*! ./globalConstants */
+
 /*! ./header */
+
+/*! ./index */
 
 /*! ./internal/streams/BufferList */
 
@@ -136,6 +208,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./internal/streams/stream */
 
 /*! ./is */
+
+/*! ./jsWrapperObjects */
 
 /*! ./lib/_stream_duplex.js */
 
@@ -155,7 +229,11 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./lib/rng */
 
+/*! ./logEvent */
+
 /*! ./memo */
+
+/*! ./messageDefinitionUtils */
 
 /*! ./misc */
 
@@ -173,9 +251,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./scope */
 
+/*! ./sendNotification */
+
+/*! ./sharedStyleConstants */
+
 /*! ./string */
 
 /*! ./types */
+
+/*! ./util */
 
 /*! ./v1 */
 
@@ -184,6 +268,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./wasm-lz4 */
 
 /*! ./wasm-lz4.wasm */
+
+/*! ./workers */
 
 /*! @sentry/browser */
 
@@ -368,80 +454,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! uuid */
 
 /*! wasm-lz4 */
-
-/*! webviz-core/src/dataProviders/ApiCheckerDataProvider */
-
-/*! webviz-core/src/dataProviders/BagDataProvider */
-
-/*! webviz-core/src/dataProviders/BrowserHttpReader */
-
-/*! webviz-core/src/dataProviders/FetchReader */
-
-/*! webviz-core/src/dataProviders/IdbCacheWriterDataProvider */
-
-/*! webviz-core/src/dataProviders/MeasureDataProvider */
-
-/*! webviz-core/src/dataProviders/MemoryCacheDataProvider */
-
-/*! webviz-core/src/dataProviders/RpcDataProviderRemote */
-
-/*! webviz-core/src/dataProviders/constants */
-
-/*! webviz-core/src/dataProviders/createGetDataProvider */
-
-/*! webviz-core/src/dataProviders/util */
-
-/*! webviz-core/src/filterMap */
-
-/*! webviz-core/src/players/types */
-
-/*! webviz-core/src/util */
-
-/*! webviz-core/src/util/CachedFilelike */
-
-/*! webviz-core/src/util/Logger */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/bagConnectionsHelper */
-
-/*! webviz-core/src/util/bags */
-
-/*! webviz-core/src/util/binaryObjects */
-
-/*! webviz-core/src/util/binaryObjects/ArrayViews */
-
-/*! webviz-core/src/util/binaryObjects/binaryWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/jsWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/messageDefinitionUtils */
-
-/*! webviz-core/src/util/corsError */
-
-/*! webviz-core/src/util/errors */
-
-/*! webviz-core/src/util/getNewConnection */
-
-/*! webviz-core/src/util/globalConstants */
-
-/*! webviz-core/src/util/indexeddb/Database */
-
-/*! webviz-core/src/util/indexeddb/MetaDatabase */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/ranges */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/sharedStyleConstants */
-
-/*! webviz-core/src/util/time */
-
-/*! webviz-core/src/util/workers */
 
 /*!********************!*\
   !*** ./src/bag.js ***!

@@ -1,3 +1,11 @@
+/*! ../../players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
+
+/*! ../../stories/inScreenshotTests */
+
+/*! ./prettier */
+
+/*! ./theme/vs-webviz.json */
+
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
 /*! all exports used */
@@ -21,14 +29,6 @@
 /*! react */
 
 /*! react-monaco-editor */
-
-/*! webviz-core/src/panels/NodePlayground/prettier */
-
-/*! webviz-core/src/panels/NodePlayground/theme/vs-webviz.json */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
-
-/*! webviz-core/src/stories/inScreenshotTests */
 
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/Editor.js ***!

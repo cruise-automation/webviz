@@ -34,6 +34,16 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
+/*! ../../util */
+
+/*! ../../util/Rpc */
+
+/*! ../../util/RpcWorkerUtils */
+
+/*! ../../util/installChartjs */
+
+/*! ../../util/workers */
+
 /*! ../helpers.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
@@ -346,6 +356,8 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./eq */
 
+/*! ./errors */
+
 /*! ./events.js */
 
 /*! ./flatten */
@@ -392,17 +404,23 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./last */
 
+/*! ./logEvent */
+
 /*! ./memo */
 
 /*! ./memoize */
 
 /*! ./misc */
 
+/*! ./multicolorLineChart */
+
 /*! ./overwriteFetch */
 
 /*! ./property */
 
 /*! ./scope */
+
+/*! ./sendNotification */
 
 /*! ./string */
 
@@ -415,6 +433,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./types/box.js */
 
 /*! ./types/line.js */
+
+/*! ./workers */
 
 /*! ./zoomAndPanHelpers */
 
@@ -531,24 +551,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! no static exports found */
 
 /*! tslib */
-
-/*! webviz-core/src/util */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/errors */
-
-/*! webviz-core/src/util/installChartjs */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/multicolorLineChart */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/workers */
 
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!

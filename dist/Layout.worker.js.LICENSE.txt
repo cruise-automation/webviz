@@ -48,13 +48,121 @@ See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
 
+/*! ../../../../../../regl-worldview/dist/index.cjs */
+
+/*! ../../../../../regl-worldview/dist/index.cjs */
+
+/*! ../../../../filterMap */
+
+/*! ../../../../regl-worldview/dist/index.cjs */
+
+/*! ../../../../shared/signal */
+
+/*! ../../../../util */
+
+/*! ../../../../util/Pose */
+
+/*! ../../../../util/sendNotification */
+
+/*! ../../../players/types */
+
+/*! ../../../stories/inScreenshotTests */
+
+/*! ../../../util */
+
+/*! ../../../util/NoopReactRenderer */
+
+/*! ../../../util/Pose */
+
+/*! ../../../util/Rpc */
+
+/*! ../../../util/RpcWorkerUtils */
+
+/*! ../../../util/binaryObjects */
+
+/*! ../../../util/binaryObjects/BobjectRpc */
+
+/*! ../../../util/globalConstants */
+
+/*! ../../../util/hooks */
+
+/*! ../../../util/naturalSort */
+
+/*! ../../../util/sendNotification */
+
+/*! ../../../util/time */
+
+/*! ../../logger */
+
+/*! ../../players/types */
+
+/*! ../../stories/inScreenshotTests */
+
+/*! ../../util/Pose */
+
+/*! ../../util/binaryObjects */
+
+/*! ../../util/colorUtils */
+
+/*! ../../util/hooks */
+
+/*! ../../util/sharedStyleConstants */
+
 /*! ../BagReader */
+
+/*! ../DebugStats */
+
+/*! ../LaserScanVert */
+
+/*! ../Rpc */
+
+/*! ../SceneBuilder */
+
+/*! ../SceneBuilder/defaultHooks */
+
+/*! ../TopicTree/useSceneBuilderAndTransformsData */
+
+/*! ../Transforms */
+
+/*! ../Transforms/TransformsBuilder */
+
+/*! ../Transforms/utils */
+
+/*! ../World */
+
+/*! ../WorldContext */
 
 /*! ../bag */
 
+/*! ../commands/OverlayProjector */
+
+/*! ../commands/PoseMarkers */
+
+/*! ../commands/utils */
+
+/*! ../constants */
+
+/*! ../dataProviders/MemoryCacheDataProvider */
+
+/*! ../filterMap */
+
 /*! ../index */
 
+/*! ../players/types */
+
+/*! ../threeDimensionalVizUtils */
+
 /*! ../types */
+
+/*! ../util/binaryObjects */
+
+/*! ../util/getNewConnection */
+
+/*! ../util/ranges */
+
+/*! ../util/sendNotification */
+
+/*! ../util/time */
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
@@ -96,11 +204,15 @@ and limitations under the License.
 
 /*! ./../webpack/node_modules/process/browser.js */
 
+/*! ./ArrayViews */
+
 /*! ./BagReader */
 
 /*! ./CarModel */
 
 /*! ./Collector */
+
+/*! ./Crosshair */
 
 /*! ./DebugStatsOverlay */
 
@@ -114,7 +226,13 @@ and limitations under the License.
 
 /*! ./LaserScans */
 
+/*! ./LayoutWorker */
+
 /*! ./LinedConvexHulls */
+
+/*! ./MeasureMarker */
+
+/*! ./MessageCollector */
 
 /*! ./MessageReader */
 
@@ -132,9 +250,13 @@ and limitations under the License.
 
 /*! ./ReadResult */
 
+/*! ./Renderer */
+
 /*! ./Rpc */
 
 /*! ./TimeUtil */
+
+/*! ./Transforms */
 
 /*! ./UserAgent_DEPRECATED */
 
@@ -143,6 +265,10 @@ and limitations under the License.
 /*! ./VertexBufferCache */
 
 /*! ./VertexList */
+
+/*! ./WorkerDataRpc */
+
+/*! ./WorldMarkers */
 
 /*! ./_DataView */
 
@@ -450,7 +576,13 @@ and limitations under the License.
 
 /*! ./bag */
 
+/*! ./binaryObjects */
+
+/*! ./binaryWrapperObjects */
+
 /*! ./buffers */
+
+/*! ./carModel.glb */
 
 /*! ./cjs/react-is.production.min.js */
 
@@ -460,9 +592,19 @@ and limitations under the License.
 
 /*! ./cjs/scheduler.production.min.js */
 
+/*! ./commands */
+
+/*! ./commands/Cover */
+
+/*! ./commands/OverlayProjector */
+
+/*! ./commands/PointClouds/selection */
+
 /*! ./common */
 
 /*! ./constant */
+
+/*! ./constants */
 
 /*! ./decodeMarker */
 
@@ -474,6 +616,8 @@ and limitations under the License.
 
 /*! ./eq */
 
+/*! ./errors */
+
 /*! ./factoryWithThrowingShims */
 
 /*! ./fields */
@@ -484,11 +628,15 @@ and limitations under the License.
 
 /*! ./get */
 
+/*! ./globalConstants */
+
 /*! ./hasIn */
 
 /*! ./header */
 
 /*! ./identity */
+
+/*! ./index */
 
 /*! ./is */
 
@@ -522,6 +670,8 @@ and limitations under the License.
 
 /*! ./isTypedArray */
 
+/*! ./jsWrapperObjects */
+
 /*! ./keys */
 
 /*! ./keysIn */
@@ -538,6 +688,8 @@ and limitations under the License.
 
 /*! ./lib/rng */
 
+/*! ./logEvent */
+
 /*! ./map */
 
 /*! ./memo */
@@ -545,6 +697,8 @@ and limitations under the License.
 /*! ./memoization */
 
 /*! ./memoize */
+
+/*! ./messageDefinitionUtils */
 
 /*! ./misc */
 
@@ -568,6 +722,12 @@ and limitations under the License.
 
 /*! ./scope */
 
+/*! ./selection */
+
+/*! ./sendNotification */
+
+/*! ./sharedStyleConstants */
+
 /*! ./squared */
 
 /*! ./src/normalizeWheel.js */
@@ -588,13 +748,23 @@ and limitations under the License.
 
 /*! ./useDebugStats */
 
+/*! ./utils */
+
+/*! ./utils/diffModeUtils */
+
 /*! ./utils/glTextAtlasLoader */
 
 /*! ./utils/groupingUtils */
 
+/*! ./utils/searchTextUtils */
+
 /*! ./v1 */
 
 /*! ./v4 */
+
+/*! ./withWorldMarkerHighlights.js */
+
+/*! ./workers */
 
 /*! @babel/runtime/helpers/defineProperty */
 
@@ -704,7 +874,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/regl-worldview/dist/index.esm.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/regl-worldview/dist/index.cjs.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/constants.js (referenced with cjs require) */
 
@@ -910,8 +1080,6 @@ and limitations under the License.
 
 /*! regl */
 
-/*! regl-worldview */
-
 /*! reselect */
 
 /*! rosbag */
@@ -933,124 +1101,6 @@ and limitations under the License.
 /*! tslib */
 
 /*! uuid */
-
-/*! webviz-core/shared/signal */
-
-/*! webviz-core/src/dataProviders/MemoryCacheDataProvider */
-
-/*! webviz-core/src/filterMap */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Crosshair */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Renderer */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/useDebugStats */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/World */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/WorldContext */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/Cover */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/utils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/constants */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/logger */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/diffModeUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js */
-
-/*! webviz-core/src/players/types */
-
-/*! webviz-core/src/stories/inScreenshotTests */
-
-/*! webviz-core/src/util */
-
-/*! webviz-core/src/util/NoopReactRenderer */
-
-/*! webviz-core/src/util/Pose */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/binaryObjects */
-
-/*! webviz-core/src/util/binaryObjects/ArrayViews */
-
-/*! webviz-core/src/util/binaryObjects/BobjectRpc */
-
-/*! webviz-core/src/util/binaryObjects/binaryWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/jsWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/messageDefinitionUtils */
-
-/*! webviz-core/src/util/colorUtils */
-
-/*! webviz-core/src/util/errors */
-
-/*! webviz-core/src/util/getNewConnection */
-
-/*! webviz-core/src/util/globalConstants */
-
-/*! webviz-core/src/util/hooks */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/naturalSort */
-
-/*! webviz-core/src/util/ranges */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/sharedStyleConstants */
-
-/*! webviz-core/src/util/time */
-
-/*! webviz-core/src/util/workers */
 
 /*!********************!*\
   !*** ./src/bag.js ***!
@@ -1297,7 +1347,7 @@ and limitations under the License.
   \***************************************************/
 
 /*!***************************************************!*\
-  !*** ./packages/regl-worldview/dist/index.esm.js ***!
+  !*** ./packages/regl-worldview/dist/index.cjs.js ***!
   \***************************************************/
 
 /*!***************************************************!*\

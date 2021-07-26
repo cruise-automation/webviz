@@ -44,25 +44,543 @@
 
 /*! ../../../../../../node_modules/style-loader/lib/addStyles.js */
 
+/*! ../../../../../../regl-worldview/dist/index.cjs */
+
 /*! ../../../../../node_modules/css-loader/lib/css-base.js */
 
 /*! ../../../../../node_modules/style-loader/lib/addStyles.js */
+
+/*! ../../../../../regl-worldview/dist/index.cjs */
+
+/*! ../../../../@cruise-automation/hooks/dist/index.cjs */
+
+/*! ../../../../@cruise-automation/tooltip/lib */
+
+/*! ../../../../components/Button */
+
+/*! ../../../../components/ChildToggle */
+
+/*! ../../../../components/Icon */
+
+/*! ../../../../filterMap */
+
+/*! ../../../../hooks/useGlobalVariables */
 
 /*! ../../../../node_modules/css-loader/lib/css-base.js */
 
 /*! ../../../../node_modules/style-loader/lib/addStyles.js */
 
+/*! ../../../../regl-worldview/dist/index.cjs */
+
+/*! ../../../../shared/delay */
+
+/*! ../../../../shared/signal */
+
+/*! ../../../../shared/validators */
+
+/*! ../../../../styles/colors.module.scss */
+
+/*! ../../../../util */
+
+/*! ../../../../util/Pose */
+
+/*! ../../../../util/globalConstants */
+
+/*! ../../../../util/sendNotification */
+
+/*! ../../../../util/sharedStyleConstants */
+
+/*! ../../../PanelAPI */
+
+/*! ../../../PanelAPI/useDataSourceInfo */
+
+/*! ../../../actions/panels */
+
+/*! ../../../actions/userNodes */
+
+/*! ../../../components/Button */
+
+/*! ../../../components/Checkbox */
+
+/*! ../../../components/ChildToggle */
+
+/*! ../../../components/Dimensions */
+
+/*! ../../../components/Dropdown */
+
+/*! ../../../components/ErrorBoundary */
+
+/*! ../../../components/ExpandingToolbar */
+
+/*! ../../../components/ExperimentalFeatures */
+
+/*! ../../../components/Flex */
+
+/*! ../../../components/GradientPicker */
+
+/*! ../../../components/Icon */
+
+/*! ../../../components/KeyListener */
+
+/*! ../../../components/KeyboardShortcut */
+
+/*! ../../../components/Menu */
+
+/*! ../../../components/Menu/Item */
+
+/*! ../../../components/MessagePipeline */
+
+/*! ../../../components/Modal */
+
+/*! ../../../components/PanelContext */
+
+/*! ../../../components/Radio */
+
+/*! ../../../components/SegmentedControl */
+
+/*! ../../../components/Select */
+
+/*! ../../../components/Switch */
+
+/*! ../../../components/TextField */
+
+/*! ../../../components/Tooltip */
+
+/*! ../../../components/ValidatedInput */
+
+/*! ../../../components/renderToBody */
+
+/*! ../../../filterMap */
+
+/*! ../../../hooks/useGlobalVariables */
+
+/*! ../../../loadWebviz */
+
+/*! ../../../players/UserNodePlayer/types */
+
+/*! ../../../players/types */
+
+/*! ../../../shared/panelToolbarStyles */
+
+/*! ../../../stories/inScreenshotTests */
+
+/*! ../../../styles/colors.module.scss */
+
+/*! ../../../util */
+
+/*! ../../../util/NoopReactRenderer */
+
+/*! ../../../util/Pose */
+
+/*! ../../../util/Rpc */
+
+/*! ../../../util/RpcMainThreadUtils */
+
+/*! ../../../util/RpcWorkerUtils */
+
+/*! ../../../util/binaryObjects */
+
+/*! ../../../util/binaryObjects/BobjectRpc */
+
+/*! ../../../util/clipboard */
+
+/*! ../../../util/globalConstants */
+
+/*! ../../../util/hooks */
+
+/*! ../../../util/inAutomatedRunMode */
+
+/*! ../../../util/logEvent */
+
+/*! ../../../util/naturalSort */
+
+/*! ../../../util/selectors */
+
+/*! ../../../util/sendNotification */
+
+/*! ../../../util/sharedStyleConstants */
+
+/*! ../../../util/supportsOffscreenCanvas */
+
+/*! ../../../util/time */
+
+/*! ../../../util/topicUtils */
+
+/*! ../../../util/yaml */
+
+/*! ../../PanelAPI */
+
+/*! ../../RawMessages */
+
+/*! ../../actions/panels */
+
+/*! ../../components/Autocomplete */
+
+/*! ../../components/Button */
+
+/*! ../../components/Checkbox */
+
+/*! ../../components/ChildToggle */
+
+/*! ../../components/ContextMenu */
+
+/*! ../../components/Dimensions */
+
+/*! ../../components/Dropdown */
+
+/*! ../../components/Dropdown/index.module.scss */
+
+/*! ../../components/EmptyState */
+
+/*! ../../components/ExpandingToolbar */
+
+/*! ../../components/ExperimentalFeatures */
+
+/*! ../../components/Flex */
+
+/*! ../../components/GLChart */
+
+/*! ../../components/GlobalVariableSlider */
+
+/*! ../../components/GlobalVariablesTable */
+
+/*! ../../components/HoverBar */
+
+/*! ../../components/HoverBar/context */
+
+/*! ../../components/Icon */
+
+/*! ../../components/KeyListener */
+
+/*! ../../components/LogList */
+
+/*! ../../components/Menu */
+
+/*! ../../components/Menu/Item */
+
+/*! ../../components/MessageHistoryDEPRECATED */
+
+/*! ../../components/MessagePathSyntax/MessagePathInput */
+
+/*! ../../components/MessagePathSyntax/constants */
+
+/*! ../../components/MessagePathSyntax/isTypicalFilterName */
+
+/*! ../../components/MessagePathSyntax/messagePathsForDatatype */
+
+/*! ../../components/MessagePathSyntax/parseRosPath */
+
+/*! ../../components/MessagePathSyntax/useCachedGetMessagePathDataItems */
+
+/*! ../../components/MessagePathSyntax/useLatestMessageDataItem */
+
+/*! ../../components/MessagePipeline */
+
+/*! ../../components/Panel */
+
+/*! ../../components/PanelContext */
+
+/*! ../../components/PanelLayout */
+
+/*! ../../components/PanelToolbar */
+
+/*! ../../components/Publisher */
+
+/*! ../../components/ReactChartjs */
+
+/*! ../../components/ResizableSplitFlex */
+
+/*! ../../components/SelectableTimestamp */
+
+/*! ../../components/Sparkline */
+
+/*! ../../components/SpinningLoadingIcon */
+
+/*! ../../components/TextContent */
+
+/*! ../../components/TextField */
+
+/*! ../../components/TimeBasedChart */
+
+/*! ../../components/TimeBasedChart/utils */
+
+/*! ../../components/Tooltip */
+
+/*! ../../components/TopicToRenderMenu */
+
+/*! ../../components/input/JSONInput */
+
+/*! ../../filterMap */
+
+/*! ../../hooks/useGlobalVariables */
+
 /*! ../../loadWebviz */
+
+/*! ../../logger */
+
+/*! ../../players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
+
+/*! ../../players/UserNodePlayer/nodeTransformerWorker/typescript/templates */
+
+/*! ../../players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/README.md */
+
+/*! ../../players/types */
+
+/*! ../../shared/validators */
+
+/*! ../../stories/inScreenshotTests */
+
+/*! ../../styles/colors.module.scss */
+
+/*! ../../styles/mixins.module.scss */
+
+/*! ../../util */
+
+/*! ../../util/FakeRpc */
+
+/*! ../../util/Pose */
+
+/*! ../../util/WebWorkerManager */
+
+/*! ../../util/binaryObjects */
+
+/*! ../../util/binaryObjects/messageDefinitionUtils */
+
+/*! ../../util/clipboard */
+
+/*! ../../util/colorUtils */
+
+/*! ../../util/debouncePromise */
+
+/*! ../../util/formatTime */
+
+/*! ../../util/fuzzyFilter */
+
+/*! ../../util/globalConstants */
+
+/*! ../../util/hooks */
+
+/*! ../../util/layout */
+
+/*! ../../util/naturalSort */
+
+/*! ../../util/plotColors */
+
+/*! ../../util/selectors */
+
+/*! ../../util/sendNotification */
+
+/*! ../../util/sharedStyleConstants */
+
+/*! ../../util/supportsOffscreenCanvas */
+
+/*! ../../util/synchronizeMessages */
+
+/*! ../../util/time */
+
+/*! ../../util/toggle */
+
+/*! ../../util/toolsColorScheme */
+
+/*! ../Autocomplete */
+
+/*! ../Button */
+
+/*! ../DebugStats */
+
+/*! ../DrawingTools */
+
+/*! ../DrawingTools/MeasuringTool */
+
+/*! ../Dropdown */
+
+/*! ../GLChart */
 
 /*! ../GlobalVariableName */
 
+/*! ../GlobalVariableStyles */
+
+/*! ../HoverBar */
+
+/*! ../HoverBar/context */
+
+/*! ../Icon */
+
+/*! ../IconOverlay */
+
+/*! ../Interactions */
+
+/*! ../Interactions/Interactions */
+
+/*! ../Interactions/useLinkedGlobalVariables */
+
+/*! ../KeyListener */
+
+/*! ../LaserScanVert */
+
+/*! ../Layout.module.scss */
+
+/*! ../LayoutToolbar */
+
+/*! ../Menu */
+
+/*! ../MessagePathSyntax/parseRosPath */
+
+/*! ../MessagePathSyntax/useCachedGetMessagePathDataItems */
+
 /*! ../MessagePipeline */
+
+/*! ../PanelAPI */
+
+/*! ../PanelToolbarMenu */
+
+/*! ../Plot */
+
+/*! ../ReactChartjs */
+
+/*! ../ReactChartjs/zoomAndPanHelpers */
+
+/*! ../SceneBuilder */
+
+/*! ../SearchText */
+
+/*! ../StateTransitions */
+
+/*! ../ThreeDimensionalViz/Interactions/Interactions */
+
+/*! ../ThreeDimensionalViz/Interactions/ObjectDetails */
+
+/*! ../ThreeDimensionalViz/Interactions/TopicLink */
+
+/*! ../ThreeDimensionalViz/Interactions/useLinkedGlobalVariables */
+
+/*! ../ThreeDimensionalViz/SceneBuilder */
+
+/*! ../ThreeDimensionalViz/WorldMarkers */
+
+/*! ../ThreeDimensionalViz/commands/OverlayProjector */
+
+/*! ../ThreeDimensionalViz/constants */
+
+/*! ../ThreeDimensionalViz/threeDimensionalVizUtils */
+
+/*! ../ThreeDimensionalVizContext */
+
+/*! ../Tooltip */
+
+/*! ../TopicSettingsEditor */
+
+/*! ../TopicSettingsEditor/ColorPickerForTopicSettings */
+
+/*! ../TopicTree/TopicSettingsModal */
+
+/*! ../TopicTree/TopicTree */
+
+/*! ../TopicTree/TopicViewModeSelector */
+
+/*! ../TopicTree/useSceneBuilderAndTransformsData */
+
+/*! ../TopicTree/useTopicTree */
+
+/*! ../Transforms */
+
+/*! ../Transforms/TransformsBuilder */
+
+/*! ../Transforms/utils */
+
+/*! ../World */
+
+/*! ../WorldContext */
+
+/*! ../WorldMarkers */
+
+/*! ../actions/mosaic */
+
+/*! ../actions/panels */
+
+/*! ../commands/OverlayProjector */
+
+/*! ../commands/PointClouds/types */
+
+/*! ../commands/PoseMarkers */
+
+/*! ../commands/utils */
+
+/*! ../components/Button */
+
+/*! ../components/Dropdown */
+
+/*! ../components/Flex */
+
+/*! ../components/Menu */
+
+/*! ../components/MessageHistoryDEPRECATED */
+
+/*! ../components/MessagePipeline */
+
+/*! ../components/Panel */
+
+/*! ../components/PanelToolbar */
+
+/*! ../components/TextContent */
+
+/*! ../constants */
+
+/*! ../filterMap */
+
+/*! ../hooks/useGlobalVariables */
 
 /*! ../interactionUtils */
 
+/*! ../panels/PanelList */
+
+/*! ../panels/ThreeDimensionalViz/Interactions/interactionUtils */
+
+/*! ../panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables */
+
+/*! ../panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings */
+
+/*! ../players/types */
+
+/*! ../stories/inScreenshotTests */
+
+/*! ../stories/waitFor3dPanelEvents */
+
+/*! ../styles/colors.module.scss */
+
+/*! ../styles/mixins.module.scss */
+
+/*! ../threeDimensionalVizUtils */
+
 /*! ../useLinkedGlobalVariables */
 
+/*! ../util */
+
+/*! ../util/clipboard */
+
+/*! ../util/formatTime */
+
+/*! ../util/fuzzyFilter */
+
+/*! ../util/globalConstants */
+
 /*! ../util/hooks */
+
+/*! ../util/layout */
+
+/*! ../util/logEvent */
+
+/*! ../util/selectors */
+
+/*! ../util/sharedStyleConstants */
+
+/*! ../util/time */
+
+/*! ../util/yaml */
+
+/*! ../utils/drawToolUtils */
+
+/*! ./.. */
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
@@ -78,7 +596,17 @@
 
 /*! ./AudioToolbar */
 
+/*! ./AutoSizingCanvas */
+
 /*! ./Autocomplete.module.scss */
+
+/*! ./BlockLoadingProgress */
+
+/*! ./BottomBar */
+
+/*! ./Button */
+
+/*! ./CameraInfo */
 
 /*! ./CameraModel */
 
@@ -88,9 +616,17 @@
 
 /*! ./ChartJSWorker.worker */
 
+/*! ./ChildToggle */
+
 /*! ./Collector */
 
 /*! ./ColorPickerForTopicSettings */
+
+/*! ./CopyText */
+
+/*! ./Crosshair */
+
+/*! ./DEPRECATED_ros */
 
 /*! ./DebugStatsOverlay */
 
@@ -108,11 +644,33 @@
 
 /*! ./DiagnosticsHistory */
 
+/*! ./DiagnosticsSection */
+
 /*! ./Diff */
 
 /*! ./DiffModeSettings */
 
+/*! ./DraggableToolbarTab */
+
+/*! ./DrawingTools */
+
+/*! ./DrawingTools/MeasuringTool */
+
+/*! ./Dropdown */
+
+/*! ./Editor */
+
+/*! ./EmptyDropTarget */
+
+/*! ./ErrorBoundary */
+
 /*! ./ExpandingToolbar.module.scss */
+
+/*! ./ExperimentalFeatures */
+
+/*! ./Flex */
+
+/*! ./FollowTFControl */
 
 /*! ./FrameCompatibility */
 
@@ -120,9 +678,13 @@
 
 /*! ./GlobalVariableLink/index */
 
+/*! ./Icon */
+
 /*! ./IconMarkerSettingsEditor */
 
 /*! ./IconMarkers */
+
+/*! ./IconTextMenu */
 
 /*! ./ImageCanvas */
 
@@ -134,9 +696,17 @@
 
 /*! ./Interactions */
 
+/*! ./Interactions/useLinkedGlobalVariables */
+
+/*! ./KeyListener */
+
 /*! ./LaserScanSettingsEditor */
 
 /*! ./LaserScans */
+
+/*! ./Layout */
+
+/*! ./Layout.module.scss */
 
 /*! ./LevelToString */
 
@@ -150,17 +720,31 @@
 
 /*! ./LogMessage.module.scss */
 
+/*! ./LogsSection */
+
+/*! ./MainToolbar */
+
 /*! ./MarkerOverrideColorSettingsEditor */
 
 /*! ./MarkerSettingsEditor */
 
+/*! ./MeasureMarker */
+
+/*! ./Menu */
+
+/*! ./MessageCollector */
+
 /*! ./MessagePathInput.module.scss */
+
+/*! ./MessagePipeline */
 
 /*! ./Metadata */
 
 /*! ./NamespaceMenu */
 
 /*! ./NodeName */
+
+/*! ./ObjectDetails */
 
 /*! ./OccupancyGrids */
 
@@ -172,9 +756,21 @@
 
 /*! ./Panel.module.scss */
 
+/*! ./PanelContext */
+
+/*! ./PanelToolbar/MosaicDragHandle */
+
+/*! ./PanelToolbar/index.module.scss */
+
+/*! ./PlotChart */
+
 /*! ./PlotChart.module.scss */
 
+/*! ./PlotLegend */
+
 /*! ./PlotLegend.module.scss */
+
+/*! ./PlotMenu */
 
 /*! ./PlotMenu.module.scss */
 
@@ -192,29 +788,61 @@
 
 /*! ./RawMessagesIcons */
 
+/*! ./Renderer */
+
 /*! ./Rpc */
+
+/*! ./RpcMainThreadUtils */
+
+/*! ./SearchText */
 
 /*! ./Select */
 
 /*! ./Select.module.scss */
 
+/*! ./Sidebar */
+
+/*! ./Slider */
+
+/*! ./SliderWithTicks */
+
 /*! ./Tab.module.scss */
+
+/*! ./TabDndContext */
+
+/*! ./TabbedToolbar */
+
+/*! ./TableSettings */
 
 /*! ./TextHighlight */
 
 /*! ./TextMiddleTruncate */
 
+/*! ./TimeBasedChartLegend */
+
 /*! ./TimeBasedChartTooltip */
 
 /*! ./TimeBasedChartTooltip.module.scss */
 
+/*! ./ToolbarTab */
+
+/*! ./Tooltip */
+
+/*! ./TopicLink */
+
 /*! ./TopicSettingsEditor.module.scss */
+
+/*! ./TopicSettingsEditor/ColorPickerForTopicSettings */
 
 /*! ./TopicTree */
 
 /*! ./TopicTreeSwitcher */
 
 /*! ./TopicViewModeSelector */
+
+/*! ./Transforms */
+
+/*! ./Transforms/utils */
 
 /*! ./TreeNodeMenu */
 
@@ -232,9 +860,29 @@
 
 /*! ./VolumeControl */
 
+/*! ./WorkerDataRpc */
+
+/*! ./WorldMarkers */
+
+/*! ./assets/file-document-edit.svg */
+
+/*! ./assets/hammer-wrench.svg */
+
 /*! ./buffers */
 
 /*! ./buildSampleMessage */
+
+/*! ./carModel.glb */
+
+/*! ./colors.ts */
+
+/*! ./commands */
+
+/*! ./commands/Cover */
+
+/*! ./commands/OverlayProjector */
+
+/*! ./commands/PointClouds/selection */
 
 /*! ./common */
 
@@ -245,6 +893,8 @@
 /*! ./decodings */
 
 /*! ./generateNodeKey */
+
+/*! ./getDiff */
 
 /*! ./getValueActionForValue */
 
@@ -258,7 +908,15 @@
 
 /*! ./index.module.scss */
 
+/*! ./input/JSONInput */
+
+/*! ./input/ValidatedResizingInput */
+
 /*! ./interactionUtils */
+
+/*! ./internalTypes */
+
+/*! ./isTypicalFilterName */
 
 /*! ./lib */
 
@@ -266,7 +924,13 @@
 
 /*! ./loadWebviz */
 
+/*! ./lodash.ts */
+
+/*! ./logEvent */
+
 /*! ./markerArray.template.ts */
+
+/*! ./markers.ts */
 
 /*! ./memoization */
 
@@ -276,11 +940,71 @@
 
 /*! ./overwriteFetch */
 
+/*! ./panels/Audio */
+
+/*! ./panels/GlobalVariableDropdown */
+
+/*! ./panels/GlobalVariableSlider */
+
+/*! ./panels/GlobalVariables */
+
+/*! ./panels/ImageView */
+
+/*! ./panels/Internals */
+
+/*! ./panels/NodePlayground */
+
+/*! ./panels/Note */
+
+/*! ./panels/NumberOfRenders */
+
+/*! ./panels/PlaybackPerformance */
+
+/*! ./panels/Plot */
+
+/*! ./panels/Publish */
+
+/*! ./panels/RawMessages */
+
+/*! ./panels/Rosout */
+
+/*! ./panels/SourceInfo */
+
+/*! ./panels/StateTransitions */
+
+/*! ./panels/SubscribeToList */
+
+/*! ./panels/Tab */
+
+/*! ./panels/Table */
+
+/*! ./panels/ThreeDimensionalViz */
+
+/*! ./panels/ThreeDimensionalViz/Layout/Layout.worker */
+
+/*! ./panels/ThreeDimensionalViz/Layout/LayoutWorker */
+
+/*! ./panels/ThreeDimensionalViz/SceneBuilder/defaultHooks */
+
+/*! ./panels/ThreeDimensionalViz/SceneBuilder/useWorldContextValue */
+
+/*! ./panels/TwoDimensionalPlot */
+
+/*! ./panels/diagnostics/DiagnosticStatusPanel */
+
+/*! ./panels/diagnostics/DiagnosticSummary */
+
 /*! ./parseRosPath */
+
+/*! ./playground-icon.svg */
+
+/*! ./pointClouds.ts */
 
 /*! ./pointRenderer */
 
 /*! ./readers */
+
+/*! ./readers.ts */
 
 /*! ./renderImage */
 
@@ -290,13 +1014,29 @@
 
 /*! ./renderTreeNodes */
 
+/*! ./ros */
+
+/*! ./selection */
+
+/*! ./sendNotification */
+
 /*! ./textAtlas.json */
 
 /*! ./textureAtlasData.bin */
 
+/*! ./threeDimensionalVizUtils */
+
+/*! ./time.ts */
+
+/*! ./toolsColorScheme */
+
+/*! ./transformPlotRange */
+
 /*! ./twoDimensionalPlot.template.ts */
 
 /*! ./types */
+
+/*! ./types.ts */
 
 /*! ./useCachedGetMessagePathDataItems */
 
@@ -304,13 +1044,33 @@
 
 /*! ./useLinkedGlobalVariables */
 
+/*! ./useTopicTree */
+
+/*! ./userUtils */
+
 /*! ./util */
 
+/*! ./util/entities */
+
+/*! ./util/globalConstants */
+
+/*! ./util/supportsOffscreenCanvas */
+
 /*! ./utils */
+
+/*! ./utils/diffModeUtils */
 
 /*! ./utils/glTextAtlasLoader */
 
 /*! ./utils/groupingUtils */
+
+/*! ./utils/searchTextUtils */
+
+/*! ./vectors.ts */
+
+/*! ./withTransforms */
+
+/*! ./withWorldMarkerHighlights.js */
 
 /*! ./zoomAndPanHelpers */
 
@@ -321,10 +1081,6 @@
 /*! @babel/runtime/helpers/objectSpread */
 
 /*! @babel/runtime/helpers/objectWithoutProperties */
-
-/*! @cruise-automation/hooks */
-
-/*! @cruise-automation/tooltip */
 
 /*! @mapbox/tiny-sdf */
 
@@ -678,8 +1434,6 @@
 
 /*! regl */
 
-/*! regl-worldview */
-
 /*! reselect */
 
 /*! rosbag */
@@ -699,514 +1453,6 @@
 /*! use-debounce */
 
 /*! uuid */
-
-/*! webviz-core/shared/delay */
-
-/*! webviz-core/shared/panelToolbarStyles */
-
-/*! webviz-core/shared/signal */
-
-/*! webviz-core/shared/validators */
-
-/*! webviz-core/src/PanelAPI */
-
-/*! webviz-core/src/PanelAPI/useDataSourceInfo */
-
-/*! webviz-core/src/actions/mosaic */
-
-/*! webviz-core/src/actions/panels */
-
-/*! webviz-core/src/actions/userNodes */
-
-/*! webviz-core/src/components/AutoSizingCanvas */
-
-/*! webviz-core/src/components/Autocomplete */
-
-/*! webviz-core/src/components/Button */
-
-/*! webviz-core/src/components/Checkbox */
-
-/*! webviz-core/src/components/ChildToggle */
-
-/*! webviz-core/src/components/ContextMenu */
-
-/*! webviz-core/src/components/CopyText */
-
-/*! webviz-core/src/components/Dimensions */
-
-/*! webviz-core/src/components/Dropdown */
-
-/*! webviz-core/src/components/Dropdown/index.module.scss */
-
-/*! webviz-core/src/components/EmptyState */
-
-/*! webviz-core/src/components/ErrorBoundary */
-
-/*! webviz-core/src/components/ExpandingToolbar */
-
-/*! webviz-core/src/components/ExperimentalFeatures */
-
-/*! webviz-core/src/components/Flex */
-
-/*! webviz-core/src/components/GLChart */
-
-/*! webviz-core/src/components/GlobalVariableSlider */
-
-/*! webviz-core/src/components/GlobalVariablesTable */
-
-/*! webviz-core/src/components/GradientPicker */
-
-/*! webviz-core/src/components/HoverBar */
-
-/*! webviz-core/src/components/HoverBar/context */
-
-/*! webviz-core/src/components/Icon */
-
-/*! webviz-core/src/components/KeyListener */
-
-/*! webviz-core/src/components/KeyboardShortcut */
-
-/*! webviz-core/src/components/LogList */
-
-/*! webviz-core/src/components/Menu */
-
-/*! webviz-core/src/components/Menu/Item */
-
-/*! webviz-core/src/components/MessageHistoryDEPRECATED */
-
-/*! webviz-core/src/components/MessagePathSyntax/MessagePathInput */
-
-/*! webviz-core/src/components/MessagePathSyntax/constants */
-
-/*! webviz-core/src/components/MessagePathSyntax/isTypicalFilterName */
-
-/*! webviz-core/src/components/MessagePathSyntax/messagePathsForDatatype */
-
-/*! webviz-core/src/components/MessagePathSyntax/parseRosPath */
-
-/*! webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems */
-
-/*! webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem */
-
-/*! webviz-core/src/components/MessagePipeline */
-
-/*! webviz-core/src/components/Modal */
-
-/*! webviz-core/src/components/Panel */
-
-/*! webviz-core/src/components/PanelContext */
-
-/*! webviz-core/src/components/PanelLayout */
-
-/*! webviz-core/src/components/PanelToolbar */
-
-/*! webviz-core/src/components/PanelToolbar/MosaicDragHandle */
-
-/*! webviz-core/src/components/PanelToolbar/index.module.scss */
-
-/*! webviz-core/src/components/Publisher */
-
-/*! webviz-core/src/components/Radio */
-
-/*! webviz-core/src/components/ReactChartjs */
-
-/*! webviz-core/src/components/ReactChartjs/zoomAndPanHelpers */
-
-/*! webviz-core/src/components/ResizableSplitFlex */
-
-/*! webviz-core/src/components/SegmentedControl */
-
-/*! webviz-core/src/components/Select */
-
-/*! webviz-core/src/components/SelectableTimestamp */
-
-/*! webviz-core/src/components/Slider */
-
-/*! webviz-core/src/components/SliderWithTicks */
-
-/*! webviz-core/src/components/Sparkline */
-
-/*! webviz-core/src/components/SpinningLoadingIcon */
-
-/*! webviz-core/src/components/Switch */
-
-/*! webviz-core/src/components/TextContent */
-
-/*! webviz-core/src/components/TextField */
-
-/*! webviz-core/src/components/TimeBasedChart */
-
-/*! webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend */
-
-/*! webviz-core/src/components/TimeBasedChart/constants */
-
-/*! webviz-core/src/components/TimeBasedChart/utils */
-
-/*! webviz-core/src/components/Tooltip */
-
-/*! webviz-core/src/components/TopicToRenderMenu */
-
-/*! webviz-core/src/components/ValidatedInput */
-
-/*! webviz-core/src/components/input/JSONInput */
-
-/*! webviz-core/src/components/input/ValidatedResizingInput */
-
-/*! webviz-core/src/components/renderToBody */
-
-/*! webviz-core/src/filterMap */
-
-/*! webviz-core/src/hooks/useGlobalVariables */
-
-/*! webviz-core/src/loadWebviz */
-
-/*! webviz-core/src/panels/Audio */
-
-/*! webviz-core/src/panels/Audio/BlockLoadingProgress */
-
-/*! webviz-core/src/panels/GlobalVariableDropdown */
-
-/*! webviz-core/src/panels/GlobalVariableDropdown/index.help.md */
-
-/*! webviz-core/src/panels/GlobalVariableSlider */
-
-/*! webviz-core/src/panels/GlobalVariables */
-
-/*! webviz-core/src/panels/ImageView */
-
-/*! webviz-core/src/panels/ImageView/IconTextMenu */
-
-/*! webviz-core/src/panels/Internals */
-
-/*! webviz-core/src/panels/NodePlayground */
-
-/*! webviz-core/src/panels/NodePlayground/BottomBar */
-
-/*! webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection */
-
-/*! webviz-core/src/panels/NodePlayground/BottomBar/LogsSection */
-
-/*! webviz-core/src/panels/NodePlayground/Editor */
-
-/*! webviz-core/src/panels/NodePlayground/Sidebar */
-
-/*! webviz-core/src/panels/NodePlayground/assets/file-document-edit.svg */
-
-/*! webviz-core/src/panels/NodePlayground/assets/hammer-wrench.svg */
-
-/*! webviz-core/src/panels/NodePlayground/index.help.md */
-
-/*! webviz-core/src/panels/NodePlayground/playground-icon.svg */
-
-/*! webviz-core/src/panels/Note */
-
-/*! webviz-core/src/panels/NumberOfRenders */
-
-/*! webviz-core/src/panels/PanelList */
-
-/*! webviz-core/src/panels/PlaybackPerformance */
-
-/*! webviz-core/src/panels/Plot */
-
-/*! webviz-core/src/panels/Plot/PlotChart */
-
-/*! webviz-core/src/panels/Plot/PlotLegend */
-
-/*! webviz-core/src/panels/Plot/PlotMenu */
-
-/*! webviz-core/src/panels/Plot/internalTypes */
-
-/*! webviz-core/src/panels/Plot/transformPlotRange */
-
-/*! webviz-core/src/panels/Publish */
-
-/*! webviz-core/src/panels/RawMessages */
-
-/*! webviz-core/src/panels/RawMessages/getDiff */
-
-/*! webviz-core/src/panels/RawMessages/index */
-
-/*! webviz-core/src/panels/Rosout */
-
-/*! webviz-core/src/panels/SourceInfo */
-
-/*! webviz-core/src/panels/StateTransitions */
-
-/*! webviz-core/src/panels/SubscribeToList */
-
-/*! webviz-core/src/panels/Tab */
-
-/*! webviz-core/src/panels/Tab/DraggableToolbarTab */
-
-/*! webviz-core/src/panels/Tab/EmptyDropTarget */
-
-/*! webviz-core/src/panels/Tab/TabDndContext */
-
-/*! webviz-core/src/panels/Tab/TabbedToolbar */
-
-/*! webviz-core/src/panels/Tab/ToolbarTab */
-
-/*! webviz-core/src/panels/Tab/index.help.md */
-
-/*! webviz-core/src/panels/Table */
-
-/*! webviz-core/src/panels/Table/TableSettings */
-
-/*! webviz-core/src/panels/Table/utils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/CameraInfo */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Crosshair */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Renderer */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DebugStats/useDebugStats */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DrawingTools */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/IconOverlay */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout/Layout.worker */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/MainToolbar */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/useWorldContextValue */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/SearchText */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/IconMarkerSettingsEditor */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/generateNodeKey */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderTreeNodes */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/World */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/WorldContext */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/Cover */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector/index */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/types */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/utils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/constants */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/index.help.md */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/logger */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/diffModeUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/withTransforms */
-
-/*! webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js */
-
-/*! webviz-core/src/panels/TwoDimensionalPlot */
-
-/*! webviz-core/src/panels/diagnostics/DiagnosticStatusPanel */
-
-/*! webviz-core/src/panels/diagnostics/DiagnosticSummary */
-
-/*! webviz-core/src/panels/diagnostics/DiagnosticsHistory */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/DEPRECATED_ros */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/templates */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/README.md */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/colors.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/lodash.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/markers.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/types.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts */
-
-/*! webviz-core/src/players/UserNodePlayer/types */
-
-/*! webviz-core/src/players/types */
-
-/*! webviz-core/src/stories/inScreenshotTests */
-
-/*! webviz-core/src/styles/colors.module.scss */
-
-/*! webviz-core/src/styles/mixins.module.scss */
-
-/*! webviz-core/src/util */
-
-/*! webviz-core/src/util/FakeRpc */
-
-/*! webviz-core/src/util/NoopReactRenderer */
-
-/*! webviz-core/src/util/Pose */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcMainThreadUtils */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/WebWorkerManager */
-
-/*! webviz-core/src/util/binaryObjects */
-
-/*! webviz-core/src/util/binaryObjects/BobjectRpc */
-
-/*! webviz-core/src/util/binaryObjects/messageDefinitionUtils */
-
-/*! webviz-core/src/util/clipboard */
-
-/*! webviz-core/src/util/colorUtils */
-
-/*! webviz-core/src/util/debouncePromise */
-
-/*! webviz-core/src/util/entities */
-
-/*! webviz-core/src/util/formatTime */
-
-/*! webviz-core/src/util/fuzzyFilter */
-
-/*! webviz-core/src/util/globalConstants */
-
-/*! webviz-core/src/util/hooks */
-
-/*! webviz-core/src/util/inAutomatedRunMode */
-
-/*! webviz-core/src/util/layout */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/naturalSort */
-
-/*! webviz-core/src/util/plotColors */
-
-/*! webviz-core/src/util/selectors */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/sharedStyleConstants */
-
-/*! webviz-core/src/util/supportsOffscreenCanvas */
-
-/*! webviz-core/src/util/synchronizeMessages */
-
-/*! webviz-core/src/util/time */
-
-/*! webviz-core/src/util/toggle */
-
-/*! webviz-core/src/util/toolsColorScheme */
-
-/*! webviz-core/src/util/topicUtils */
-
-/*! webviz-core/src/util/yaml */
 
 /*!********************!*\
   !*** fs (ignored) ***!
@@ -1245,7 +1491,7 @@
   \**************************************************/
 
 /*!***************************************************!*\
-  !*** ./packages/regl-worldview/dist/index.esm.js ***!
+  !*** ./packages/regl-worldview/dist/index.cjs.js ***!
   \***************************************************/
 
 /*!***************************************************!*\

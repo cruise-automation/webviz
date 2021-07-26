@@ -13,6 +13,12 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
+/*! ../../util/Rpc */
+
+/*! ../../util/RpcWorkerUtils */
+
+/*! ../../util/sendNotification */
+
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
@@ -43,6 +49,8 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./decodings */
 
+/*! ./errors */
+
 /*! ./is */
 
 /*! ./isObject */
@@ -50,6 +58,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./isObjectLike */
 
 /*! ./isSymbol */
+
+/*! ./logEvent */
 
 /*! ./memo */
 
@@ -61,11 +71,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./scope */
 
+/*! ./sendNotification */
+
 /*! ./string */
 
 /*! ./toNumber */
 
 /*! ./util */
+
+/*! ./workers */
 
 /*! @sentry/browser */
 
@@ -166,18 +180,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! no static exports found */
 
 /*! tslib */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/errors */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/workers */
 
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!

@@ -1124,7 +1124,7 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/regl-worldview/dist/index.esm.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/regl-worldview/dist/index.cjs.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-outside-click-handler/build/OutsideClickHandler.js (referenced with cjs require) */
 

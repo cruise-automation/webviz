@@ -108,17 +108,53 @@ and limitations under the License.
 
 /*! ../../../../../node_modules/style-loader/lib/addStyles.js */
 
+/*! ../../../../@cruise-automation/tooltip/lib */
+
 /*! ../../../../node_modules/css-loader/lib/css-base.js */
 
 /*! ../../../../node_modules/css-loader/lib/url/escape.js */
 
 /*! ../../../../node_modules/style-loader/lib/addStyles.js */
 
+/*! ../../../@cruise-automation/button/lib */
+
+/*! ../../../@cruise-automation/hooks/dist/index.cjs */
+
+/*! ../../../@cruise-automation/tooltip/lib */
+
+/*! ../../../shared/delay */
+
+/*! ../../../shared/promiseTimeout */
+
+/*! ../../../shared/signal */
+
+/*! ../../../shared/triggerFileDownload */
+
+/*! ../../actions/panels */
+
 /*! ../../asn1 */
+
+/*! ../../assets/emptyBox.svg */
 
 /*! ../../common/DndContext */
 
+/*! ../../components/ChildToggle */
+
+/*! ../../components/Confirm */
+
+/*! ../../components/ExperimentalFeatures */
+
+/*! ../../components/Flex */
+
+/*! ../../components/Icon */
+
+/*! ../../components/Menu */
+
+/*! ../../components/TextHighlight */
+
 /*! ../../elliptic */
+
+/*! ../../loadWebviz */
 
 /*! ../../modules/_core */
 
@@ -148,27 +184,171 @@ and limitations under the License.
 
 /*! ../../modules/web.dom.iterable */
 
+/*! ../../panels/PanelList */
+
+/*! ../../players/types */
+
+/*! ../../shared/delay */
+
+/*! ../../shared/layout */
+
+/*! ../../stories/StoreSetup */
+
+/*! ../../styles/colors.module.scss */
+
+/*! ../../test/datatypes */
+
+/*! ../../util */
+
+/*! ../../util/Logger */
+
+/*! ../../util/Rpc */
+
+/*! ../../util/RpcMainThreadUtils */
+
+/*! ../../util/Storage */
+
+/*! ../../util/binaryObjects */
+
+/*! ../../util/binaryObjects/BobjectRpc */
+
+/*! ../../util/colorUtils */
+
+/*! ../../util/entities */
+
+/*! ../../util/formatTime */
+
+/*! ../../util/frameless */
+
+/*! ../../util/globalConstants */
+
+/*! ../../util/hooks */
+
+/*! ../../util/inAutomatedRunMode */
+
+/*! ../../util/indexeddb/Database */
+
+/*! ../../util/layout */
+
+/*! ../../util/logEvent */
+
+/*! ../../util/naturalSort */
+
+/*! ../../util/selectors */
+
+/*! ../../util/sendNotification */
+
+/*! ../../util/sharedStyleConstants */
+
+/*! ../../util/time */
+
+/*! ../../util/topicUtils */
+
 /*! ../5/CheckObjectCoercible */
 
 /*! ../5/Type */
 
+/*! ../AutoSizingCanvas */
+
 /*! ../BagReader */
+
+/*! ../Button */
 
 /*! ../ChildToggle */
 
+/*! ../Dimensions */
+
+/*! ../Dropdown */
+
+/*! ../Flex */
+
 /*! ../GetIntrinsic */
+
+/*! ../HelpModal */
+
+/*! ../HoverBar/PlaybackBarHoverTicks */
+
+/*! ../HoverBar/context */
 
 /*! ../Icon */
 
+/*! ../KeyListener */
+
+/*! ../Logger */
+
 /*! ../Menu */
 
+/*! ../MessageOrderControls */
+
+/*! ../MessagePipeline */
+
+/*! ../Modal */
+
+/*! ../OrderedStampPlayer */
+
+/*! ../PanelAPI */
+
+/*! ../PanelContext */
+
+/*! ../PanelList */
+
+/*! ../PlaybackSpeedControls */
+
+/*! ../Radio */
+
+/*! ../RandomAccessPlayer */
+
+/*! ../ReactChartjs/zoomAndPanHelpers */
+
+/*! ../Resizable */
+
+/*! ../Rpc */
+
+/*! ../Screenshots/ScreenshotsContext */
+
+/*! ../ShareJsonModal */
+
+/*! ../Slider */
+
+/*! ../TextContent */
+
+/*! ../Tooltip */
+
+/*! ../Tooltip.module.scss */
+
+/*! ../actions/layoutHistory */
+
+/*! ../actions/mosaic */
+
+/*! ../actions/panels */
+
+/*! ../actions/userNodes */
+
 /*! ../asn1 */
+
+/*! ../assets/layout.svg */
+
+/*! ../assets/logo.svg */
 
 /*! ../bag */
 
 /*! ../base */
 
 /*! ../common */
+
+/*! ../components/ExperimentalFeatures */
+
+/*! ../components/HelpModal */
+
+/*! ../components/MessagePathSyntax/index.help.md */
+
+/*! ../components/MessagePipeline */
+
+/*! ../components/PanelContext */
+
+/*! ../components/WssErrorModal */
+
+/*! ../components/renderToBody */
 
 /*! ../constants */
 
@@ -190,9 +370,25 @@ and limitations under the License.
 
 /*! ../curve */
 
+/*! ../dataProviders/MemoryCacheDataProvider */
+
+/*! ../dataProviders/ParsedMessageCache */
+
+/*! ../dataProviders/constants */
+
+/*! ../dataProviders/getRemoteBagGuid */
+
+/*! ../dataProviders/rootGetDataProvider */
+
+/*! ../dataProviders/standardDataProviderDescriptors */
+
 /*! ../des */
 
 /*! ../elliptic */
+
+/*! ../filterMap */
+
+/*! ../frozenHelpers/getPanelTypeFromId */
 
 /*! ../helpers/DefineOwnProperty */
 
@@ -212,11 +408,15 @@ and limitations under the License.
 
 /*! ../helpers/typeof */
 
+/*! ../hooks/useUserNodes */
+
 /*! ../incr32 */
 
 /*! ../index */
 
 /*! ../internalTypes */
+
+/*! ../loadWebviz */
 
 /*! ../locate/break */
 
@@ -236,23 +436,145 @@ and limitations under the License.
 
 /*! ../locate/url */
 
+/*! ../middleware/updateUrlAndLocalStorage */
+
+/*! ../migrations */
+
+/*! ../migrations/constants */
+
 /*! ../package.json */
+
+/*! ../panels/PanelList */
+
+/*! ../panels/Tab/EmptyDropTarget */
+
+/*! ../players/OrderedStampPlayer */
+
+/*! ../players/RandomAccessPlayer */
+
+/*! ../players/RosbridgePlayer */
+
+/*! ../players/UserNodePlayer */
+
+/*! ../players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
+
+/*! ../players/automatedRun/AutomatedRunPlayer */
+
+/*! ../players/automatedRun/performanceMeasuringClient */
+
+/*! ../players/automatedRun/videoRecordingClient */
+
+/*! ../players/types */
+
+/*! ../reducers */
+
+/*! ../reducers/panels */
+
+/*! ../renderToBody */
+
+/*! ../store/configureStore */
+
+/*! ../store/getGlobalStore */
+
+/*! ../stories/inScreenshotTests */
+
+/*! ../styles/colors.module.scss */
+
+/*! ../test/MemoryStorage */
 
 /*! ../types */
 
+/*! ../util */
+
+/*! ../util/CachedFilelike */
+
+/*! ../util/Logger */
+
 /*! ../util/OptionalBlueprint */
+
+/*! ../util/Rpc */
+
+/*! ../util/RpcMainThreadUtils */
+
+/*! ../util/Storage */
+
+/*! ../util/bagConnectionsHelper */
+
+/*! ../util/bags */
+
+/*! ../util/binaryObjects */
+
+/*! ../util/binaryObjects/binaryMessageWriter */
 
 /*! ../util/binaryObjects/binaryTranslation */
 
+/*! ../util/clipboard */
+
+/*! ../util/corsError */
+
+/*! ../util/datatypes */
+
+/*! ../util/debouncePromise */
+
+/*! ../util/demoLayout.json */
+
+/*! ../util/dev */
+
+/*! ../util/entities */
+
+/*! ../util/errors */
+
 /*! ../util/get-indentation */
+
+/*! ../util/getGlobalVariablesFromUrl */
+
+/*! ../util/getNewConnection */
+
+/*! ../util/globalConstants */
+
+/*! ../util/history */
+
+/*! ../util/hooks */
 
 /*! ../util/html */
 
+/*! ../util/iframeUtils */
+
+/*! ../util/inAutomatedRunMode */
+
+/*! ../util/indexeddb/Database */
+
+/*! ../util/indexeddb/MetaDatabase */
+
+/*! ../util/indexeddb/clearIndexedDb */
+
 /*! ../util/interrupt */
+
+/*! ../util/layout */
+
+/*! ../util/minivizAPI */
+
+/*! ../util/naturalSort */
 
 /*! ../util/normalize */
 
+/*! ../util/parseMessageDefinitionsCache */
+
+/*! ../util/ranges */
+
 /*! ../util/remove-indentation */
+
+/*! ../util/selectors */
+
+/*! ../util/sendNotification */
+
+/*! ../util/sharedStyleConstants */
+
+/*! ../util/showHelpModalOpenSource */
+
+/*! ../util/stateHistory */
+
+/*! ../util/time */
 
 /*! ../utils */
 
@@ -320,35 +642,67 @@ and limitations under the License.
 
 /*! ./../webpack/node_modules/process/browser.js */
 
+/*! ./2020.05.06.00:00:03.migrate3DPanel */
+
 /*! ./256 */
 
 /*! ./512 */
 
+/*! ./ApiCheckerDataProvider */
+
+/*! ./AppMenu */
+
+/*! ./ArrayViews */
+
 /*! ./BWT */
+
+/*! ./BagDataProvider */
 
 /*! ./BagReader */
 
 /*! ./BitStream */
 
+/*! ./BrowserHttpReader */
+
+/*! ./Button */
+
 /*! ./CRC32 */
+
+/*! ./ChildToggle */
+
+/*! ./CombinedDataProvider */
 
 /*! ./Confirm.module.scss */
 
 /*! ./CreateDataProperty */
 
+/*! ./Database */
+
 /*! ./DbWriter */
 
 /*! ./DndContext */
 
+/*! ./DocumentDropListener */
+
 /*! ./Draggable */
 
 /*! ./DraggableCore */
+
+/*! ./DropOverlay */
+
+/*! ./Dropdown */
 
 /*! ./ErrorBoundary */
 
 /*! ./ExpandButton */
 
 /*! ./ExpandableMenu */
+
+/*! ./ExperimentalFeatures */
+
+/*! ./FetchReader */
+
+/*! ./Flex */
 
 /*! ./Flex.module.scss */
 
@@ -358,11 +712,17 @@ and limitations under the License.
 
 /*! ./HelpButton */
 
+/*! ./HelpModal */
+
+/*! ./HoverBar/context */
+
 /*! ./HuffmanAllocator */
 
 /*! ./Icon */
 
 /*! ./IdbCacheDataProviderDatabase */
+
+/*! ./IdbCacheReaderDataProvider */
 
 /*! ./IsArray */
 
@@ -382,13 +742,29 @@ and limitations under the License.
 
 /*! ./Item */
 
+/*! ./KeyListener */
+
+/*! ./KeyboardShortcut */
+
+/*! ./LayoutMenu */
+
+/*! ./LayoutModal */
+
+/*! ./MeasureDataProvider */
+
+/*! ./MemoryCacheDataProvider */
+
 /*! ./Menu */
 
 /*! ./MenuHeader */
 
+/*! ./MessagePipeline */
+
 /*! ./MessageReader */
 
 /*! ./MessageWriter */
+
+/*! ./Modal */
 
 /*! ./Mosaic */
 
@@ -406,9 +782,33 @@ and limitations under the License.
 
 /*! ./MosaicZeroState */
 
+/*! ./NoHeaderTopicsButton */
+
+/*! ./NoopMetricsCollector */
+
+/*! ./NotificationDisplay */
+
+/*! ./OrderedStampPlayer */
+
 /*! ./OrdinaryGetOwnProperty */
 
+/*! ./PanelLayout */
+
 /*! ./PanelLayout.scss */
+
+/*! ./PanelToolbar */
+
+/*! ./ParseMessagesDataProvider */
+
+/*! ./ParsedMessageCache */
+
+/*! ./PlaybackControls */
+
+/*! ./PlaybackControls/sharedHelpers */
+
+/*! ./PlaybackTimeDisplayMethod */
+
+/*! ./PlayerManager */
 
 /*! ./ProgressPlot */
 
@@ -416,17 +816,23 @@ and limitations under the License.
 
 /*! ./RemoveButton */
 
+/*! ./RenameDataProvider */
+
 /*! ./ReplaceButton */
 
 /*! ./RequireObjectCoercible */
 
 /*! ./Resizable */
 
+/*! ./RewriteBinaryDataProvider */
+
 /*! ./Root.module.scss */
 
 /*! ./RootDropTargets */
 
 /*! ./Rpc */
+
+/*! ./RpcDataProvider */
 
 /*! ./SameValue */
 
@@ -436,7 +842,13 @@ and limitations under the License.
 
 /*! ./SettingsMenu */
 
+/*! ./ShareJsonModal */
+
 /*! ./ShareJsonModal.module.scss */
+
+/*! ./ShortcutsModal */
+
+/*! ./SpinningLoadingIcon */
 
 /*! ./SpinningLoadingIcon.module.scss */
 
@@ -444,13 +856,19 @@ and limitations under the License.
 
 /*! ./SplitButton */
 
+/*! ./Storage */
+
 /*! ./Stream */
 
 /*! ./SubMenu */
 
+/*! ./TextContent */
+
 /*! ./TextContent.module.scss */
 
 /*! ./TimeUtil */
+
+/*! ./TinyConnectionPicker */
 
 /*! ./ToBoolean */
 
@@ -460,15 +878,23 @@ and limitations under the License.
 
 /*! ./ToPropertyDescriptor */
 
+/*! ./Toolbar */
+
 /*! ./Toolbar.module.scss */
+
+/*! ./Tooltip */
 
 /*! ./Tooltip.module.scss */
 
 /*! ./Type */
 
+/*! ./UserNodePlayer */
+
 /*! ./Util */
 
 /*! ./VirtualLRUBuffer */
+
+/*! ./WorkerDataProvider */
 
 /*! ./WssErrorModal.png */
 
@@ -954,6 +1380,10 @@ and limitations under the License.
 
 /*! ./binaryObjects */
 
+/*! ./binaryObjects/messageDefinitionUtils */
+
+/*! ./binaryWrapperObjects */
+
 /*! ./binding */
 
 /*! ./block-elements.json */
@@ -1002,11 +1432,19 @@ and limitations under the License.
 
 /*! ./cjs/scheduler.production.min.js */
 
+/*! ./commenting */
+
 /*! ./common */
+
+/*! ./components/Confirm */
+
+/*! ./components/Root */
 
 /*! ./configureStore */
 
 /*! ./constant */
+
+/*! ./constants */
 
 /*! ./context */
 
@@ -1018,11 +1456,15 @@ and limitations under the License.
 
 /*! ./crc32 */
 
+/*! ./createGetDataProvider */
+
 /*! ./ctr */
 
 /*! ./curves.json */
 
 /*! ./data/packed/latest.json */
+
+/*! ./dataProviders/WorkerDataProvider.worker */
 
 /*! ./debounce */
 
@@ -1072,6 +1514,8 @@ and limitations under the License.
 
 /*! ./eq */
 
+/*! ./errors */
+
 /*! ./es6.array.iterator */
 
 /*! ./factoryWithThrowingShims */
@@ -1081,6 +1525,36 @@ and limitations under the License.
 /*! ./fixProc */
 
 /*! ./freeze */
+
+/*! ./frozenHelpers/incrementVersion */
+
+/*! ./frozenHelpers/validateVersions */
+
+/*! ./frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects */
+
+/*! ./frozenMigrations/2020.05.06.00:00:03.migrate3DPanel */
+
+/*! ./frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables */
+
+/*! ./frozenMigrations/2020.05.06.00:00:05.migrateSourcePrefix */
+
+/*! ./frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys */
+
+/*! ./frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors */
+
+/*! ./frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig */
+
+/*! ./frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode */
+
+/*! ./frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey */
+
+/*! ./frozenMigrations/2020.06.26.17:40:24.migrate3DPanelColorSettings */
+
+/*! ./frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js */
+
+/*! ./frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js */
+
+/*! ./frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js */
 
 /*! ./generatePrime */
 
@@ -1095,6 +1569,8 @@ and limitations under the License.
 /*! ./getPrefix */
 
 /*! ./ghash */
+
+/*! ./globalConstants */
 
 /*! ./hasIn */
 
@@ -1112,6 +1588,8 @@ and limitations under the License.
 
 /*! ./header */
 
+/*! ./helpModalOpenSource.help.md */
+
 /*! ./helpers/isPrimitive */
 
 /*! ./hooksImporter */
@@ -1124,7 +1602,11 @@ and limitations under the License.
 
 /*! ./implementation */
 
+/*! ./inScreenshotTests */
+
 /*! ./incr32 */
+
+/*! ./index */
 
 /*! ./index.module.scss */
 
@@ -1170,11 +1652,15 @@ and limitations under the License.
 
 /*! ./isTypedArray */
 
+/*! ./jsWrapperObjects */
+
 /*! ./key */
 
 /*! ./keys */
 
 /*! ./keysIn */
+
+/*! ./layoutHistory */
 
 /*! ./legacy */
 
@@ -1228,6 +1714,10 @@ and limitations under the License.
 
 /*! ./list.json */
 
+/*! ./loadWebviz */
+
+/*! ./logEvent */
+
 /*! ./memo */
 
 /*! ./memoize */
@@ -1248,6 +1738,8 @@ and limitations under the License.
 
 /*! ./mont */
 
+/*! ./mosaic */
+
 /*! ./mosaicUtilities */
 
 /*! ./nmerge */
@@ -1257,6 +1749,8 @@ and limitations under the License.
 /*! ./now */
 
 /*! ./ofb */
+
+/*! ./panels */
 
 /*! ./parse */
 
@@ -1292,7 +1786,13 @@ and limitations under the License.
 
 /*! ./readable */
 
+/*! ./recentLayouts */
+
 /*! ./record */
+
+/*! ./reducers/panels */
+
+/*! ./renderToBody */
 
 /*! ./renderers */
 
@@ -1303,6 +1803,8 @@ and limitations under the License.
 /*! ./scope */
 
 /*! ./seedrandom */
+
+/*! ./sendNotification */
 
 /*! ./set-options */
 
@@ -1330,6 +1832,10 @@ and limitations under the License.
 
 /*! ./shams */
 
+/*! ./sharedHelpers */
+
+/*! ./sharedStyleConstants */
+
 /*! ./shim */
 
 /*! ./shims */
@@ -1340,6 +1846,8 @@ and limitations under the License.
 
 /*! ./signature */
 
+/*! ./stories/prepareForScreenshots */
+
 /*! ./streamCipher */
 
 /*! ./string */
@@ -1348,11 +1856,17 @@ and limitations under the License.
 
 /*! ./stubFalse */
 
+/*! ./styles/global.scss */
+
+/*! ./styles/waitForFonts */
+
 /*! ./support/isBuffer */
 
 /*! ./symbols */
 
 /*! ./sync */
+
+/*! ./tests */
 
 /*! ./time */
 
@@ -1438,15 +1952,31 @@ and limitations under the License.
 
 /*! ./useMessagesByTopic */
 
+/*! ./userNodes */
+
+/*! ./util */
+
 /*! ./util.inspect */
 
 /*! ./util/BoundingBox */
 
 /*! ./util/OptionalBlueprint */
 
+/*! ./util/datatypes */
+
+/*! ./util/globalConstants */
+
+/*! ./util/indexeddb/clearIndexedDb */
+
+/*! ./util/installDevtoolsFormatters */
+
+/*! ./util/logEvent */
+
 /*! ./util/mosaicUpdates */
 
 /*! ./util/mosaicUtilities */
+
+/*! ./util/overwriteFetch */
 
 /*! ./utils */
 
@@ -1470,7 +2000,11 @@ and limitations under the License.
 
 /*! ./wasm-lz4.wasm */
 
+/*! ./withDragDropContext */
+
 /*! ./withPublic */
+
+/*! ./workers */
 
 /*! ./wrap-table-rows */
 
@@ -1483,12 +2017,6 @@ and limitations under the License.
 /*! @babel/runtime/helpers/esm/inheritsLoose */
 
 /*! @babel/runtime/helpers/esm/objectWithoutPropertiesLoose */
-
-/*! @cruise-automation/button */
-
-/*! @cruise-automation/hooks */
-
-/*! @cruise-automation/tooltip */
 
 /*! @emotion/is-prop-valid */
 
@@ -1598,6 +2126,8 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/@cruise-automation/tooltip/node_modules/warning/browser.js (<- Module is not an ECMAScript module) */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
@@ -1626,7 +2156,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1683,6 +2213,8 @@ and limitations under the License.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
@@ -2418,402 +2950,6 @@ and limitations under the License.
 /*! vm */
 
 /*! wasm-lz4 */
-
-/*! webviz-core/migrations */
-
-/*! webviz-core/migrations/constants */
-
-/*! webviz-core/migrations/frozenHelpers/getPanelTypeFromId */
-
-/*! webviz-core/migrations/frozenHelpers/incrementVersion */
-
-/*! webviz-core/migrations/frozenHelpers/validateVersions */
-
-/*! webviz-core/migrations/frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects */
-
-/*! webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel */
-
-/*! webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables */
-
-/*! webviz-core/migrations/frozenMigrations/2020.05.06.00:00:05.migrateSourcePrefix */
-
-/*! webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys */
-
-/*! webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors */
-
-/*! webviz-core/migrations/frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig */
-
-/*! webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode */
-
-/*! webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey */
-
-/*! webviz-core/migrations/frozenMigrations/2020.06.26.17:40:24.migrate3DPanelColorSettings */
-
-/*! webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js */
-
-/*! webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js */
-
-/*! webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js */
-
-/*! webviz-core/shared/delay */
-
-/*! webviz-core/shared/layout */
-
-/*! webviz-core/shared/promiseTimeout */
-
-/*! webviz-core/shared/signal */
-
-/*! webviz-core/shared/triggerFileDownload */
-
-/*! webviz-core/src/PanelAPI */
-
-/*! webviz-core/src/PanelAPI/useBlocksByTopic */
-
-/*! webviz-core/src/actions/layoutHistory */
-
-/*! webviz-core/src/actions/mosaic */
-
-/*! webviz-core/src/actions/panels */
-
-/*! webviz-core/src/actions/userNodes */
-
-/*! webviz-core/src/assets/emptyBox.svg */
-
-/*! webviz-core/src/assets/layout.svg */
-
-/*! webviz-core/src/assets/logo.svg */
-
-/*! webviz-core/src/components/AppMenu */
-
-/*! webviz-core/src/components/AutoSizingCanvas */
-
-/*! webviz-core/src/components/Button */
-
-/*! webviz-core/src/components/ChildToggle */
-
-/*! webviz-core/src/components/Confirm */
-
-/*! webviz-core/src/components/Dimensions */
-
-/*! webviz-core/src/components/DocumentDropListener */
-
-/*! webviz-core/src/components/DropOverlay */
-
-/*! webviz-core/src/components/Dropdown */
-
-/*! webviz-core/src/components/ErrorBoundary */
-
-/*! webviz-core/src/components/ExperimentalFeatures */
-
-/*! webviz-core/src/components/Flex */
-
-/*! webviz-core/src/components/HelpModal */
-
-/*! webviz-core/src/components/HoverBar */
-
-/*! webviz-core/src/components/HoverBar/PlaybackBarHoverTicks */
-
-/*! webviz-core/src/components/HoverBar/context */
-
-/*! webviz-core/src/components/Icon */
-
-/*! webviz-core/src/components/KeyListener */
-
-/*! webviz-core/src/components/KeyboardShortcut */
-
-/*! webviz-core/src/components/LayoutMenu */
-
-/*! webviz-core/src/components/LayoutModal */
-
-/*! webviz-core/src/components/Menu */
-
-/*! webviz-core/src/components/MessageOrderControls */
-
-/*! webviz-core/src/components/MessagePathSyntax/index.help.md */
-
-/*! webviz-core/src/components/MessagePipeline */
-
-/*! webviz-core/src/components/Modal */
-
-/*! webviz-core/src/components/NoHeaderTopicsButton */
-
-/*! webviz-core/src/components/NotificationDisplay */
-
-/*! webviz-core/src/components/PanelContext */
-
-/*! webviz-core/src/components/PanelLayout */
-
-/*! webviz-core/src/components/PanelToolbar */
-
-/*! webviz-core/src/components/PanelToolbar/utils */
-
-/*! webviz-core/src/components/PlaybackControls */
-
-/*! webviz-core/src/components/PlaybackControls/PlaybackTimeDisplayMethod */
-
-/*! webviz-core/src/components/PlaybackControls/sharedHelpers */
-
-/*! webviz-core/src/components/PlaybackSpeedControls */
-
-/*! webviz-core/src/components/PlayerManager */
-
-/*! webviz-core/src/components/Radio */
-
-/*! webviz-core/src/components/ReactChartjs/zoomAndPanHelpers */
-
-/*! webviz-core/src/components/Resizable */
-
-/*! webviz-core/src/components/Root */
-
-/*! webviz-core/src/components/Screenshots/ScreenshotsContext */
-
-/*! webviz-core/src/components/ShareJsonModal */
-
-/*! webviz-core/src/components/ShortcutsModal */
-
-/*! webviz-core/src/components/Slider */
-
-/*! webviz-core/src/components/SpinningLoadingIcon */
-
-/*! webviz-core/src/components/TextContent */
-
-/*! webviz-core/src/components/TextHighlight */
-
-/*! webviz-core/src/components/TinyConnectionPicker */
-
-/*! webviz-core/src/components/Toolbar */
-
-/*! webviz-core/src/components/Tooltip */
-
-/*! webviz-core/src/components/Tooltip.module.scss */
-
-/*! webviz-core/src/components/WssErrorModal */
-
-/*! webviz-core/src/components/renderToBody */
-
-/*! webviz-core/src/components/withDragDropContext */
-
-/*! webviz-core/src/dataProviders/ApiCheckerDataProvider */
-
-/*! webviz-core/src/dataProviders/BagDataProvider */
-
-/*! webviz-core/src/dataProviders/BrowserHttpReader */
-
-/*! webviz-core/src/dataProviders/CombinedDataProvider */
-
-/*! webviz-core/src/dataProviders/FetchReader */
-
-/*! webviz-core/src/dataProviders/IdbCacheReaderDataProvider */
-
-/*! webviz-core/src/dataProviders/MeasureDataProvider */
-
-/*! webviz-core/src/dataProviders/MemoryCacheDataProvider */
-
-/*! webviz-core/src/dataProviders/ParseMessagesDataProvider */
-
-/*! webviz-core/src/dataProviders/ParsedMessageCache */
-
-/*! webviz-core/src/dataProviders/RenameDataProvider */
-
-/*! webviz-core/src/dataProviders/RewriteBinaryDataProvider */
-
-/*! webviz-core/src/dataProviders/RpcDataProvider */
-
-/*! webviz-core/src/dataProviders/WorkerDataProvider */
-
-/*! webviz-core/src/dataProviders/WorkerDataProvider.worker */
-
-/*! webviz-core/src/dataProviders/constants */
-
-/*! webviz-core/src/dataProviders/createGetDataProvider */
-
-/*! webviz-core/src/dataProviders/getRemoteBagGuid */
-
-/*! webviz-core/src/dataProviders/rootGetDataProvider */
-
-/*! webviz-core/src/dataProviders/standardDataProviderDescriptors */
-
-/*! webviz-core/src/dataProviders/util */
-
-/*! webviz-core/src/filterMap */
-
-/*! webviz-core/src/hooks/useUserNodes */
-
-/*! webviz-core/src/loadWebviz */
-
-/*! webviz-core/src/middleware/updateUrlAndLocalStorage */
-
-/*! webviz-core/src/panels/PanelList */
-
-/*! webviz-core/src/panels/Tab/EmptyDropTarget */
-
-/*! webviz-core/src/players/NoopMetricsCollector */
-
-/*! webviz-core/src/players/OrderedStampPlayer */
-
-/*! webviz-core/src/players/RandomAccessPlayer */
-
-/*! webviz-core/src/players/RosbridgePlayer */
-
-/*! webviz-core/src/players/UserNodePlayer */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
-
-/*! webviz-core/src/players/UserNodePlayer/types */
-
-/*! webviz-core/src/players/UserNodePlayer/utils */
-
-/*! webviz-core/src/players/automatedRun/AutomatedRunPlayer */
-
-/*! webviz-core/src/players/automatedRun/performanceMeasuringClient */
-
-/*! webviz-core/src/players/automatedRun/videoRecordingClient */
-
-/*! webviz-core/src/players/types */
-
-/*! webviz-core/src/reducers */
-
-/*! webviz-core/src/reducers/commenting */
-
-/*! webviz-core/src/reducers/layoutHistory */
-
-/*! webviz-core/src/reducers/mosaic */
-
-/*! webviz-core/src/reducers/panels */
-
-/*! webviz-core/src/reducers/recentLayouts */
-
-/*! webviz-core/src/reducers/tests */
-
-/*! webviz-core/src/reducers/userNodes */
-
-/*! webviz-core/src/store */
-
-/*! webviz-core/src/store/configureStore */
-
-/*! webviz-core/src/store/getGlobalStore */
-
-/*! webviz-core/src/stories/StoreSetup */
-
-/*! webviz-core/src/stories/inScreenshotTests */
-
-/*! webviz-core/src/stories/prepareForScreenshots */
-
-/*! webviz-core/src/styles/colors.module.scss */
-
-/*! webviz-core/src/styles/global.scss */
-
-/*! webviz-core/src/styles/waitForFonts */
-
-/*! webviz-core/src/test/MemoryStorage */
-
-/*! webviz-core/src/test/datatypes */
-
-/*! webviz-core/src/util */
-
-/*! webviz-core/src/util/CachedFilelike */
-
-/*! webviz-core/src/util/Logger */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcMainThreadUtils */
-
-/*! webviz-core/src/util/Storage */
-
-/*! webviz-core/src/util/bagConnectionsHelper */
-
-/*! webviz-core/src/util/bags */
-
-/*! webviz-core/src/util/binaryObjects */
-
-/*! webviz-core/src/util/binaryObjects/ArrayViews */
-
-/*! webviz-core/src/util/binaryObjects/BobjectRpc */
-
-/*! webviz-core/src/util/binaryObjects/binaryMessageWriter */
-
-/*! webviz-core/src/util/binaryObjects/binaryWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/jsWrapperObjects */
-
-/*! webviz-core/src/util/binaryObjects/messageDefinitionUtils */
-
-/*! webviz-core/src/util/clipboard */
-
-/*! webviz-core/src/util/colorUtils */
-
-/*! webviz-core/src/util/corsError */
-
-/*! webviz-core/src/util/datatypes */
-
-/*! webviz-core/src/util/debouncePromise */
-
-/*! webviz-core/src/util/demoLayout.json */
-
-/*! webviz-core/src/util/dev */
-
-/*! webviz-core/src/util/entities */
-
-/*! webviz-core/src/util/errors */
-
-/*! webviz-core/src/util/formatTime */
-
-/*! webviz-core/src/util/frameless */
-
-/*! webviz-core/src/util/getGlobalVariablesFromUrl */
-
-/*! webviz-core/src/util/getNewConnection */
-
-/*! webviz-core/src/util/globalConstants */
-
-/*! webviz-core/src/util/helpModalOpenSource.help.md */
-
-/*! webviz-core/src/util/history */
-
-/*! webviz-core/src/util/hooks */
-
-/*! webviz-core/src/util/iframeUtils */
-
-/*! webviz-core/src/util/inAutomatedRunMode */
-
-/*! webviz-core/src/util/indexeddb/Database */
-
-/*! webviz-core/src/util/indexeddb/MetaDatabase */
-
-/*! webviz-core/src/util/indexeddb/clearIndexedDb */
-
-/*! webviz-core/src/util/installDevtoolsFormatters */
-
-/*! webviz-core/src/util/layout */
-
-/*! webviz-core/src/util/logEvent */
-
-/*! webviz-core/src/util/minivizAPI */
-
-/*! webviz-core/src/util/naturalSort */
-
-/*! webviz-core/src/util/overwriteFetch */
-
-/*! webviz-core/src/util/parseMessageDefinitionsCache */
-
-/*! webviz-core/src/util/ranges */
-
-/*! webviz-core/src/util/selectors */
-
-/*! webviz-core/src/util/sendNotification */
-
-/*! webviz-core/src/util/sharedStyleConstants */
-
-/*! webviz-core/src/util/showHelpModalOpenSource */
-
-/*! webviz-core/src/util/stateHistory */
-
-/*! webviz-core/src/util/time */
-
-/*! webviz-core/src/util/topicUtils */
-
-/*! webviz-core/src/util/workers */
 
 /*! x-is-string */
 
@@ -4346,7 +4482,7 @@ and limitations under the License.
   \*************************************************************/
 
 /*!*************************************************************!*\
-  !*** ./packages/@cruise-automation/hooks/dist/index.esm.js ***!
+  !*** ./packages/@cruise-automation/hooks/dist/index.cjs.js ***!
   \*************************************************************/
 
 /*!*************************************************************!*\

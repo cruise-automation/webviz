@@ -1,4 +1,14 @@
+/*! ../../util/Rpc */
+
+/*! ../../util/RpcWorkerUtils */
+
+/*! ../../util/installChartjs */
+
+/*! ../../util/workers */
+
 /*! ./ChartJSManager */
+
+/*! ./multicolorLineChart */
 
 /*! ./zoomAndPanHelpers */
 
@@ -17,16 +27,6 @@
 /*! lodash/omit */
 
 /*! no static exports found */
-
-/*! webviz-core/src/util/Rpc */
-
-/*! webviz-core/src/util/RpcWorkerUtils */
-
-/*! webviz-core/src/util/installChartjs */
-
-/*! webviz-core/src/util/multicolorLineChart */
-
-/*! webviz-core/src/util/workers */
 
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/installChartjs.js ***!

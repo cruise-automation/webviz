@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { mat4 } from "gl-matrix";
+import { mat4, quat } from "gl-matrix";
 
 import type { Vec3, Mat4, CameraCommand, Viewport } from "../types";
 import getOrthographicBounds from "../utils/getOrthographicBounds";
@@ -79,7 +79,16 @@ export default (regl: any) => {
 
         // inverse of the view rotation, used for making objects always face the camera
         billboardRotation(context, props) {
-          return selectors.billboardRotation(this.cameraState);
+          const { cameraView } = props;
+          if (cameraView == null) return selectors.billboardRotation(this.cameraState);
+          // if a custom cameraView is being used, ignore cameraState for billboardRotation
+          // calculation.  Instead, extract rotation from custom cameraView.
+          const orientation = mat4.getRotation(quat.create(), cameraView);
+          const m = mat4.identity(mat4.create());
+          const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+          mat4.multiply(m, m, mat4.fromQuat(TEMP_MAT, orientation));
+          mat4.rotateZ(m, m, Math.PI / 2);
+          return m;
         },
 
         isPerspective(context, props) {

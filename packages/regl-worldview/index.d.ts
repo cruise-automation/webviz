@@ -315,12 +315,12 @@ export declare const Cylinders: ShapeComponent<Cylinder>;
 export declare const Axes: React.ComponentType<{}>;
 export declare const Lines: ShapeComponent<Line>;
 export declare const Spheres: ShapeComponent<Sphere>;
+export declare const Triangles: ShapeComponent<Triangle>;
 export declare const Text: React.ComponentType<{
   children: TextMarker[];
   autoBackgroundColor?: boolean;
 }>;
-export declare const Triangles: ShapeComponent<Triangle>;
-export declare const Text: React.ComponentType<{
+export declare const GLText: React.ComponentType<{
   children: TextMarker[];
   autoBackgroundColor?: boolean;
 }>;

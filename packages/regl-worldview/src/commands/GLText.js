@@ -299,7 +299,10 @@ const frag = `
     // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
     // when the solid background is enabled, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
-    float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+    // 8/3/2021 Max - Disable hacky fwidth anti-aliasing. 
+    // See: https://stackoverflow.com/questions/25956272/better-quality-text-in-webgl
+    // float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+    float edgeStep = dist;
 
     if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize <= 20.0) {
       // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate

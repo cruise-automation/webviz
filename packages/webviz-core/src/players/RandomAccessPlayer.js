@@ -33,7 +33,7 @@ import {
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { SEEK_TO_QUERY_KEY, SEEK_ON_START_NS } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics, getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -45,7 +45,6 @@ import {
   fromNanoSec,
   getSeekTimeFromSpec,
   percentOf,
-  SEEK_ON_START_NS,
   subtractTimes,
   toSec,
   rosTimeToUrlTime,
@@ -119,7 +118,7 @@ export default class RandomAccessPlayer implements Player {
   _messages: Message[] = [];
   _bobjects: $ReadOnlyArray<BobjectMessage> = [];
   _receivedBytes: number = 0;
-  _globalMessageOrder: TimestampMethod = "receiveTime";
+  _globalMessageOrder: TimestampMethod;
   _hasError = false;
   _closed = false;
   _seekToTime: SeekToTimeSpec;
@@ -130,10 +129,12 @@ export default class RandomAccessPlayer implements Player {
   constructor(
     providerDescriptor: DataProviderDescriptor,
     {
+      initialMessageOrder,
       metricsCollector,
       seekToTime,
       notifyPlayerManager,
     }: {
+      initialMessageOrder: TimestampMethod,
       metricsCollector: ?PlayerMetricsCollectorInterface,
       seekToTime: SeekToTimeSpec,
       notifyPlayerManager: NotifyPlayerManager,
@@ -148,6 +149,7 @@ export default class RandomAccessPlayer implements Player {
     this._seekToTime = seekToTime;
     this._metricsCollector.playerConstructed();
     this._notifyPlayerManager = notifyPlayerManager;
+    this._globalMessageOrder = initialMessageOrder;
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
@@ -250,7 +252,7 @@ export default class RandomAccessPlayer implements Player {
           }
           // Only do the initial seek if we haven't started playing already.
           if (!this._isPlaying && TimeUtil.areSame(this._currentTime, initialTime)) {
-            this.seekPlayback(initialTime);
+            this._seekPlaybackInternal(initialTime);
           }
         }, SEEK_START_DELAY_MS);
       })
@@ -304,8 +306,11 @@ export default class RandomAccessPlayer implements Player {
         params.delete(SEEK_TO_QUERY_KEY);
       } else {
         // Otherwise, update the seek-to param
-
-        params.set(SEEK_TO_QUERY_KEY, rosTimeToUrlTime(this._currentTime));
+        const globalTime =
+          this._globalMessageOrder === "receiveTime"
+            ? this._currentTime
+            : subtractTimes(this._currentTime, fromSec(BUFFER_DURATION_SECS));
+        params.set(SEEK_TO_QUERY_KEY, rosTimeToUrlTime(globalTime));
       }
       history.replaceState({}, window.title, `${location.pathname}${stringifyParams(params)}`);
     }
@@ -548,7 +553,8 @@ export default class RandomAccessPlayer implements Player {
     this._currentTime = clampTime(time, this._start, this._end());
   }
 
-  _seekPlaybackInternal = debouncePromise(async (backfillDuration: ?Time) => {
+  // Internal API. Handles data-fetching after this._currentTime is changed.
+  _seekImpl = debouncePromise(async (backfillDuration: ?Time) => {
     const seekTime = Date.now();
     this._lastSeekStartTime = seekTime;
     this._cancelSeekBackfill = false;
@@ -581,6 +587,7 @@ export default class RandomAccessPlayer implements Player {
     }
   });
 
+  // External API. Caller is responsible for adjusting for messageOrder.
   seekPlayback(time: Time, backfillDuration: ?Time): void {
     // Only seek when the provider initialization is done.
     if (!this._start || !this._providerEnd) {
@@ -588,7 +595,18 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector.seek(time);
     this._setCurrentTime(time);
-    this._seekPlaybackInternal(backfillDuration);
+    this._seekImpl(backfillDuration);
+  }
+
+  // Internal API, used when a seek originates from this player. Used to correct for the downstream
+  // messageOrder.
+  _seekPlaybackInternal(time: Time) {
+    if (this._globalMessageOrder === "receiveTime") {
+      this.seekPlayback(time);
+    } else {
+      const bufferDuration = fromSec(BUFFER_DURATION_SECS);
+      this.seekPlayback(TimeUtil.add(time, bufferDuration), bufferDuration);
+    }
   }
 
   _playFromStart(): void {
@@ -596,7 +614,7 @@ export default class RandomAccessPlayer implements Player {
       throw new Error("Can only play from the very start when we're already playing.");
     }
     // Start a nanosecond before start time to get messages exactly at start time.
-    this.seekPlayback(TimeUtil.add(this._start, { sec: 0, nsec: -1 }));
+    this._seekPlaybackInternal(TimeUtil.add(this._start, { sec: 0, nsec: -1 }));
   }
 
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {

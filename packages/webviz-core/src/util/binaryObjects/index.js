@@ -8,8 +8,10 @@
 
 import { Buffer } from "buffer";
 import int53 from "int53";
+import { Time } from "rosbag";
 
 import { cast, type Bobject } from "webviz-core/src/players/types";
+import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { type ArrayView, getArrayView } from "webviz-core/src/util/binaryObjects/ArrayViews";
 import getGetClassForView from "webviz-core/src/util/binaryObjects/binaryWrapperObjects";
@@ -20,6 +22,7 @@ import {
   getSourceData,
   primitiveList,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
+import { isTime } from "webviz-core/src/util/time";
 
 const parseJson = (s) => {
   try {
@@ -213,4 +216,25 @@ export const getFieldFromPath = (obj: any, path: (string | number)[]): any => {
     ret = typeof field === "string" ? getField(ret, field) : getIndex(ret, field);
   }
   return ret;
+};
+
+export const compareBinaryTimes = (a: BinaryTime, b: BinaryTime) => {
+  return a.sec() - b.sec() || a.nsec() - b.nsec();
+};
+
+// Descriptive -- not a real type
+type MaybeStampedBobject = $ReadOnly<{|
+  header?: () => $ReadOnly<{| stamp?: () => mixed |}>,
+|}>;
+
+export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
+  if (message == null) {
+    return;
+  }
+  const maybeStamped = cast<MaybeStampedBobject>(message);
+  const header = maybeStamped.header && maybeStamped.header();
+  const stamp = header && header.stamp && deepParse(header.stamp());
+  if (isTime(stamp)) {
+    return stamp;
+  }
 };

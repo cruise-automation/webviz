@@ -22,7 +22,13 @@ import { deepParse } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { toSec } from "webviz-core/src/util/time";
 
-const { useStaticTransformsData } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+const {
+  skipTransformFrame,
+  useDynamicTransformsData,
+  useStaticTransformsData,
+} = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+
+const NO_HOOK_TRANSFORMS = [];
 
 type ProcessedBlock = { [frameId: string]: BinaryTransformStamped[] };
 
@@ -116,16 +122,27 @@ const useDynamicTransformsNear = (time: Time, framesToIgnore: Set<string>): $Rea
   );
 };
 
-const NO_HOOK_STATIC_TRANSFORMS = [];
-
 // Given a timestamp, find relevant transforms. Assumes transforms with a given frame id have
 // monotonically increasing header stamps.
-const useTransformsNear = (time: Time): TransformElement[] => {
-  const hookStaticTransforms: TransformElement[] = useStaticTransformsData() ?? NO_HOOK_STATIC_TRANSFORMS;
-  const framesToIgnore = React.useMemo(() => new Set(hookStaticTransforms.map((t) => t.childFrame)), [
-    hookStaticTransforms,
-  ]);
+const useTransformsNear = (time: Time, staticTransformPath: ?string): TransformElement[] => {
+  const hookStaticTransforms: TransformElement[] = useStaticTransformsData(staticTransformPath);
+  const framesToIgnore = React.useMemo(
+    () =>
+      new Set(
+        hookStaticTransforms
+          .map((t) => t.childFrame)
+          .concat(skipTransformFrame?.frameId)
+          .filter(Boolean)
+      ),
+    [hookStaticTransforms]
+  );
+  const hookDynamicTransforms = useDynamicTransformsData() ?? NO_HOOK_TRANSFORMS;
   const dynamicTransforms = useDynamicTransformsNear(time, framesToIgnore);
-  return React.useMemo(() => dynamicTransforms.concat(hookStaticTransforms), [dynamicTransforms, hookStaticTransforms]);
+  return React.useMemo(() => dynamicTransforms.concat(hookStaticTransforms, hookDynamicTransforms), [
+    dynamicTransforms,
+    hookStaticTransforms,
+    hookDynamicTransforms,
+  ]);
 };
+
 export default useTransformsNear;

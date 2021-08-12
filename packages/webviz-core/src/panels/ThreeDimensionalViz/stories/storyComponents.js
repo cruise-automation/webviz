@@ -28,6 +28,7 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import PanelSetupWithBag from "webviz-core/src/stories/PanelSetupWithBag";
 import { ScreenshotSizedContainer } from "webviz-core/src/stories/storyHelpers";
 import { createRosDatatypesFromFrame } from "webviz-core/src/test/datatypes";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
 import { isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
@@ -37,7 +38,7 @@ export type FixtureExampleData = {
   globalVariables?: { [name: string]: string | number },
 };
 
-function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
+function bobjectify(fixture: FixtureExampleData): {| frame: Frame, datatypes: RosDatatypes |} {
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
@@ -53,7 +54,7 @@ function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
       }));
     }
   });
-  return { ...fixture, frame: newFrame };
+  return { datatypes, frame: newFrame };
 }
 
 type FixtureExampleProps = {|
@@ -110,9 +111,10 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
         // Additional delay to allow the 3D panel's dynamic setSubscriptions to take effect
         // *before* the fixture changes, not in the same update cycle.
         setImmediate(() => {
-          this.setState((state) => ({
-            fixture: { ...state.fixture, frame: bobjectify(data).frame },
-          }));
+          this.setState((state) => {
+            const { frame, datatypes } = bobjectify(data);
+            return { fixture: { ...state.fixture, datatypes, frame } };
+          });
           // Additional delay to trigger updating available namespaces after consuming
           // the messages in SceneBuilder.
           setImmediate(() => {
@@ -167,7 +169,7 @@ export const ThreeDimPanelSetupWithBag = ({
     threeDimensionalConfig.checkedKeys
       .filter((key) => key.startsWith("t:"))
       .map((topic) => topic.substring(2))
-      .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics)
+      .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.additionalSubscriptions)
   );
 
   const [_, forceUpdate] = React.useState(false);

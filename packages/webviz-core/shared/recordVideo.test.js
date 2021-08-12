@@ -48,7 +48,6 @@ describe("waitForXhrRequests", () => {
     expect(done).toBeFalsy();
 
     pendingUrls.delete("2");
-    await delayBy(1000);
     expect(async () => done).toBeTruthy();
   });
 
@@ -59,8 +58,7 @@ describe("waitForXhrRequests", () => {
     expect(done).toBeFalsy();
 
     await delayBy(40000);
-    await Promise.resolve();
-    expect(done).toBeTruthy();
+    expect(async () => done).toBeTruthy();
     expect(pendingUrls.size).toBe(0);
   });
 });

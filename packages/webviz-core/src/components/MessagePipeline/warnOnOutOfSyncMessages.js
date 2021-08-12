@@ -11,7 +11,7 @@ import { type Time, TimeUtil } from "rosbag";
 import type { Message, PlayerState } from "webviz-core/src/players/types";
 import Logger from "webviz-core/src/util/Logger";
 import sendNotification from "webviz-core/src/util/sendNotification";
-import { subtractTimes, toSec, formatFrame, getTimestampForMessage } from "webviz-core/src/util/time";
+import { subtractTimes, toSec, rosTimeToUrlTime, getTimestampForMessage } from "webviz-core/src/util/time";
 
 const DRIFT_THRESHOLD_SEC = 1; // Maximum amount of drift allowed.
 const WAIT_FOR_SEEK_SEC = 1; // How long we wait for a change in `lastSeekTime` before warning.
@@ -53,7 +53,7 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
       if (!messageTime) {
         sendNotification(
           `Message has no ${messageOrder}`,
-          `Received a message on topic ${message.topic} around ${formatFrame(currentTime)} with ` +
+          `Received a message on topic ${message.topic} around ${rosTimeToUrlTime(currentTime)} with ` +
             `no ${messageOrder} when sorting by that method.`,
           "app",
           "warn"
@@ -82,8 +82,8 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
       if (lastMessageTime && lastMessageTopic && TimeUtil.isLessThan(messageTime, lastMessageTime)) {
         sendNotification(
           "Bag went back in time",
-          `Processed a message on ${message.topic} at ${formatFrame(messageTime)} which is earlier than ` +
-            `last processed message on ${lastMessageTopic} at ${formatFrame(lastMessageTime)}. ` +
+          `Processed a message on ${message.topic} at ${rosTimeToUrlTime(messageTime)} which is earlier than ` +
+            `last processed message on ${lastMessageTopic} at ${rosTimeToUrlTime(lastMessageTime)}. ` +
             `Data source may be corrupted on these or other topics.`,
           "user",
           "warn"

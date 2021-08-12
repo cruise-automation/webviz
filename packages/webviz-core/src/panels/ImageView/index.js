@@ -12,7 +12,7 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import WavesIcon from "@mdi/svg/svg/waves.svg";
 import cx from "classnames";
-import { last, uniq, keyBy, partition } from "lodash";
+import { uniq, keyBy, partition } from "lodash";
 import React, { useMemo, useCallback, type Node } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
@@ -43,6 +43,7 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import { deepParse, maybeGetBobjectHeaderStamp } from "webviz-core/src/util/binaryObjects";
 import { WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
@@ -167,10 +168,11 @@ function renderEmptyState(
                   <code>{topic}</code>:{" "}
                   {messagesByTopic[topic] && messagesByTopic[topic].length
                     ? messagesByTopic[topic]
-                        .map(({ message }) =>
+                        .map(({ message }) => {
+                          const stamp = maybeGetBobjectHeaderStamp(message);
                           // In some cases, a user may have subscribed to a topic that does not include a header stamp.
-                          message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ unknown ]"
-                        )
+                          return stamp ? formatTimeRaw(stamp) : "[ unknown ]";
+                        })
                         .join(", ")
                     : "no messages"}
                 </li>
@@ -181,35 +183,6 @@ function renderEmptyState(
       </EmptyState>
     </SEmptyStateWrapper>
   );
-}
-
-function useOptionallySynchronizedMessages(
-  shouldSynchronize: boolean,
-  topics: $ReadOnlyArray<PanelAPI.RequestedTopic>
-) {
-  const memoizedTopics = useDeepMemo(topics);
-  const reducers = useMemo(
-    () =>
-      shouldSynchronize
-        ? getSynchronizingReducers(
-            memoizedTopics.map((request) => (typeof request === "string" ? request : request.topic))
-          )
-        : {
-            restore: (previousValue) => ({
-              messagesByTopic: previousValue ? previousValue.messagesByTopic : {},
-              synchronizedMessages: null,
-            }),
-            addMessage: ({ messagesByTopic }, newMessage) => ({
-              messagesByTopic: { ...messagesByTopic, [newMessage.topic]: [newMessage] },
-              synchronizedMessages: null,
-            }),
-          },
-    [shouldSynchronize, memoizedTopics]
-  );
-  return PanelAPI.useMessageReducer({
-    topics,
-    ...reducers,
-  });
 }
 
 const AddTopic = ({ onSelectTopic, topics }: { onSelectTopic: (string) => void, topics: string[] }) => {
@@ -353,23 +326,50 @@ function ImageView(props: Props) {
   });
 
   const shouldSynchronize = synchronize && enabledMarkerTopics.length > 0;
-  const imageAndMarkerTopics = useShallowMemo([{ topic: cameraTopic, imageScale: scale }, ...enabledMarkerTopics]);
-  const { messagesByTopic, synchronizedMessages } = useOptionallySynchronizedMessages(
-    shouldSynchronize,
-    imageAndMarkerTopics
-  );
+  const imageAndMarkerTopics = useDeepMemo([{ topic: cameraTopic, imageScale: scale }, ...enabledMarkerTopics]);
+
+  const { messagesByTopic: pendingSynchronizedMessages, synchronizedMessages } = PanelAPI.useMessageReducer({
+    topics: imageAndMarkerTopics,
+    ...useMemo(
+      () =>
+        getSynchronizingReducers(
+          imageAndMarkerTopics.map((request) => (typeof request === "string" ? request : request.topic))
+        ),
+      [imageAndMarkerTopics]
+    ),
+  });
+  const unsynchronizedMessages = PanelAPI.useMessageReducer({
+    topics: imageAndMarkerTopics,
+    restore: useCallback((previousValue) => previousValue ?? {}, []),
+    addBobjects: useCallback((oldState, newBobjects) => {
+      const newState = { ...oldState };
+      newBobjects.forEach((bobject) => {
+        newState[bobject.topic] = bobject;
+      });
+      return newState;
+    }, []),
+  });
+  const bobjectFrame = shouldSynchronize ? synchronizedMessages : unsynchronizedMessages;
+  // TODO(steel): Move the parsing into the worker.
+  const parsedFrame = useMemo(() => {
+    if (bobjectFrame == null) {
+      return bobjectFrame;
+    }
+    const ret = {};
+    Object.keys(bobjectFrame).forEach((topic) => {
+      const { message, receiveTime } = bobjectFrame[topic];
+      ret[topic] = { message: deepParse(message), topic, receiveTime };
+    });
+    return ret;
+  }, [bobjectFrame]);
 
   const { iconMarkersToRender, nonIconMarkersToRender } = useMemo(() => {
-    const synchronizedFrame = synchronizedMessages ?? {};
-    const combinedMarkers: Message[] = shouldSynchronize
-      ? filterMap(enabledMarkerTopics, (topic) => synchronizedFrame[topic])
-      : filterMap(enabledMarkerTopics, (topic) => last(messagesByTopic[topic]));
-
-    const [iconMarkers, nonIconMarkers] = partition(combinedMarkers, (item) => {
-      return topicsKeyByTopicName[item.topic].datatype === WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY;
+    const combinedMarkers: Message[] = filterMap(enabledMarkerTopics, (topic) => parsedFrame?.[topic]);
+    const [iconMarkers, nonIconMarkers] = partition(combinedMarkers, ({ topic }) => {
+      return topicsKeyByTopicName[topic].datatype === WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY;
     });
     return { iconMarkersToRender: iconMarkers, nonIconMarkersToRender: nonIconMarkers };
-  }, [enabledMarkerTopics, messagesByTopic, shouldSynchronize, synchronizedMessages, topicsKeyByTopicName]);
+  }, [enabledMarkerTopics, parsedFrame, topicsKeyByTopicName]);
 
   // Timestamps are displayed for informational purposes in the markers menu
   const renderedMarkerTimestamps = useMemo(() => {
@@ -482,7 +482,7 @@ function ImageView(props: Props) {
     [synchronize, onToggleSynchronize, iconTextTemplate, onIconTextChange, scale, onChangeScale]
   );
 
-  const imageMessage = messagesByTopic?.[cameraTopic]?.[0];
+  const imageMessage = parsedFrame?.[cameraTopic];
   const lastImageMessageRef = React.useRef(imageMessage);
   if (imageMessage) {
     lastImageMessageRef.current = imageMessage;
@@ -553,13 +553,14 @@ function ImageView(props: Props) {
     );
   };
 
-  const showEmptyState = !imageMessage || (shouldSynchronize && !synchronizedMessages);
+  const showEmptyState = !imageMessage || (shouldSynchronize && !parsedFrame);
 
   return (
     <Flex col clip>
       {toolbar}
       {/* If rendered, EmptyState will hide the always-present ImageCanvas */}
-      {showEmptyState && renderEmptyState(cameraTopic, enabledMarkerTopics, shouldSynchronize, messagesByTopic)}
+      {showEmptyState &&
+        renderEmptyState(cameraTopic, enabledMarkerTopics, shouldSynchronize, pendingSynchronizedMessages)}
       {/* Always render the ImageCanvas because it's expensive to unmount and start up. */}
       {imageMessageToRender && (
         <ImageCanvas

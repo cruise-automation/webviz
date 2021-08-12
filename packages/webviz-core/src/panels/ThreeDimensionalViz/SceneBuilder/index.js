@@ -14,6 +14,7 @@ import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
 import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
   BinaryPath,
@@ -22,6 +23,7 @@ import type {
   BinaryPolygonStamped,
   BinaryPoseStamped,
   BinaryInstancedMarker,
+  WrappedPointCloud,
 } from "webviz-core/src/types/BinaryMessages";
 import type {
   Color,
@@ -53,6 +55,8 @@ import {
   GEOMETRY_MSGS$POLYGON_STAMPED,
   WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
   MARKER_MSG_TYPES,
+  RADAR_POINT_CLOUD,
+  WRAPPED_POINT_CLOUD,
 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
@@ -190,6 +194,7 @@ export default class SceneBuilder implements MarkerProvider {
   rootTransformID: string;
   selectionState: any = {};
   frame: Frame;
+  _structuralDatatypes: StructuralDatatypes = {};
   // TODO(JP): Get rid of these two different variables `errors` and `errorsByTopic` which we
   // have to keep in sync.
   errors: SceneErrors = {
@@ -252,6 +257,10 @@ export default class SceneBuilder implements MarkerProvider {
     this.rootTransformID = rootTransformID;
     this.errors.rootTransformID = rootTransformID;
   };
+
+  setStructuralDatatypes(datatypes: StructuralDatatypes) {
+    this._structuralDatatypes = datatypes;
+  }
 
   clear() {
     for (const topicName of Object.keys(this.topicsByName)) {
@@ -817,6 +826,15 @@ export default class SceneBuilder implements MarkerProvider {
         break;
       }
       default: {
+        const structuralDatatype = this._structuralDatatypes[datatype];
+        if (structuralDatatype === RADAR_POINT_CLOUD) {
+          this._consumeNonMarkerMessage(topic, deepParse(message), 106);
+          break;
+        }
+        if (structuralDatatype === WRAPPED_POINT_CLOUD) {
+          this._consumeNonMarkerMessage(topic, deepParse(cast<WrappedPointCloud>(message).cloud()), 102, message);
+          break;
+        }
         const { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState } = this;
         this._hooks.consumeBobject(
           topic,
@@ -947,6 +965,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 102: return add.pointcloud(marker);
       case 103: return add.poseMarker(marker);
       case 104: return add.laserScan(marker);
+      case 106: return add.radarPointCluster(marker);
       case 107: return add.filledPolygon(marker);
       case 108: return add.instancedLineList(marker);
       case 109: return add.overlayIcon(marker)

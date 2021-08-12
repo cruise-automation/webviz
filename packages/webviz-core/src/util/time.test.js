@@ -9,7 +9,7 @@
 import * as time from "./time";
 import { cast } from "webviz-core/src/players/types";
 import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
-import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { deepParse, wrapJsObject, compareBinaryTimes } from "webviz-core/src/util/binaryObjects";
 
 const { fromSecondStamp } = time;
 describe("time.toDate & time.fromDate", () => {
@@ -221,6 +221,7 @@ describe("time.isTimeInRangeInclusive", () => {
 
 describe("time.parseRosTimeStr", () => {
   it("returns undefined if the input string is formatted incorrectly", () => {
+    expect(time.parseRosTimeStr(null)).toEqual(undefined);
     expect(time.parseRosTimeStr("")).toEqual(undefined);
     expect(time.parseRosTimeStr(".12121")).toEqual(undefined);
     expect(time.parseRosTimeStr(".")).toEqual(undefined);
@@ -321,7 +322,7 @@ describe("time.compareBinaryTimes", () => {
   it("properly orders a list of times", () => {
     const times = [{ sec: 1, nsec: 1 }, { sec: 0, nsec: 0 }, { sec: 1, nsec: 0 }, { sec: 0, nsec: 1 }];
     const binaryTimes = times.map((t) => cast<BinaryTime>(wrapJsObject({}, "time", t)));
-    expect(binaryTimes.sort(time.compareBinaryTimes).map(deepParse)).toEqual([
+    expect(binaryTimes.sort(compareBinaryTimes).map(deepParse)).toEqual([
       { sec: 0, nsec: 0 },
       { sec: 0, nsec: 1 },
       { sec: 1, nsec: 0 },

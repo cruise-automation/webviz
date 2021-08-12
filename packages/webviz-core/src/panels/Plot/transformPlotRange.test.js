@@ -161,4 +161,16 @@ describe("transformPlotRange", () => {
     const items = [{ x: 1, y: 180 }];
     expect(applyToDataOrTooltips(items, mathFunctions.deg2rad)).toEqual([{ x: 1, y: Math.PI }]);
   });
+
+  // Sanity-checking the conversions.
+  it("converts speed units", () => {
+    expect(mathFunctions.mph2kph(1)).toBeCloseTo(1.61, 2);
+    expect(mathFunctions.kph2mph(1.61)).toBeCloseTo(1.0, 2);
+
+    expect(mathFunctions.mps2mph(1)).toBeCloseTo(2.24, 2);
+    expect(mathFunctions.mph2mps(2.24)).toBeCloseTo(1.0, 2);
+
+    expect(mathFunctions.mps2kph(1)).toBeCloseTo(3.6);
+    expect(mathFunctions.kph2mps(3.6)).toBeCloseTo(1);
+  });
 });

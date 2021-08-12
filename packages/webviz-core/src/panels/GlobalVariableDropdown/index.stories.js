@@ -13,6 +13,7 @@ import TestUtils from "react-dom/test-utils";
 import GlobalVariableDropdownPanel, { defaultConfig } from "webviz-core/src/panels/GlobalVariableDropdown/index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
+import { useDelayedEffect } from "webviz-core/src/util/hooks";
 
 const fixture = {
   topics: [{ name: "/def", datatype: "some_datatype" }],
@@ -38,20 +39,24 @@ const fixture = {
   globalVariables: {},
 };
 
-const hoverOnIcon = () => {
-  setTimeout(() => {
-    const hoverItem = document.querySelectorAll("[data-test=global-variable-dropdown-menu-icon]")[0];
-    if (hoverItem) {
-      TestUtils.Simulate.mouseEnter(hoverItem);
-    }
-  }, 50);
+const useHoverOnIcon = () => {
+  useDelayedEffect(
+    React.useCallback(() => {
+      const hoverItem = document.querySelectorAll("[data-test=global-variable-dropdown-menu-icon]")[0];
+      if (hoverItem) {
+        TestUtils.Simulate.mouseEnter(hoverItem);
+      }
+    }, []),
+    50 // ms
+  );
 };
 
 storiesOf("<GlobalVariableDropdownPanel>", module)
   .add("default", () => {
+    useHoverOnIcon();
     return (
       <PanelSetup fixture={fixture}>
-        <GlobalVariableDropdownPanel ref={hoverOnIcon} />
+        <GlobalVariableDropdownPanel />
       </PanelSetup>
     );
   })
@@ -63,25 +68,27 @@ storiesOf("<GlobalVariableDropdownPanel>", module)
     );
   })
   .add("custom global variable name with invalid path", () => {
+    useHoverOnIcon();
     return (
       <PanelSetup fixture={fixture}>
         <GlobalVariableDropdownPanel
           config={{ ...defaultConfig, globalVariableName: "myGlobalVar", topicPath: "/abc" }}
-          ref={hoverOnIcon}
         />
       </PanelSetup>
     );
   })
   .add("custom global variable name with valid path", () => {
+    useDelayedEffect(
+      React.useCallback(() => {
+        document.querySelectorAll("[data-test=global-variable-dropdown-menu]")[0].click();
+      }, []),
+      100 // ms
+    );
+
     return (
       <PanelSetup fixture={fixture}>
         <GlobalVariableDropdownPanel
           config={{ ...defaultConfig, globalVariableName: "myGlobalVar", topicPath: "/def.animals[:].name" }}
-          ref={() => {
-            setTimeout(() => {
-              document.querySelectorAll("[data-test=global-variable-dropdown-menu]")[0].click();
-            }, 50);
-          }}
         />
       </PanelSetup>
     );

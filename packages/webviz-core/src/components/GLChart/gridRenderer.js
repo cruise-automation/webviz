@@ -8,16 +8,15 @@
 
 import type { Mat4 } from "gl-matrix";
 
-import type { GLContext, Bounds } from "./types";
-import { createShaderProgram, createBuffer, checkErrors } from "./utils";
+import type { Bounds } from "./types";
+import { type GLContextType } from "webviz-core/src/components/GLCanvas/GLContext";
+import { createShaderProgram, createBuffer, checkErrors } from "webviz-core/src/components/GLCanvas/utils";
 
-export default function gridRenderer(gl: GLContext) {
-  if (!gl) {
-    return;
-  }
+export default function gridRenderer(ctx: GLContextType) {
+  const { gl } = ctx;
 
   const program = createShaderProgram(
-    gl,
+    ctx,
     `
       precision highp float;
 
@@ -45,7 +44,7 @@ export default function gridRenderer(gl: GLContext) {
   // it has to be "big enough" for storing all posible vertices. It can be resized
   // but we should do it only when necessary.
   // TODO: resize buffers when needed.
-  const positionBuffer = createBuffer(gl, new Float32Array(5000));
+  const positionBuffer = createBuffer(ctx, new Float32Array(5000));
 
   const positionAttribLocation = gl.getAttribLocation(program, "position");
   const projUniformLocation = gl.getUniformLocation(program, "proj");
@@ -57,7 +56,7 @@ export default function gridRenderer(gl: GLContext) {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-  const error = checkErrors(gl);
+  const error = checkErrors(ctx);
   if (error) {
     console.warn("Error creating grid renderer:", error);
     return;

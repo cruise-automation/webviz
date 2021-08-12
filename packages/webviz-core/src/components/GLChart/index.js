@@ -7,14 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Mat4 } from "gl-matrix";
-import React, { useState, useRef, useMemo, useCallback } from "react";
-import uuid from "uuid";
+import React, { useEffect, useMemo, useRef } from "react";
 
 import gridRenderer from "./gridRenderer";
-import linesRenderer from "./linesRenderer";
+import lineRenderer from "./linesRenderer";
 import pointRenderer from "./pointRenderer";
-import type { GLContext, Bounds } from "./types";
-import { beginRender, devicePixelRatio, createGLContext } from "./utils";
+import type { Bounds } from "./types";
+import { type GLContextType, useGLContext } from "webviz-core/src/components/GLCanvas/GLContext";
+import { clearRect } from "webviz-core/src/components/GLCanvas/utils";
 import { type Props } from "webviz-core/src/components/ReactChartjs";
 import { useDeepMemo } from "webviz-core/src/util/hooks";
 
@@ -82,10 +82,11 @@ function computeProjectionMatrix(bounds: Bounds): Mat4 {
 }
 
 // Compute a scaling matrix to leave some space for labels and margin
-function computePaddingMatrix(gl: GLContext, x: number, y: number): Mat4 {
+function computePaddingMatrix(ctx: GLContextType, x: number, y: number): Mat4 {
+  const { gl, scale } = ctx;
   const { width, height } = gl.canvas;
-  const sx = 1 - x / width;
-  const sy = 1 - y / height;
+  const sx = 1 - (scale * x) / width;
+  const sy = 1 - (scale * y) / height;
 
   // This is a simple scaling matrix for X and Y axes.
   // prettier-ignore
@@ -98,24 +99,14 @@ function computePaddingMatrix(gl: GLContext, x: number, y: number): Mat4 {
 }
 
 export default function GLChart({ width, height, data, options }: Props) {
-  const [id] = useState<string>(uuid);
-  const [gl, setGL] = useState<?GLContext>();
+  const elRef = useRef<?HTMLDivElement>();
+  const prevRectRef = useRef();
 
-  const canvasRef = useRef<?HTMLCanvasElement>();
+  const glContext = useGLContext();
 
-  const setCanvasRef = useCallback((canvas) => {
-    if (canvas) {
-      if (canvasRef.current !== canvas) {
-        canvasRef.current = canvas;
-        // Save the GL context and force a render
-        setGL(createGLContext(canvas));
-      }
-    }
-  }, []);
-
-  const renderGrid = useMemo(() => gridRenderer(gl), [gl]);
-  const renderPoints = useMemo(() => pointRenderer(gl), [gl]);
-  const renderLines = useMemo(() => linesRenderer(gl), [gl]);
+  const renderGrid = useMemo(() => gridRenderer(glContext), [glContext]);
+  const renderPoints = useMemo(() => pointRenderer(glContext), [glContext]);
+  const renderLines = useMemo(() => lineRenderer(glContext), [glContext]);
 
   // Memoizing data and options helps rendering functions to update
   // internal buffers only when the values actually change.
@@ -124,38 +115,42 @@ export default function GLChart({ width, height, data, options }: Props) {
   const bounds = useMemo(() => computeDataBounds(memoizedData, memoizedOptions), [memoizedData, memoizedOptions]);
   const proj = useMemo(() => computeProjectionMatrix(bounds), [bounds]);
 
-  // Scaling the canvas will provide better looks in HDPI monitors, like Retina,
-  // by increasing the presentation framebuffer resolution. This, of course, has
-  // some performance impact on those devices.
-  // TODO: do not scale during playback?
-  const canvasScale = devicePixelRatio;
+  // We need to use `useEffect` for rendering in order to obtain the
+  // correct values for the bounding client rect.
+  // TODO (hernan): I'll improve this once I fix the concurrency issue
+  // happening when rendering multiple panels at the same time.
+  useEffect(() => {
+    const el = elRef.current;
+    if (el && glContext) {
+      const rect = el.getBoundingClientRect();
+      clearRect(glContext, rect);
+      prevRectRef.current = rect;
 
-  if (gl) {
-    beginRender(gl);
+      // Add some margin around the chart
+      const padding = computePaddingMatrix(glContext, 20, 20);
 
-    // Add some margin around the chart
-    const padding = computePaddingMatrix(gl, 20 * canvasScale, 20 * canvasScale);
+      if (renderGrid) {
+        renderGrid({ proj, bounds, padding });
+      }
 
-    if (renderGrid) {
-      renderGrid({ proj, bounds, padding });
+      if (renderLines) {
+        renderLines({ data: memoizedData, proj, padding });
+      }
+
+      if (renderPoints) {
+        renderPoints({ data: memoizedData, proj, padding });
+      }
     }
+  }, [bounds, glContext, height, memoizedData, proj, renderGrid, renderLines, renderPoints, width]);
 
-    if (renderLines) {
-      renderLines({ data: memoizedData, proj, padding });
-    }
+  useEffect(() => {
+    return () => {
+      // We need to clear the shared canvas during unmounting
+      if (glContext && prevRectRef.current) {
+        clearRect(glContext, prevRectRef.current);
+      }
+    };
+  }, [glContext]);
 
-    if (renderPoints) {
-      renderPoints({ data: memoizedData, proj, padding });
-    }
-  }
-
-  return (
-    <canvas
-      id={id}
-      ref={setCanvasRef}
-      height={height * canvasScale}
-      width={width * canvasScale}
-      style={{ width, height }}
-    />
-  );
+  return <div ref={elRef} style={{ width, height }} />;
 }

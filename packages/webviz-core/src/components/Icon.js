@@ -22,7 +22,7 @@ type Props = {
   xxsmall?: boolean,
   active?: boolean,
   fade?: boolean,
-  onClick?: (e: SyntheticMouseEvent<HTMLElement>) => void,
+  onClick?: ?(e: SyntheticMouseEvent<HTMLElement>) => void,
   clickable?: boolean,
   className?: string,
   style?: { [string]: any },

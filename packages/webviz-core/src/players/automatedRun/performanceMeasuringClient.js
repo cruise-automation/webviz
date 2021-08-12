@@ -80,6 +80,8 @@ class PerformanceMeasuringClient {
 
   startTime: ?number;
   startedMeasuringPerformance = false;
+  rangeStartTime = undefined;
+  rangeEndTime = undefined;
   frameRenderStart: ?number;
   frameRenderTimes: number[] = [];
   preloadStart: ?number;

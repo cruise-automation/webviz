@@ -115,6 +115,7 @@ export default class RosbridgePlayer implements Player {
         this._topicSubscriptions[topicName].unsubscribe();
         delete this._topicSubscriptions[topicName];
       }
+      rosClient.close();
       delete this._rosClient;
       this._emitState();
 

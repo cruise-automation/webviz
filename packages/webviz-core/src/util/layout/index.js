@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import CBOR from "cbor-js";
 import { compact, cloneDeep, flatMap, isEmpty, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
@@ -16,9 +15,7 @@ import {
   updateTree,
   type MosaicUpdate,
 } from "react-mosaic-component";
-import zlib from "zlib";
 
-import { isInIFrame } from "./iframeUtils";
 import { getLayoutNameAndVersion } from "webviz-core/shared/layout";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
@@ -34,21 +31,10 @@ import type {
 import {
   TAB_PANEL_TYPE,
   LAYOUT_QUERY_KEY,
-  LAYOUT_URL_QUERY_KEY,
-  PATCH_QUERY_KEY,
   TITLE_QUERY_KEY,
+  LAYOUT_URL_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 
-const jsondiffpatch = require("jsondiffpatch").create({});
-
-const IS_IN_IFRAME = isInIFrame();
-
-const PARAMS_TO_DECODE = new Set([LAYOUT_URL_QUERY_KEY]);
-
-// given a panel type, create a unique id for a panel
-// with the type embedded within the id
-// we need this because react-mosaic
-// DUPLICATED in webviz-core/migrations/ to be used for frozen migrations
 export function getPanelIdForType(type: string): string {
   const factor = 1e10;
   const rnd = Math.round(Math.random() * factor).toString(36);
@@ -458,68 +444,6 @@ export function getConfigsForNestedPanelsInsideTab(
   return configs;
 }
 
-export function getLayoutPatch(baseState: ?PanelsState, newState: ?PanelsState): string {
-  const delta = jsondiffpatch.diff(baseState, newState);
-  return delta ? JSON.stringify(delta) : "";
-}
-
-export function stringifyParams(params: URLSearchParams): string {
-  const stringifiedParams = [];
-  for (const [key, value] of params) {
-    if (PARAMS_TO_DECODE.has(key)) {
-      stringifiedParams.push(`${key}=${decodeURIComponent(value)}`);
-    } else {
-      stringifiedParams.push(`${key}=${encodeURIComponent(value)}`);
-    }
-  }
-  return stringifiedParams.length ? `?${stringifiedParams.join("&")}` : "";
-}
-
-const stateKeyMap = {
-  layout: "l",
-  savedProps: "sa",
-  globalVariables: "g",
-  userNodes: "u",
-  linkedGlobalVariables: "lg",
-  version: "v",
-  playbackConfig: "p",
-};
-const layoutKeyMap = { direction: "d", first: "f", second: "se", row: "r", column: "c", splitPercentage: "sp" };
-export const dictForPatchCompression = { ...layoutKeyMap, ...stateKeyMap };
-
-export function deflatePatch(jsObj: {}) {
-  const diffBuffer = Buffer.from(CBOR.encode(jsObj));
-  const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
-  return zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
-}
-
-export function getUpdatedURLWithPatch(search: string, diff: string): string {
-  // Return the original search directly if the diff is empty.
-  if (!diff) {
-    return search;
-  }
-  const params = new URLSearchParams(search);
-  const zlibPatch = deflatePatch(JSON.parse(diff));
-  params.set(PATCH_QUERY_KEY, zlibPatch);
-  return stringifyParams(params);
-}
-
-export function getUpdatedURLWithNewVersion(search: string, name: string, version?: string): string {
-  const params = new URLSearchParams(search);
-  params.set(LAYOUT_QUERY_KEY, `${name}${version ? `@${version}` : ""}`);
-  params.delete(PATCH_QUERY_KEY);
-  return stringifyParams(params);
-}
-export function getShouldProcessPatch() {
-  // Skip processing patch in iframe (currently used for MiniViz) since we can't update the URL anyway.
-  return !IS_IN_IFRAME;
-}
-// If we have a URL patch, the user has edited the layout.
-export function hasEditedLayout() {
-  const params = new URLSearchParams(window.location.search);
-  return params.has(PATCH_QUERY_KEY);
-}
-
 // There are 2 cases for updating the document title based on layout:
 // - Update when initializing redux store (can read layout name from URL or localStorage)
 // - After URL is updated.
@@ -556,4 +480,17 @@ export function setDefaultFields(defaultLayout: PanelsState, layout: PanelsState
     }
   });
   return clonedLayout;
+}
+
+const PARAMS_TO_DECODE = new Set([LAYOUT_URL_QUERY_KEY]);
+export function stringifyParams(params: URLSearchParams): string {
+  const stringifiedParams = [];
+  for (const [key, value] of params) {
+    if (PARAMS_TO_DECODE.has(key)) {
+      stringifiedParams.push(`${key}=${decodeURIComponent(value)}`);
+    } else {
+      stringifiedParams.push(`${key}=${encodeURIComponent(value)}`);
+    }
+  }
+  return stringifiedParams.length ? `?${stringifiedParams.join("&")}` : "";
 }

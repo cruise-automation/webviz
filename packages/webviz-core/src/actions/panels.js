@@ -5,10 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import CBOR from "cbor-js";
-import { cloneDeep } from "lodash";
 import type { MosaicDropTargetPosition, MosaicPath } from "react-mosaic-component";
-import zlib from "zlib";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
@@ -29,8 +26,7 @@ import type {
   SetFetchedLayoutPayload,
 } from "webviz-core/src/types/panels";
 import { LAYOUT_URL_QUERY_KEY, PATCH_QUERY_KEY } from "webviz-core/src/util/globalConstants";
-import { dictForPatchCompression } from "webviz-core/src/util/layout";
-import sendNotification from "webviz-core/src/util/sendNotification";
+import { applyPatchToLayout } from "webviz-core/src/util/layout/patch";
 
 export const PANELS_ACTION_TYPES = {
   CHANGE_PANEL_LAYOUT: "CHANGE_PANEL_LAYOUT",
@@ -58,7 +54,6 @@ export const PANELS_ACTION_TYPES = {
   SET_FULL_SCREEN_PANEL: "SET_FULL_SCREEN_PANEL",
   CLEAR_FULL_SCREEN_PANEL: "CLEAR_FULL_SCREEN_PANEL",
 };
-const jsondiffpatch = require("jsondiffpatch").create({});
 
 export type SAVE_PANEL_CONFIGS = { type: "SAVE_PANEL_CONFIGS", payload: SaveConfigsPayload };
 export type SAVE_FULL_PANEL_CONFIG = { type: "SAVE_FULL_PANEL_CONFIG", payload: SaveFullConfigPayload };
@@ -110,35 +105,6 @@ type CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT = { type: "CLEAR_LAYOUT_URL_REPLACED_B
 export const clearLayoutUrlReplacedByDefault = (): Dispatcher<CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT> => (dispatch) => {
   return dispatch({ type: PANELS_ACTION_TYPES.CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT });
 };
-
-export function applyPatchToLayout(patch: ?string, layout: PanelsState): PanelsState {
-  if (!patch) {
-    return layout;
-  }
-  try {
-    const patchBuffer = Buffer.from(patch, "base64");
-    const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
-    const uint8Arr = zlib.inflateSync(patchBuffer, { dictionary: dictionaryBuffer });
-
-    if (!uint8Arr) {
-      return layout;
-    }
-
-    const buffer = uint8Arr.buffer.slice(uint8Arr.byteOffset, uint8Arr.byteLength + uint8Arr.byteOffset);
-    const bufferToJS = CBOR.decode(buffer);
-    const clonedLayout = cloneDeep(layout);
-    jsondiffpatch.patch(clonedLayout, bufferToJS);
-    return clonedLayout;
-  } catch (e) {
-    sendNotification(
-      "Failed to apply patch on top of the layout.",
-      `Ignoring the patch "${patch}".\n\n${e}`,
-      "app",
-      "error"
-    );
-  }
-  return layout;
-}
 
 export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
   const params = new URLSearchParams(search);

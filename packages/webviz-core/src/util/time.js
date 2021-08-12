@@ -7,17 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 // No time functions that require `moment` should live in this file.
-import { padStart } from "lodash";
 import { type Time, TimeUtil } from "rosbag";
 
-import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
-import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
-import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
-import { deepParse } from "webviz-core/src/util/binaryObjects";
+import { type Message } from "webviz-core/src/players/types";
 import {
   SEEK_TO_FRACTION_QUERY_KEY,
   SEEK_TO_RELATIVE_MS_QUERY_KEY,
   SEEK_TO_QUERY_KEY,
+  SEEK_ON_START_NS,
 } from "webviz-core/src/util/globalConstants";
 
 export const DEFAULT_ZERO_TIME = { sec: 0, nsec: 0 };
@@ -211,12 +208,12 @@ export function getNextFrame(currentTime: Time, timestamps: string[] = [], goLef
   return fromSecondStamp(nextFrame);
 }
 
-export function formatFrame({ sec, nsec }: Time): string {
+export function rosTimeToUrlTime({ sec, nsec }: Time): string {
   return `${sec}.${String.prototype.padStart.call(nsec, 9, "0")}`;
 }
 
 export function transformBatchTimestamp({ seconds, nanoseconds }: BatchTimestamp): string {
-  return formatFrame({ sec: seconds, nsec: nanoseconds });
+  return rosTimeToUrlTime({ sec: seconds, nsec: nanoseconds });
 }
 
 export function clampTime(time: Time, start: Time, end: Time): Time {
@@ -236,7 +233,10 @@ export const isTimeInRangeInclusive = (time: Time, start: Time, end: Time) => {
   return true;
 };
 
-export function parseRosTimeStr(str: string): ?Time {
+export function parseRosTimeStr(str: ?string): ?Time {
+  if (!str) {
+    return undefined;
+  }
   if (/^\d+\.?$/.test(str)) {
     // Whole number with optional "." at the end.
     return { sec: parseInt(str, 10) || 0, nsec: 0 };
@@ -257,11 +257,6 @@ export function parseRosTimeStr(str: string): ?Time {
   return fixTime({ sec: parseInt(partials[0], 10) || 0, nsec });
 }
 
-export function rosTimeToUrlTime(time: Time): string {
-  const nsec = padStart(`${time.nsec}`, 9, "0");
-  return `${time.sec}.${nsec}`;
-}
-
 // Functions and types for specifying and applying player initial seek time intentions.
 // When loading from a copied URL, the exact unix time is used.
 type AbsoluteSeekToTime = $ReadOnly<{| type: "absolute", time: Time |}>;
@@ -272,17 +267,6 @@ type RelativeSeekToTime = $ReadOnly<{| type: "relative", startOffset: Time |}>;
 // store the seek state as a fraction of the eventual bag length.
 type SeekFraction = $ReadOnly<{| type: "fraction", fraction: number |}>;
 export type SeekToTimeSpec = AbsoluteSeekToTime | RelativeSeekToTime | SeekFraction;
-
-// Amount to seek into the bag from the start when loading the player, to show
-// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
-// MemoryCacheDataProvider so we still stay within the first block when fetching
-// initial data.
-export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
-if (SEEK_ON_START_NS >= MIN_MEM_CACHE_BLOCK_SIZE_NS) {
-  throw new Error(
-    "SEEK_ON_START_NS should be less than MIN_MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
-  );
-}
 
 export function getSeekToTime(search: ?string): SeekToTimeSpec {
   const params = new URLSearchParams(search || window.location.search);
@@ -338,23 +322,8 @@ export function getDisplayedTimestampMethod(timestampMethod?: TimestampMethod): 
   return timestampMethod === "headerStamp" ? "Header stamp" : "Receive time";
 }
 
-export const compareBinaryTimes = (a: BinaryTime, b: BinaryTime) => {
-  return a.sec() - b.sec() || a.nsec() - b.nsec();
-};
-
-// Descriptive -- not a real type
-type MaybeStampedBobject = $ReadOnly<{|
-  header?: () => $ReadOnly<{| stamp?: () => mixed |}>,
-|}>;
-
-export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
-  if (message == null) {
-    return;
-  }
-  const maybeStamped = cast<MaybeStampedBobject>(message);
-  const header = maybeStamped.header && maybeStamped.header();
-  const stamp = header && header.stamp && deepParse(header.stamp());
-  if (isTime(stamp)) {
-    return stamp;
-  }
-};
+export function formatSeconds(sec: number): string {
+  const date = new Date(0);
+  date.setSeconds(sec);
+  return date.toISOString().substr(11, 8);
+}

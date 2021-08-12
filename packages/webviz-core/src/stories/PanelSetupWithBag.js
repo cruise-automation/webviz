@@ -25,7 +25,7 @@ type Props = {|
   subscriptions?: string[],
   // merge the bag data with existing fixture data
   getMergedFixture?: (bagFixture: Fixture) => Fixture,
-  onMount?: (HTMLDivElement) => void,
+  onMount?: (HTMLDivElement) => Promise<void> | void,
   onFirstMount?: (HTMLDivElement) => void,
   store?: Store,
   frameHistoryCompatibility?: boolean,

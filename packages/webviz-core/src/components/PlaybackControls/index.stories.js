@@ -61,7 +61,7 @@ function Wrapper({
 }) {
   return (
     <MockMessagePipelineProvider capabilities={["setSpeed"]} store={store} activeData={activeData}>
-      <div style={{ padding: 20, margin: 100 }}>{children}</div>
+      <div style={{ padding: 32, margin: 32 }}>{children}</div>
     </MockMessagePipelineProvider>
   );
 }

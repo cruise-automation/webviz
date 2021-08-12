@@ -104,7 +104,7 @@ export type Line = {
   pointBackgroundColor?: string,
   pointBorderColor?: string,
   pointBorderWidth?: number,
-  pointRadius?: number,
+  pointRadius?: string,
   pointStyle?:
     | "circle"
     | "cross"

@@ -23,14 +23,8 @@ import {
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import type { BinaryStampedMessage } from "webviz-core/src/types/BinaryMessages";
 import type { UserNodes } from "webviz-core/src/types/panels";
-import { deepParse } from "webviz-core/src/util/binaryObjects";
-import {
-  clampTime,
-  compareBinaryTimes,
-  isTime,
-  maybeGetBobjectHeaderStamp,
-  type TimestampMethod,
-} from "webviz-core/src/util/time";
+import { deepParse, maybeGetBobjectHeaderStamp, compareBinaryTimes } from "webviz-core/src/util/binaryObjects";
+import { clampTime, isTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 // As a compromise between playback buffering required and correctness (as well as our ability to
 // play near the ends of bags), we assume messages' headers are always between 0s and 1s earlier
@@ -92,6 +86,7 @@ export default class OrderedStampPlayer implements Player {
         }
       });
       if (newMissingTopic || activeData.playerWarnings !== this._previousUpstreamWarnings) {
+        this._previousUpstreamWarnings = activeData.playerWarnings;
         this._warnings = {
           ...activeData.playerWarnings,
           topicsWithoutHeaderStamps: uniq([

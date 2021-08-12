@@ -13,15 +13,15 @@ import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import {
   DEFAULT_TEXT_COLOR,
   sendIconTypeDeprecatedNotification,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector/index";
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import { ICON_BY_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
+import { BG_COLOR, SText } from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
 import { SRow, SValue } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import ObjectDetails from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails";
 import TopicLink from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { parseStringTemplate } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index";
 import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import { BG_COLOR, SText } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
 import type { TypedMessage } from "webviz-core/src/players/types";
 import type { Icon2dMarkersMessage, Icon2dMarker } from "webviz-core/src/types/Messages";
 import { colorToRgbaString } from "webviz-core/src/util/colorUtils";

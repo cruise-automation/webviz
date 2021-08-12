@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "rosbag analysis tool",
   "license": "Apache-2.0",
-  "engines": {
-    "node": ">=10.22.0 <12"
-  },
   "dependencies": {
     "@cruise-automation/button": "0.0.7",
     "@cruise-automation/hooks": "0.0.1",
@@ -107,7 +104,7 @@
     "fake-indexeddb": "2.0.4",
     "fetch-mock": "7.2.5",
     "flow-bin": "0.110.0",
-    "puppeteer": "7.0.1",
+    "puppeteer": "10.1.0",
     "react-test-renderer": "16.10.2",
     "redux-devtools-extension": "^2.13.7"
   },

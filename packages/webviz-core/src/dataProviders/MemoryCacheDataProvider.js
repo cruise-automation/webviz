@@ -24,13 +24,14 @@ import filterMap from "webviz-core/src/filterMap";
 import type { BobjectMessage } from "webviz-core/src/players/types";
 import { inaccurateByteSize } from "webviz-core/src/util/binaryObjects";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
+import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/util/globalConstants";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
-export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+
 // Preloading algorithms get too slow when there are too many blocks. For very long bags, use longer
 // blocks. Adaptive block sizing is simpler than using a tree structure for immutable updates but
 // less flexible, so we may want to move away from a single-level block structure in the future.

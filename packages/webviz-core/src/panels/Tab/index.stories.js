@@ -14,7 +14,7 @@ import TestUtils from "react-dom/test-utils";
 import Tab from "./index";
 import tick from "webviz-core/shared/tick";
 import PanelLayout from "webviz-core/src/components/PanelLayout";
-import nestedTabLayoutFixture from "webviz-core/src/panels/Tab/nestedTabLayoutFixture.test";
+import nestedTabLayoutFixture from "webviz-core/src/panels/Tab/nestedTabLayoutFixture.testSetup";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";

@@ -53,7 +53,7 @@ export function sendIconTypeDeprecatedNotification() {
 export const getIconName = (icon: Interactive<OverlayIconMarker>): string =>
   JSON.stringify([icon.interactionData?.topic, icon.ns, icon.id]);
 
-export const projectItem = ({
+const projectItem = ({
   item,
   item: { metadata = {}, icon_type },
   coordinates,

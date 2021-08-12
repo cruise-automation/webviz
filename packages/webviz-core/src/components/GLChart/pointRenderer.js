@@ -6,16 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type GLContext } from "./types";
-import { createShaderProgram, createBuffer, checkErrors } from "./utils";
+import { type GLContextType } from "webviz-core/src/components/GLCanvas/GLContext";
+import { createShaderProgram, createBuffer, checkErrors } from "webviz-core/src/components/GLCanvas/utils";
 
-export default function testPointRenderer(gl: GLContext) {
-  if (!gl) {
-    return;
-  }
+export default function pointRenderer(ctx: GLContextType) {
+  const { gl } = ctx;
 
   const program = createShaderProgram(
-    gl,
+    ctx,
     `
       precision highp float;
 
@@ -52,7 +50,7 @@ export default function testPointRenderer(gl: GLContext) {
   // it has to be "big enough" for storing all posible vertices. It can be resized
   // but we should do it only when necessary.
   // TODO: resize buffers when needed.
-  const positionBuffer = createBuffer(gl, new Float32Array(10000));
+  const positionBuffer = createBuffer(ctx, new Float32Array(10000));
 
   const positionAttribLocation = gl.getAttribLocation(program, "inPosition");
   const projUniformLocation = gl.getUniformLocation(program, "proj");
@@ -64,7 +62,7 @@ export default function testPointRenderer(gl: GLContext) {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-  const error = checkErrors(gl);
+  const error = checkErrors(ctx);
   if (error) {
     console.warn("Error creating point renderer:", error);
     return;

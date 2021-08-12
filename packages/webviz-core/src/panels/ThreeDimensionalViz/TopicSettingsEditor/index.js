@@ -22,6 +22,7 @@ import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { Select, Option } from "webviz-core/src/components/Select";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import type { Topic } from "webviz-core/src/players/types";
 import {
   SENSOR_MSGS$POINT_CLOUD_2,
@@ -125,7 +126,10 @@ export type TopicSettingsEditorProps<Msg, Settings: {}> = {|
   onSettingsChange: ({} | (({}) => {})) => void,
 |};
 
-export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
+export function topicSettingsEditorForDatatype(
+  datatype: string,
+  structuralDatatypes: StructuralDatatypes
+): ?ComponentType<TopicSettingsEditorProps<any, any>> {
   const editors = {
     [SENSOR_MSGS$POINT_CLOUD_2]: PointCloudSettingsEditor,
     [GEOMETRY_MSGS$POSE_STAMPED]: PoseSettingsEditor,
@@ -138,15 +142,18 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
     [NAV_MSGS$PATH]: MarkerOverrideColorSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,
   };
-  return editors[datatype];
+  return editors[datatype] ?? editors[structuralDatatypes[datatype]];
 }
 
-export function canEditDatatype(datatype: string): boolean {
-  return topicSettingsEditorForDatatype(datatype) != null;
+export function canEditDatatype(datatype: string, structuralDatatypes: StructuralDatatypes): boolean {
+  return topicSettingsEditorForDatatype(datatype, structuralDatatypes) != null;
 }
 
-export function canEditNamespaceOverrideColorDatatype(datatype: string): boolean {
-  const editor = topicSettingsEditorForDatatype(datatype);
+export function canEditNamespaceOverrideColorDatatype(
+  datatype: string,
+  structuralDatatypes: StructuralDatatypes
+): boolean {
+  const editor = topicSettingsEditorForDatatype(datatype, structuralDatatypes);
   // $FlowFixMe added static field `canEditNamespaceOverrideColor` to the React component
   return !!(editor && editor.canEditNamespaceOverrideColor);
 }
@@ -155,6 +162,7 @@ type Props = {|
   topic: Topic,
   message: any,
   settings: ?{},
+  structuralDatatypes: StructuralDatatypes,
   onSettingsChange: ({}) => void,
 |};
 
@@ -162,13 +170,14 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
   topic,
   message,
   settings,
+  structuralDatatypes,
   onSettingsChange,
 }: Props) {
   const onFieldChange = useCallback((fieldName: string, value: any) => {
     onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
   }, [onSettingsChange]);
 
-  const Editor = topicSettingsEditorForDatatype(topic.datatype);
+  const Editor = topicSettingsEditorForDatatype(topic.datatype, structuralDatatypes);
   if (!Editor) {
     throw new Error(`No topic settings editor available for ${topic.datatype}`);
   }

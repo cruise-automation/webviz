@@ -8,6 +8,12 @@
 
 import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart/utils";
 import type { PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
+import {
+  METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR,
+  METERS_PER_SECOND_TO_MILES_PER_HOUR,
+  MILES_PER_HOUR_TO_METERS_PER_SECOND,
+  MILES_PER_HOUR_TO_KILOMETERS_PER_HOUR,
+} from "webviz-core/src/util/globalConstants";
 
 export function derivative(
   data: PlotChartPoint[],
@@ -56,6 +62,12 @@ export const mathFunctions = {
   negative: (value: number) => -value,
   deg2rad: (degrees: number) => degrees * (Math.PI / 180),
   rad2deg: (radians: number) => radians * (180 / Math.PI),
+  mps2kph: (metersPerSecond: number) => metersPerSecond * METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR,
+  kph2mps: (kmPerHour: number) => kmPerHour / METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR,
+  mps2mph: (metersPerSecond: number) => metersPerSecond * METERS_PER_SECOND_TO_MILES_PER_HOUR,
+  mph2mps: (milesPerHour: number) => milesPerHour * MILES_PER_HOUR_TO_METERS_PER_SECOND,
+  mph2kph: (milesPerHour: number) => milesPerHour * MILES_PER_HOUR_TO_KILOMETERS_PER_HOUR,
+  kph2mph: (kmPerHour: number) => kmPerHour / MILES_PER_HOUR_TO_KILOMETERS_PER_HOUR,
 };
 
 // Apply a function to the y-value of the data or tooltips passed in.

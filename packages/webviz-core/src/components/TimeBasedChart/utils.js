@@ -15,10 +15,9 @@ import type { MessageHistoryItem } from "webviz-core/src/components/MessageHisto
 import type { MessagePathDataItem } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import { type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
 import { objectValues } from "webviz-core/src/util";
-import { isBobject } from "webviz-core/src/util/binaryObjects";
+import { isBobject, maybeGetBobjectHeaderStamp } from "webviz-core/src/util/binaryObjects";
 import { useDeepChangeDetector, useForceUpdate } from "webviz-core/src/util/hooks";
 import { defaultGetHeaderStamp } from "webviz-core/src/util/synchronizeMessages";
-import { maybeGetBobjectHeaderStamp } from "webviz-core/src/util/time";
 
 export type Bounds = {| minX: ?number, maxX: ?number |};
 

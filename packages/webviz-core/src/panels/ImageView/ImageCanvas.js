@@ -21,8 +21,8 @@ import uuid from "uuid";
 import IconMarkers from "./IconMarkers";
 import styles from "./ImageCanvas.module.scss";
 import ImageCanvasWorker from "./ImageCanvas.worker";
+import ImageCanvasRenderer from "./ImageCanvasRenderer";
 import type { Config, SaveImagePanelConfig } from "./index";
-import { renderImage } from "./renderImage";
 import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import KeyListener from "webviz-core/src/components/KeyListener";
@@ -32,7 +32,7 @@ import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo, Icon2dMarkersMessage } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import type Rpc from "webviz-core/src/util/Rpc";
+import Rpc, { createLinkedChannels } from "webviz-core/src/util/Rpc";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
@@ -71,20 +71,16 @@ const SErrorMessage = styled.div`
   color: ${colors.red};
 `;
 
-const MAX_ZOOM_PERCENTAGE = 150;
+const MAX_ZOOM_PERCENTAGE = 1000;
 const ZOOM_STEP = 5;
 
 const webWorkerManager = new WebWorkerManager(ImageCanvasWorker, 1);
 
-type CanvasRenderer =
-  | {|
-      type: "rpc",
-      // This is nullable because we destroy the worker whenever we unmount and recreate it if we remount.
-      worker: ?Rpc,
-    |}
-  | {|
-      type: "mainThread",
-    |};
+type CanvasRenderer = {|
+  type: "mainThread" | "worker",
+  // This is nullable because we destroy the worker whenever we unmount and recreate it if we remount.
+  rpc: ?Rpc,
+|};
 
 export default class ImageCanvas extends React.Component<Props, State> {
   _canvasRef = React.createRef<HTMLCanvasElement>();
@@ -101,35 +97,31 @@ export default class ImageCanvas extends React.Component<Props, State> {
     this._id = uuid.v4();
     // If we support offscreen canvas, use the ImageCanvasWorker because it improves performance by moving canvas
     // operations off of the main thread. Allow an override for testing / stories.
-    this._canvasRenderer =
-      !supportsOffscreenCanvas() || props.useMainThreadRenderingForTesting
-        ? { type: "mainThread" }
-        : { type: "rpc", worker: webWorkerManager.registerWorkerListener(this._id) };
+    const type = !supportsOffscreenCanvas() || props.useMainThreadRenderingForTesting ? "mainThread" : "worker";
+    this._canvasRenderer = { type, rpc: this._instantiateRpc(type) };
+  }
+
+  _instantiateRpc(type: "mainThread" | "worker") {
+    if (type === "mainThread") {
+      const { local, remote } = createLinkedChannels();
+      new ImageCanvasRenderer(new Rpc(remote));
+      return new Rpc(local);
+    }
+    return webWorkerManager.registerWorkerListener(this._id);
   }
 
   // Returns the existing RPC worker, or initializes one if it doesn't exist yet.
   _getRpcWorker = (): Rpc => {
-    const canvasRenderer = this._canvasRenderer;
-    if (canvasRenderer.type === "rpc") {
-      // Create the worker if it hasn't been initialized yet.
-      const worker = canvasRenderer.worker || webWorkerManager.registerWorkerListener(this._id);
-      if (!canvasRenderer.worker) {
-        canvasRenderer.worker = worker;
-      }
-      return worker;
-    }
-    throw new Error("_getRpcWorker can only be called with canvasRenderer type rpc");
+    // Create the rpc if it's null. Only possible after unmount, probably not necessary...
+    return (this._canvasRenderer.rpc = this._canvasRenderer.rpc || this._instantiateRpc(this._canvasRenderer.type));
   };
 
   _setCanvasRef = (canvas: ?HTMLCanvasElement) => {
     if (canvas) {
       this.loadZoomFromConfig();
-      if (this._canvasRenderer.type === "rpc") {
-        const worker = this._getRpcWorker();
-        // $FlowFixMe This is a function that is not yet in Flow.
-        const transferableCanvas = canvas.transferControlToOffscreen();
-        worker.send<void>("initialize", { id: this._id, canvas: transferableCanvas }, [transferableCanvas]);
-      }
+      // $FlowFixMe This is a function that is not yet in Flow.
+      const transferableCanvas = this._canvasRenderer.type === "worker" ? canvas.transferControlToOffscreen() : canvas;
+      this._getRpcWorker().send<void>("initialize", { id: this._id, canvas: transferableCanvas }, [transferableCanvas]);
       this._canvasRef.current = canvas;
     }
   };
@@ -168,7 +160,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
     const div = this._divRef.current;
     if (canvas && div) {
       this.panZoomCanvas = panzoom(canvas, {
-        maxZoom: 1.5,
+        maxZoom: MAX_ZOOM_PERCENTAGE / 100,
         minZoom: 0,
         zoomSpeed: 0.05,
         smoothScroll: false,
@@ -254,11 +246,11 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
   componentWillUnmount() {
     const canvasRenderer = this._canvasRenderer;
-    if (canvasRenderer.type === "rpc") {
-      // Unset the PRC worker so that we can destroy the worker if it's no longer necessary.
+    if (canvasRenderer.type === "worker") {
+      // Unset the RPC worker so that we can destroy the worker if it's no longer necessary.
       webWorkerManager.unregisterWorkerListener(this._id);
-      canvasRenderer.worker = null;
     }
+    canvasRenderer.rpc = null;
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
   }
 
@@ -356,24 +348,13 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
     const onFinishImageRender = onStartRenderImage();
     try {
-      let dimensions;
-      const canvasRenderer = this._canvasRenderer;
-      if (canvasRenderer.type === "rpc") {
-        const worker = this._getRpcWorker();
-        dimensions = await worker.send<?Dimensions>("renderImage", {
-          id: this._id,
-          imageMessage: image,
-          imageMessageDatatype: topic.datatype,
-          rawMarkerData,
-        });
-      } else {
-        dimensions = await renderImage({
-          canvas: this._canvasRef.current,
-          imageMessage: image,
-          imageMessageDatatype: topic.datatype,
-          rawMarkerData,
-        });
-      }
+      const worker = this._getRpcWorker();
+      const dimensions = await worker.send<?Dimensions>("renderImage", {
+        id: this._id,
+        imageMessage: image,
+        imageMessageDatatype: topic.datatype,
+        rawMarkerData,
+      });
 
       if (dimensions) {
         this.bitmapDimensions = dimensions;
@@ -521,9 +502,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
       saveConfig,
       iconMarkers,
     } = this.props;
-    if (zoomPercentage && (zoomPercentage > 150 || zoomPercentage < 0)) {
+    if (zoomPercentage && (zoomPercentage > MAX_ZOOM_PERCENTAGE || zoomPercentage < 0)) {
       sendNotification(
-        `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and 150. It has been reset to 100.`,
+        `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and ${MAX_ZOOM_PERCENTAGE}. It has been reset to 100.`,
         "",
         "user",
         "warn"

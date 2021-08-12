@@ -48,51 +48,51 @@ function useTopicsWithoutHeaders() {
   }, [topicsWithoutHeaderStamps, topics]);
 }
 
-export default function NoHeaderTopicsButton() {
+function NoHeaderTopicsButton() {
   const topicsWithoutHeaders = useTopicsWithoutHeaders();
-  return useMemo(() => {
-    if (!topicsWithoutHeaders.length) {
-      return null;
-    }
-    const rows = topicsWithoutHeaders.sort().map(({ topic, datatype }) => (
-      <tr key={topic}>
-        <td>{topic}</td>
-        <td>{datatype}</td>
-      </tr>
-    ));
-    const color = topicsWithoutHeaders.length > COLOR_THRESHOLD ? colors.YELLOW : "default";
-    const tooltip =
-      topicsWithoutHeaders.length === 1
-        ? "1 subscribed topic does not have headers"
-        : `${topicsWithoutHeaders.length} subscribed topics do not have headers`;
-    return (
-      <Icon
-        tooltip={tooltip}
-        onClick={() => {
-          const modal = renderToBody(
-            <Modal onRequestClose={() => modal.remove()}>
-              <SRoot>
-                <Title>Topics without headers</Title>
-                <TextContent>
-                  <p>These topics will not be visible in panels when ordering data by header stamp:</p>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Topic</th>
-                        <th>Datatype</th>
-                      </tr>
-                    </thead>
-                    <tbody>{rows}</tbody>
-                  </table>
-                </TextContent>
-              </SRoot>
-            </Modal>
-          );
-        }}
-        style={{ color, paddingRight: "6px" }}
-        dataTest="missing-headers-icon">
-        <InformationIcon />
-      </Icon>
-    );
-  }, [topicsWithoutHeaders]);
+  if (!topicsWithoutHeaders.length) {
+    return null;
+  }
+  const rows = topicsWithoutHeaders.sort().map(({ topic, datatype }) => (
+    <tr key={topic}>
+      <td>{topic}</td>
+      <td>{datatype}</td>
+    </tr>
+  ));
+  const color = topicsWithoutHeaders.length > COLOR_THRESHOLD ? colors.YELLOW : "default";
+  const tooltip =
+    topicsWithoutHeaders.length === 1
+      ? "1 subscribed topic does not have headers"
+      : `${topicsWithoutHeaders.length} subscribed topics do not have headers`;
+  return (
+    <Icon
+      tooltip={tooltip}
+      onClick={() => {
+        const modal = renderToBody(
+          <Modal onRequestClose={() => modal.remove()}>
+            <SRoot>
+              <Title>Topics without headers</Title>
+              <TextContent>
+                <p>These topics will not be visible in panels when ordering data by header stamp:</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Topic</th>
+                      <th>Datatype</th>
+                    </tr>
+                  </thead>
+                  <tbody>{rows}</tbody>
+                </table>
+              </TextContent>
+            </SRoot>
+          </Modal>
+        );
+      }}
+      style={{ color, paddingRight: "6px" }}
+      dataTest="missing-headers-icon">
+      <InformationIcon />
+    </Icon>
+  );
 }
+
+export default React.memo<{}>(NoHeaderTopicsButton);

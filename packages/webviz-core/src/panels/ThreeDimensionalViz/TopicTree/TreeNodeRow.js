@@ -21,6 +21,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -108,6 +109,7 @@ type Props = {|
   visibleByColumn: (?boolean)[],
   sceneErrors: ?(string[]),
   setCurrentEditingTopic: SetCurrentEditingTopic,
+  structuralDatatypes: StructuralDatatypes,
   derivedCustomSettings: ?DerivedCustomSettings,
   width: number,
   filterText: string,
@@ -128,6 +130,7 @@ export default function TreeNodeRow({
   nodeVisibleInScene,
   sceneErrors,
   setCurrentEditingTopic,
+  structuralDatatypes,
   tooltips,
   visibleByColumn,
   visibleTopicsCount,
@@ -138,7 +141,7 @@ export default function TreeNodeRow({
   const datatype = node.type === "topic" ? node.datatype : undefined;
 
   const isDefaultSettings = derivedCustomSettings?.isDefaultSettings || !derivedCustomSettings;
-  const showTopicSettings = topicName && datatype && canEditDatatype(datatype);
+  const showTopicSettings = topicName && datatype && canEditDatatype(datatype, structuralDatatypes);
   const showTopicSettingsChanged = showTopicSettings && !isDefaultSettings;
 
   const showTopicError = node.type === "topic" && sceneErrors && sceneErrors.length > 0;

@@ -11,7 +11,6 @@ import React, { type Node, useCallback, useContext, useEffect, useMemo, useReduc
 import {
   Worldview,
   PolygonBuilder,
-  DrawPolygons,
   type CameraState,
   type ReglClickInfo,
   type MouseEventObject,
@@ -37,7 +36,7 @@ import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
 import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import { DebugStatsOverlay, DebugStatsOverlayRpc } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
+import DebugStatsOverlay from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Overlay";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import IconOverlay from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
@@ -51,7 +50,6 @@ import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scs
 import { LayoutWorkerDataSender } from "webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
 import PanelToolbarMenu from "webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu";
-import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { SearchCameraHandler, useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import { useStoryEventsContext } from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
 import {
@@ -63,22 +61,18 @@ import {
   getInteractionData,
   getObject,
   getUpdatedGlobalVariablesBySelectedObject,
-  normalizeMouseEventObject,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { ColorPickerSettingsPanel } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import TopicSettingsModal from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal";
 import TopicTree from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
-import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
 import useTopicTree, { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder";
-import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
-import WorldContext from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
+import { useStructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Color, OverlayIconMarker } from "webviz-core/src/types/Messages";
 import { getField } from "webviz-core/src/util/binaryObjects";
-import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import Rpc from "webviz-core/src/util/Rpc";
@@ -88,12 +82,7 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
-const {
-  sceneBuilderHooks,
-  getLayoutWorker,
-  useStaticTransformsData,
-  useWorldContextValue,
-} = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+const { getLayoutWorker, useWorldContextValue } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
 const VIDEO_RECORDING_STYLE = { visibility: inVideoRecordingMode() ? "hidden" : "visible" };
 const DEFAULT_SELECTION_STATE = {
   clickedObjects: [],
@@ -192,8 +181,6 @@ export default function Layout({
     disableAutoOpenClickedObject,
   },
 }: Props) {
-  const useWorkerIn3DPanel = useExperimentalFeature("useWorkerIn3DPanel");
-
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
   const containerRef = useRef<?HTMLDivElement>();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
@@ -219,22 +206,22 @@ export default function Layout({
     [frame, transforms, followTf]
   );
 
-  const [workerAvailableNamespacesByTopic, setWorkerAvailableNamespacesByTopic] = useState({});
-  const [workerErrorsByTopicFromWorker, setWorkerErrorsByTopic] = useState({});
+  const [availableNamespacesByTopic, setAvailableNamespacesByTopic] = useState({});
+  const [sceneErrorsByTopicKey, setSceneErrorsByTopicKey] = useState({});
 
   const updateWorkerAvailableNamespacesByTopic = useCallback((newAvailableNamespacesByTopic) => {
-    setWorkerAvailableNamespacesByTopic((oldAvailableNamespacesByTopic) =>
+    setAvailableNamespacesByTopic((oldAvailableNamespacesByTopic) =>
       isEqual(oldAvailableNamespacesByTopic, newAvailableNamespacesByTopic)
         ? oldAvailableNamespacesByTopic
         : newAvailableNamespacesByTopic
     );
-  }, [setWorkerAvailableNamespacesByTopic]);
+  }, [setAvailableNamespacesByTopic]);
 
   const updateWorkerErrorsByTopic = useCallback((newErrorsByTopic) => {
-    setWorkerErrorsByTopic((oldErrorsByTopic) =>
+    setSceneErrorsByTopicKey((oldErrorsByTopic) =>
       isEqual(oldErrorsByTopic, newErrorsByTopic) ? oldErrorsByTopic : newErrorsByTopic
     );
-  }, [setWorkerErrorsByTopic]);
+  }, [setSceneErrorsByTopicKey]);
 
   const searchTextProps = useSearchText();
   const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
@@ -276,35 +263,25 @@ export default function Layout({
     measureInfo.measureState,
   ]);
 
-  // initialize the SceneBuilder and TransformsBuilder
-  const { sceneBuilder, transformsBuilder } = useMemo(
-    () => ({
-      sceneBuilder: useWorkerIn3DPanel ? null : new SceneBuilder(sceneBuilderHooks),
-      transformsBuilder: new TransformsBuilder(),
-    }),
-    [useWorkerIn3DPanel]
+  const structuralDatatypes = useStructuralDatatypes();
+  const supportedMarkerDatatypesSet = useMemo(
+    () =>
+      new Set(
+        Object.values(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES).concat(
+          Object.keys(structuralDatatypes)
+        )
+      ),
+    [structuralDatatypes]
   );
-
-  // Ensure that we show new namespaces and errors any time scenebuilder adds them.
-  useMemo(() => {
-    if (sceneBuilder) {
-      sceneBuilder.setOnForceUpdate(forceUpdate);
-    }
-  }, [sceneBuilder, forceUpdate]);
-
   const {
     blacklistTopicsSet,
     topicTreeConfig,
     staticallyAvailableNamespacesByTopic,
-    supportedMarkerDatatypesSet,
     defaultTopicSettings,
     uncategorizedGroupName,
   } = useMemo(
     () => ({
       blacklistTopicsSet: new Set(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.BLACKLIST_TOPICS),
-      supportedMarkerDatatypesSet: new Set(
-        Object.values(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES)
-      ),
       topicTreeConfig: getGlobalHooks()
         .startupPerPanelHooks()
         .ThreeDimensionalViz.getDefaultTopicTree(),
@@ -320,22 +297,6 @@ export default function Layout({
   );
 
   const { playerId } = useDataSourceInfo();
-
-  const {
-    availableNamespacesByTopic: nonWorkerAvailableNamespacesByTopic,
-    sceneErrorsByKey: nonWorkerSceneErrorsByKey,
-  } = useSceneBuilderAndTransformsData({
-    playerId,
-    sceneBuilder,
-    staticallyAvailableNamespacesByTopic,
-    transforms,
-  });
-
-  const availableNamespacesByTopic = useWorkerIn3DPanel
-    ? workerAvailableNamespacesByTopic
-    : nonWorkerAvailableNamespacesByTopic;
-
-  const sceneErrorsByTopicKey = useWorkerIn3DPanel ? workerErrorsByTopicFromWorker : nonWorkerSceneErrorsByKey;
 
   // Use deep compare so that we only regenerate rootTreeNode when topics change.
   const memoizedTopics = useShallowMemo(topics);
@@ -448,54 +409,6 @@ export default function Layout({
     const topicsByTopicName = getTopicsByTopicName(topics);
     return filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
   }, [topics, selectedTopicNames]);
-
-  useMemo(() => {
-    if (!sceneBuilder) {
-      return;
-    }
-
-    // TODO(Audrey): add tests for the clearing behavior
-    if (cleared) {
-      sceneBuilder.clear();
-    }
-    if (!frame || !rootTf) {
-      return;
-    }
-
-    sceneBuilder.setPlayerId(playerId);
-    sceneBuilder.setTransforms(transforms, rootTf);
-    sceneBuilder.setFlattenMarkers(!!flattenMarkers);
-    sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
-    sceneBuilder.setSettingsByKey(settingsByKey);
-    sceneBuilder.setTopics(selectedTopics);
-    sceneBuilder.setGlobalVariables({ globalVariables, linkedGlobalVariables });
-    sceneBuilder.setHighlightedMatchers(highlightMarkerMatchers);
-    sceneBuilder.setColorOverrideMatchers(colorOverrideMarkerMatchers);
-    sceneBuilder.setFrame(frame);
-    sceneBuilder.setCurrentTime(currentTime);
-    sceneBuilder.render();
-
-    // update the transforms and set the selected ones to render
-    transformsBuilder.setTransforms(transforms, rootTf);
-    transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
-  }, [
-    sceneBuilder,
-    cleared,
-    frame,
-    rootTf,
-    playerId,
-    transforms,
-    flattenMarkers,
-    selectedNamespacesByTopic,
-    selectedTopics,
-    settingsByKey,
-    globalVariables,
-    linkedGlobalVariables,
-    highlightMarkerMatchers,
-    colorOverrideMarkerMatchers,
-    currentTime,
-    transformsBuilder,
-  ]);
 
   const handleDrawPolygons = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
     polygonBuilder[eventName](ev, args);
@@ -713,30 +626,11 @@ export default function Layout({
     return handlers;
   }, [pinTopics, saveConfig, searchTextProps, toggleCameraMode]);
 
-  const markerProviders = useMemo(() => [sceneBuilder, transformsBuilder], [sceneBuilder, transformsBuilder]);
-
   const cursorType = isDrawing ? "crosshair" : "";
   const { isHovered } = useContext(PanelContext) || {};
   const isDemoMode = useExperimentalFeature("demoMode");
   const isHidden = isDemoMode && !isHovered;
   const DemoModeComponent = getGlobalHooks().getDemoModeComponent();
-
-  const { MapComponent } = sceneBuilderHooks;
-  const memoizedScene = useShallowMemo(sceneBuilder ? sceneBuilder.getScene() : null);
-  const metadataTopicNamespaces = useShallowMemo(selectedNamespacesByTopic["/metadata"] || []);
-  const mapElement = useMemo(
-    () =>
-      MapComponent && (
-        <MapComponent
-          metadataTopicNamespaces={metadataTopicNamespaces}
-          scene={memoizedScene}
-          debug={debug}
-          perspective={!!cameraState.perspective}
-          isDemoMode={isDemoMode}
-        />
-      ),
-    [MapComponent, cameraState.perspective, debug, isDemoMode, memoizedScene, metadataTopicNamespaces]
-  );
 
   // Memoize the threeDimensionalVizContextValue to avoid returning a new object every time
   const threeDimensionalVizContextValue = useMemo(
@@ -762,9 +656,6 @@ export default function Layout({
   frameIndexRef.current += 1;
   const resumeFrames = useRef(new Map<number, () => void>());
   const rpc = useMemo(() => {
-    if (!useWorkerIn3DPanel) {
-      return null;
-    }
     const ret = new Rpc(getLayoutWorker());
     setupMainThreadRpc(ret);
     ret.receive("onAvailableNsAndErrors", async (props) => {
@@ -788,18 +679,9 @@ export default function Layout({
       }
     });
     return ret;
-  }, [
-    storyEvents,
-    updateSearchTextMatches,
-    updateWorkerAvailableNamespacesByTopic,
-    updateWorkerErrorsByTopic,
-    useWorkerIn3DPanel,
-  ]);
-
+  }, [storyEvents, updateSearchTextMatches, updateWorkerAvailableNamespacesByTopic, updateWorkerErrorsByTopic]);
   // TODO (useWorkerIn3DPanel): Move worker releated objects and functions to a different file to reduce the complexity of this one.
-  const workerDataSender = useMemo(() => {
-    return rpc ? new LayoutWorkerDataSender(rpc) : null;
-  }, [rpc]);
+  const workerDataSender = useMemo(() => new LayoutWorkerDataSender(rpc), [rpc]);
 
   const canvasRef = useRef();
   const [initialized, setInitialized] = useState(false);
@@ -819,13 +701,9 @@ export default function Layout({
   // We use deep clone here to keep the polygons instance stable, so we can detect changes
   // and send it across the worker boundary only when needed.
   const polygons = useDeepMemo(cloneDeep(polygonBuilder.polygons));
-  const staticTransformsData = useStaticTransformsData();
-  if (staticTransformsData) {
-    transforms.consumeStaticData(staticTransformsData);
-  }
   useMemo(async () => {
     const frameIndex = frameIndexRef.current;
-    if (workerDataSender && canvasRef.current && initialized) {
+    if (canvasRef.current && initialized) {
       // This process is async, so we must use message pipeline to pause/resume playback
       if (!frame || !rootTf) {
         return;
@@ -836,7 +714,7 @@ export default function Layout({
       const { width, height } = viewport;
       const frameSent = await workerDataSender.renderFrame({
         cleared,
-        staticTransformsData,
+        transformElements: transforms.rawTransforms,
         frame,
         frameIndex,
         playerId,
@@ -864,6 +742,7 @@ export default function Layout({
         polygons,
         forcedUpdate,
         measurePoints: measureInfo.measurePoints,
+        structuralDatatypes,
         worldContextValue,
         debug,
       });
@@ -874,7 +753,7 @@ export default function Layout({
       }
     }
   }, [
-    staticTransformsData,
+    transforms.rawTransforms,
     frame,
     workerDataSender,
     initialized,
@@ -905,12 +784,13 @@ export default function Layout({
     polygons,
     forcedUpdate,
     measureInfo.measurePoints,
+    structuralDatatypes,
     worldContextValue,
     debug,
   ]);
 
   const setCanvasRef = useCallback((canvas) => {
-    if (canvas && !initialized && rpc) {
+    if (canvas && !initialized) {
       // $FlowFixMe: flow does not recognize `transferControlToOffscreen`
       const transferableCanvas = supportsOffscreenCanvas() ? canvas.transferControlToOffscreen() : canvas;
       rpc
@@ -932,12 +812,6 @@ export default function Layout({
     canvasRef.current = canvas;
   }, [initialized, rpc, storyEvents]);
 
-  if (!useWorkerIn3DPanel && storyEvents) {
-    // If we're not using workers, both `ready` and `render` events can be resolved immediately
-    storyEvents.ready.resolve();
-    storyEvents.render.resolve();
-  }
-
   const mouseEventHandlers = useShallowMemo({
     onMouseDown,
     onMouseMove,
@@ -947,7 +821,7 @@ export default function Layout({
   });
 
   const sendMouseEvent = useCallback((e, mouseEventName) => {
-    if (!rpc || !initialized) {
+    if (!initialized) {
       return;
     }
 
@@ -1013,19 +887,6 @@ export default function Layout({
     }, cameraState || DEFAULT_CAMERA_STATE);
   }, [cameraState, onCameraStateChange]);
 
-  const normalizedOnClick = useCallback((ev: MouseEvent, inputArgs: ?ReglClickInfo) => {
-    const args =
-      !inputArgs || !inputArgs.objects
-        ? inputArgs
-        : { ...inputArgs, objects: inputArgs.objects.map(normalizeMouseEventObject) };
-    return onClick(ev, args);
-  }, [onClick]);
-  const normalizedOnIconClick = useCallback((
-    iconMarker: Interactive<OverlayIconMarker>,
-    newClickedPosition: ClickedPosition
-  ) => {
-    return onIconClick(normalizeMouseEventObject({ object: iconMarker }).object, newClickedPosition);
-  }, [onIconClick]);
   return (
     <ThreeDimensionalVizContext.Provider value={threeDimensionalVizContextValue}>
       <TopicTreeContext.Provider value={topicTreeData}>
@@ -1077,6 +938,7 @@ export default function Layout({
                       setShowTopicTree={setShowTopicTree}
                       shouldExpandAllKeys={shouldExpandAllKeys}
                       showTopicTree={showTopicTree}
+                      structuralDatatypes={structuralDatatypes}
                       topicDisplayMode={topicDisplayMode}
                       visibleTopicsCountByKey={visibleTopicsCountByKey}
                     />
@@ -1090,6 +952,7 @@ export default function Layout({
                   setCurrentEditingTopic={setCurrentEditingTopic}
                   saveConfig={saveConfig}
                   settingsByKey={settingsByKey}
+                  structuralDatatypes={structuralDatatypes}
                 />
               )}
               {editingNamespace && (
@@ -1112,146 +975,74 @@ export default function Layout({
             </div>
           </div>
           <div className={styles.world}>
-            {useWorkerIn3DPanel && rpc ? (
-              <Dimensions>
-                {({ width, height }) => (
-                  <Flex col style={{ position: "relative" }}>
-                    <>
-                      {updateViewport({ width, height })}
-                      <CameraListener cameraStore={cameraStore} shiftKeys={true} ref={cameraListener}>
-                        <canvas
-                          id="sceneViewerCanvas"
-                          ref={setCanvasRef}
-                          style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-                          width={width}
-                          height={height}
-                          onMouseUp={sendMouseUp}
-                          onMouseDown={sendMouseDown}
-                          onDoubleClick={sendDoubleClick}
-                          onMouseMove={sendMouseMove}
-                        />
-                      </CameraListener>
-                      {children}
-                      <IconOverlay
-                        onIconClick={onIconClick}
-                        rpc={rpc}
-                        cameraDistance={cameraState.distance || DEFAULT_CAMERA_STATE.distance}
+            <Dimensions>
+              {({ width, height }) => (
+                <Flex col style={{ position: "relative" }}>
+                  <>
+                    {updateViewport({ width, height })}
+                    <CameraListener cameraStore={cameraStore} shiftKeys={true} ref={cameraListener}>
+                      <canvas
+                        id="sceneViewerCanvas"
+                        ref={setCanvasRef}
+                        style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
+                        width={width}
+                        height={height}
+                        onMouseUp={sendMouseUp}
+                        onMouseDown={sendMouseDown}
+                        onDoubleClick={sendDoubleClick}
+                        onMouseMove={sendMouseMove}
                       />
-                      <div style={VIDEO_RECORDING_STYLE}>
-                        <LayoutToolbar
-                          cameraState={cameraState}
-                          interactionsTabType={interactionsTabType}
-                          setInteractionsTabType={setInteractionsTabType}
-                          debug={debug}
-                          followOrientation={followOrientation}
-                          followTf={followTf}
-                          isPlaying={isPlaying}
-                          measureInfo={measureInfo}
-                          measuringElRef={measuringElRef}
-                          onAlignXYAxis={onAlignXYAxis}
-                          onCameraStateChange={onCameraStateChange}
-                          autoSyncCameraState={!!autoSyncCameraState}
-                          onFollowChange={onFollowChange}
-                          onSetDrawingTabType={setDrawingTabType}
-                          onSetPolygons={onSetPolygons}
-                          onToggleCameraMode={toggleCameraMode}
-                          onToggleDebug={toggleDebug}
-                          polygonBuilder={polygonBuilder}
-                          saveConfig={saveConfig}
-                          selectedObject={selectedObject}
-                          selectedPolygonEditFormat={selectedPolygonEditFormat}
-                          setMeasureInfo={setMeasureInfo}
-                          showCrosshair={showCrosshair}
-                          targetPose={targetPose}
-                          transforms={transforms}
-                          isHidden={isHidden}
-                          findTopicInTopicTree={findTopicInTopicTree}
-                          {...searchTextProps}
-                        />
-                      </div>
-                      {clickedObjects.length > 1 && !selectedObject && (
-                        <InteractionContextMenu
-                          clickedPosition={clickedPosition}
-                          clickedObjects={clickedObjects}
-                          selectObject={selectObject}
-                        />
-                      )}
-                      <DebugStatsOverlayRpc debug={debug} rpc={rpc} />
-                    </>
-                  </Flex>
-                )}
-              </Dimensions>
-            ) : (
-              <WorldContext.Provider value={worldContextValue}>
-                <World
-                  key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
-                  autoTextBackgroundColor={!!autoTextBackgroundColor}
-                  cameraState={cameraState}
-                  isPlaying={!!isPlaying}
-                  isDemoMode={isDemoMode}
-                  markerProviders={markerProviders}
-                  onCameraStateChange={onCameraStateChange}
-                  diffModeEnabled={hasFeatureColumn && diffModeEnabled}
-                  onClick={normalizedOnClick}
-                  onIconClick={normalizedOnIconClick}
-                  onDoubleClick={onDoubleClick}
-                  onMouseDown={onMouseDown}
-                  onMouseMove={onMouseMove}
-                  onMouseUp={onMouseUp}
-                  hooks={sceneBuilderHooks}
-                  searchTextOpen={searchTextOpen}
-                  searchText={searchText}
-                  setSearchTextMatches={setSearchTextMatches}
-                  searchTextMatches={searchTextMatches}
-                  selectedMatchIndex={selectedMatchIndex}
-                  showCrosshair={showCrosshair}
-                  measurePoints={measureInfo.measurePoints}>
-                  {mapElement}
-                  {children}
-                  <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
-                  <div style={VIDEO_RECORDING_STYLE}>
-                    <LayoutToolbar
-                      cameraState={cameraState}
-                      interactionsTabType={interactionsTabType}
-                      setInteractionsTabType={setInteractionsTabType}
-                      debug={debug}
-                      findTopicInTopicTree={findTopicInTopicTree}
-                      followOrientation={followOrientation}
-                      followTf={followTf}
-                      isPlaying={isPlaying}
-                      measureInfo={measureInfo}
-                      measuringElRef={measuringElRef}
-                      onAlignXYAxis={onAlignXYAxis}
-                      onCameraStateChange={onCameraStateChange}
-                      autoSyncCameraState={!!autoSyncCameraState}
-                      onFollowChange={onFollowChange}
-                      onSetDrawingTabType={setDrawingTabType}
-                      onSetPolygons={onSetPolygons}
-                      onToggleCameraMode={toggleCameraMode}
-                      onToggleDebug={toggleDebug}
-                      polygonBuilder={polygonBuilder}
-                      saveConfig={saveConfig}
-                      selectedObject={selectedObject}
-                      selectedPolygonEditFormat={selectedPolygonEditFormat}
-                      setMeasureInfo={setMeasureInfo}
-                      showCrosshair={showCrosshair}
-                      targetPose={targetPose}
-                      transforms={transforms}
-                      isHidden={isHidden}
-                      {...searchTextProps}
+                    </CameraListener>
+                    {children}
+                    <IconOverlay
+                      onIconClick={onIconClick}
+                      rpc={rpc}
+                      cameraDistance={cameraState.distance || DEFAULT_CAMERA_STATE.distance}
                     />
-                  </div>
-                  {clickedObjects.length > 1 && !selectedObject && (
-                    <InteractionContextMenu
-                      clickedPosition={clickedPosition}
-                      clickedObjects={clickedObjects}
-                      selectObject={selectObject}
-                    />
-                  )}
-                  <DebugStatsOverlay debug={debug} />
-                </World>
-              </WorldContext.Provider>
-            )}
+                    <div style={VIDEO_RECORDING_STYLE}>
+                      <LayoutToolbar
+                        cameraState={cameraState}
+                        interactionsTabType={interactionsTabType}
+                        setInteractionsTabType={setInteractionsTabType}
+                        debug={debug}
+                        followOrientation={followOrientation}
+                        followTf={followTf}
+                        isPlaying={isPlaying}
+                        measureInfo={measureInfo}
+                        measuringElRef={measuringElRef}
+                        onAlignXYAxis={onAlignXYAxis}
+                        onCameraStateChange={onCameraStateChange}
+                        autoSyncCameraState={!!autoSyncCameraState}
+                        onFollowChange={onFollowChange}
+                        onSetDrawingTabType={setDrawingTabType}
+                        onSetPolygons={onSetPolygons}
+                        onToggleCameraMode={toggleCameraMode}
+                        onToggleDebug={toggleDebug}
+                        polygonBuilder={polygonBuilder}
+                        saveConfig={saveConfig}
+                        selectedObject={selectedObject}
+                        selectedPolygonEditFormat={selectedPolygonEditFormat}
+                        setMeasureInfo={setMeasureInfo}
+                        showCrosshair={showCrosshair}
+                        targetPose={targetPose}
+                        transforms={transforms}
+                        isHidden={isHidden}
+                        findTopicInTopicTree={findTopicInTopicTree}
+                        {...searchTextProps}
+                      />
+                    </div>
+                    {clickedObjects.length > 1 && !selectedObject && (
+                      <InteractionContextMenu
+                        clickedPosition={clickedPosition}
+                        clickedObjects={clickedObjects}
+                        selectObject={selectObject}
+                      />
+                    )}
+                    <DebugStatsOverlay debug={debug} rpc={rpc} />
+                  </>
+                </Flex>
+              )}
+            </Dimensions>
           </div>
         </div>
       </TopicTreeContext.Provider>

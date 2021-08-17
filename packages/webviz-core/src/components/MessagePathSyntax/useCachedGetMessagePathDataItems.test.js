@@ -214,12 +214,12 @@ describe("useCachedGetMessagePathDataItems", () => {
           {
             topic: "/some/topic",
             receiveTime: { sec: 0, nsec: 0 },
-            message: { someJson: { someId: 10, anotherId: 9 } },
+            message: { someJson: { someId: 10, anotherId: 9, nested: { someNestedId: "7" } } },
           },
           {
             topic: "/some/topic",
             receiveTime: { sec: 0, nsec: 0 },
-            message: { someJson: { someId: 11, anotherId: 12 } },
+            message: { someJson: { someId: 11, anotherId: 12, nested: { someNestedId: "8" } } },
           },
         ];
         const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
@@ -228,14 +228,38 @@ describe("useCachedGetMessagePathDataItems", () => {
         };
 
         expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes, useBobjects)).toEqual([
-          [{ value: { someId: 10, anotherId: 9 }, path: "/some/topic.someJson", constantName: undefined }],
-          [{ value: { someId: 11, anotherId: 12 }, path: "/some/topic.someJson", constantName: undefined }],
+          [
+            {
+              value: { someId: 10, anotherId: 9, nested: { someNestedId: "7" } },
+              path: "/some/topic.someJson",
+              constantName: undefined,
+            },
+          ],
+          [
+            {
+              value: { someId: 11, anotherId: 12, nested: { someNestedId: "8" } },
+              path: "/some/topic.someJson",
+              constantName: undefined,
+            },
+          ],
         ]);
         expect(
           addValuesWithPathsToItems(messages, "/some/topic.someJson.someId", topics, datatypes, useBobjects)
         ).toEqual([
           [{ value: 10, path: "/some/topic.someJson.someId", constantName: undefined }],
           [{ value: 11, path: "/some/topic.someJson.someId", constantName: undefined }],
+        ]);
+        expect(
+          addValuesWithPathsToItems(
+            messages,
+            "/some/topic.someJson.nested.someNestedId",
+            topics,
+            datatypes,
+            useBobjects
+          )
+        ).toEqual([
+          [{ value: "7", path: "/some/topic.someJson.nested.someNestedId", constantName: undefined }],
+          [{ value: "8", path: "/some/topic.someJson.nested.someNestedId", constantName: undefined }],
         ]);
       });
 

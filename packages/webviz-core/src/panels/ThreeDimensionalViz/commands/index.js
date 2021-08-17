@@ -11,3 +11,4 @@ export { default as OccupancyGrids } from "./OccupancyGrids";
 export { default as PointClouds } from "./PointClouds";
 export { default as LinedConvexHulls } from "./LinedConvexHulls";
 export { default as OverlayProjector } from "./OverlayProjector";
+export { default as RadarPointClusters } from "./RadarPointClusters";

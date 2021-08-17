@@ -13,10 +13,13 @@ import AutomatedRunPlayer, { type AutomatedRunClient, AUTOMATED_RUN_START_DELAY 
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import { type Progress } from "webviz-core/src/players/types";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 class TestRunClient implements AutomatedRunClient {
   speed = 1;
   msPerFrame = 20000;
+  rangeStartTime = undefined;
+  rangeEndTime = undefined;
   shouldLoadDataBeforePlaying = false;
 
   finished = false;
@@ -164,6 +167,18 @@ describe("AutomatedRunPlayer", () => {
       previousEmitSignal.resolve();
       await delay(1);
     }
+  });
+
+  it("ignores warnings and info notifications", async () => {
+    const provider = new TestProvider({ getMessages: async () => getMessagesResult });
+    const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
+    new AutomatedRunPlayer(provider, client);
+
+    expect(() => {
+      sendNotification("Some warning", "message", "user", "warn");
+      sendNotification("Some info", "message", "user", "info");
+    }).not.toThrow();
+    sendNotification.expectCalledDuringTest();
   });
 
   async function setupEventLoopTest() {

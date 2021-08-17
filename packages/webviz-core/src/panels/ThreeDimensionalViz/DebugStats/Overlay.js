@@ -1,13 +1,23 @@
 // @flow
 //
-//  Copyright (c) 2019-present, Cruise LLC
+//  Copyright (c) 2021-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+
+import { isEqual } from "lodash";
 import React from "react";
 
 import { type DebugStats } from "./types";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
+import Rpc from "webviz-core/src/util/Rpc";
+
+type Props = {
+  debug: boolean,
+  rpc: Rpc,
+};
 
 const style = {
   position: "absolute",
@@ -38,13 +48,13 @@ function validate(stats) {
   }
 }
 
-type Props = {|
+type RenderProps = {|
   debugStats: DebugStats,
 |};
 
 // Shows debug regl stats in the 3d panel.  Crashes the panel if regl stats drift outside of acceptable ranges.
 // TODO(bmc): move to regl-worldview at some point
-export default function Renderer(props: Props) {
+function Renderer(props: RenderProps) {
   const { debugStats } = props;
   if (debugStats) {
     validate(debugStats);
@@ -76,3 +86,26 @@ export default function Renderer(props: Props) {
   }
   return null;
 }
+const MemoizedRenderer = React.memo<RenderProps>(Renderer);
+
+function Overlay(props: Props) {
+  const { rpc, debug } = props;
+
+  const [debugStats, setDebugStats] = React.useState();
+
+  const updateDebugStats = React.useCallback((newStats: DebugStats) => {
+    setDebugStats((oldStats) => (isEqual(oldStats, newStats) ? oldStats : newStats));
+  }, [setDebugStats]);
+
+  if (useChangeDetector([rpc], true)) {
+    rpc.receive("updateDebugStats", updateDebugStats);
+  }
+
+  if (process.env.NODE_ENV === "production" || inScreenshotTests() || !debug || !debugStats) {
+    return null;
+  }
+
+  return <MemoizedRenderer debugStats={debugStats} />;
+}
+
+export default React.memo<Props>(Overlay);

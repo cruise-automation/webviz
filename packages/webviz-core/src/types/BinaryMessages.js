@@ -168,3 +168,11 @@ export type BinaryWebvizFutureMarkerArray = $ReadOnly<{|
   header(): BinaryHeader,
   allMarkers(): ArrayView<BinaryWebvizMarker>,
 |}>;
+
+// Incomplete: details are unused.
+type BinaryPointCloud2 = $ReadOnly<{}>;
+// Descriptive: These messages are matched in the 3D panel by structure. Type that are supersets of
+// this description are valid.
+export type WrappedPointCloud = $ReadOnly<{
+  cloud(): BinaryPointCloud2,
+}>;

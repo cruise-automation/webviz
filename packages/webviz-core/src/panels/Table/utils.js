@@ -11,7 +11,7 @@ import { TimeUtil } from "rosbag";
 
 import type { ConditionalFormat, ColumnFilter } from "webviz-core/src/panels/Table/types";
 import { isNumberType } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
-import { formatFrame } from "webviz-core/src/util/time";
+import { rosTimeToUrlTime } from "webviz-core/src/util/time";
 
 export const getLastAccessor = (accessorPath: string) => {
   const splitPath = accessorPath.split(".");
@@ -77,7 +77,7 @@ export const filterColumn = (
 
   return rows.filter((row) => {
     const value = _.get(row.values, columnId);
-    const formattedValue = fieldType === "time" || fieldType === "duration" ? formatFrame(value) : value;
+    const formattedValue = fieldType === "time" || fieldType === "duration" ? rosTimeToUrlTime(value) : value;
     const filterValue = isNumberColumn
       ? Number(columnFilter.value)
       : isBooleanColumn

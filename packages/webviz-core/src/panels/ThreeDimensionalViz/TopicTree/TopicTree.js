@@ -41,6 +41,7 @@ import type {
 import Dimensions from "webviz-core/src/components/Dimensions";
 import Icon from "webviz-core/src/components/Icon";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -218,6 +219,7 @@ type SharedProps = {|
   setShowTopicTree: (boolean | ((boolean) => boolean)) => void,
   shouldExpandAllKeys: boolean,
   showTopicTree: boolean,
+  structuralDatatypes: StructuralDatatypes,
   topicDisplayMode: TopicDisplayMode,
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
 |};
@@ -259,6 +261,7 @@ function TopicTree({
   shouldExpandAllKeys,
   showTopicTree,
   showDiffMode,
+  structuralDatatypes,
   topicDisplayMode,
   treeHeight,
   treeWidth,
@@ -370,6 +373,7 @@ function TopicTree({
               setCurrentEditingTopic,
               derivedCustomSettingsByKey,
               setEditingNamespace,
+              structuralDatatypes,
               topicDisplayMode,
               visibleTopicsCountByKey,
               width: treeWidth,

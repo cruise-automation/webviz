@@ -111,9 +111,10 @@ async function doPlaybackPerformanceMeasurements() {
 
 async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOptions, onBeforeUnloadPage }) {
   const runMetrics = {};
-  const testTimeout = 180000;
+  const testTimeout = 120000;
   const runStartEpoch = Date.now();
 
+  let timeoutCount = 0;
   return runInPage(
     async (page) => {
       let runtimeMs = 0;
@@ -122,12 +123,15 @@ async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOpti
       while (runMetrics[program.waitForEventName] === undefined) {
         // Print a dot every so often as a sign of life
         process.stdout.write(".");
-        await delay(250);
+        await delay(500);
 
         runtimeMs = Date.now() - runStartEpoch;
         if (runtimeMs > testTimeout) {
           const errorText = `Timeout waiting for event, '${program.waitForEventName}'`;
           console.error(errorText);
+          if (timeoutCount++ >= 3) {
+            throw new Error("Too many timeouts in a row. Failing!");
+          }
           return { stats: runMetrics, logs: [], errors: [errorText] };
         }
       }

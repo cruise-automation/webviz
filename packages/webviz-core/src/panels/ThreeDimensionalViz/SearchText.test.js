@@ -163,20 +163,6 @@ describe("<SearchText />", () => {
   describe("useCurrentMatchPosition", () => {
     const p = (x: number = 0, y = x, z = x) => ({ x, y, z });
     const q = (x = 0, y = 0, z = 0, w = 0) => ({ x, y, z, w });
-    const getTf = () => {
-      const tf = new Transforms();
-      const message = {
-        header,
-        pose: {
-          position: p(30, 60, 90),
-          orientation: q(0, 0, 0, 1),
-        },
-      };
-      const rootTf = tf.storage.get(CHILD_FRAME_ID);
-      rootTf.set(message.pose.position, message.pose.orientation);
-      rootTf.parent = tf.storage.get(ROOT_FRAME_ID);
-      return tf;
-    };
 
     const baseCameraState = {
       target: [0, 0, 0],
@@ -188,7 +174,8 @@ describe("<SearchText />", () => {
       initialCameraState?: CameraState = baseCameraState,
       initialMatch?: GLTextMarker = createMarker("text")
     ) => {
-      const transforms = getTf();
+      const pose = { position: p(30, 60, 90), orientation: q(0, 0, 0, 1) };
+      const transforms = new Transforms([{ childFrame: CHILD_FRAME_ID, parentFrame: ROOT_FRAME_ID, pose }]);
       const [cameraState, updateCameraState] = React.useState(initialCameraState);
       const [currentMatch, updateCurrentMatch] = React.useState<GLTextMarker>(initialMatch);
       const onCameraStateChange = React.useCallback(jest.fn(updateCameraState), []);

@@ -15,7 +15,8 @@ import type { RenderResult } from "./types";
 import signal, { type Signal } from "webviz-core/shared/signal";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getIconName } from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
-import { DebugStatsCollector, type DebugStats } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
+import DebugStatsCollector from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Collector";
+import type { DebugStats } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { LayoutWorkerDataReceiver } from "webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc";
 import { type MeasurePoints } from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
@@ -28,7 +29,7 @@ import { normalizeMouseEventObject } from "webviz-core/src/panels/ThreeDimension
 import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData";
 import Transforms, { type TransformElement } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder";
-import { updateTransforms } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { type GLTextMarker } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext, { type WorldContextType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
@@ -66,9 +67,10 @@ type WorldRendererState = $ReadOnly<{|
   selectedTopics: Topic[],
   settingsByKey: TopicSettingsCollection,
   showCrosshair: boolean,
-  transforms: Transforms, // TODO: Instantiate in WorldRenderer
+  transformElements: $ReadOnlyArray<TransformElement>,
   polygons: Polygon[],
   measurePoints: MeasurePoints,
+  structuralDatatypes: StructuralDatatypes,
   worldContextValue: WorldContextType,
   debug: boolean,
 |}>;
@@ -176,13 +178,15 @@ function WorldRenderer(props: WorldRendererProps) {
     highlightMarkerMatchers,
     colorOverrideMarkerMatchers,
     currentTime,
-    transforms,
+    transformElements,
     rootTf,
     frame,
     setAvailableNsAndErrors,
+    structuralDatatypes,
     debug,
   } = props;
 
+  const transforms = useMemo(() => new Transforms(transformElements), [transformElements]);
   const { sceneBuilder, transformsBuilder } = useMemo(
     () => ({
       sceneBuilder: new SceneBuilder(hooks),
@@ -207,6 +211,7 @@ function WorldRenderer(props: WorldRendererProps) {
     sceneBuilder.setColorOverrideMatchers(colorOverrideMarkerMatchers);
     sceneBuilder.setFrame(frame);
     sceneBuilder.setCurrentTime(currentTime);
+    sceneBuilder.setStructuralDatatypes(structuralDatatypes);
     sceneBuilder.render();
 
     // update the transforms and set the selected ones to render
@@ -226,6 +231,7 @@ function WorldRenderer(props: WorldRendererProps) {
     selectedNamespacesByTopic,
     selectedTopics,
     settingsByKey,
+    structuralDatatypes,
     transforms,
     transformsBuilder,
   ]);
@@ -273,7 +279,6 @@ class LayoutWorker {
   hooks: any;
   playerId: string;
   hasChangedPlayerId: boolean;
-  transforms: Transforms;
   rendererCallbacks: WorldRendererCallbacks;
   searchTextMatches: GLTextMarker[];
   availableTfs: any[];
@@ -285,7 +290,6 @@ class LayoutWorker {
     this.hooks = hooks;
     this.playerId = "";
     this.hasChangedPlayerId = true;
-    this.transforms = new Transforms();
     this.searchTextMatches = [];
     this.availableTfs = [];
     let iconDrawables = [];
@@ -349,7 +353,7 @@ class LayoutWorker {
     cleared,
     rootTf,
     playerId,
-    staticTransformsData,
+    transformElements,
     flattenMarkers,
     frame,
     selectedNamespacesByTopic,
@@ -373,13 +377,14 @@ class LayoutWorker {
     showCrosshair,
     polygons,
     measurePoints,
+    structuralDatatypes,
     worldContextValue,
     debug,
   }: $ReadOnly<{
     cleared: boolean,
     rootTf: string,
     playerId: string,
-    staticTransformsData: ?$ReadOnlyArray<TransformElement>,
+    transformElements: $ReadOnlyArray<TransformElement>,
     flattenMarkers: boolean,
     frame: Frame,
     selectedNamespacesByTopic: SelectedNamespacesByTopic,
@@ -403,22 +408,12 @@ class LayoutWorker {
     showCrosshair: boolean,
     polygons: Polygon[],
     measurePoints: MeasurePoints,
+    structuralDatatypes: StructuralDatatypes,
     worldContextValue: WorldContextType,
     debug: boolean,
   }>): Promise<RenderResult> => {
     this.hasChangedPlayerId = !shallowequal(this.playerId, playerId);
     this.playerId = playerId;
-
-    this.transforms = updateTransforms(
-      this.transforms,
-      frame,
-      cleared,
-      this.hooks.skipTransformFrame?.frameId,
-      this.hooks.consumePose
-    );
-    if (staticTransformsData) {
-      this.transforms.consumeStaticData(staticTransformsData);
-    }
 
     if (this._hasOffscreenCanvas) {
       // These attributes exist already (and are read-only) in HTMLCanvasElement.
@@ -458,9 +453,10 @@ class LayoutWorker {
       selectedTopics,
       settingsByKey,
       showCrosshair,
-      transforms: this.transforms,
+      transformElements,
       polygons,
       measurePoints,
+      structuralDatatypes,
       worldContextValue,
       debug,
     });

@@ -7,21 +7,22 @@
 //  You may not use this file except in compliance with the License.
 import child_process from "child_process";
 import fs from "fs";
-import { last } from "lodash";
+import { last, sumBy } from "lodash";
 import type { Page } from "puppeteer";
 import rmfr from "rmfr";
 import util from "util";
 import uuid from "uuid";
 
-import convertVideoToGif from "webviz-core/shared/convertVideoToGif";
-import delay from "webviz-core/shared/delay";
-import { withTempDirectory } from "webviz-core/shared/fileUtils";
-import globalEnvVars from "webviz-core/shared/globalEnvVars";
-import promiseTimeout from "webviz-core/shared/promiseTimeout";
-import runInBrowser from "webviz-core/shared/runInBrowser";
-import ServerLogger from "webviz-core/shared/ServerLogger";
-import type { VideoMetadata } from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
-import type { VideoRecordingAction } from "webviz-core/src/players/automatedRun/videoRecordingClient";
+import type { VideoMetadata, RecordingProgressEvent } from "../src/players/automatedRun/AutomatedRunPlayer";
+import type { VideoRecordingAction } from "../src/players/automatedRun/videoRecordingClient";
+import convertVideoToGif from "./convertVideoToGif";
+import delay from "./delay";
+import { withTempDirectory } from "./fileUtils";
+import globalEnvVars from "./globalEnvVars";
+import promiseTimeout from "./promiseTimeout";
+import runInBrowser from "./runInBrowser";
+import ServerLogger from "./ServerLogger";
+import { formatSeconds } from "webviz-core/src/util/time";
 
 const exec = util.promisify(child_process.exec);
 const mkdir = util.promisify(fs.mkdir);
@@ -52,17 +53,21 @@ type VideoConfig = {
   errorIsWhitelisted?: (string) => boolean,
 };
 
-type RecordingOptions = {| outputDirectory: string |};
+export type RecordingOptions = {| outputDirectory: string, onProgress?: (ev: RecordingProgressEvent) => void |};
 
 // Delegates to recordVideo, but returns the resulting video as a Buffer.
 // *PERFORMANCE NOTE* This should only be used for short videos since it reads
 // the entire video into memory. For long videos, use recordVideo directly
 // without reading the video into a Buffer.
 export async function recordVideoAsBuffer(
-  config: VideoConfig
+  config: VideoConfig,
+  options?: RecordingOptions
 ): Promise<{ mediaBuffer: Buffer, sampledImageFile: Buffer, metadata: VideoMetadata }> {
   return withTempDirectory(async (tmpDir) => {
-    const { mediaPath, sampledImageFile, metadata } = await recordVideo(config, { outputDirectory: tmpDir });
+    const { mediaPath, sampledImageFile, metadata } = await recordVideo(config, {
+      ...options,
+      outputDirectory: tmpDir,
+    });
 
     const mediaBuffer = await readFile(mediaPath);
     await rmfr(mediaPath);
@@ -97,12 +102,16 @@ export async function recordVideo(
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
 
+  const { onProgress } = options;
+
   // This is used primarily to ensure the map tile requests resolve before taking screenshots
   const pendingRequestUrls = new Set();
+  const startEpoch = Date.now();
 
   let hasFailed = false;
   try {
     let metadata: ?VideoMetadata;
+    const percentCompleteByParallelIndex = new Array(parallel).fill(0);
     const promises = new Array(parallel).fill().map(async (_, parallelIndex) => {
       const urlObject = url ? new URL(url) : baseUrlObject;
       // Update the base url to point to localhost if it's set to something else.
@@ -212,15 +221,38 @@ export async function recordVideo(
                   // so it can continue executing.
                   const screenshotStartEpoch = Date.now();
                   const screenshotIndex = i * parallel + parallelIndex;
+
                   await page.screenshot({
                     path: `${screenshotsDir}/${screenshotIndex}.jpg`,
+                    captureBeyondViewport: false,
                     quality: 85,
                   });
                   await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
-                  log.info(
-                    `[${parallelIndex}/${parallel}] Screenshot ${screenshotIndex} took ${Date.now() -
-                      screenshotStartEpoch}ms`
-                  );
+
+                  if (actionObj.progressEvent) {
+                    const { percentComplete, frameRenderDurationMs = 0 } = actionObj.progressEvent;
+                    percentCompleteByParallelIndex[parallelIndex] = percentComplete;
+
+                    const totalPercentComplete = sumBy(percentCompleteByParallelIndex) / parallel;
+                    const msPerPercent = (Date.now() - startEpoch) / totalPercentComplete;
+                    const estimatedSecondsRemaining = Math.round(((1 - totalPercentComplete) * msPerPercent) / 1000);
+
+                    const etaEpochDate = new Date();
+                    etaEpochDate.setSeconds(etaEpochDate.getSeconds() + estimatedSecondsRemaining);
+                    if (onProgress) {
+                      onProgress({ etaEpochMs: etaEpochDate.getTime(), percentComplete: totalPercentComplete });
+                    }
+                    log.info(
+                      [
+                        `Recording ${(totalPercentComplete * 100).toFixed(1)}% done.`,
+                        `ETA: ${formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */))}.`,
+                        `[${parallelIndex}/${parallel} #${screenshotIndex}]`,
+                        `frameMs: ${frameRenderDurationMs ?? 0},`,
+                        `screenshotMs: ${Date.now() - screenshotStartEpoch}ms`,
+                      ].join(" ")
+                    );
+                  }
+
                   i++;
                 } else {
                   throw new Error(`Unknown action: '${actionObj.action}'`);

@@ -8,27 +8,29 @@
 import prefixCollapsedSectionsWithDiagnosticName from "webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js";
 
 describe("prefixCollapsedSectionsWithDiagnosticName", () => {
-  expect(
-    prefixCollapsedSectionsWithDiagnosticName({
+  it("turns 'collapsed sections' entries into objects", () => {
+    expect(
+      prefixCollapsedSectionsWithDiagnosticName({
+        savedProps: {
+          "DiagnosticStatusPanel!123": {
+            topicToRender: "/diagnostics",
+            selectedName: "diagnostic_name",
+            collapsedSections: ["--section a--", "--section b--", "--section c--"],
+          },
+        },
+      })
+    ).toEqual({
       savedProps: {
         "DiagnosticStatusPanel!123": {
           topicToRender: "/diagnostics",
           selectedName: "diagnostic_name",
-          collapsedSections: ["--section a--", "--section b--", "--section c--"],
+          collapsedSections: [
+            { name: "diagnostic_name", section: "--section a--" },
+            { name: "diagnostic_name", section: "--section b--" },
+            { name: "diagnostic_name", section: "--section c--" },
+          ],
         },
       },
-    })
-  ).toEqual({
-    savedProps: {
-      "DiagnosticStatusPanel!123": {
-        topicToRender: "/diagnostics",
-        selectedName: "diagnostic_name",
-        collapsedSections: [
-          { name: "diagnostic_name", section: "--section a--" },
-          { name: "diagnostic_name", section: "--section b--" },
-          { name: "diagnostic_name", section: "--section c--" },
-        ],
-      },
-    },
+    });
   });
 });

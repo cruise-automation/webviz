@@ -6,12 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { mapValues } from "lodash";
+import { groupBy, mapValues } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import { cast, type Message } from "webviz-core/src/players/types";
 import type { RosObject } from "webviz-core/src/players/types";
 import type { StampedMessage } from "webviz-core/src/types/Messages";
+import { maybeGetBobjectHeaderStamp } from "webviz-core/src/util/binaryObjects";
 
 export const defaultGetHeaderStamp = (message: ?$ReadOnly<RosObject>): ?Time => {
   if (message != null && message.header != null) {
@@ -81,7 +82,7 @@ function getSynchronizedMessages(
   const synchronizedMessages = {};
   for (const topic of topics) {
     const matchingMessage = messages[topic].find(({ message }) => {
-      const thisStamp = message?.header?.stamp;
+      const thisStamp = maybeGetBobjectHeaderStamp(message);
       return thisStamp && TimeUtil.areSame(stamp, thisStamp);
     });
     if (!matchingMessage) {
@@ -104,15 +105,18 @@ function getSynchronizedState(
   let newMessagesByTopic = messagesByTopic;
   let newSynchronizedMessages = synchronizedMessages;
 
-  for (const stamp of allMessageStampsNewestFirst(messagesByTopic)) {
+  const headerStamps = allMessageStampsNewestFirst(messagesByTopic, ({ message }) =>
+    maybeGetBobjectHeaderStamp(message)
+  );
+  for (const stamp of headerStamps) {
     const syncedMsgs = getSynchronizedMessages(stamp, topics, messagesByTopic);
     if (syncedMsgs) {
       // We've found a new synchronized set; remove messages older than these.
       newSynchronizedMessages = syncedMsgs;
       newMessagesByTopic = mapValues(newMessagesByTopic, (msgsByTopic) =>
         msgsByTopic.filter(({ message }) => {
-          const thisStamp = message?.header?.stamp;
-          return !TimeUtil.isLessThan(thisStamp, stamp);
+          const thisStamp = maybeGetBobjectHeaderStamp(message);
+          return thisStamp && !TimeUtil.isLessThan(thisStamp, stamp);
         })
       );
       break;
@@ -131,16 +135,14 @@ export function getSynchronizingReducers(topics: $ReadOnlyArray<string>) {
       }
       return getSynchronizedState(topics, { messagesByTopic, synchronizedMessages: null });
     },
-    addMessage({ messagesByTopic, synchronizedMessages }: ReducedValue, newMessage: Message) {
-      return getSynchronizedState(topics, {
-        messagesByTopic: {
-          ...messagesByTopic,
-          [newMessage.topic]: messagesByTopic[newMessage.topic]
-            ? messagesByTopic[newMessage.topic].concat(newMessage)
-            : [newMessage],
-        },
-        synchronizedMessages,
+    addBobjects({ messagesByTopic, synchronizedMessages }: ReducedValue, newMessages: $ReadOnlyArray<Message>) {
+      // Add newMessages to messagesByTopic
+      const newMessagesByTopic = groupBy(newMessages, "topic");
+      Object.keys(messagesByTopic).forEach((topic) => {
+        newMessagesByTopic[topic] = messagesByTopic[topic].concat(newMessagesByTopic[topic] ?? []);
       });
+
+      return getSynchronizedState(topics, { messagesByTopic: newMessagesByTopic, synchronizedMessages });
     },
   };
 }

@@ -189,17 +189,17 @@ storiesOf("<TwoDimensionalPlot>", module)
   })
   .add("with tooltip", () => {
     return (
-      <div
-        style={{ width: 300, height: 300 }}
-        ref={() => {
-          setTimeout(() => {
-            const [canvas] = document.getElementsByTagName("canvas");
-            const x = 105;
-            const y = 190;
-            canvas.dispatchEvent(new MouseEvent("mousemove", { pageX: x, pageY: y, clientX: x, clientY: y }));
-          }, 100);
-        }}>
-        <PanelSetup fixture={fixture}>
+      <div style={{ width: 300, height: 300 }}>
+        <PanelSetup
+          fixture={fixture}
+          onMount={() => {
+            setTimeout(() => {
+              const [canvas] = document.getElementsByTagName("canvas");
+              const x = 105;
+              const y = 190;
+              canvas.dispatchEvent(new MouseEvent("mousemove", { pageX: x, pageY: y, clientX: x, clientY: y }));
+            }, 100);
+          }}>
           <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
         </PanelSetup>
       </div>

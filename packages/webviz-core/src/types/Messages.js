@@ -413,3 +413,17 @@ export type Icon3dMarkersMessage = $ReadOnly<{
   header: Header,
   markers: OverlayIconMarker[],
 }>;
+
+type RadarPoint = $ReadOnly<{
+  // Incomplete: more fields available for selecting a "channel" color in the 3D panel.
+  range: number,
+  radial_vel: number,
+  elevation_angle: number,
+  azimuth_angle_0: number,
+}>;
+
+// Incomplete.
+export type RadarPointCluster = $ReadOnly<{
+  header: Header,
+  points: RadarPoint[],
+}>;

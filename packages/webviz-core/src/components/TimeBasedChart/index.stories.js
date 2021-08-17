@@ -12,6 +12,7 @@ import React, { useState, useCallback } from "react";
 import TimeBasedChart from "./index";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { triggerWheel } from "webviz-core/src/stories/PanelSetup";
+import { useDelayedEffect } from "webviz-core/src/util/hooks";
 
 const dataX = 0.000057603000000000004;
 const dataY = 5.544444561004639;
@@ -223,18 +224,18 @@ storiesOf("<TimeBasedChart>", module)
     );
   })
   .add("with vertical bar, no tooltip", () => {
+    useDelayedEffect(
+      React.useCallback(() => {
+        const [canvas] = document.getElementsByTagName("canvas");
+        const { top, left } = canvas.getBoundingClientRect();
+        // This will show the vertical bar but not the tooltip because the mouse is on top of a different element
+        // (in this case the document), not the canvas itself.
+        document.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
+      }, []),
+      DEFAULT_DELAY // ms
+    );
     return (
-      <div
-        style={{ width: "100%", height: "100%", background: "black" }}
-        ref={() => {
-          setTimeout(() => {
-            const [canvas] = document.getElementsByTagName("canvas");
-            const { top, left } = canvas.getBoundingClientRect();
-            // This will show the vertical bar but not the tooltip because the mouse is on top of a different element
-            // (in this case the document), not the canvas itself.
-            document.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
-          }, DEFAULT_DELAY);
-        }}>
+      <div style={{ width: "100%", height: "100%", background: "black" }}>
         <MockMessagePipelineProvider>
           <TimeBasedChart {...props} />
         </MockMessagePipelineProvider>
@@ -242,16 +243,16 @@ storiesOf("<TimeBasedChart>", module)
     );
   })
   .add("with tooltip and vertical bar", () => {
+    useDelayedEffect(
+      React.useCallback(() => {
+        const [canvas] = document.getElementsByTagName("canvas");
+        const { top, left } = canvas.getBoundingClientRect();
+        canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
+      }, []),
+      DEFAULT_DELAY // ms
+    );
     return (
-      <div
-        style={{ width: "100%", height: "100%", background: "black" }}
-        ref={() => {
-          setTimeout(() => {
-            const [canvas] = document.getElementsByTagName("canvas");
-            const { top, left } = canvas.getBoundingClientRect();
-            canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
-          }, DEFAULT_DELAY);
-        }}>
+      <div style={{ width: "100%", height: "100%", background: "black" }}>
         <MockMessagePipelineProvider>
           <TimeBasedChart {...props} />
         </MockMessagePipelineProvider>

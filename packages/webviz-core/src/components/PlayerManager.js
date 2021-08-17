@@ -53,11 +53,12 @@ import {
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_SOURCE_PREFIX,
 } from "webviz-core/src/util/globalConstants";
+import { useGetCurrentValue, useChangeDetector } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode, inPlaybackPerformanceMeasuringMode } from "webviz-core/src/util/inAutomatedRunMode";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
-function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
+function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor, initialMessageOrder): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
@@ -87,17 +88,18 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
     metricsCollector: undefined,
     seekToTime: getSeekToTime(),
     notifyPlayerManager: async () => {},
+    initialMessageOrder,
   });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
 
-function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
+function buildPlayerFromFiles(files: File[], initialMessageOrder: TimestampMethod): ?PlayerDefinition {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
     return {
-      player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0])),
+      player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0]), initialMessageOrder),
       inputDescription: (
         <>
           Using local bag file <code>{files[0].name}</code>.
@@ -106,18 +108,21 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
     };
   } else if (files.length === 2) {
     return {
-      player: buildPlayerFromDescriptor({
-        name: CoreDataProviders.CombinedDataProvider,
-        args: {},
-        children: [
-          getLocalBagDescriptor(files[0]),
-          {
-            name: CoreDataProviders.RenameDataProvider,
-            args: { prefix: SECOND_SOURCE_PREFIX },
-            children: [getLocalBagDescriptor(files[1])],
-          },
-        ],
-      }),
+      player: buildPlayerFromDescriptor(
+        {
+          name: CoreDataProviders.CombinedDataProvider,
+          args: {},
+          children: [
+            getLocalBagDescriptor(files[0]),
+            {
+              name: CoreDataProviders.RenameDataProvider,
+              args: { prefix: SECOND_SOURCE_PREFIX },
+              children: [getLocalBagDescriptor(files[1])],
+            },
+          ],
+        },
+        initialMessageOrder
+      ),
       inputDescription: (
         <>
           Using local bag files <code>{files[0].name}</code> and <code>{files[1].name}</code>.
@@ -128,14 +133,17 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
   throw new Error(`Unsupported number of files: ${files.length}`);
 }
 
-async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition> {
+async function buildPlayerFromBagURLs(
+  urls: string[],
+  initialMessageOrder: TimestampMethod
+): Promise<?PlayerDefinition> {
   const guids: (?string)[] = await Promise.all(urls.map(getRemoteBagGuid));
 
   if (urls.length === 0) {
     return undefined;
   } else if (urls.length === 1) {
     return {
-      player: buildPlayerFromDescriptor(getRemoteBagDescriptor(urls[0], guids[0])),
+      player: buildPlayerFromDescriptor(getRemoteBagDescriptor(urls[0], guids[0]), initialMessageOrder),
       inputDescription: (
         <>
           Streaming bag from <code>{urls[0]}</code>.
@@ -144,18 +152,21 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
     };
   } else if (urls.length === 2) {
     return {
-      player: buildPlayerFromDescriptor({
-        name: CoreDataProviders.CombinedDataProvider,
-        args: {},
-        children: [
-          getRemoteBagDescriptor(urls[0], guids[0]),
-          {
-            name: CoreDataProviders.RenameDataProvider,
-            args: { prefix: SECOND_SOURCE_PREFIX },
-            children: [getRemoteBagDescriptor(urls[1], guids[1])],
-          },
-        ],
-      }),
+      player: buildPlayerFromDescriptor(
+        {
+          name: CoreDataProviders.CombinedDataProvider,
+          args: {},
+          children: [
+            getRemoteBagDescriptor(urls[0], guids[0]),
+            {
+              name: CoreDataProviders.RenameDataProvider,
+              args: { prefix: SECOND_SOURCE_PREFIX },
+              children: [getRemoteBagDescriptor(urls[1], guids[1])],
+            },
+          ],
+        },
+        initialMessageOrder
+      ),
       inputDescription: (
         <>
           Streaming bag from <code>{urls[0]}</code> and <code>{urls[1]}</code>.
@@ -198,7 +209,7 @@ function PlayerManager({
   // We don't want to recreate the player when the message order changes, but we do want to
   // initialize it with the right order, so make a variable for its initial value we can use in the
   // dependency array below to defeat the linter.
-  const [initialMessageOrder] = React.useState(messageOrder);
+  const getMessageOrder = useGetCurrentValue(messageOrder);
   const setPlayer = React.useCallback((playerDefinition: ?PlayerDefinition) => {
     if (!playerDefinition) {
       setPlayerInternal(undefined);
@@ -211,10 +222,10 @@ function PlayerManager({
       addUserNodeLogs: setLogs,
       setUserNodeRosLib: setRosLib,
     });
-    const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
+    const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, getMessageOrder());
     headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
     setPlayerInternal(headerStampPlayer);
-  }, [setDiagnostics, setLogs, setRosLib, initialMessageOrder]);
+  }, [setDiagnostics, setLogs, setRosLib, getMessageOrder]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -248,7 +259,7 @@ function PlayerManager({
 
     const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
     if (params.has(DEMO_QUERY_KEY)) {
-      buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
+      buildPlayerFromBagURLs([remoteDemoBagUrl], getMessageOrder()).then((playerDefinition: ?PlayerDefinition) => {
         setPlayer(playerDefinition);
         // When we're showing a demo, then automatically start playback (we don't normally
         // do that).
@@ -261,7 +272,7 @@ function PlayerManager({
     }
     if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
       const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
-      buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
+      buildPlayerFromBagURLs(urls, getMessageOrder()).then((playerDefinition: ?PlayerDefinition) => {
         setPlayer(playerDefinition);
       });
     } else {
@@ -275,13 +286,11 @@ function PlayerManager({
         ),
       });
     }
-  }, [loadLayout, setPlayer, setVariables]);
+  }, [getMessageOrder, loadLayout, setPlayer, setVariables]);
 
-  React.useEffect(() => {
-    if (player) {
-      player.setMessageOrder(messageOrder);
-    }
-  }, [messageOrder, player]);
+  if (useChangeDetector([messageOrder], false) && player) {
+    player.setMessageOrder(messageOrder);
+  }
   useUserNodes({ nodePlayer: player, userNodes });
 
   return (
@@ -295,7 +304,7 @@ function PlayerManager({
           } else {
             usedFiles.current = [files[0]];
           }
-          setPlayer(buildPlayerFromFiles(usedFiles.current));
+          setPlayer(buildPlayerFromFiles(usedFiles.current, getMessageOrder()));
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>

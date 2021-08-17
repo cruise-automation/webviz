@@ -33,6 +33,7 @@ import type { LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimension
 import { canEditNamespaceOverrideColorDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index";
 import generateNodeKey from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/generateNodeKey";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -93,6 +94,7 @@ type Props = {|
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
   setEditingNamespace: SetEditingNamespace,
+  structuralDatatypes: StructuralDatatypes,
   topicDisplayMode: TopicDisplayMode,
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
   width: number,
@@ -194,6 +196,7 @@ export default function renderTreeNodes({
   sceneErrorsByKey,
   setCurrentEditingTopic,
   setEditingNamespace,
+  structuralDatatypes,
   topicDisplayMode,
   visibleTopicsCountByKey,
   width,
@@ -228,7 +231,9 @@ export default function renderTreeNodes({
         item.type === "topic"
           ? getNamespaceNodes({
               availableNamespacesByTopic,
-              canEditNamespaceOverrideColor: !!(datatype && canEditNamespaceOverrideColorDatatype(datatype)),
+              canEditNamespaceOverrideColor: !!(
+                datatype && canEditNamespaceOverrideColorDatatype(datatype, structuralDatatypes)
+              ),
               checkedKeysSet,
               derivedCustomSettingsByKey,
               getIsNamespaceCheckedByDefault,
@@ -280,6 +285,7 @@ export default function renderTreeNodes({
           nodeVisibleInScene={nodeVisibleInScene}
           sceneErrors={sceneErrorsByKey[item.key]}
           setCurrentEditingTopic={setCurrentEditingTopic}
+          structuralDatatypes={structuralDatatypes}
           visibleByColumn={visibleByColumn}
           width={titleWidth}
           visibleTopicsCount={visibleTopicsCountByKey[item.key] || 0}
@@ -332,6 +338,7 @@ export default function renderTreeNodes({
             topicDisplayMode,
             sceneErrorsByKey,
             setCurrentEditingTopic,
+            structuralDatatypes,
             derivedCustomSettingsByKey,
             visibleTopicsCountByKey,
             width: titleWidth,

@@ -143,6 +143,29 @@ export function useShouldNotChangeOften<T>(value: T, warn: () => void): T {
   return value;
 }
 
+// Calls a callback after a delay if the component hasn't unmounted in the meantime.
+export function useDelayedEffect(effectCallback: () => ?() => void, delayMs?: number = 0) {
+  React.useEffect(() => {
+    let canceled = false;
+    let maybeCleanupFn = null;
+
+    // Self-executing function for the async/await sugar
+    (async () => {
+      await new Promise((r) => setTimeout(r, delayMs));
+      if (!canceled) {
+        maybeCleanupFn = effectCallback();
+      }
+    })();
+
+    return () => {
+      canceled = true;
+      if (maybeCleanupFn) {
+        maybeCleanupFn();
+      }
+    };
+  }, [delayMs, effectCallback]);
+}
+
 type SelectableContextHandle<T> = {
   currentValue(): T,
   publish(value: T): void,

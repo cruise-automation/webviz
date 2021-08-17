@@ -8,11 +8,7 @@
 import * as React from "react";
 
 import type { CreatePointCloudPositionBuffer } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/buffers";
-import type {
-  Scaling,
-  Props as PoseMarkersProps,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers";
-import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import type { Props as PoseMarkersProps } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers";
 import type { Frame } from "webviz-core/src/players/types";
 import type { Color, Pose } from "webviz-core/src/types/Messages";
 
@@ -23,7 +19,6 @@ export type ThreeDimensionalVizHooks = $ReadOnly<{|
   getTopicsToRender: (any, any) => Set<string>, // args are selection states
 
   // Custom transform override logic
-  consumePose: (Frame, Transforms) => void,
   skipTransformFrame: ?SkipTransformSpec,
 
   getMarkerColor: (string, Color) => Color,
@@ -39,8 +34,6 @@ export type ThreeDimensionalVizHooks = $ReadOnly<{|
   renderAdditionalMarkers: (any) => any,
   createPointCloudPositionBuffer: CreatePointCloudPositionBuffer,
   allSupportedMarkers: $ReadOnlyArray<string>,
-  originalPoseScaling: Scaling,
-  updatedPoseScaling: Scaling,
   PoseMarkers: React.AbstractComponent<PoseMarkersProps>,
   rootTransformFrame: string,
   getStaticallyAvailableNamespacesByTopic: () => { [topic: string]: string[] },

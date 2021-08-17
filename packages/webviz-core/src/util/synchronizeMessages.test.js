@@ -7,6 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import synchronizeMessages, { getSynchronizingReducers } from "./synchronizeMessages";
+import { wrapMessage } from "webviz-core/src/test/datatypes";
+import { deepParse } from "webviz-core/src/util/binaryObjects";
 
 function message(topic, stamp) {
   return {
@@ -89,6 +91,24 @@ describe("synchronizeMessages", () => {
   });
 });
 
+const bobject = (topic, stamp) => wrapMessage(message(topic, stamp));
+
+const parseMessage = ({ message: m, topic, receiveTime }) => ({ message: deepParse(m), topic, receiveTime });
+
+const parseState = ({ messagesByTopic, synchronizedMessages }) => {
+  const newMessagesByTopic = {};
+  Object.keys(messagesByTopic).forEach((topic) => {
+    newMessagesByTopic[topic] = messagesByTopic[topic].map(parseMessage);
+  });
+  if (synchronizedMessages == null) {
+    return { messagesByTopic: newMessagesByTopic, synchronizedMessages };
+  }
+  const newSynchronizedMessages = {};
+  Object.keys(synchronizedMessages).forEach((topic) => {
+    newSynchronizedMessages[topic] = parseMessage(synchronizedMessages[topic]);
+  });
+  return { messagesByTopic: newMessagesByTopic, synchronizedMessages: newSynchronizedMessages };
+};
 describe("getSynchronizingReducers", () => {
   it("restores all existing messages on the requested topics", () => {
     const { restore } = getSynchronizingReducers(["/a", "/b"]);
@@ -102,13 +122,15 @@ describe("getSynchronizingReducers", () => {
     });
 
     expect(
-      restore({
-        messagesByTopic: {
-          "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
-          "/c": [message("/c", { sec: 1, nsec: 0 })],
-        },
-        synchronizedMessages: null,
-      })
+      parseState(
+        restore({
+          messagesByTopic: {
+            "/a": [bobject("/a", { sec: 1, nsec: 0 }), bobject("/a", { sec: 2, nsec: 0 })],
+            "/c": [bobject("/c", { sec: 1, nsec: 0 })],
+          },
+          synchronizedMessages: null,
+        })
+      )
     ).toEqual({
       messagesByTopic: {
         "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
@@ -121,14 +143,16 @@ describe("getSynchronizingReducers", () => {
   it("restores synchronized messages, removing old unneeded messages", () => {
     const { restore } = getSynchronizingReducers(["/a", "/b"]);
     expect(
-      restore({
-        messagesByTopic: {
-          "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
-          "/b": [message("/b", { sec: 2, nsec: 0 })],
-          "/c": [message("/c", { sec: 1, nsec: 0 })],
-        },
-        synchronizedMessages: null,
-      })
+      parseState(
+        restore({
+          messagesByTopic: {
+            "/a": [bobject("/a", { sec: 1, nsec: 0 }), bobject("/a", { sec: 2, nsec: 0 })],
+            "/b": [bobject("/b", { sec: 2, nsec: 0 })],
+            "/c": [bobject("/c", { sec: 1, nsec: 0 })],
+          },
+          synchronizedMessages: null,
+        })
+      )
     ).toEqual({
       messagesByTopic: {
         "/a": [message("/a", { sec: 2, nsec: 0 })],
@@ -142,17 +166,19 @@ describe("getSynchronizingReducers", () => {
   });
 
   it("keeps old messages when adding a new ones if stamps don't match", () => {
-    const { addMessage } = getSynchronizingReducers(["/a", "/b"]);
+    const { addBobjects } = getSynchronizingReducers(["/a", "/b"]);
     expect(
-      addMessage(
-        {
-          messagesByTopic: {
-            "/a": [message("/a", { sec: 1, nsec: 0 })],
-            "/b": [message("/b", { sec: 2, nsec: 0 })],
+      parseState(
+        addBobjects(
+          {
+            messagesByTopic: {
+              "/a": [bobject("/a", { sec: 1, nsec: 0 })],
+              "/b": [bobject("/b", { sec: 2, nsec: 0 })],
+            },
+            synchronizedMessages: null,
           },
-          synchronizedMessages: null,
-        },
-        message("/a", { sec: 3, nsec: 0 })
+          [bobject("/a", { sec: 3, nsec: 0 })]
+        )
       )
     ).toEqual({
       messagesByTopic: {
@@ -164,17 +190,19 @@ describe("getSynchronizingReducers", () => {
   });
 
   it("synchronizes when adding a new message, removing old unneeded messages", () => {
-    const { addMessage } = getSynchronizingReducers(["/a", "/b"]);
+    const { addBobjects } = getSynchronizingReducers(["/a", "/b"]);
     expect(
-      addMessage(
-        {
-          messagesByTopic: {
-            "/a": [message("/a", { sec: 1, nsec: 0 })],
-            "/b": [message("/b", { sec: 2, nsec: 0 })],
+      parseState(
+        addBobjects(
+          {
+            messagesByTopic: {
+              "/a": [bobject("/a", { sec: 1, nsec: 0 })],
+              "/b": [bobject("/b", { sec: 2, nsec: 0 })],
+            },
+            synchronizedMessages: null,
           },
-          synchronizedMessages: null,
-        },
-        message("/a", { sec: 2, nsec: 0 })
+          [bobject("/a", { sec: 2, nsec: 0 })]
+        )
       )
     ).toEqual({
       messagesByTopic: {

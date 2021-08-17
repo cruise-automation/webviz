@@ -107,7 +107,7 @@ export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history
 
     const newPersistedState = cloneDeep(defaultPersistedState);
 
-    const { search: currentSearch, pathname } = history.location;
+    const { search: currentSearch, pathname } = history.location || {};
     const currentSearchParams = new URLSearchParams(currentSearch);
     const oldFetchedLayoutState = oldPersistedState?.fetchedLayout;
     const oldPersistedSearch = oldPersistedState?.search;

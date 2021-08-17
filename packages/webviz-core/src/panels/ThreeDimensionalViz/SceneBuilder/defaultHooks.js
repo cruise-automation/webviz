@@ -29,7 +29,6 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   getMarkerColor: (topic, markerColor) => markerColor,
 
   // Duplicated in top-level 3D panel hooks
-  consumePose: () => {},
   skipTransformFrame: null,
   MapComponent: null,
   renderAdditionalMarkers: () => {},
@@ -52,6 +51,7 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
     "lineList",
     "lineStrip",
     "overlayIcon",
+    "radarPointCluster",
     "pointcloud",
     "points",
     "poseMarker",
@@ -60,8 +60,6 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
     "text",
     "triangleList",
   ],
-  originalPoseScaling: { x: 1, y: 1 },
-  updatedPoseScaling: { x: 1, y: 1 },
   PoseMarkers,
   rootTransformFrame: "map",
   getStaticallyAvailableNamespacesByTopic: () => ({}),

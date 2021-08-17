@@ -154,24 +154,14 @@ class TfStore {
 export default class Transforms {
   storage = new TfStore();
   empty = true;
-  _hasStaticTransformsData: boolean = false;
-
-  consume({ childFrame, parentFrame, pose: { position, orientation } }: TransformElement) {
-    const tf = this.storage.get(childFrame);
-    tf.set(position, orientation);
-    tf.parent = this.storage.get(parentFrame);
-    this.empty = false;
-  }
-
-  consumeStaticData(data: $ReadOnlyArray<TransformElement>) {
-    if (this._hasStaticTransformsData) {
-      // These transforms never change value. It wouldn't be incorrect to consume them more than
-      // once, though.
-      return;
-    }
-    this._hasStaticTransformsData = true;
-    data.forEach((elem) => {
-      this.consume(elem);
+  rawTransforms: $ReadOnlyArray<TransformElement>;
+  constructor(transformElements: $ReadOnlyArray<TransformElement>) {
+    this.empty = transformElements.length === 0;
+    this.rawTransforms = transformElements;
+    transformElements.forEach(({ childFrame, parentFrame, pose: { position, orientation } }) => {
+      const tf = this.storage.get(childFrame);
+      tf.set(position, orientation);
+      tf.parent = this.storage.get(parentFrame);
     });
   }
 

@@ -25,7 +25,7 @@ import type {
   SubscribePayload,
   Topic,
 } from "webviz-core/src/players/types";
-import { USER_ERROR_PREFIX } from "webviz-core/src/util/globalConstants";
+import { USER_ERROR_PREFIX, SEEK_ON_START_NS } from "webviz-core/src/util/globalConstants";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, {
   type NotificationType,
@@ -36,12 +36,12 @@ import sendNotification, {
 } from "webviz-core/src/util/sendNotification";
 import {
   fromSec,
-  getSeekTimeFromSpec,
   clampTime,
   subtractTimes,
   toMillis,
   fromMillis,
-  getSeekToTime,
+  fromNanoSec,
+  formatSeconds,
   type TimestampMethod,
 } from "webviz-core/src/util/time";
 
@@ -51,12 +51,16 @@ export type VideoMetadata = {|
   msPerFrame: number, // millis per frame
 |};
 
+export type RecordingProgressEvent = {| percentComplete: number, etaEpochMs?: number, frameRenderDurationMs?: number |};
+
 export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
   durationMs?: number | typeof undefined;
   workerIndex?: number;
   workerTotal?: number;
+  rangeStartTime: any;
+  rangeEndTime: any;
   shouldLoadDataBeforePlaying: boolean;
   onError(any): Promise<void>;
   start({ bagLengthMs: number }): void;
@@ -66,18 +70,12 @@ export interface AutomatedRunClient {
   markFrameRenderEnd(): number;
   markPreloadStart(): void;
   markPreloadEnd(): number;
-  onFrameFinished(): Promise<void>;
+  onFrameFinished(progressEvent: RecordingProgressEvent): Promise<void>;
   finish(VideoMetadata): any;
 }
 
 export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
 const NO_WARNINGS = Object.freeze({});
-
-function formatSeconds(sec: number): string {
-  const date = new Date(0);
-  date.setSeconds(sec);
-  return date.toISOString().substr(11, 8);
-}
 
 export default class AutomatedRunPlayer implements Player {
   static className = "AutomatedRunPlayer";
@@ -113,8 +111,8 @@ export default class AutomatedRunPlayer implements Player {
     // Report errors from sendNotification and those thrown on the window object to the client.
     setNotificationHandler(
       (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
-        if (severity === "warn") {
-          // We can ignore warnings in automated runs
+        if (severity !== "error") {
+          // We can ignore warnings and info messages in automated runs
           return;
         }
         let error;
@@ -285,7 +283,12 @@ export default class AutomatedRunPlayer implements Player {
       notifyPlayerManager: async () => {},
     });
     this._providerTopics = this._providerResult.topics.map((t) => ({ ...t, preloadable: true }));
-    this._startTime = getSeekTimeFromSpec(getSeekToTime(), this._providerResult.start, this._end());
+
+    this._startTime = clampTime(
+      this._client.rangeStartTime || TimeUtil.add(this._providerResult.start, fromNanoSec(SEEK_ON_START_NS)),
+      this._providerResult.start,
+      this._end()
+    );
     await this._start();
   }
 
@@ -345,9 +348,9 @@ export default class AutomatedRunPlayer implements Player {
       ? fromMillis(this._client.durationMs)
       : { sec: Infinity, nsec: 0 };
     const endTime = clampTime(
-      TimeUtil.add(this._startTime, requestedDurationTime),
+      clampTime(TimeUtil.add(this._startTime, requestedDurationTime), this._providerResult.start, this._end()),
       this._providerResult.start,
-      this._end()
+      this._client.rangeEndTime || this._end()
     );
     const videoDurationMs = toMillis(subtractTimes(endTime, this._startTime));
     this._client.start({ bagLengthMs: videoDurationMs });
@@ -393,15 +396,7 @@ export default class AutomatedRunPlayer implements Player {
       );
 
       const percentComplete = bagTimeSinceStartMs / videoDurationMs;
-      const msPerPercent = (Date.now() - startEpoch) / percentComplete;
-      const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);
-      const eta = formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */));
-      console.log(
-        `[${workerIndex}/${workerCount}] Recording ${(percentComplete * 100).toFixed(
-          1
-        )}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
-      );
-      await this._client.onFrameFinished();
+      await this._client.onFrameFinished({ percentComplete, frameRenderDurationMs });
     }
 
     await this._client.finish({

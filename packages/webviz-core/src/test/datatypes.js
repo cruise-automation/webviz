@@ -33,7 +33,10 @@ const maybeInferJsonFieldType = (value: any, fieldName: string): ?FieldType => {
   // to make this pluggable in the future.
   // "Markers" sometimes have some missing fields, but these ones always seem to be present:
   const hasMarkerFields = ["header", "ns", "id", "type", "action", "pose"].every((field) => value[field] != null);
-  if (!hasMarkerFields) {
+  const hasIconMarkerFields = ["header", "position", "icon_type", "text", "outline_color", "metadata"].every(
+    (field) => value[field] != null
+  );
+  if (!hasMarkerFields && !hasIconMarkerFields) {
     return;
   }
   if (fieldName === "metadata" || fieldName === "metadataByIndex") {

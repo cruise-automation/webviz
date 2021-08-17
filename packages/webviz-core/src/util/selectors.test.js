@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import {
   constantsByDatatype,
+  getSanitizedTopics,
   getTopicNames,
   getTopicsByTopicName,
   enumValuesByDatatypeAndField,
@@ -142,5 +143,21 @@ describe("extractTypeFromWebizEnumAnnotation", () => {
 
   it("returns undefined for field not mathcing", () => {
     expect(extractTypeFromWebizEnumAnnotation("Foo__webviz_enum_EXTRA")).toBeUndefined();
+  });
+});
+
+describe("getSanitizedTopics", () => {
+  it("finds the intersection as expected", () => {
+    const subscribedTopics1 = ["/tf", "/tf_static"];
+    const subscribedTopics2 = ["/foo", "/bar"];
+    const providerTopics = [{ name: "/tf" }, { name: "/bar" }];
+
+    const sanitized1 = getSanitizedTopics(subscribedTopics1, providerTopics);
+    const sanitized2 = getSanitizedTopics(subscribedTopics2, providerTopics);
+
+    expect(sanitized1).toEqual(["/tf"]);
+    expect(sanitized2).toEqual(["/bar"]);
+    expect(getSanitizedTopics(subscribedTopics1, providerTopics)).toBe(sanitized1);
+    expect(getSanitizedTopics(subscribedTopics2, providerTopics)).toBe(sanitized2);
   });
 });

@@ -17,8 +17,8 @@ const SCropSelectionOverlay = styled.div`
   z-index: 1000;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background: transparent;
   pointer-events: none;
 `;
@@ -30,12 +30,15 @@ const SCropMainBox = styled.div`
   cursor: move;
 `;
 
-const SEdge = styled.div`
+const SEdge = styled.div.attrs(({ x, y, axis }) => ({
+  style: {
+    top: `${((y + 1) / 2) * 100}%`,
+    left: `${((x + 1) / 2) * 100}%`,
+    width: axis === "x" ? "1px" : "100%",
+    height: axis === "y" ? "1px" : "100%",
+  },
+}))`
   position: absolute;
-  top: ${({ y }) => `${((y + 1) / 2) * 100}%`};
-  left: ${({ x }) => `${((x + 1) / 2) * 100}%`};
-  width: ${({ axis }) => (axis === "x" ? "1px" : "100%")};
-  height: ${({ axis }) => (axis === "y" ? "1px" : "100%")};
   background: transparent;
   border: 1px dashed rgba(255, 255, 255, 0.5);
 `;
@@ -47,14 +50,14 @@ const SMask = styled.div`
   left: -100vw;
   width: 200vw;
   pointer-events: none;
-  background: rgba(64, 0, 0, 0.35);
+  background: rgba(64, 0, 0, 0.45);
 `;
 
-const SHandle = styled.div`
+const SHandle = styled.div.attrs(({ x, y }) => ({
+  style: { top: `${((y + 1) / 2) * 100}%`, left: `${((x + 1) / 2) * 100}%` },
+}))`
   position: absolute;
   transition: width 0.1s, height 0.1s;
-  top: ${({ y }) => `${((y + 1) / 2) * 100}%`};
-  left: ${({ x }) => `${((x + 1) / 2) * 100}%`};
   height: 10px;
   width: 10px;
   background: ${colors.DARK9};

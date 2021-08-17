@@ -11,7 +11,6 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Store } from "webviz-core/src/reducers";
 import { setPersistedStateInLocalStorage } from "webviz-core/src/reducers/panels";
 import { isInIFrame } from "webviz-core/src/util/iframeUtils";
-import { getShouldProcessPatch } from "webviz-core/src/util/layout";
 
 type Action = { type: string, payload: any };
 
@@ -89,8 +88,10 @@ const updateUrlAndLocalStorageMiddlewareDebounced = (store: Store) => (next: (Ac
       clearTimeout(updateUrlTimer);
     }
     updateUrlTimer = setTimeout(async () => {
-      const shouldProcessPatch = getShouldProcessPatch();
-      if (!shouldProcessPatch) {
+      const inIframe = isInIFrame();
+      // Skip processing patch in iframe (currently used for MiniViz) since we
+      // can't update the URL anyway.
+      if (inIframe) {
         maybeSetPersistedStateInLocalStorage(store, skipSettingLocalStorage);
         return result;
       }

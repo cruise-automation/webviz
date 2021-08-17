@@ -26,10 +26,9 @@ import {
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
+import useTransformsNear from "webviz-core/src/panels/ThreeDimensionalViz/Transforms/useTransformsNear";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 // The amount of time to wait before dispatching the saveConfig action to save the cameraState into the layout
@@ -55,6 +54,9 @@ export type ThreeDimensionalVizConfig = {
   autoSyncCameraState?: boolean,
   colorOverrideBySourceIdxByVariable?: ColorOverrideBySourceIdxByVariable,
   disableAutoOpenClickedObject?: boolean,
+  // The message path syntax path to the static URDF transforms.
+  // Currently set in the config but not editable in any UI.
+  staticTransformPath?: string,
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 
@@ -65,7 +67,7 @@ export type Props = {
   saveConfig: Save3DConfig,
   setSubscriptions: (subscriptions: string[]) => void,
   topics: Topic[],
-  transforms: Transforms,
+  transforms?: Transforms, // Provided in one story
 };
 
 const DEFAULT_TIME = { sec: 0, nsec: 0 };
@@ -78,7 +80,6 @@ const BaseRenderer = (props: Props, ref) => {
     saveConfig,
     setSubscriptions,
     topics,
-    transforms,
     config: { autoSyncCameraState, followOrientation, followTf },
   } = props;
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
@@ -106,6 +107,9 @@ const BaseRenderer = (props: Props, ref) => {
     setConfigCameraState(config.cameraState);
   }
 
+  const transformElements = useTransformsNear(currentTime, config.staticTransformPath);
+  const calculatedTransforms = useMemo(() => new Transforms(transformElements), [transformElements]);
+  const transforms = props.transforms ?? calculatedTransforms;
   const { transformedCameraState, targetPose } = useTransformedCameraState({
     configCameraState,
     followTf,
@@ -115,9 +119,7 @@ const BaseRenderer = (props: Props, ref) => {
 
   const onSetSubscriptions = useCallback((subscriptions: string[]) => {
     setSubscriptions([
-      ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
-      TRANSFORM_TOPIC,
-      TRANSFORM_STATIC_TOPIC,
+      ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.additionalSubscriptions,
       ...subscriptions,
     ]);
   }, [setSubscriptions]);
@@ -247,4 +249,4 @@ BaseRenderer.shortcuts = [
 
 export const Renderer = hoistNonReactStatics(React.forwardRef<Props, typeof BaseRenderer>(BaseRenderer), BaseRenderer);
 
-export default hot(Panel<ThreeDimensionalVizConfig>(FrameCompatibilityDEPRECATED(withTransforms(Renderer), [])));
+export default hot(Panel<ThreeDimensionalVizConfig>(FrameCompatibilityDEPRECATED(Renderer, [])));

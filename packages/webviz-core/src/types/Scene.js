@@ -25,6 +25,7 @@ import type {
   LaserScan,
   InstancedLineListMarker,
   OverlayIconMarker,
+  RadarPointCluster,
 } from "webviz-core/src/types/Messages";
 
 export type Scene = {|
@@ -52,6 +53,7 @@ export interface MarkerCollector {
   filledPolygon(FilledPolygonMarker): any;
   instancedLineList(InstancedLineListMarker): any;
   overlayIcon(OverlayIconMarker): any;
+  radarPointCluster(RadarPointCluster): any;
 }
 
 export interface MarkerProvider {

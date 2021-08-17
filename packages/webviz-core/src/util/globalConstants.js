@@ -27,6 +27,8 @@ export const TITLE_QUERY_KEY = "title";
 export const TEST_EVERYTHING_LAYOUT_QUERY_VAL = "_integration-test-everything-layout";
 export const FRAMELESS = "frameless";
 
+export const RADAR_POINT_CLOUD = "radarPointCloud";
+export const WRAPPED_POINT_CLOUD = "wrappedPointCloud";
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
 export const TRANSFORM_TOPIC = "/tf";
@@ -104,10 +106,12 @@ export const MARKER_MSG_TYPES = {
 
 export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };
 
-// Planning
+// Unit conversions
 export const METERS_PER_SECOND_TO_MILES_PER_HOUR = 2.23694;
 export const METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR = 3.6;
 export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 1 / METERS_PER_SECOND_TO_MILES_PER_HOUR;
+export const MILES_PER_HOUR_TO_KILOMETERS_PER_HOUR =
+  MILES_PER_HOUR_TO_METERS_PER_SECOND * METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR;
 
 export const jsonTreeTheme = {
   base00: "transparent", // bg
@@ -127,4 +131,17 @@ export const PANEL_LAYOUT_ROOT_ID = "PanelLayout-root";
 
 // Feature announcements
 export const FEATURE_ANNOUNCEMENTS_LOCAL_STORAGE_KEY = "webvizFeatureAnnouncements";
-export const RECORDING_SERVICE_ANNOUNCEMENT_KEY = "recordingService";
+export const RECORDING_RANGE_SELECTION_ANNOUNCEMENT_KEY = "recordingRangeSelection";
+
+export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+
+// Amount to seek into the bag from the start when loading the player, to show
+// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
+// MemoryCacheDataProvider so we still stay within the first block when fetching
+// initial data.
+export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
+if (SEEK_ON_START_NS >= MIN_MEM_CACHE_BLOCK_SIZE_NS) {
+  throw new Error(
+    "SEEK_ON_START_NS should be less than MIN_MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
+  );
+}

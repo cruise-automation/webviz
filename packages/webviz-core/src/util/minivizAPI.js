@@ -21,16 +21,16 @@ type IframeNotificationMessageData = {
 };
 
 // Do not modify below values. You will break Miniviz
-const WebvizNotificationMessageType = "webviz-notification";
-const WebvizPlaybackMessageType = "webviz-playback";
-const WebvizLayoutMessageType = "webviz-layout";
+export const WebvizNotificationMessageType = "webviz-notification";
+export const WebvizPlaybackMessageType = "webviz-playback";
+export const WebvizLayoutMessageType = "webviz-layout";
 export const IframePlaybackMessageType = "playback-message";
 export const IframeSeekMessageType = "seek-message";
 export const IframeUrlChangeMessageType = "url-change-message";
 export type IframeEvent =
-  | {| type: "url-change-message", newUrlSource: string |}
-  | {| type: "playback-message", isPlaying: boolean, playSpeed: number |}
-  | {| type: "seek-message", seekTimeMs: number |};
+  | {| type: typeof IframeUrlChangeMessageType, newUrlSource: string |}
+  | {| type: typeof IframePlaybackMessageType, isPlaying: boolean, playSpeed: number |}
+  | {| type: typeof IframeSeekMessageType, seekTimeMs: number |};
 
 function createMessageHandler(handleMessage: (eventData: IframeEvent) => void) {
   return (event: any) => {

@@ -99,11 +99,15 @@ export function perPanelHooks() {
     VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
     DIAGNOSTIC_TOPIC,
+    RADAR_POINT_CLOUD,
+    WRAPPED_POINT_CLOUD,
   } = require("webviz-core/src/util/globalConstants");
 
   const sceneBuilderHooks = require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks").default;
   const supportsOffscreenCanvas = require("webviz-core/src/util/supportsOffscreenCanvas").default;
   const initLayoutNonWorker = require("webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker").default;
+  const useStaticTransformsData = require("webviz-core/src/panels/ThreeDimensionalViz/Transforms/useStaticTransformsData")
+    .default;
 
   const SUPPORTED_MARKER_DATATYPES = {
     // generally supported datatypes
@@ -164,8 +168,9 @@ export function perPanelHooks() {
       topicSettingsEditors: {},
       SUPPORTED_MARKER_DATATYPES,
       BLACKLIST_TOPICS: [],
-      topics: [],
+      additionalSubscriptions: [],
       iconsByDatatype: {
+        // Named datatypes
         [VISUALIZATION_MSGS$MARKER]: HexagonIcon,
         [VISUALIZATION_MSGS$MARKER_ARRAY]: HexagonMultipleIcon,
         [NAV_MSGS$OCCUPANCY_GRID]: GridIcon,
@@ -176,6 +181,9 @@ export function perPanelHooks() {
         [GEOMETRY_MSGS$POSE_STAMPED]: RobotIcon,
         [VISUALIZATION_MSGS$WEBVIZ_MARKER]: HexagonIcon,
         [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: HexagonMultipleIcon,
+        // Structural datatypes
+        [RADAR_POINT_CLOUD]: BlurIcon,
+        [WRAPPED_POINT_CLOUD]: BlurIcon,
       },
       // TODO(Audrey): remove icons config after topic group release
       icons: {},
@@ -192,9 +200,9 @@ export function perPanelHooks() {
         return initLayoutNonWorker(sceneBuilderHooks);
       },
       // Duplicated in sceneBuilderHooks
-      consumePose: () => {},
       skipTransformFrame: null,
-      useStaticTransformsData: () => null,
+      useDynamicTransformsData: () => null,
+      useStaticTransformsData,
 
       ungroupedNodesCategory: "Topics",
       rootTransformFrame: "map",

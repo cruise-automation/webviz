@@ -20,11 +20,13 @@ import {
   type PlayerMetricsCollectorInterface,
   type PlayerState,
 } from "webviz-core/src/players/types";
+import { SEEK_ON_START_NS, SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
-import { fromNanoSec, getSeekToTime, SEEK_ON_START_NS } from "webviz-core/src/util/time";
+import { fromNanoSec, getSeekToTime } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
 const playerOptions = {
+  initialMessageOrder: "receiveTime",
   metricsCollector: undefined,
   seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } },
   notifyPlayerManager: async () => {},
@@ -142,6 +144,24 @@ describe("RandomAccessPlayer", () => {
     expect(messages[1].activeData.currentTime).toEqual(
       TimeUtil.add({ sec: 10, nsec: 0 }, fromNanoSec(SEEK_ON_START_NS))
     );
+
+    source.close();
+  });
+
+  it("loads data past the specified seek time when loaded in header-stamp mode", async () => {
+    // The OrderedStampPlayer needs an extra second of data to buffer and sort data, so if it wants
+    // to show data up to 00:50, we need to send it data from 00:50 to 00:51.
+    history.replaceState(null, window.title, `?${SEEK_TO_QUERY_KEY}=50000`);
+
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer(
+      { name: "TestProvider", args: { provider }, children: [] },
+      { ...playerOptions, seekToTime: getSeekToTime(), initialMessageOrder: "headerStamp" }
+    );
+    const store = new MessageStore(2);
+    await source.setListener(store.add);
+    const messages: any = await store.done;
+    expect(messages[1].activeData.currentTime).toEqual({ sec: 51, nsec: 0 });
 
     source.close();
   });

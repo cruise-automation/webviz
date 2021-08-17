@@ -8,19 +8,25 @@
 
 import delay from "webviz-core/shared/delay";
 import signal, { type Signal } from "webviz-core/shared/signal";
-import { type VideoMetadata } from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
+import { PLAYBACK_RANGE_START_KEY, PLAYBACK_RANGE_END_KEY } from "webviz-core/shared/url";
+import {
+  type VideoMetadata,
+  type RecordingProgressEvent,
+} from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
+import { parseRosTimeStr } from "webviz-core/src/util/time";
 
 // This is the interface between the video recording server (recordVideo.js) and
 // the client (whomever uses `videoRecordingClient`). The idea is that the server opens a webpage
 // that runs a client, and from that point on, the client is in control. Essentially, the client
 // makes remote procedure calls to the server, which the server executes and then acknowledges.
+//
 // Right now there are only three calls to the server:
 // - "error" (which throws an error and aborts);
 // - "finish" (to close the browser and generate the actual video);
 // - "screenshot" (take a screenshot and acknowledge when done, so we can continue).
-//
 
 let screenshotResolve: ?() => void;
+let lastScreenshotProgressEvent: ?RecordingProgressEvent;
 let finishedVideoMetadata: ?VideoMetadata;
 let error: ?Error;
 let errorSignal: ?Signal<void>;
@@ -31,6 +37,7 @@ export type VideoRecordingFinishAction = {
 };
 export type VideoRecordingScreenshotAction = {
   action: "screenshot",
+  progressEvent: ?RecordingProgressEvent,
 };
 
 export type VideoRecordingErrorAction = {
@@ -63,14 +70,14 @@ window.videoRecording = {
       return { action: "finish", metadata: finishedVideoMetadata };
     }
     if (screenshotResolve) {
-      return { action: "screenshot" };
+      return { action: "screenshot", progressEvent: lastScreenshotProgressEvent };
     }
     return null;
   },
 
   hasTakenScreenshot() {
-    if (!screenshotResolve) {
-      throw new Error("No screenshotResolve found!");
+    if (!screenshotResolve || !lastScreenshotProgressEvent) {
+      throw new Error("No screenshotResolve or lastScreenshotProgressEvent found!");
     }
     const resolve = screenshotResolve;
     screenshotResolve = undefined;
@@ -80,6 +87,9 @@ window.videoRecording = {
 
 const params = new URLSearchParams(location.search);
 const durationMs = params.has("duration") ? parseFloat(params.get("duration")) * 1000 : undefined;
+const [rangeStartRaw, rangeEndRaw] = [params.get(PLAYBACK_RANGE_START_KEY), params.get(PLAYBACK_RANGE_END_KEY)];
+const [rangeStartTime, rangeEndTime] = [rangeStartRaw, rangeEndRaw].map(parseRosTimeStr);
+
 const [workerIndex = 0, workerTotal = 1] = (params.get("video-recording-worker") || "0/1")
   .split("/")
   .map((n) => parseInt(n));
@@ -93,6 +103,8 @@ class VideoRecordingClient {
   durationMs = durationMs;
   workerIndex = workerIndex;
   workerTotal = workerTotal;
+  rangeStartTime = rangeStartTime;
+  rangeEndTime = rangeEndTime;
   speed = speed;
   shouldLoadDataBeforePlaying = false;
   lastFrameStart = 0;
@@ -133,13 +145,14 @@ class VideoRecordingClient {
     return errorSignal;
   }
 
-  async onFrameFinished() {
+  async onFrameFinished(progressEvent: RecordingProgressEvent) {
     await delay(60); // Give PlayerDispatcher time to dispatch a frame, and then render everything.
     if (screenshotResolve) {
       throw new Error("Already have a screenshot queued!");
     }
     return (new Promise((resolve) => {
       screenshotResolve = resolve;
+      lastScreenshotProgressEvent = progressEvent;
     }): Promise<void>);
   }
 

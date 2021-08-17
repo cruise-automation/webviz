@@ -72,7 +72,7 @@ import { isComplex, primitiveList } from "webviz-core/src/util/binaryObjects/mes
 import { createSelectableContext, useChangeDetector, useContextSelector } from "webviz-core/src/util/hooks";
 import { enumValuesByDatatypeAndField, type EnumMap } from "webviz-core/src/util/selectors";
 import { ROBOTO_MONO, colors } from "webviz-core/src/util/sharedStyleConstants";
-import { formatFrame, DEFAULT_ZERO_TIME, isTimeInRangeInclusive } from "webviz-core/src/util/time";
+import { rosTimeToUrlTime, DEFAULT_ZERO_TIME, isTimeInRangeInclusive } from "webviz-core/src/util/time";
 import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
 const STable = styled.div`
@@ -342,7 +342,7 @@ const TimeCell = ({
   color: ?string,
   isNestedArray: ?boolean,
 }) => {
-  const renderedValue = formatFrame(value);
+  const renderedValue = rosTimeToUrlTime(value);
   const { seekPlayback, startTime, endTime } = useMessagePipeline(
     React.useCallback((state) => {
       const { activeData } = state.playerState;

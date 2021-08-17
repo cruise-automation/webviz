@@ -5,12 +5,12 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { type GLContext } from "./types";
 
-export const devicePixelRatio = window.devicePixelRatio || 1;
+import { type GLContextType } from "./GLContext";
 
 // This is a costly operation. DO NOT use during rendering loop if possible
-export const checkErrors = (gl: GLContext) => {
+export const checkErrors = (ctx: GLContextType) => {
+  const { gl } = ctx;
   const code = gl.getError();
   switch (code) {
     case gl.NO_ERROR:
@@ -53,16 +53,8 @@ export const checkErrors = (gl: GLContext) => {
   }
 };
 
-export const createGLContext = (canvas: HTMLCanvasElement): GLContext => {
-  const gl = canvas.getContext("webgl2");
-  if (!gl) {
-    throw new Error("Cannot initialize WebGL context");
-  }
-
-  return gl;
-};
-
-export const createShader = (gl: GLContext, type: number, source: string) => {
+export const createShader = (ctx: GLContextType, type: number, source: string) => {
+  const { gl } = ctx;
   if (!source.startsWith("#version")) {
     // Prepend GLES 3.0 version if none was provided
     source = `#version 300 es\n${source}`;
@@ -79,9 +71,10 @@ export const createShader = (gl: GLContext, type: number, source: string) => {
   return shader;
 };
 
-export const createShaderProgram = (gl: GLContext, vert: string, frag: string) => {
-  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert);
-  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frag);
+export const createShaderProgram = (ctx: GLContextType, vert: string, frag: string) => {
+  const { gl } = ctx;
+  const vertexShader = createShader(ctx, gl.VERTEX_SHADER, vert);
+  const fragmentShader = createShader(ctx, gl.FRAGMENT_SHADER, frag);
   if (!vertexShader || !fragmentShader) {
     return;
   }
@@ -100,15 +93,23 @@ export const createShaderProgram = (gl: GLContext, vert: string, frag: string) =
   return program;
 };
 
-export const createBuffer = (gl: GLContext, data: any) => {
+export const createBuffer = (ctx: GLContextType, data: any) => {
+  const { gl } = ctx;
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
   return buffer;
 };
 
-export const beginRender = (gl: GLContext) => {
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+export const clearRect = (ctx: GLContextType, rect: any) => {
+  const { gl, scale } = ctx;
+  const width = scale * (rect.right - rect.left);
+  const height = scale * (rect.bottom - rect.top);
+  const left = scale * rect.left;
+  const bottom = scale * (gl.canvas.clientHeight - rect.bottom);
+
+  gl.viewport(left, bottom, width, height);
+  gl.scissor(left, bottom, width, height);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 };

@@ -174,12 +174,6 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
-      useWorkerIn3DPanel: {
-        name: "Enable Web Worker in 3D Panel",
-        description: "If this flag is on, the 3D Panel will use a web worker for message processing and rendering.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
       useGLChartIn2dPlot: {
         name: "Enable WebGL-based charts for the 2D plot panel",
         description: "Replaces the Chartjs-based charts with a new implementation using WebGL instead.",

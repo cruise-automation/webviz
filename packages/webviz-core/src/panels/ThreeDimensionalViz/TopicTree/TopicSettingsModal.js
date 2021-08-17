@@ -19,6 +19,7 @@ import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { useArbitraryTopicMessage } from "webviz-core/src/PanelAPI";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import type { Topic } from "webviz-core/src/players/types";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -90,6 +91,7 @@ function MainEditor({
   onFieldChange,
   onSettingsChange,
   settings,
+  structuralDatatypes,
   topicName,
 }: {|
   datatype: string,
@@ -98,9 +100,10 @@ function MainEditor({
   onFieldChange: (fieldName: string, value: any) => void,
   onSettingsChange: (settings: any | ((prevSettings: {}) => {})) => void,
   settings: any,
+  structuralDatatypes: StructuralDatatypes,
   topicName: string,
 |}) {
-  const Editor = topicSettingsEditorForDatatype(datatype);
+  const Editor = topicSettingsEditorForDatatype(datatype, structuralDatatypes);
   if (!Editor) {
     throw new Error(`No topic settings editor available for ${datatype}`);
   }
@@ -134,6 +137,7 @@ type Props = {|
   saveConfig: Save3DConfig,
   setCurrentEditingTopic: (?Topic) => void,
   settingsByKey: { [topic: string]: any },
+  structuralDatatypes: StructuralDatatypes,
 |};
 
 function TopicSettingsModal({
@@ -143,6 +147,7 @@ function TopicSettingsModal({
   saveConfig,
   setCurrentEditingTopic,
   settingsByKey,
+  structuralDatatypes,
 }: Props) {
   const topicSettingsKey = `t:${topicName}`;
   const onSettingsChange = useCallback((settings: any | ((prevSettings: {}) => {})) => {
@@ -175,6 +180,7 @@ function TopicSettingsModal({
       onFieldChange={onFieldChange}
       onSettingsChange={onSettingsChange}
       settings={settingsByKey[topicSettingsKey] || {}}
+      structuralDatatypes={structuralDatatypes}
       topicName={nonPrefixedTopic}
     />
   );

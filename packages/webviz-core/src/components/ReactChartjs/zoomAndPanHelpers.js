@@ -408,14 +408,18 @@ export function getChartValue(bounds: ?ScaleBounds, canvasPx: number): ?number {
 }
 
 export function getChartPx(bounds: ?ScaleBounds, value: number): ?number {
-  if (bounds == null) {
+  if (bounds == null || value === undefined) {
     return;
   }
   const { min, max, minAlongAxis, maxAlongAxis } = bounds;
-  // If [min, value, max] = [5, 7, 10], then valuePercent is 2/5 = 0.4.
+  // If [min, value, max] = [10, 14, 20], then valuePercent is 4/10 = 0.4.
   const valuePercent = (value - min) / (max - min);
-  // If the chart goes from 104px to 154px, a bar at 40% should be at 104 + 20px.
-  return minAlongAxis + valuePercent * (maxAlongAxis - minAlongAxis);
+
+  // value should be between 0 and 1
+  const clampedValuePercent = Math.max(0, Math.min(valuePercent, 1));
+
+  // If the chart goes from 100px to 200px, a bar at 40% should be at 100 + 40px.
+  return minAlongAxis + clampedValuePercent * (maxAlongAxis - minAlongAxis);
 }
 
 export function inBounds(position: number, bounds: ?ScaleBounds): boolean {

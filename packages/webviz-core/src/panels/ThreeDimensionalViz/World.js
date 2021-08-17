@@ -8,7 +8,6 @@
 
 import React, { type Node, forwardRef } from "react";
 import {
-  Worldview,
   OffscreenWorldview,
   type CameraState,
   type MouseHandler,
@@ -27,13 +26,10 @@ import {
   type WorldSearchTextProps,
 } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import withHighlights from "webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js";
-import WorldMarkers, {
-  type InteractiveMarkersByType,
-  type OnIconClick,
-} from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
+import WorldMarkers, { type InteractiveMarkersByType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
-import { useChangeDetector } from "webviz-core/src/util/hooks";
+import { useChangeDetector, useGetCurrentValue } from "webviz-core/src/util/hooks";
 
 type Props = {|
   autoTextBackgroundColor: boolean,
@@ -45,17 +41,16 @@ type Props = {|
   markerProviders: MarkerProvider[],
   onCameraStateChange: (CameraState) => void,
   onClick: MouseHandler,
-  onIconClick: OnIconClick,
   onDoubleClick: MouseHandler,
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
   diffModeEnabled: boolean,
-  canvas?: HTMLCanvasElement,
+  canvas: HTMLCanvasElement,
   setOverlayIcons: (any) => void,
   showCrosshair: ?boolean,
   measurePoints: MeasurePoints,
-  resolveRenderSignal?: ?() => void,
+  resolveRenderSignal: () => void,
   ...WorldSearchTextProps,
 |};
 
@@ -74,6 +69,7 @@ function getMarkers(markerProviders: MarkerProvider[], hooks: ThreeDimensionalVi
     lineList: [],
     lineStrip: [],
     overlayIcon: [],
+    radarPointCluster: [],
     pointcloud: [],
     points: [],
     poseMarker: [],
@@ -101,14 +97,11 @@ function getMarkers(markerProviders: MarkerProvider[], hooks: ThreeDimensionalVi
 }
 
 // When rendering in a worker, we wait until worldview paints before calling resumeFrame.
-function RenderSignalResolver({ resolveRenderSignal }: { resolveRenderSignal: ?() => void }) {
-  const resolveRenderSignalRef = React.useRef(resolveRenderSignal);
-  resolveRenderSignalRef.current = resolveRenderSignal;
+function RenderSignalResolver({ resolveRenderSignal }: { resolveRenderSignal: () => void }) {
+  const getResolveRenderSignal = useGetCurrentValue(resolveRenderSignal);
   const resolveLatestSignal = React.useCallback(() => {
-    if (resolveRenderSignalRef.current) {
-      resolveRenderSignalRef.current();
-    }
-  }, []);
+    getResolveRenderSignal()();
+  }, [getResolveRenderSignal]);
 
   const worldviewContext = React.useContext(WorldviewReactContext);
   if (useChangeDetector([resolveRenderSignal], true) && worldviewContext) {
@@ -145,7 +138,6 @@ function World(
     isDemoMode,
     markerProviders,
     onDoubleClick,
-    onIconClick,
     onMouseDown,
     onMouseMove,
     onMouseUp,
@@ -160,7 +152,7 @@ function World(
     measurePoints,
     resolveRenderSignal,
   }: Props,
-  ref: Worldview
+  ref: OffscreenWorldview
 ) {
   const markersByType = getMarkers(markerProviders, hooks);
   const { text = [] } = markersByType;
@@ -177,14 +169,11 @@ function World(
     }),
   };
 
-  const WorldviewImpl = canvas ? OffscreenWorldview : Worldview;
-  const offscreenProps = canvas ? { canvas, width: canvas.width, height: canvas.height, top: 0, left: 0 } : {};
-
   const { overlayIcon } = processedMarkersByType;
   const cameraDistance = cameraState.distance || DEFAULT_CAMERA_STATE.distance;
 
   return (
-    <WorldviewImpl
+    <OffscreenWorldview
       cameraState={cameraState}
       enableStackedObjectEvents={!isPlaying}
       hideDebug={inScreenshotTests()}
@@ -201,7 +190,11 @@ function World(
       resolutionScale={isDemoMode ? 2 : 1}
       ref={ref}
       contextAttributes={{ preserveDrawingBuffer: true }}
-      {...offscreenProps}>
+      canvas={canvas}
+      width={canvas.width}
+      height={canvas.height}
+      top={0}
+      left={0}>
       {children}
       <RenderSignalResolver resolveRenderSignal={resolveRenderSignal} />
       <WrappedWorldMarkers
@@ -210,18 +203,15 @@ function World(
           markersByType: processedMarkersByType,
           layerIndex: LAYER_INDEX_DEFAULT_BASE,
           clearCachedMarkers: false,
-          isDemoMode,
-          cameraDistance,
           diffModeEnabled,
           hooks,
-          onIconClick,
         }}
       />
-      {!!canvas && <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>}
+      <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>
       {!cameraState.perspective && showCrosshair && <Crosshair cameraState={cameraState} hooks={hooks} />}
       <MeasureMarker measurePoints={measurePoints} cameraDistance={cameraDistance} />
-    </WorldviewImpl>
+    </OffscreenWorldview>
   );
 }
 
-export default forwardRef<typeof Worldview, _>(World);
+export default forwardRef<typeof OffscreenWorldview, _>(World);

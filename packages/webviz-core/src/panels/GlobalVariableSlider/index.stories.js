@@ -12,6 +12,7 @@ import TestUtils from "react-dom/test-utils";
 
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider/index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import { useDelayedEffect } from "webviz-core/src/util/hooks";
 
 const fixture = {
   topics: [],
@@ -41,17 +42,17 @@ storiesOf("<GlobalVariableSliderPanel>", module)
     );
   })
   .add("menu", () => {
+    useDelayedEffect(
+      React.useCallback(() => {
+        const mouseEnterContainer = document.querySelectorAll("[data-test~=panel-mouseenter-container")[0];
+        TestUtils.Simulate.mouseEnter(mouseEnterContainer);
+        document.querySelectorAll("[data-test=panel-settings]")[0].click();
+      }, []),
+      50 // ms
+    );
     return (
       <PanelSetup fixture={fixture}>
-        <GlobalVariableSliderPanel
-          ref={() => {
-            setTimeout(() => {
-              const mouseEnterContainer = document.querySelectorAll("[data-test~=panel-mouseenter-container")[0];
-              TestUtils.Simulate.mouseEnter(mouseEnterContainer);
-              document.querySelectorAll("[data-test=panel-settings]")[0].click();
-            }, 50);
-          }}
-        />
+        <GlobalVariableSliderPanel />
       </PanelSetup>
     );
   });

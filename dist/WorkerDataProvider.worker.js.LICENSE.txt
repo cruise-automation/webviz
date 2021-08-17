@@ -27,21 +27,13 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
-/*! ../../players/types */
-
 /*! ../BagReader */
 
 /*! ../Logger */
 
 /*! ../bag */
 
-/*! ../dataProviders/MemoryCacheDataProvider */
-
-/*! ../filterMap */
-
 /*! ../index */
-
-/*! ../players/types */
 
 /*! ../types */
 
@@ -58,8 +50,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ../util/bagConnectionsHelper */
 
 /*! ../util/bags */
-
-/*! ../util/binaryObjects */
 
 /*! ../util/corsError */
 
@@ -123,8 +113,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./ApiCheckerDataProvider */
 
-/*! ./ArrayViews */
-
 /*! ./BWT */
 
 /*! ./BagDataProvider */
@@ -179,10 +167,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./bag */
 
-/*! ./binaryObjects */
-
-/*! ./binaryWrapperObjects */
-
 /*! ./constants */
 
 /*! ./createGetDataProvider */
@@ -209,8 +193,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./is */
 
-/*! ./jsWrapperObjects */
-
 /*! ./lib/_stream_duplex.js */
 
 /*! ./lib/_stream_passthrough.js */
@@ -225,15 +207,11 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./lib/heap */
 
-/*! ./lib/memoize */
-
 /*! ./lib/rng */
 
 /*! ./logEvent */
 
 /*! ./memo */
-
-/*! ./messageDefinitionUtils */
 
 /*! ./misc */
 
@@ -403,8 +381,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
-/*! indent-string */
-
 /*! inherits */
 
 /*! int53 */
@@ -414,8 +390,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! isarray */
 
 /*! lodash */
-
-/*! memoize-weak */
 
 /*! no static exports found */
 
@@ -576,10 +550,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************/
 
 /*!***********************************************!*\
-  !*** ./packages/webviz-core/src/filterMap.js ***!
-  \***********************************************/
-
-/*!***********************************************!*\
   !*** ./packages/webviz-core/src/util/bags.js ***!
   \***********************************************/
 
@@ -633,10 +603,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!***************************************************!*\
   !*** ./node_modules/setimmediate/setImmediate.js ***!
-  \***************************************************/
-
-/*!***************************************************!*\
-  !*** ./packages/webviz-core/src/players/types.js ***!
   \***************************************************/
 
 /*!***************************************************!*\
@@ -701,10 +667,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!**********************************************************!*\
   !*** ./packages/webviz-core/node_modules/idb/lib/idb.js ***!
-  \**********************************************************/
-
-/*!**********************************************************!*\
-  !*** ./packages/webviz-core/node_modules/int53/index.js ***!
   \**********************************************************/
 
 /*!**********************************************************!*\
@@ -779,10 +741,6 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/node_modules/tslib/tslib.es6.js ***!
   \**************************************************************/
 
-/*!**************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/index.js ***!
-  \**************************************************************/
-
 /*!***************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_transform.js ***!
   \***************************************************************/
@@ -812,10 +770,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \*****************************************************************/
 
 /*!*****************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/memoize-weak/index.js ***!
-  \*****************************************************************/
-
-/*!*****************************************************************!*\
   !*** ./packages/webviz-core/src/util/indexeddb/MetaDatabase.js ***!
   \*****************************************************************/
 
@@ -825,10 +779,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/compressjs/lib/Util.js ***!
-  \******************************************************************/
-
-/*!******************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/indent-string/index.js ***!
   \******************************************************************/
 
 /*!******************************************************************!*\
@@ -861,10 +811,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!*******************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/BagDataProvider.js ***!
-  \*******************************************************************/
-
-/*!*******************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/ArrayViews.js ***!
   \*******************************************************************/
 
 /*!********************************************************************!*\
@@ -924,10 +870,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************************************/
 
 /*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/memoize-weak/lib/memoize.js ***!
-  \***********************************************************************/
-
-/*!***********************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/MeasureDataProvider.js ***!
   \***********************************************************************/
 
@@ -947,17 +889,9 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/src/dataProviders/createGetDataProvider.js ***!
   \*************************************************************************/
 
-/*!*************************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/jsWrapperObjects.js ***!
-  \*************************************************************************/
-
 /*!**************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/ApiCheckerDataProvider.js ***!
   \**************************************************************************/
-
-/*!***************************************************************************!*\
-  !*** ./packages/webviz-core/src/dataProviders/MemoryCacheDataProvider.js ***!
-  \***************************************************************************/
 
 /*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js ***!
@@ -967,10 +901,6 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./node_modules/readable-stream/lib/internal/streams/stream-browser.js ***!
   \*****************************************************************************/
 
-/*!*****************************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/binaryWrapperObjects.js ***!
-  \*****************************************************************************/
-
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/compressjs/lib/HuffmanAllocator.js ***!
   \******************************************************************************/
@@ -978,10 +908,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/IdbCacheWriterDataProvider.js ***!
   \******************************************************************************/
-
-/*!*******************************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/messageDefinitionUtils.js ***!
-  \*******************************************************************************/
 
 /*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/intervals-fn/es/lib.js + 319 modules ***!

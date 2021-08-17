@@ -33,21 +33,6 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-
 /*! ../../../../../../regl-worldview/dist/index.cjs */
 
 /*! ../../../../../regl-worldview/dist/index.cjs */
@@ -65,8 +50,6 @@ and limitations under the License.
 /*! ../../../../util/sendNotification */
 
 /*! ../../../players/types */
-
-/*! ../../../stories/inScreenshotTests */
 
 /*! ../../../util */
 
@@ -102,15 +85,11 @@ and limitations under the License.
 
 /*! ../../util/binaryObjects */
 
-/*! ../../util/colorUtils */
-
 /*! ../../util/hooks */
-
-/*! ../../util/sharedStyleConstants */
 
 /*! ../BagReader */
 
-/*! ../DebugStats */
+/*! ../DebugStats/Collector */
 
 /*! ../LaserScanVert */
 
@@ -126,8 +105,6 @@ and limitations under the License.
 
 /*! ../Transforms/TransformsBuilder */
 
-/*! ../Transforms/utils */
-
 /*! ../World */
 
 /*! ../WorldContext */
@@ -142,27 +119,13 @@ and limitations under the License.
 
 /*! ../constants */
 
-/*! ../dataProviders/MemoryCacheDataProvider */
-
-/*! ../filterMap */
-
 /*! ../index */
-
-/*! ../players/types */
 
 /*! ../threeDimensionalVizUtils */
 
+/*! ../time */
+
 /*! ../types */
-
-/*! ../util/binaryObjects */
-
-/*! ../util/getNewConnection */
-
-/*! ../util/ranges */
-
-/*! ../util/sendNotification */
-
-/*! ../util/time */
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
@@ -190,8 +153,6 @@ and limitations under the License.
 
 /*! ./../../node_modules/timers-browserify/main.js */
 
-/*! ./../../webpack/node_modules/process/browser.js */
-
 /*! ./../node_modules/node-libs-browser/node_modules/buffer/index.js */
 
 /*! ./../node_modules/timers-browserify/main.js */
@@ -210,13 +171,7 @@ and limitations under the License.
 
 /*! ./CarModel */
 
-/*! ./Collector */
-
 /*! ./Crosshair */
-
-/*! ./DebugStatsOverlay */
-
-/*! ./DebugStatsOverlayRpc */
 
 /*! ./ExecutionEnvironment */
 
@@ -248,9 +203,9 @@ and limitations under the License.
 
 /*! ./QuickHull */
 
-/*! ./ReadResult */
+/*! ./RadarPointClusters */
 
-/*! ./Renderer */
+/*! ./ReadResult */
 
 /*! ./Rpc */
 
@@ -576,15 +531,11 @@ and limitations under the License.
 
 /*! ./bag */
 
-/*! ./binaryObjects */
-
 /*! ./binaryWrapperObjects */
 
 /*! ./buffers */
 
 /*! ./carModel.glb */
-
-/*! ./cjs/react-is.production.min.js */
 
 /*! ./cjs/react-reconciler.production.min.js */
 
@@ -617,8 +568,6 @@ and limitations under the License.
 /*! ./eq */
 
 /*! ./errors */
-
-/*! ./factoryWithThrowingShims */
 
 /*! ./fields */
 
@@ -678,8 +627,6 @@ and limitations under the License.
 
 /*! ./last */
 
-/*! ./lib/ReactPropTypesSecret */
-
 /*! ./lib/bytesToUuid */
 
 /*! ./lib/heap */
@@ -714,8 +661,6 @@ and limitations under the License.
 
 /*! ./property */
 
-/*! ./ranges */
-
 /*! ./readers */
 
 /*! ./record */
@@ -746,8 +691,6 @@ and limitations under the License.
 
 /*! ./types */
 
-/*! ./useDebugStats */
-
 /*! ./utils */
 
 /*! ./utils/diffModeUtils */
@@ -773,10 +716,6 @@ and limitations under the License.
 /*! @babel/runtime/helpers/objectSpread */
 
 /*! @babel/runtime/helpers/objectWithoutProperties */
-
-/*! @emotion/is-prop-valid */
-
-/*! @emotion/unitless */
 
 /*! @mapbox/tiny-sdf */
 
@@ -882,8 +821,6 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module uses injected variables (module) */
 
-/*! ModuleConcatenation bailout: Module uses injected variables (process) */
-
 /*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
 
 /*! all exports used */
@@ -928,13 +865,7 @@ and limitations under the License.
 
 /*! exports provided: charInfo, textureWidth, textureHeight, default */
 
-/*! exports provided: convertFTtoSE, convertARtoSE, convertSEtoFT, convertSEtoAR, complement, isOverlappingSimple, isOverlapping, isMeeting, isBefore, isAfter, isStarting, isEnding, isDuring, isEqual, simplify, unify, intersect, merge, substract, split */
-
 /*! exports provided: default */
-
-/*! exports provided: default, concatArrays, merge */
-
-/*! exports provided: default, createGlobalStyle, css, isStyledComponent, keyframes, ServerStyleSheet, StyleSheetConsumer, StyleSheetContext, StyleSheetManager, ThemeConsumer, ThemeContext, ThemeProvider, withTheme, __DO_NOT_USE_OR_YOU_WILL_BE_HAUNTED_BY_SPOOKY_GHOSTS */
 
 /*! exports provided: dynamicRequire, isNodeEnv, getGlobalObject, uuid4, parseUrl, getEventDescription, consoleSandbox, addExceptionTypeValue, addExceptionMechanism, getLocationHref, htmlTreeAsString, timestampWithMs, parseSemver, parseRetryAfterHeader, getFunctionName */
 
@@ -956,8 +887,6 @@ and limitations under the License.
 
 /*! exports provided: truncate, snipLine, safeJoin, isMatchingPattern */
 
-/*! exports used: ForwardRef, isValidElementType */
-
 /*! exports used: Hub, getCurrentHub, getHubFromCarrier */
 
 /*! exports used: Memo */
@@ -973,8 +902,6 @@ and limitations under the License.
 /*! exports used: __assign, __extends, __read, __spread, __values */
 
 /*! exports used: addExceptionMechanism, addExceptionTypeValue, consoleSandbox, dynamicRequire, getEventDescription, getFunctionName, getGlobalObject, getLocationHref, htmlTreeAsString, isNodeEnv, parseRetryAfterHeader, parseUrl, timestampWithMs, uuid4 */
-
-/*! exports used: default */
 
 /*! exports used: extractExceptionKeysForMessage, fill, normalize, normalizeToSize, urlEncode */
 
@@ -1024,8 +951,6 @@ and limitations under the License.
 
 /*! int53 */
 
-/*! intervals-fn */
-
 /*! isarray */
 
 /*! lodash */
@@ -1052,8 +977,6 @@ and limitations under the License.
 
 /*! memoize-weak */
 
-/*! merge-anything */
-
 /*! ms */
 
 /*! natsort */
@@ -1068,13 +991,9 @@ and limitations under the License.
 
 /*! point-line-distance */
 
-/*! prop-types */
-
 /*! quickhull3d */
 
 /*! react */
-
-/*! react-is */
 
 /*! react-reconciler */
 
@@ -1089,12 +1008,6 @@ and limitations under the License.
 /*! setimmediate */
 
 /*! shallowequal */
-
-/*! styled-components */
-
-/*! stylis-rule-sheet */
-
-/*! stylis/stylis.min */
 
 /*! tinycolor2 */
 
@@ -1214,10 +1127,6 @@ and limitations under the License.
   !*** ./node_modules/gl-vec3/length.js ***!
   \****************************************/
 
-/*!****************************************!*\
-  !*** ./node_modules/react-is/index.js ***!
-  \****************************************/
-
 /*!*****************************************!*\
   !*** ./node_modules/base64-js/index.js ***!
   \*****************************************/
@@ -1234,20 +1143,12 @@ and limitations under the License.
   !*** ./node_modules/gl-vec3/subtract.js ***!
   \******************************************/
 
-/*!******************************************!*\
-  !*** ./node_modules/prop-types/index.js ***!
-  \******************************************/
-
 /*!*******************************************!*\
   !*** (webpack)/buildin/harmony-module.js ***!
   \*******************************************/
 
 /*!*******************************************!*\
   !*** ./node_modules/gl-vec3/normalize.js ***!
-  \*******************************************/
-
-/*!*******************************************!*\
-  !*** ./node_modules/stylis/stylis.min.js ***!
   \*******************************************/
 
 /*!*********************************************!*\
@@ -1319,15 +1220,7 @@ and limitations under the License.
   \*************************************************/
 
 /*!*************************************************!*\
-  !*** ./node_modules/stylis-rule-sheet/index.js ***!
-  \*************************************************/
-
-/*!*************************************************!*\
   !*** ./packages/webviz-core/src/util/errors.js ***!
-  \*************************************************/
-
-/*!*************************************************!*\
-  !*** ./packages/webviz-core/src/util/ranges.js ***!
   \*************************************************/
 
 /*!**************************************************!*\
@@ -1368,10 +1261,6 @@ and limitations under the License.
 
 /*!*****************************************************!*\
   !*** ./node_modules/quickhull3d/dist/VertexList.js ***!
-  \*****************************************************/
-
-/*!*****************************************************!*\
-  !*** ./packages/webviz-core/src/util/colorUtils.js ***!
   \*****************************************************/
 
 /*!******************************************************!*\
@@ -1417,10 +1306,6 @@ and limitations under the License.
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/overwriteFetch.js ***!
   \*********************************************************/
-
-/*!**********************************************************!*\
-  !*** ./node_modules/memoize-one/dist/memoize-one.esm.js ***!
-  \**********************************************************/
 
 /*!**********************************************************!*\
   !*** ./packages/webviz-core/node_modules/int53/index.js ***!
@@ -1471,10 +1356,6 @@ and limitations under the License.
   \***********************************************************/
 
 /*!***********************************************************!*\
-  !*** ./packages/webviz-core/src/util/getNewConnection.js ***!
-  \***********************************************************/
-
-/*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/sendNotification.js ***!
   \***********************************************************/
 
@@ -1509,14 +1390,6 @@ and limitations under the License.
 /*!************************************************************!*\
   !*** ./packages/webviz-core/src/util/NoopReactRenderer.js ***!
   \************************************************************/
-
-/*!*************************************************************!*\
-  !*** ./node_modules/prop-types/factoryWithThrowingShims.js ***!
-  \*************************************************************/
-
-/*!*************************************************************!*\
-  !*** ./node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
-  \*************************************************************/
 
 /*!*************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_Map.js ***!
@@ -1564,10 +1437,6 @@ and limitations under the License.
 
 /*!**************************************************************!*\
   !*** ./node_modules/gl-matrix/lib/gl-matrix.js + 10 modules ***!
-  \**************************************************************/
-
-/*!**************************************************************!*\
-  !*** ./node_modules/react-is/cjs/react-is.production.min.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\
@@ -2201,10 +2070,6 @@ and limitations under the License.
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/object-assign/index.js ***!
   \******************************************************************/
-
-/*!*******************************************************************!*\
-  !*** ./node_modules/merge-anything/dist/index.esm.js + 1 modules ***!
-  \*******************************************************************/
 
 /*!*******************************************************************!*\
   !*** ./node_modules/quickhull3d/node_modules/debug/src/common.js ***!
@@ -2974,10 +2839,6 @@ and limitations under the License.
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-top-left.svg ***!
   \***************************************************************************/
 
-/*!***************************************************************************!*\
-  !*** ./packages/webviz-core/src/dataProviders/MemoryCacheDataProvider.js ***!
-  \***************************************************************************/
-
 /*!****************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_isStrictComparable.js ***!
   \****************************************************************************/
@@ -3009,10 +2870,6 @@ and limitations under the License.
 /*!*****************************************************************************!*\
   !*** ./packages/webviz-core/src/util/binaryObjects/binaryWrapperObjects.js ***!
   \*****************************************************************************/
-
-/*!******************************************************************************!*\
-  !*** ./node_modules/styled-components/dist/styled-components.browser.esm.js ***!
-  \******************************************************************************/
 
 /*!******************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/draco3d/draco_decoder_nodejs.js ***!
@@ -3078,10 +2935,6 @@ and limitations under the License.
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle-outline.svg ***!
   \********************************************************************************/
 
-/*!********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/intervals-fn/es/lib.js + 319 modules ***!
-  \********************************************************************************/
-
 /*!*********************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_matchesStrictComparable.js ***!
   \*********************************************************************************/
@@ -3091,19 +2944,7 @@ and limitations under the License.
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/index.js ***!
-  \*********************************************************************************/
-
-/*!*********************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/types.js ***!
-  \*********************************************************************************/
-
-/*!*********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/index.js ***!
-  \*********************************************************************************/
-
-/*!*********************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/utils.js ***!
   \*********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -3124,10 +2965,6 @@ and limitations under the License.
 
 /*!************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/normalizeWheel.js ***!
-  \************************************************************************************/
-
-/*!************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Renderer.js ***!
   \************************************************************************************/
 
 /*!************************************************************************************!*\
@@ -3203,10 +3040,6 @@ and limitations under the License.
   \****************************************************************************************/
 
 /*!*****************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/useDebugStats.js ***!
-  \*****************************************************************************************/
-
-/*!*****************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils.js ***!
   \*****************************************************************************************/
 
@@ -3251,10 +3084,6 @@ and limitations under the License.
   \********************************************************************************************/
 
 /*!*********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/DebugStatsOverlay.js ***!
-  \*********************************************************************************************/
-
-/*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Transforms/TransformsBuilder.js ***!
   \*********************************************************************************************/
 
@@ -3279,10 +3108,6 @@ and limitations under the License.
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DebugStats/DebugStatsOverlayRpc.js ***!
-  \************************************************************************************************/
-
-/*!************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector/index.js ***!
   \************************************************************************************************/
 
@@ -3294,13 +3119,13 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/decodeMarker.js ***!
   \**************************************************************************************************/
 
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/RadarPointClusters/index.js ***!
+  \**************************************************************************************************/
+
 /*!***************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-reconciler/cjs/react-reconciler.production.min.js ***!
   \***************************************************************************************************/
-
-/*!****************************************************************************************************!*\
-  !*** ./node_modules/styled-components/node_modules/@emotion/unitless/dist/unitless.browser.esm.js ***!
-  \****************************************************************************************************/
 
 /*!*****************************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js ***!
@@ -3317,10 +3142,6 @@ and limitations under the License.
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-reconciler/node_modules/scheduler/cjs/scheduler.production.min.js ***!
   \*******************************************************************************************************************/
-
-/*!**************************************************************************************************************************!*\
-  !*** ./node_modules/styled-components/node_modules/@emotion/is-prop-valid/dist/is-prop-valid.browser.esm.js + 1 modules ***!
-  \**************************************************************************************************************************/
 
 /*!************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib?cacheDirectory!./packages/webviz-core/src/panels/ThreeDimensionalViz/Layout/Layout.worker.js ***!
@@ -3370,15 +3191,6 @@ and limitations under the License.
 
 /** @license React v16.10.2
  * react.production.min.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-/** @license React v16.12.0
- * react-is.production.min.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
  *

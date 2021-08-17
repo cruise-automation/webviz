@@ -124,11 +124,15 @@ and limitations under the License.
 
 /*! ../../../shared/delay */
 
+/*! ../../../shared/layout */
+
 /*! ../../../shared/promiseTimeout */
 
 /*! ../../../shared/signal */
 
 /*! ../../../shared/triggerFileDownload */
+
+/*! ../../../shared/url */
 
 /*! ../../actions/panels */
 
@@ -189,8 +193,6 @@ and limitations under the License.
 /*! ../../players/types */
 
 /*! ../../shared/delay */
-
-/*! ../../shared/layout */
 
 /*! ../../stories/StoreSetup */
 
@@ -370,8 +372,6 @@ and limitations under the License.
 
 /*! ../curve */
 
-/*! ../dataProviders/MemoryCacheDataProvider */
-
 /*! ../dataProviders/ParsedMessageCache */
 
 /*! ../dataProviders/constants */
@@ -389,6 +389,8 @@ and limitations under the License.
 /*! ../filterMap */
 
 /*! ../frozenHelpers/getPanelTypeFromId */
+
+/*! ../globalConstants */
 
 /*! ../helpers/DefineOwnProperty */
 
@@ -472,6 +474,8 @@ and limitations under the License.
 
 /*! ../renderToBody */
 
+/*! ../sendNotification */
+
 /*! ../store/configureStore */
 
 /*! ../store/getGlobalStore */
@@ -481,6 +485,8 @@ and limitations under the License.
 /*! ../styles/colors.module.scss */
 
 /*! ../test/MemoryStorage */
+
+/*! ../time */
 
 /*! ../types */
 
@@ -536,6 +542,8 @@ and limitations under the License.
 
 /*! ../util/hooks */
 
+/*! ../util/hooks.js */
+
 /*! ../util/html */
 
 /*! ../util/iframeUtils */
@@ -551,6 +559,8 @@ and limitations under the License.
 /*! ../util/interrupt */
 
 /*! ../util/layout */
+
+/*! ../util/layout/patch */
 
 /*! ../util/minivizAPI */
 
@@ -707,6 +717,10 @@ and limitations under the License.
 /*! ./Flex.module.scss */
 
 /*! ./FromPropertyDescriptor */
+
+/*! ./GLCanvas */
+
+/*! ./GLContext */
 
 /*! ./Get */
 
@@ -2156,7 +2170,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -2213,8 +2227,6 @@ and limitations under the License.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
@@ -3293,6 +3305,10 @@ and limitations under the License.
   !*** ./node_modules/randomfill/browser.js ***!
   \********************************************/
 
+/*!********************************************!*\
+  !*** ./packages/webviz-core/shared/url.js ***!
+  \********************************************/
+
 /*!*********************************************!*\
   !*** ./node_modules/create-ecdh/browser.js ***!
   \*********************************************/
@@ -3607,10 +3623,6 @@ and limitations under the License.
 
 /*!*************************************************!*\
   !*** ./packages/webviz-core/src/util/errors.js ***!
-  \*************************************************/
-
-/*!*************************************************!*\
-  !*** ./packages/webviz-core/src/util/layout.js ***!
   \*************************************************/
 
 /*!*************************************************!*\
@@ -4003,6 +4015,14 @@ and limitations under the License.
 
 /*!*******************************************************!*\
   !*** ./packages/webviz-core/src/util/demoLayout.json ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./packages/webviz-core/src/util/layout/index.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./packages/webviz-core/src/util/layout/patch.js ***!
   \*******************************************************/
 
 /*!*******************************************************!*\
@@ -4874,6 +4894,10 @@ and limitations under the License.
   \***************************************************************/
 
 /*!***************************************************************!*\
+  !*** ./packages/webviz-core/src/components/GLCanvas/index.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
   !*** ./packages/webviz-core/src/components/HoverBar/index.js ***!
   \***************************************************************/
 
@@ -5491,6 +5515,10 @@ and limitations under the License.
 
 /*!*******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/vfile-location/index.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/src/components/GLCanvas/GLContext.js ***!
   \*******************************************************************/
 
 /*!*******************************************************************!*\

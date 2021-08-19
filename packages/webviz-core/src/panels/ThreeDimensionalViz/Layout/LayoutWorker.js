@@ -73,6 +73,7 @@ type WorldRendererState = $ReadOnly<{|
   structuralDatatypes: StructuralDatatypes,
   worldContextValue: WorldContextType,
   debug: boolean,
+  sphericalRangeScale: number,
 |}>;
 
 type WorldRendererCallbacks = $ReadOnly<{|
@@ -265,6 +266,7 @@ function WorldRenderer(props: WorldRendererProps) {
         setSearchTextMatches={props.setSearchTextMatches}
         showCrosshair={props.showCrosshair}
         markerProviders={[sceneBuilder, transformsBuilder]}
+        sphericalRangeScale={props.sphericalRangeScale}
         {...props}>
         {mapElement}
         <DrawPolygons>{props.polygons}</DrawPolygons>
@@ -380,6 +382,7 @@ class LayoutWorker {
     structuralDatatypes,
     worldContextValue,
     debug,
+    sphericalRangeScale,
   }: $ReadOnly<{
     cleared: boolean,
     rootTf: string,
@@ -411,6 +414,7 @@ class LayoutWorker {
     structuralDatatypes: StructuralDatatypes,
     worldContextValue: WorldContextType,
     debug: boolean,
+    sphericalRangeScale: number,
   }>): Promise<RenderResult> => {
     this.hasChangedPlayerId = !shallowequal(this.playerId, playerId);
     this.playerId = playerId;
@@ -459,6 +463,7 @@ class LayoutWorker {
       structuralDatatypes,
       worldContextValue,
       debug,
+      sphericalRangeScale,
     });
     await renderSignal;
 

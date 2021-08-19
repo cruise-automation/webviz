@@ -96,6 +96,7 @@ export type WorldMarkerProps = {|
   clearCachedMarkers: boolean,
   diffModeEnabled: boolean,
   hooks: ThreeDimensionalVizHooks,
+  sphericalRangeScale: number,
 |};
 
 export default function WorldMarkers({
@@ -104,6 +105,7 @@ export default function WorldMarkers({
   markersByType,
   clearCachedMarkers,
   hooks,
+  sphericalRangeScale,
 }: WorldMarkerProps) {
   const getChildrenForHitmap = useMemo(() => createInstancedGetChildrenForHitmap(1), []);
   const {
@@ -159,9 +161,9 @@ export default function WorldMarkers({
       {additionalMarkers}
       {/* Render PointClouds first so other markers with the same zIndex can show on top of PointClouds. */}
       <PointClouds
+        sphericalRangeScale={sphericalRangeScale}
         layerIndex={layerIndex}
-        clearCachedMarkers={clearCachedMarkers}
-        createPointCloudPositionBuffer={hooks.createPointCloudPositionBuffer}>
+        clearCachedMarkers={clearCachedMarkers}>
         {pointcloud}
       </PointClouds>
       <Arrows layerIndex={layerIndex}>{arrow}</Arrows>

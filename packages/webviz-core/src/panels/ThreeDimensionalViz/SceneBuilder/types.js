@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import * as React from "react";
 
-import type { CreatePointCloudPositionBuffer } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/buffers";
 import type { Props as PoseMarkersProps } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PoseMarkers";
 import type { Frame } from "webviz-core/src/players/types";
 import type { Color, Pose } from "webviz-core/src/types/Messages";
@@ -32,7 +31,7 @@ export type ThreeDimensionalVizHooks = $ReadOnly<{|
   useWorldspacePointSize: boolean,
   getMapPalette: (string) => Uint8Array,
   renderAdditionalMarkers: (any) => any,
-  createPointCloudPositionBuffer: CreatePointCloudPositionBuffer,
+  sphericalRangeScale: number,
   allSupportedMarkers: $ReadOnlyArray<string>,
   PoseMarkers: React.AbstractComponent<PoseMarkersProps>,
   rootTransformFrame: string,

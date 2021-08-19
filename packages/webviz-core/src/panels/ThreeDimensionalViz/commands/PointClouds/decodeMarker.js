@@ -9,7 +9,6 @@
 import {
   getFieldOffsetsAndReaders,
   createPositionBuffer,
-  type CreatePointCloudPositionBuffer,
   createColorBuffer,
   getVertexCount,
   getVertexValue,
@@ -18,10 +17,7 @@ import { type PointCloudMarker, DEFAULT_FLAT_COLOR, type ColorMode } from "./typ
 
 // Decode a marker and generate position and color buffers for rendering
 // The resulting marker should be memoized for better performance
-export function decodeMarker(
-  marker: PointCloudMarker,
-  createPointCloudPositionBuffer: ?CreatePointCloudPositionBuffer
-) {
+export function decodeMarker(marker: PointCloudMarker, sphericalRangeScale?: number) {
   const { fields = [], settings = {}, point_step: stride, width, height, hitmapColors, data } = marker;
   const offsetsAndReaders = getFieldOffsetsAndReaders(fields);
   const { rgb: { offset: rgbOffset } = {} } = offsetsAndReaders;
@@ -43,7 +39,7 @@ export function decodeMarker(
     fields: offsetsAndReaders,
     pointCount,
     stride,
-    createPointCloudPositionBuffer,
+    sphericalRangeScale,
   });
 
   // If hitmapColors are provided, we don't need a colorBuffer

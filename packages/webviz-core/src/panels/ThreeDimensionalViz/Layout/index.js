@@ -179,6 +179,7 @@ export default function Layout({
     settingsByKey,
     colorOverrideBySourceIdxByVariable,
     disableAutoOpenClickedObject,
+    sphericalRangeScale,
   },
 }: Props) {
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
@@ -745,6 +746,9 @@ export default function Layout({
         structuralDatatypes,
         worldContextValue,
         debug,
+        sphericalRangeScale:
+          sphericalRangeScale ||
+          getGlobalHooks().perPanelHooks().ThreeDimensionalViz.sceneBuilderHooks.sphericalRangeScale,
       });
       if (!frameSent) {
         // Frame was overridden by one coming later.
@@ -753,19 +757,19 @@ export default function Layout({
       }
     }
   }, [
-    transforms.rawTransforms,
-    frame,
-    workerDataSender,
     initialized,
+    frame,
     rootTf,
     pauseFrame,
     viewport,
-    selectedTopics,
+    workerDataSender,
     cleared,
+    transforms.rawTransforms,
     playerId,
     flattenMarkers,
     selectedNamespacesByTopic,
     settingsByKey,
+    selectedTopics,
     globalVariables,
     linkedGlobalVariables,
     highlightMarkerMatchers,
@@ -787,6 +791,7 @@ export default function Layout({
     structuralDatatypes,
     worldContextValue,
     debug,
+    sphericalRangeScale,
   ]);
 
   const setCanvasRef = useCallback((canvas) => {

@@ -8,6 +8,7 @@
 
 import { type FieldReader, Uint8Reader, getReader } from "./readers";
 import { DATATYPE, type VertexBuffer, type ColorMode } from "./types";
+import createPointCloudPositionBuffer from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils/createPointCloudPositionBuffer";
 import type { PointField } from "webviz-core/src/types/Messages";
 
 export type FieldOffsetsAndReaders = {
@@ -112,22 +113,19 @@ type PointCloudData = $ReadOnly<{|
   fields: FieldOffsetsAndReaders,
   pointCount: number,
   stride: number,
+  sphericalRangeScale?: number,
 |}>;
-
-export type CreatePointCloudPositionBuffer = (PointCloudData) => ?VertexBuffer;
 
 export function createPositionBuffer({
   data,
   fields,
   pointCount,
   stride,
-  createPointCloudPositionBuffer,
+  sphericalRangeScale,
 }: {|
   ...PointCloudData,
-  createPointCloudPositionBuffer: ?CreatePointCloudPositionBuffer,
 |}): VertexBuffer {
-  const positions =
-    createPointCloudPositionBuffer && createPointCloudPositionBuffer({ data, fields, pointCount, stride });
+  const positions = createPointCloudPositionBuffer({ data, fields, pointCount, stride, sphericalRangeScale });
   if (positions) {
     return positions;
   }

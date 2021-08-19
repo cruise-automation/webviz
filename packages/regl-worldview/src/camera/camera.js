@@ -84,10 +84,15 @@ export default (regl: any) => {
           // if a custom cameraView is being used, ignore cameraState for billboardRotation
           // calculation.  Instead, extract rotation from custom cameraView.
           const orientation = mat4.getRotation(quat.create(), cameraView);
+
           const m = mat4.identity(mat4.create());
           const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-          mat4.multiply(m, m, mat4.fromQuat(TEMP_MAT, orientation));
+
           mat4.rotateZ(m, m, Math.PI / 2);
+          mat4.rotateY(m, m, Math.PI / 2);
+
+          mat4.multiply(m, m, mat4.fromQuat(TEMP_MAT, orientation));
+
           return m;
         },
 

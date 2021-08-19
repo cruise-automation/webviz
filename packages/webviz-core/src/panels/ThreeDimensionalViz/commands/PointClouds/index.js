@@ -17,7 +17,7 @@ import {
   vec4ToRGBA,
 } from "regl-worldview";
 
-import { FLOAT_SIZE, type CreatePointCloudPositionBuffer } from "./buffers";
+import { FLOAT_SIZE } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
 import { updateMarkerCache } from "./memoization";
 import {
@@ -348,17 +348,17 @@ function instancedGetChildrenForHitmap<
 type Props = {
   ...CommonCommandProps,
   children: PointCloud[],
+  sphericalRangeScale?: number,
   clearCachedMarkers?: boolean,
-  createPointCloudPositionBuffer: CreatePointCloudPositionBuffer,
 };
 
-export default function PointClouds({ children, clearCachedMarkers, createPointCloudPositionBuffer, ...rest }: Props) {
+export default function PointClouds({ children, clearCachedMarkers, sphericalRangeScale, ...rest }: Props) {
   const [command] = useState(() => makePointCloudCommand());
   const markerCache = useRef(new Map<Uint8Array, MemoizedMarker>());
-  markerCache.current = updateMarkerCache(markerCache.current, children, createPointCloudPositionBuffer);
+  markerCache.current = updateMarkerCache(markerCache.current, children, sphericalRangeScale);
   const decodedMarkers = !clearCachedMarkers
     ? [...markerCache.current.values()].map((decoded) => decoded.marker)
-    : children.map((m) => decodeMarker(m, createPointCloudPositionBuffer));
+    : children.map((m) => decodeMarker(m, sphericalRangeScale));
   return (
     <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={command}>
       {decodedMarkers}

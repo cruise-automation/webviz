@@ -8,7 +8,6 @@
 
 import { isEqual } from "lodash";
 
-import type { CreatePointCloudPositionBuffer } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
 import type { MemoizedMarker, PointCloudMarker } from "./types";
 
@@ -18,7 +17,7 @@ import type { MemoizedMarker, PointCloudMarker } from "./types";
 export function updateMarkerCache(
   existing: Map<Uint8Array, MemoizedMarker>,
   markers: PointCloudMarker[],
-  createPointCloudPositionBuffer: ?CreatePointCloudPositionBuffer
+  sphericalRangeScale?: number
 ): Map<Uint8Array, MemoizedMarker> {
   const markerCache = new Map<Uint8Array, MemoizedMarker>();
   markers.forEach((marker) => {
@@ -28,7 +27,7 @@ export function updateMarkerCache(
     // Compare 'hitmapColors' by reference because the same marker msg may contain different values
     if (!decoded || !isEqual(marker.settings, decoded.settings) || marker.hitmapColors !== decoded.hitmapColors) {
       decoded = {
-        marker: decodeMarker(marker, createPointCloudPositionBuffer),
+        marker: decodeMarker(marker, sphericalRangeScale),
         settings: marker.settings,
         hitmapColors: marker.hitmapColors,
       };

@@ -37,7 +37,7 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
     return defaultMapPalette;
   },
   useWorldspacePointSize: true,
-  createPointCloudPositionBuffer: () => null,
+  sphericalRangeScale: 1,
   allSupportedMarkers: [
     "arrow",
     "cube",

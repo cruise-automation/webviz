@@ -57,6 +57,7 @@ export type ThreeDimensionalVizConfig = {
   // The message path syntax path to the static URDF transforms.
   // Currently set in the config but not editable in any UI.
   staticTransformPath?: string,
+  sphericalRangeScale?: number,
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 

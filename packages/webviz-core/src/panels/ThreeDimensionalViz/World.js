@@ -51,6 +51,7 @@ type Props = {|
   showCrosshair: ?boolean,
   measurePoints: MeasurePoints,
   resolveRenderSignal: () => void,
+  sphericalRangeScale: number,
   ...WorldSearchTextProps,
 |};
 
@@ -151,6 +152,7 @@ function World(
     showCrosshair,
     measurePoints,
     resolveRenderSignal,
+    sphericalRangeScale,
   }: Props,
   ref: OffscreenWorldview
 ) {
@@ -205,6 +207,7 @@ function World(
           clearCachedMarkers: false,
           diffModeEnabled,
           hooks,
+          sphericalRangeScale,
         }}
       />
       <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>

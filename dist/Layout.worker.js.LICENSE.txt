@@ -127,6 +127,8 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ../types */
 
+/*! ../utils/createPointCloudPositionBuffer */
+
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
@@ -3138,6 +3140,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!***********************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData.js ***!
   \***********************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/utils/createPointCloudPositionBuffer.js ***!
+  \**************************************************************************************************************/
 
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-reconciler/node_modules/scheduler/cjs/scheduler.production.min.js ***!

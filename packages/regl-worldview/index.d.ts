@@ -316,6 +316,7 @@ export declare const Axes: React.ComponentType<{}>;
 export declare const Lines: ShapeComponent<Line>;
 export declare const Spheres: ShapeComponent<Sphere>;
 export declare const Triangles: ShapeComponent<Triangle>;
+export declare const Points: ShapeComponent<PointType>;
 export declare const Text: React.ComponentType<{
   children: TextMarker[];
   autoBackgroundColor?: boolean;

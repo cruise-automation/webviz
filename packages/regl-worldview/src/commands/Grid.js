@@ -41,9 +41,10 @@ export function grid() {
     primitive: "lines",
     attributes: {
       point: (context, props) => {
+        const { count, size } = props;
         const points = [];
-        const bound = props.count;
-        for (let i = -props.count; i < props.count; i++) {
+        const bound = count * size;
+        for (let i = -count * size; i < count * size; i += size) {
           points.push([-bound, i, 0]);
           points.push([bound, i, 0]);
           points.push([i, -bound, 0]);
@@ -67,12 +68,13 @@ export function grid() {
 type Props = {
   ...CommonCommandProps,
   count: number,
+  size: number,
 };
 
 // useful for rendering a grid for debugging in stories
 
-export default function Grid({ count, ...rest }: Props): React.Node {
-  const children = { count };
+export default function Grid({ count, size, ...rest }: Props): React.Node {
+  const children = { count, size };
   return (
     // $FlowFixMe Not fixing existing regl-worldview bugs.
     <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest} reglCommand={grid}>
@@ -81,4 +83,4 @@ export default function Grid({ count, ...rest }: Props): React.Node {
   );
 }
 
-Grid.defaultProps = { count: 6 };
+Grid.defaultProps = { count: 6, size: 30 };

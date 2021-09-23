@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { addMessages, defaultDiagnosticsBuffer } from "./DiagnosticsHistory";
+import { addMessages, defaultDiagnosticsBuffer } from "./useDiagnostics";
 import { computeDiagnosticInfo, type Level, type DiagnosticInfo, LEVELS } from "./util";
 import type { Message } from "webviz-core/src/players/types";
 

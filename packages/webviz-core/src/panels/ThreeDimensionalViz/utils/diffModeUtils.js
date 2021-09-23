@@ -15,7 +15,7 @@ import type {
   InteractiveMarkersByType,
   WorldMarkerProps,
 } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 export const BASE_COLOR = [0.5, 0.5, 0.5, 1.0];
 export const SOURCE_1_COLOR = [1, 0, 1, 1];
@@ -37,7 +37,7 @@ export function getDiffBySource(markers: InteractiveMarkersByType): InteractiveM
     const elems = Array.isArray(value) ? value : [value];
     const [source1, source2] = partition(elems, (m) => {
       const { interactionData } = m;
-      return !interactionData || !interactionData.topic.startsWith(SECOND_SOURCE_PREFIX);
+      return !interactionData || !interactionData.topic.startsWith($WEBVIZ_SOURCE_2);
     });
 
     // Format markers. This results in three render passes:

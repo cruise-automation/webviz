@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { type CameraState, type Polygon, DrawPolygons } from "regl-worldview";
 import type { Time } from "rosbag";
 import shallowequal from "shallowequal";
@@ -34,7 +34,7 @@ import { type GLTextMarker } from "webviz-core/src/panels/ThreeDimensionalViz/ut
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import WorldContext, { type WorldContextType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
-import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $METADATA, $TF } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useChangeDetector } from "webviz-core/src/util/hooks";
 import render from "webviz-core/src/util/NoopReactRenderer";
 import Rpc, { createLinkedChannels, type Channel } from "webviz-core/src/util/Rpc";
@@ -149,11 +149,17 @@ type WorldRendererProps = {|
 function useMapElement(sceneBuilder: SceneBuilder, props: WorldRendererProps) {
   const { MapComponent } = props.hooks;
   const memoizedScene = useShallowMemo(sceneBuilder.getScene());
-  const metadataTopicNamespaces = useShallowMemo(props.selectedNamespacesByTopic["/metadata"] ?? []);
+  const metadataTopicNamespaces = useShallowMemo(props.selectedNamespacesByTopic[$METADATA] ?? []);
+
+  const onMapTileError = useCallback((error: Error) => {
+    sceneBuilder.setTopicError($METADATA, error.message);
+  }, [sceneBuilder]);
+
   return React.useMemo(
     () =>
       MapComponent && (
         <MapComponent
+          onMapTileError={onMapTileError}
           metadataTopicNamespaces={metadataTopicNamespaces}
           scene={memoizedScene}
           debug={props.debug}
@@ -161,7 +167,15 @@ function useMapElement(sceneBuilder: SceneBuilder, props: WorldRendererProps) {
           isDemoMode={props.isDemoMode}
         />
       ),
-    [MapComponent, metadataTopicNamespaces, memoizedScene, props.debug, props.cameraState.perspective, props.isDemoMode]
+    [
+      MapComponent,
+      metadataTopicNamespaces,
+      memoizedScene,
+      props.debug,
+      props.cameraState.perspective,
+      props.isDemoMode,
+      onMapTileError,
+    ]
   );
 }
 
@@ -217,7 +231,7 @@ function WorldRenderer(props: WorldRendererProps) {
 
     // update the transforms and set the selected ones to render
     transformsBuilder.setTransforms(transforms, rootTf);
-    transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
+    transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[$TF] || []);
   }, [
     colorOverrideMarkerMatchers,
     currentTime,

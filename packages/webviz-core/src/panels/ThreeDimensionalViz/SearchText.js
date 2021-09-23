@@ -18,6 +18,7 @@ import { type CameraState, cameraStateSelectors } from "regl-worldview";
 
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
+import { useStringWithInlinedGlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { type WorldSearchTextProps } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
 import type { TextMarker, Color } from "webviz-core/src/types/Messages";
@@ -54,18 +55,43 @@ export const getHighlightedIndices = (text?: string, searchText: string): number
   return highlightedIndices;
 };
 
-export const useSearchText = (): SearchTextProps => {
-  const [searchTextOpen, toggleSearchTextOpen] = useState<boolean>(false);
-  const [searchText, setSearchText] = useState<string>("");
+export const useSearchText = ({
+  initialSearchText,
+  onSearchTextChanged,
+}: {
+  initialSearchText?: string,
+  onSearchTextChanged?: (string) => void,
+}): SearchTextProps => {
+  const initialSearchTextRef = useRef(initialSearchText || "");
+  const [searchTextOpen, setSearchTextOpen] = useState<boolean>(!!initialSearchTextRef.current);
+  const [searchText, setSearchText] = useState<string>(initialSearchTextRef.current);
   const [searchTextMatches, setSearchTextMatches] = useState<GLTextMarker[]>([]);
   const [selectedMatchIndex, setSelectedMatchIndex] = useState(0);
   const searchInputRef = useRef<?HTMLInputElement>(null);
 
+  // Perform string interpolation on any global variables in the searchText
+  const searchTextWithInlinedVariables = useStringWithInlinedGlobalVariables(searchText);
+
+  const updateSearchText = useCallback((text) => {
+    if (onSearchTextChanged) {
+      onSearchTextChanged(text);
+    }
+    setSearchText(text);
+  }, [onSearchTextChanged]);
+
+  const toggleSearchTextOpen = useCallback((open) => {
+    setSearchTextOpen(open);
+    if (!open) {
+      updateSearchText("");
+    }
+  }, [updateSearchText]);
+
   return {
     searchTextOpen,
     toggleSearchTextOpen,
+    searchTextWithInlinedVariables,
+    setSearchText: updateSearchText,
     searchText,
-    setSearchText,
     setSearchTextMatches,
     searchTextMatches,
     selectedMatchIndex,

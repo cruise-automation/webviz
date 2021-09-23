@@ -8,7 +8,7 @@
 
 import type { TopicTreeConfig } from "webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel";
 
-const SECOND_SOURCE_PREFIX = "/webviz_source_2";
+const $WEBVIZ_SOURCE_2 = "/webviz_source_2";
 const ROOT_NAME = "name:root";
 const ROOT_2_NAME = "name_2:root";
 const UNCATEGORIZED_NAME = "name:(Uncategorized)";
@@ -24,7 +24,7 @@ export const makePredecessorRelations = (topicTree: TopicTreeConfig): Map<string
         throw new Error(`Duplicate key ${key1}. Migration won't work.`);
       }
       relations.set(`t:${key1}`, `name:${key2}`);
-      relations.set(`t:${SECOND_SOURCE_PREFIX}${key1}`, `name_2:${key2}`);
+      relations.set(`t:${$WEBVIZ_SOURCE_2}${key1}`, `name_2:${key2}`);
     } else {
       if (relations.has(`name:${key1}`)) {
         throw new Error(`Duplicate key ${key1}. Migration won't work.`);
@@ -59,9 +59,7 @@ export const visibleTopicKeys = (predecessors: Map<string, string>, checkedKeys:
   const isVisible = (key): boolean => {
     // - Not in the topic tree, with "name:(Uncategorized)" checked.
     if (!predecessors.has(key)) {
-      const uncategorizedGroup = key.startsWith(`t:${SECOND_SOURCE_PREFIX}`)
-        ? UNCATEGORIZED_2_NAME
-        : UNCATEGORIZED_NAME;
+      const uncategorizedGroup = key.startsWith(`t:${$WEBVIZ_SOURCE_2}`) ? UNCATEGORIZED_2_NAME : UNCATEGORIZED_NAME;
       return checkedKeys.has(uncategorizedGroup);
     }
     // - In the topic-tree with all ancestors checked.
@@ -89,7 +87,7 @@ export const visibleTopicKeys = (predecessors: Map<string, string>, checkedKeys:
 const migrateCheckedKeys = (
   oldTopicTree: TopicTreeConfig,
   newTopicTree: TopicTreeConfig,
-  checkedKeys: $ReadOnlyArray<string>,
+  checkedKeys: $ReadOnlyArray<?string>,
   getWantedVisibleTopicKeys: (Set<string>) => Set<string>
 ): string[] => {
   // Goal: Any topic that was visible before should stay visible. Any topic that was not visible
@@ -97,7 +95,7 @@ const migrateCheckedKeys = (
   //
   // Find the topic keys that were visible before.
   const oldPredecessors = makePredecessorRelations(oldTopicTree);
-  const oldCheckedKeys = new Set(checkedKeys);
+  const oldCheckedKeys = new Set(checkedKeys.filter(Boolean));
   const oldVisibleTopicKeys = visibleTopicKeys(oldPredecessors, oldCheckedKeys);
   // Find the topics that we want to be visible after (in case new topics are added etc.)
   const wantedVisibleTopicKeys = getWantedVisibleTopicKeys(oldVisibleTopicKeys);
@@ -112,7 +110,7 @@ const migrateCheckedKeys = (
         break;
       }
       if (iterKey == null) {
-        const uncategorizedGroup = topicKey.startsWith(`t:${SECOND_SOURCE_PREFIX}`)
+        const uncategorizedGroup = topicKey.startsWith(`t:${$WEBVIZ_SOURCE_2}`)
           ? UNCATEGORIZED_2_NAME
           : UNCATEGORIZED_NAME;
         newCheckedKeys.add(uncategorizedGroup);

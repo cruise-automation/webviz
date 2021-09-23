@@ -22,7 +22,7 @@ import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionP
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
 import { type Bobject, type BobjectMessage } from "webviz-core/src/players/types";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromMillis } from "webviz-core/src/util/time";
 
@@ -118,8 +118,11 @@ function getCombinedDataProvider(data: any[]) {
   for (const item of data) {
     const { provider, prefix } = item;
     providerInfos.push({});
-    // $FlowFixMe: This is not how getProvider is meant to work.
-    const childProvider = prefix == null ? provider : new RenameDataProvider({ prefix }, [provider], (child) => child);
+    const topicMapping = prefix != null && { [prefix]: { excludeTopics: [] } };
+    const childProvider = topicMapping
+      ? // $FlowFixMe: This is not how getProvider is meant to work.
+        new RenameDataProvider({ topicMapping }, [provider], (child) => child)
+      : provider;
     children.push({ name: "TestProvider", args: { provider: childProvider }, children: [] });
   }
   return new CombinedDataProvider({ providerInfos }, children, () => {
@@ -315,7 +318,7 @@ describe("CombinedDataProvider", () => {
     it("combines initialization data", async () => {
       const combinedProvider = getCombinedDataProvider([
         { provider: provider1() },
-        { provider: provider3(), prefix: SECOND_SOURCE_PREFIX },
+        { provider: provider3(), prefix: $WEBVIZ_SOURCE_2 },
         { provider: provider2(), prefix: "/table_1" },
       ]);
       expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
@@ -323,7 +326,7 @@ describe("CombinedDataProvider", () => {
         end: { nsec: 0, sec: 104 },
         topics: [
           { datatype: "some_datatype", name: "/some_topic1", numMessages: undefined },
-          { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic3`, originalTopic: "/some_topic3" },
+          { datatype: "some_datatype", name: `${$WEBVIZ_SOURCE_2}/some_topic3`, originalTopic: "/some_topic3" },
           {
             datatype: "some_datatype",
             name: "/table_1/some_topic2",
@@ -419,10 +422,7 @@ describe("CombinedDataProvider", () => {
       jest.spyOn(p1, "initialize").mockImplementation(() => neverResolvedPromise);
       jest.spyOn(p2, "initialize").mockImplementation(() => neverResolvedPromise);
 
-      const combinedProvider = getCombinedDataProvider([
-        { provider: p1 },
-        { provider: p2, prefix: SECOND_SOURCE_PREFIX },
-      ]);
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2, prefix: $WEBVIZ_SOURCE_2 }]);
 
       combinedProvider.initialize(mockExtensionPoint().extensionPoint);
       await delay(1);
@@ -434,21 +434,21 @@ describe("CombinedDataProvider", () => {
     it("combines messages", async () => {
       const combinedProvider = getCombinedDataProvider([
         { provider: provider1() },
-        { provider: provider1Duplicate(), prefix: SECOND_SOURCE_PREFIX },
+        { provider: provider1Duplicate(), prefix: $WEBVIZ_SOURCE_2 },
       ]);
       await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
       const result = await combinedProvider.getMessages(
         { sec: 101, nsec: 0 },
         { sec: 103, nsec: 0 },
-        { parsedMessages: ["/some_topic1", `${SECOND_SOURCE_PREFIX}/some_topic1`] }
+        { parsedMessages: ["/some_topic1", `${$WEBVIZ_SOURCE_2}/some_topic1`] }
       );
       expect(result.bobjects).toBe(undefined);
       expect(result.rosBinaryMessages).toBe(undefined);
       expect(result.parsedMessages).toEqual([
         { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: "/some_topic1" },
-        { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
+        { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${$WEBVIZ_SOURCE_2}/some_topic1` },
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: "/some_topic1" },
-        { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
+        { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${$WEBVIZ_SOURCE_2}/some_topic1` },
       ]);
     });
 

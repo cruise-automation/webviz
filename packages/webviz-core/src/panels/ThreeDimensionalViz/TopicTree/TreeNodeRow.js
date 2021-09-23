@@ -22,7 +22,7 @@ import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensio
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
@@ -179,7 +179,7 @@ export default function TreeNodeRow({
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
   const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
     if (visible) {
-      const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+      const topic = [topicName, joinTopics($WEBVIZ_SOURCE_2, topicName)][columnIndex];
       setHoveredMarkerMatchers([{ topic }]);
     }
   }, [setHoveredMarkerMatchers, topicName]);

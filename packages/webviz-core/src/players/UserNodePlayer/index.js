@@ -47,7 +47,7 @@ import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { deepParse, getObjects, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
-import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 import type { TimestampMethod } from "webviz-core/src/util/time";
@@ -323,8 +323,8 @@ export default class UserNodePlayer implements Player {
 
     // If the input doesn't use any source two input topics, automatically support source two
     if (nodeData.enableSecondSource) {
-      const outputTopic = joinTopics(SECOND_SOURCE_PREFIX, nodeData.outputTopic);
-      const inputTopics = addTopicPrefix(nodeData.inputTopics, SECOND_SOURCE_PREFIX);
+      const outputTopic = joinTopics($WEBVIZ_SOURCE_2, nodeData.outputTopic);
+      const inputTopics = addTopicPrefix(nodeData.inputTopics, $WEBVIZ_SOURCE_2);
       const nodeDataSourceTwo = { ...nodeData, inputTopics, outputTopic };
       const nodeRegistrationTwoRaw = this._createNodeRegistrationFromNodeData(nodeId, nodeDataSourceTwo);
 
@@ -334,7 +334,7 @@ export default class UserNodePlayer implements Player {
         processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
           const inputMessages = messages.map((m) => ({
             ...m,
-            topic: m.topic.replace(SECOND_SOURCE_PREFIX, ""),
+            topic: m.topic.replace($WEBVIZ_SOURCE_2, ""),
           }));
           const originalMessages = await nodeRegistrationTwoRaw.processMessages(
             inputMessages,
@@ -515,7 +515,7 @@ export default class UserNodePlayer implements Player {
       // For performance, only check topics that start with DEFAULT_WEBVIZ_NODE_PREFIX.
       if (
         !subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX) &&
-        !subscription.topic.startsWith(`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
+        !subscription.topic.startsWith(`${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
       ) {
         realTopicSubscriptions.push(subscription);
         continue;

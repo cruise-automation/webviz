@@ -44,7 +44,7 @@ export type TreeTopicNode = {|
 export type TreeNode = TreeGroupNode | TreeTopicNode;
 
 const UNCATEGORIZED_KEY = "name:(Uncategorized)";
-const SECOND_SOURCE_PREFIX = "/webviz_source_2";
+const $WEBVIZ_SOURCE_2 = "/webviz_source_2";
 
 function generateNodeKey({
   topicName,
@@ -57,11 +57,7 @@ function generateNodeKey({
   namespace?: ?string,
   isFeatureColumn?: boolean,
 |}): string {
-  const prefixedTopicName = topicName
-    ? isFeatureColumn
-      ? `${SECOND_SOURCE_PREFIX}${topicName}`
-      : topicName
-    : undefined;
+  const prefixedTopicName = topicName ? (isFeatureColumn ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName) : undefined;
   if (namespace) {
     if (prefixedTopicName) {
       return `ns:${prefixedTopicName}:${namespace}`;
@@ -107,7 +103,7 @@ export function generateTreeNode(
       featureKey,
       topicName,
       availableByColumn: hasFeatureColumn
-        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${SECOND_SOURCE_PREFIX}${topicName}`)]
+        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${$WEBVIZ_SOURCE_2}${topicName}`)]
         : [availableTopicsNamesSet.has(topicName)],
       providerAvailable,
       ...(parentKey ? { parentKey } : undefined),
@@ -163,7 +159,7 @@ export function migrateToFeatureGroupCheckedKeys(checkedKeys: string[], topicTre
   // Find checked feature topics and add their ancestor nodes to the newCheckedKeys.
   const newCheckedKeys = [...checkedKeys];
   const checkedFeatureTopicKeys = checkedKeys
-    .map((key) => (key.includes(SECOND_SOURCE_PREFIX) ? key.replace(SECOND_SOURCE_PREFIX, "") : undefined))
+    .map((key) => (key.includes($WEBVIZ_SOURCE_2) ? key.replace($WEBVIZ_SOURCE_2, "") : undefined))
     .filter(Boolean);
 
   const rootTreeNode = generateTreeNode(topicTreeConfig, {

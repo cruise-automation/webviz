@@ -58,6 +58,7 @@ export type ThreeDimensionalVizConfig = {
   // Currently set in the config but not editable in any UI.
   staticTransformPath?: string,
   sphericalRangeScale?: number,
+  searchText?: string,
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 

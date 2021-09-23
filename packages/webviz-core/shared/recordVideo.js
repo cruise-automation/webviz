@@ -24,6 +24,9 @@ import runInBrowser from "./runInBrowser";
 import ServerLogger from "./ServerLogger";
 import { formatSeconds } from "webviz-core/src/util/time";
 
+// Enables verbose output to help debug request interception issues
+const DEBUG_REQUEST_INTERCEPTION = false;
+
 const exec = util.promisify(child_process.exec);
 const mkdir = util.promisify(fs.mkdir);
 const readFile = util.promisify(fs.readFile);
@@ -34,6 +37,15 @@ const perFrameTimeoutMs = 1 * 60000; // 1 minute
 const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
+
+// To ensure all assets have loaded before capturing a screenshot,
+// we wait an extra bit of time for the first N frames.
+const INITIAL_FRAME_DELAY_COUNT = 2; // Number of frames to add the extra delay
+
+// Max amount of time to wait per frame. Frame #0 wait the full amount of time.
+// Subsequent frames will wait less time, decreasing linearly to 0 as the current
+// frame count approaches INITIAL_FRAME_DELAY_COUNT.
+const INITIAL_FRAME_DELAY_DURATION_MS = 15000;
 
 type VideoConfig = {
   bagPath?: ?string,
@@ -155,6 +167,9 @@ export async function recordVideo(
             } else {
               pendingRequestUrls.delete(parallelUrl);
             }
+            if (DEBUG_REQUEST_INTERCEPTION) {
+              log.info(`[Fetch DEBUG] ${!responseStatusCode ? "adding" : "removing"}: ${parallelUrl}`);
+            }
             try {
               await client.send("Fetch.continueRequest", { requestId });
             } catch {}
@@ -174,8 +189,16 @@ export async function recordVideo(
 
             await promiseTimeout(
               (async () => {
-                let actionHandle, errorCheckInterval;
+                let actionHandle, errorCheckInterval, nextError;
                 try {
+                  // `waitForFunction` waits until the return value is truthy,
+                  // so we won't continue until the client is ready with a new action.
+                  page
+                    .waitForFunction(() => window.videoRecording.nextAction(), {
+                      timeout: perFrameTimeoutMs - actionTimeDurationMs,
+                    })
+                    .then((nextAction) => (actionHandle = nextAction));
+
                   // The errors array is populated asynchronously, so check it on a timer while we wait
                   // for the nextAction so we don't miss any async errors (or page crashes) in the meantime
                   errorCheckInterval = setInterval(() => {
@@ -184,15 +207,19 @@ export async function recordVideo(
                         log.info(`Encountered whitelisted error: ${error}`);
                         return;
                       }
-                      throw new Error(error);
+                      // We don't throw this error here because it ends up as an
+                      // unhandled rejection error – so save it and throw it outside.
+                      nextError = error;
                     }
                   }, 1000);
 
-                  // `waitForFunction` waits until the return value is truthy, so we won't continue until
-                  // the client is ready with a new action.
-                  actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
-                    timeout: perFrameTimeoutMs - actionTimeDurationMs,
-                  });
+                  // eslint-disable-next-line no-unmodified-loop-condition
+                  while (!actionHandle && !nextError) {
+                    await delay(250);
+                  }
+                  if (nextError) {
+                    throw nextError;
+                  }
                 } catch (error) {
                   throw new Error(error);
                 } finally {
@@ -215,6 +242,13 @@ export async function recordVideo(
                   isRunning = false;
                   metadata = actionObj.metadata;
                 } else if (actionObj.action === "screenshot") {
+                  if (i < INITIAL_FRAME_DELAY_COUNT) {
+                    const delayMs =
+                      INITIAL_FRAME_DELAY_DURATION_MS -
+                      i * (INITIAL_FRAME_DELAY_DURATION_MS / INITIAL_FRAME_DELAY_COUNT);
+                    log.info(`Waiting for ${delayMs}ms to ensure all assets have loaded...`);
+                    await delay(delayMs);
+                  }
                   await waitForXhrRequests(pendingRequestUrls);
 
                   // Take a screenshot, and then tell the client that we're done taking a screenshot,
@@ -322,23 +356,27 @@ export async function recordVideo(
 // Exported for tests
 export async function waitForXhrRequests(pendingRequestUrls: Set<string>) {
   let timeout = false;
-  const waitForRequestsLoop = async () => {
-    // eslint-disable-next-line no-unmodified-loop-condition
-    while (pendingRequestUrls.size > 0 && !timeout) {
-      log.info(`Waiting for ${pendingRequestUrls.size} request(s) to resolve...`);
+  const hasPendingRequests = () => pendingRequestUrls.size > 0 && !timeout;
+  const waitForPendingRequests = async () => {
+    const hadPendingRequests = hasPendingRequests();
+    while (hasPendingRequests()) {
+      log.info(
+        `Waiting for ${pendingRequestUrls.size} request(s) to resolve...${
+          DEBUG_REQUEST_INTERCEPTION ? `pendingRequestUrls:\n ${[...pendingRequestUrls].join("\n")}` : ""
+        }`
+      );
       await delay(pendingRequestPauseDurationMs);
     }
+    return hadPendingRequests;
   };
 
   try {
     await promiseTimeout(
       new Promise(async (resolve) => {
-        if (pendingRequestUrls.size > 0) {
-          await waitForRequestsLoop();
+        if (await waitForPendingRequests()) {
           // All requests resolved, but wait a little bit longer to make sure.
           // This helps us catch cases where there's a brief pause between batches of requests
           await delay(pendingRequestPauseDurationMs);
-          await waitForRequestsLoop();
         }
         resolve();
       }),

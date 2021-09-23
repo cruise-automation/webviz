@@ -65,7 +65,6 @@ const defaultHooks = {
         });
     });
   },
-  nodes: () => [],
   getDefaultPersistedState() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
     /* eslint-disable no-restricted-modules */

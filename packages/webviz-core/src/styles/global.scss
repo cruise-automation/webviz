@@ -92,7 +92,8 @@ code {
 button,
 input,
 select,
-textarea {
+textarea,
+.text-area-style {
   @include sans-serif;
   color: $text-control;
   font-size: 1rem;
@@ -110,7 +111,8 @@ textarea {
 
 input,
 select,
-textarea {
+textarea,
+.text-area-style {
   color: $text-control;
   background-color: rgba(255, 255, 255, 0.05);
 
@@ -124,7 +126,8 @@ textarea {
   }
 }
 
-textarea {
+textarea,
+.text-area-style {
   @include monospace;
   border: 2px solid $text-normal;
   color: $text-normal;

@@ -25,6 +25,7 @@ export type SetSearchTextMatches = (((GLTextMarker[]) => GLTextMarker[]) | GLTex
 export type WorldSearchTextProps = {|
   searchTextOpen: boolean,
   searchText: string,
+  searchTextWithInlinedVariables: string,
   setSearchTextMatches: SetSearchTextMatches,
   searchTextMatches: GLTextMarker[],
   selectedMatchIndex: number,

@@ -13,7 +13,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
 import { deepParse, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { isComplex } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 type Callback<State> = ({| message: Message, state: State |}) => {| messages: Message[], state: State |};
@@ -36,7 +36,7 @@ export type NodeDefinition<State> = {
 const WEBVIZ_NODE_PREFIX = "/webviz/";
 
 export function isWebvizNodeTopic(topic: string) {
-  return topic.startsWith(WEBVIZ_NODE_PREFIX) || topic.startsWith(`${SECOND_SOURCE_PREFIX}${WEBVIZ_NODE_PREFIX}`);
+  return topic.startsWith(WEBVIZ_NODE_PREFIX) || topic.startsWith(`${$WEBVIZ_SOURCE_2}${WEBVIZ_NODE_PREFIX}`);
 }
 
 export const makeNodeMessage = (topic: string, message: any): Message => {

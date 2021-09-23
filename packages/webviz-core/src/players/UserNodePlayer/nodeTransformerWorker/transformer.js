@@ -28,7 +28,7 @@ import {
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Typescript is required since the `import` syntax breaks VSCode, presumably
@@ -144,7 +144,7 @@ export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeDa
   const badInputTopic = nodeData.inputTopics.find(
     (topic) =>
       topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX) ||
-      topic.startsWith(`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
+      topic.startsWith(`${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}`)
   );
   if (badInputTopic) {
     const error = {
@@ -174,7 +174,7 @@ export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeDa
     }
 
     if (nodeData.enableSecondSource) {
-      const prefixedTopic = `${SECOND_SOURCE_PREFIX}${inputTopic}`;
+      const prefixedTopic = `${$WEBVIZ_SOURCE_2}${inputTopic}`;
       if (!activeTopics.includes(prefixedTopic)) {
         diagnostics.push({
           severity: DiagnosticSeverity.Warning,
@@ -194,9 +194,9 @@ export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeDa
 
 export const checkForMultiSourceSupport = (nodeData: NodeData, topics: Topic[]): NodeData => {
   // Only add support if there's at least one source two topic available from the Player
-  const secondSourceTopicsPresent = topics.some((topic) => topic.name.startsWith(SECOND_SOURCE_PREFIX));
+  const secondSourceTopicsPresent = topics.some((topic) => topic.name.startsWith($WEBVIZ_SOURCE_2));
   const enableSecondSource =
-    secondSourceTopicsPresent && !nodeData.inputTopics.some((topicName) => topicName.startsWith(SECOND_SOURCE_PREFIX));
+    secondSourceTopicsPresent && !nodeData.inputTopics.some((topicName) => topicName.startsWith($WEBVIZ_SOURCE_2));
 
   return {
     ...nodeData,

@@ -8,7 +8,7 @@
 
 import { partition, groupBy } from "lodash";
 
-import { SECOND_SOURCE_PREFIX } from "../util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "../util/globalConstants";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import CombinedDataProvider from "webviz-core/src/dataProviders/CombinedDataProvider";
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
@@ -43,12 +43,14 @@ export default class StoryPlayer implements Player {
       const bagDescriptors = await Promise.all(
         this._bags.map(async (file, i) => {
           const bagDescriptor = await getBagDescriptor(file);
-          return { name: "", args: { bagDescriptor, prefix: i === 1 ? SECOND_SOURCE_PREFIX : "" }, children: [] };
+          const prefix = i === 1 ? $WEBVIZ_SOURCE_2 : "";
+          const topicMapping = { [prefix]: { excludeTopics: [] } };
+          return { name: "", args: { bagDescriptor, topicMapping }, children: [] };
         })
       );
       const provider = new CombinedDataProvider({}, bagDescriptors, ({ args }) => {
-        const { bagDescriptor, prefix } = args;
-        return new RenameDataProvider({ prefix }, NOOP_PROVIDER, () => {
+        const { bagDescriptor, topicMapping } = args;
+        return new RenameDataProvider({ topicMapping }, NOOP_PROVIDER, () => {
           return new ParseMessagesDataProvider({}, NOOP_PROVIDER, () => {
             return new RewriteBinaryDataProvider({}, NOOP_PROVIDER, () => {
               return new BagDataProvider({ bagPath: bagDescriptor, cacheSizeInBytes: Infinity }, []);

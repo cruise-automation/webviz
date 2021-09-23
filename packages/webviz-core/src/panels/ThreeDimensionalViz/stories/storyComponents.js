@@ -6,27 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createMemoryHistory } from "history";
-import { uniq } from "lodash";
 import * as React from "react";
 import { Worldview } from "regl-worldview";
 
-import delay from "webviz-core/shared/delay";
-import { selectAllPanelIds } from "webviz-core/src/actions/mosaic";
 import Flex from "webviz-core/src/components/Flex";
-import PanelLayout from "webviz-core/src/components/PanelLayout";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
 import ThreeDimensionalViz, { type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import { use3dPanelReadyEvent } from "webviz-core/src/panels/ThreeDimensionalViz/stories/waitFor3dPanelEvents";
 import type { Frame, Topic } from "webviz-core/src/players/types";
-import createRootReducer from "webviz-core/src/reducers";
 import Store from "webviz-core/src/store";
-import configureStore from "webviz-core/src/store/configureStore";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import PanelSetupWithBag from "webviz-core/src/stories/PanelSetupWithBag";
-import { ScreenshotSizedContainer } from "webviz-core/src/stories/storyHelpers";
 import { createRosDatatypesFromFrame } from "webviz-core/src/test/datatypes";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
@@ -152,72 +141,3 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
     );
   }
 }
-
-export const ThreeDimPanelSetupWithBag = ({
-  threeDimensionalConfig,
-  globalVariables = {},
-  bag,
-  onMount,
-}: {
-  threeDimensionalConfig: $Shape<ThreeDimensionalVizConfig>,
-  globalVariables: {},
-  bag: string,
-  onMount?: () => Promise<void>,
-}) => {
-  const store: Store = configureStore(createRootReducer(createMemoryHistory()));
-  const topics = uniq(
-    threeDimensionalConfig.checkedKeys
-      .filter((key) => key.startsWith("t:"))
-      .map((topic) => topic.substring(2))
-      .concat(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.additionalSubscriptions)
-  );
-
-  const [_, forceUpdate] = React.useState(false);
-  const readyEvent = use3dPanelReadyEvent();
-  React.useEffect(() => {
-    readyEvent.then(() => forceUpdate(true));
-  }, [readyEvent]);
-
-  return (
-    <ScreenshotSizedContainer>
-      <PanelSetupWithBag
-        frameHistoryCompatibility
-        bag={bag}
-        subscriptions={topics}
-        store={store}
-        onMount={() => {
-          setImmediate(async () => {
-            await delay(500); // Wait for the panel to finish resizing
-            // Select the panel so we can control with the keyboard
-            store.dispatch(selectAllPanelIds());
-            if (onMount) {
-              onMount();
-            }
-          });
-        }}
-        getMergedFixture={(bagFixture) => ({
-          ...bagFixture,
-          globalVariables: { ...globalVariables },
-          layout: {
-            first: "3D Panel!a",
-            second: "GlobalVariableSliderPanel!b",
-            direction: "column",
-            splitPercentage: 92.7860696517413,
-          },
-          savedProps: {
-            "3D Panel!a": threeDimensionalConfig,
-            "GlobalVariableSliderPanel!b": {
-              sliderProps: {
-                min: 0,
-                max: 12,
-                step: 0.5,
-              },
-              globalVariableName: "futureTime",
-            },
-          },
-        })}>
-        <PanelLayout />
-      </PanelSetupWithBag>
-    </ScreenshotSizedContainer>
-  );
-};

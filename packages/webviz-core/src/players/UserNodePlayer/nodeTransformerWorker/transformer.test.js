@@ -23,7 +23,7 @@ import baseDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransforme
 import userUtilsLibs from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils";
 import { DiagnosticSeverity, ErrorCodes, Sources, type NodeData } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // Exported for use in other tests.
 export const baseNodeData: NodeData = {
@@ -199,7 +199,7 @@ describe("pipeline", () => {
     });
     it("errs when a node tries to input another user node from source two", () => {
       const { diagnostics } = validateInputTopics(
-        { ...baseNodeData, inputTopics: [`${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`] },
+        { ...baseNodeData, inputTopics: [`${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`] },
         []
       );
       expect(diagnostics.length).toEqual(1);
@@ -961,7 +961,7 @@ describe("pipeline", () => {
               {
                 name: "pos",
                 isArray: true,
-                isComplex: true,
+                isComplex: false,
                 arrayLength: undefined,
                 type: "float64",
               },
@@ -1310,6 +1310,17 @@ describe("pipeline", () => {
             return { foo: "bar" };
           };`,
         error: ErrorCodes.DatatypeExtraction.NO_MAPPED_TYPES,
+      },
+      {
+        description: "Exporting a nested array",
+        sourceCode: `
+        type Output = {
+          message: string[][];
+        };
+          export default (msg: any): Output => {
+            return { message: [['test']] };
+          };`,
+        error: ErrorCodes.DatatypeExtraction.NO_NESTED_ARRAYS,
       },
       {
         description: "Exporting a publisher function with a return type 'void'",

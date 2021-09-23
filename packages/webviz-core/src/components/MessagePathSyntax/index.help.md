@@ -13,7 +13,7 @@ The message path syntax can be used in several panels to find the exact messages
 - Filters can be applied to fields in the top-level message, in which case entire messages that don't match the filter will be skipped: `/some/topic{foo.bar==123}`
 - You can use multiple filters at once, in which case only messages that satisfy all filters will be returned (like an "and" expression): `/some/topic.many.values[:]{a==1}{b==2}.x`
 
-When filtering, you can use booleans `{value==true}`; numbers `{value==123}`; and strings `{value="foo"}`.
+When filtering, you can use booleans `{value==true}`; numbers `{value==123}`; and strings `{value=="foo"}`.
 
 We don't support escaping quotation marks in strings, but you can use either single or double quotes, which should allow you to express most strings: `{value='string which has "some" double quotes'}`.
 

@@ -25,6 +25,7 @@ import {
   noTuples,
   limitedUnionsError,
   noNestedAny,
+  noNestedArrays,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/errors";
 import { DiagnosticSeverity, Sources, ErrorCodes, type Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -340,8 +341,8 @@ export const constructDatatypes = (
           depth + 1,
           tsNode.typeParameters ? buildTypeMapFromParams(tsNode.typeParameters, typeMap) : typeMap
         );
-        const childFields = nestedDatatypes[nestedType].fields;
-        if (childFields.length === 2) {
+        const childFields = nestedDatatypes[nestedType]?.fields;
+        if (childFields?.length === 2) {
           const secField = childFields.find((field) => field.name === "sec");
           const nsecField = childFields.find((field) => field.name === "nsec");
           if (
@@ -376,7 +377,11 @@ export const constructDatatypes = (
       }
 
       case ts.SyntaxKind.ArrayType: {
-        return getRosMsgField(name, tsNode.elementType, true, true, typeMap, innerDepth + 1);
+        if (isArray) {
+          throw new DatatypeExtractionError(noNestedArrays);
+        }
+
+        return getRosMsgField(name, tsNode.elementType, true, isComplex, typeMap, innerDepth + 1);
       }
 
       case ts.SyntaxKind.NumberKeyword:

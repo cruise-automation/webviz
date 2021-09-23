@@ -41,8 +41,8 @@ import {
   POSE_MARKER_SCALE,
   LINED_CONVEX_HULL_RENDERING_SETTING,
   MARKER_ARRAY_DATATYPES,
-  TRANSFORM_STATIC_TOPIC,
-  TRANSFORM_TOPIC,
+  $TF_STATIC,
+  $TF,
   VISUALIZATION_MSGS$WEBVIZ_MARKER,
   VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
   VISUALIZATION_MSGS$MARKER,
@@ -112,7 +112,7 @@ const missingTransformMessage = (
     return `missing transform. Is ${skipTransform.sourceTopic} present?`;
   }
   if (transforms.empty) {
-    return `missing transform. Is ${TRANSFORM_TOPIC} or ${TRANSFORM_STATIC_TOPIC} present?`;
+    return `missing transform. Is ${$TF} or ${$TF_STATIC} present?`;
   }
   const frameIds = [...error.frameIds].sort().join(",");
   const s = error.frameIds.size === 1 ? "" : "s"; // for plural
@@ -411,7 +411,7 @@ export default class SceneBuilder implements MarkerProvider {
     return values;
   }
 
-  _setTopicError = (topic: string, message: string) => {
+  setTopicError = (topic: string, message: string) => {
     this.errors.topicsWithError.set(topic, message);
     this._updateErrorsByTopic();
   };
@@ -524,7 +524,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 0: // add
         break;
       case 1: // deprecated in ros
-        this._setTopicError(topic, "Marker.action=1 is deprecated");
+        this.setTopicError(topic, "Marker.action=1 is deprecated");
         return;
       case 2: // delete
         this.collectors[topic].deleteMarker(name);
@@ -533,7 +533,7 @@ export default class SceneBuilder implements MarkerProvider {
         this.collectors[topic].deleteAll();
         return;
       default:
-        this._setTopicError(topic, `Unsupported action type: ${message.action()}`);
+        this.setTopicError(topic, `Unsupported action type: ${message.action()}`);
         return;
     }
 
@@ -752,7 +752,7 @@ export default class SceneBuilder implements MarkerProvider {
       try {
         this._consumeTopic(topic);
       } catch (error) {
-        this._setTopicError(topic, error.toString());
+        this.setTopicError(topic, error.toString());
       }
     }
     this.topicsToRender.clear();
@@ -971,7 +971,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 109: return add.overlayIcon(marker)
       default: {
         if (!this._hooks.addMarkerToCollector(add, marker)) {
-          this._setTopicError(topic.name, `Unsupported marker type: ${marker.type}`);
+          this.setTopicError(topic.name, `Unsupported marker type: ${marker.type}`);
         }
       }
     }

@@ -199,3 +199,8 @@ export type DataProviderDescriptor = {|
 |};
 
 export type GetDataProvider = (DataProviderDescriptor) => DataProvider;
+
+// Used to map source1 inputs to source2 for the RenameDataProvider
+export type TopicMapping = {
+  [prefix: string]: $ReadOnly<{| excludeTopics: $ReadOnlyArray<string> |}>,
+};

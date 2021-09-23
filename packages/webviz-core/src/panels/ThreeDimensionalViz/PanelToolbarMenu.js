@@ -19,7 +19,7 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { type Save3DConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 export const SYNC_OPTIONS = {
   bag1ToBag2: "bag1ToBag2",
@@ -40,22 +40,22 @@ type SyncOption = $Keys<typeof SYNC_OPTIONS>;
 type Keys = {| bag1: string[], bag2: [] |};
 
 function bag2KeyToBag1Key(bag2Key: string) {
-  if (bag2Key.startsWith(`t:${SECOND_SOURCE_PREFIX}`)) {
-    return bag2Key.replace(`t:${SECOND_SOURCE_PREFIX}`, "t:");
+  if (bag2Key.startsWith(`t:${$WEBVIZ_SOURCE_2}`)) {
+    return bag2Key.replace(`t:${$WEBVIZ_SOURCE_2}`, "t:");
   }
   if (bag2Key.startsWith("name_2:")) {
     return bag2Key.replace("name_2:", "name:");
   }
-  return bag2Key.replace(`ns:${SECOND_SOURCE_PREFIX}`, "ns:");
+  return bag2Key.replace(`ns:${$WEBVIZ_SOURCE_2}`, "ns:");
 }
 function bag1KeyToBag2Key(bag1Key: string) {
   if (bag1Key.startsWith("t:")) {
-    return bag1Key.replace("t:", `t:${SECOND_SOURCE_PREFIX}`);
+    return bag1Key.replace("t:", `t:${$WEBVIZ_SOURCE_2}`);
   }
   if (bag1Key.startsWith("name:")) {
     return bag1Key.replace("name:", "name_2:");
   }
-  return bag1Key.replace("ns:", `ns:${SECOND_SOURCE_PREFIX}`);
+  return bag1Key.replace("ns:", `ns:${$WEBVIZ_SOURCE_2}`);
 }
 
 function partitionKeys(
@@ -71,7 +71,7 @@ function partitionKeys(
     namespaceKeys: { bag1: [], bag2: [] },
   };
   keys.forEach((key) => {
-    if (key.startsWith(`t:${SECOND_SOURCE_PREFIX}`)) {
+    if (key.startsWith(`t:${$WEBVIZ_SOURCE_2}`)) {
       result.topicKeys.bag2.push(key);
     } else if (key.startsWith("t:")) {
       result.topicKeys.bag1.push(key);
@@ -79,7 +79,7 @@ function partitionKeys(
       result.groupKeys.bag2.push(key);
     } else if (key.startsWith("name:")) {
       result.groupKeys.bag1.push(key);
-    } else if (key.startsWith(`ns:${SECOND_SOURCE_PREFIX}`)) {
+    } else if (key.startsWith(`ns:${$WEBVIZ_SOURCE_2}`)) {
       result.namespaceKeys.bag2.push(key);
     } else if (key.startsWith("ns:")) {
       result.namespaceKeys.bag1.push(key);

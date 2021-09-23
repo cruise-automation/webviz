@@ -98,6 +98,13 @@ export const noNestedAny = {
   code: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
 };
 
+export const noNestedArrays = {
+  severity: DiagnosticSeverity.Error,
+  message: "Successive nested arrays are not valid ROS datatypes and so are not allowed in return type.",
+  source: Sources.DatatypeExtraction,
+  code: ErrorCodes.DatatypeExtraction.NO_NESTED_ARRAYS,
+};
+
 export const noMappedTypes = {
   severity: DiagnosticSeverity.Error,
   message: "MappedTypes such as Record<Keys,Type> are not supported.",

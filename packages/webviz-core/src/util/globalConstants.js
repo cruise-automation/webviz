@@ -31,12 +31,13 @@ export const RADAR_POINT_CLOUD = "radarPointCloud";
 export const WRAPPED_POINT_CLOUD = "wrappedPointCloud";
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
-export const TRANSFORM_TOPIC = "/tf";
-export const TRANSFORM_STATIC_TOPIC = "/tf_static";
-export const DIAGNOSTIC_TOPIC = "/diagnostics";
-export const ROSOUT_TOPIC = "/rosout";
+export const $METADATA = "/metadata";
+export const $TF = "/tf";
+export const $TF_STATIC = "/tf_static";
+export const $DIAGNOSTICS = "/diagnostics";
+export const $ROSOUT = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
-export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
+export const $WEBVIZ_SOURCE_2 = "/webviz_source_2";
 
 export const GEOMETRY_MSGS$POLYGON_STAMPED = "geometry_msgs/PolygonStamped";
 export const NAV_MSGS$OCCUPANCY_GRID = "nav_msgs/OccupancyGrid";
@@ -131,7 +132,6 @@ export const PANEL_LAYOUT_ROOT_ID = "PanelLayout-root";
 
 // Feature announcements
 export const FEATURE_ANNOUNCEMENTS_LOCAL_STORAGE_KEY = "webvizFeatureAnnouncements";
-export const RECORDING_RANGE_SELECTION_ANNOUNCEMENT_KEY = "recordingRangeSelection";
 
 export const MIN_MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
 

@@ -8,7 +8,7 @@
 
 import { type FieldReader, Uint8Reader, getReader } from "./readers";
 import { DATATYPE, type VertexBuffer, type ColorMode } from "./types";
-import createPointCloudPositionBuffer from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils/createPointCloudPositionBuffer";
+import maybeConvertSphericalCoordinatePointCloudToCartesian from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils/maybeConvertSphericalCoordinatePointCloudToCartesian";
 import type { PointField } from "webviz-core/src/types/Messages";
 
 export type FieldOffsetsAndReaders = {
@@ -125,7 +125,13 @@ export function createPositionBuffer({
 }: {|
   ...PointCloudData,
 |}): VertexBuffer {
-  const positions = createPointCloudPositionBuffer({ data, fields, pointCount, stride, sphericalRangeScale });
+  const positions = maybeConvertSphericalCoordinatePointCloudToCartesian({
+    data,
+    fields,
+    pointCount,
+    stride,
+    sphericalRangeScale,
+  });
   if (positions) {
     return positions;
   }

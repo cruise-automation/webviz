@@ -100,4 +100,10 @@ export default function sendNotification(
   }
 }
 
+// Allows the runInBrowser code to hook into the notification system
+// in order to distinguish between user and app errors.
+if (typeof window !== "undefined") {
+  window.setNotificationHandler = setNotificationHandler;
+}
+
 sendNotification.expectCalledDuringTest = () => {}; // Overridden in tests; added here so Flow doesn't complain.

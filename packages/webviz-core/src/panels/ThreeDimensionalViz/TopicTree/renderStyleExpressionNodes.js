@@ -19,7 +19,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import Modal from "webviz-core/src/components/Modal";
-import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
+import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
@@ -37,7 +37,7 @@ import {
   TooltipTable,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderTreeNodes";
 import type { Color } from "webviz-core/src/types/Messages";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
 // TODO: Dedupe from renderNamespaceNodes
@@ -150,7 +150,7 @@ function StyleExpressionNode(props) {
   // Mouse-hover handlers
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
   const mouseEventHandlersByColumnIdx = useMemo(() => {
-    const topicNameByColumnIdx = [topic, joinTopics(SECOND_SOURCE_PREFIX, topic)];
+    const topicNameByColumnIdx = [topic, joinTopics($WEBVIZ_SOURCE_2, topic)];
     return topicNameByColumnIdx.map((_topic) => ({
       onMouseEnter: () => setHoveredMarkerMatchers([{ topic: _topic, checks: [{ markerKeyPath, value }] }]),
       onMouseLeave,
@@ -294,7 +294,7 @@ function ColorPickerOverlay({
   onRequestClose: () => void,
 }) {
   return (
-    <RenderToBodyComponent>
+    <RenderToBodyPortal>
       <Modal
         onRequestClose={onRequestClose}
         contentStyle={{
@@ -305,6 +305,6 @@ function ColorPickerOverlay({
         }}>
         <ColorPickerSettingsPanel color={color} onChange={onChangeColor} />
       </Modal>
-    </RenderToBodyComponent>
+    </RenderToBodyPortal>
   );
 }

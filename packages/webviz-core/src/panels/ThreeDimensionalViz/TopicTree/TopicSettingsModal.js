@@ -15,13 +15,13 @@ import { type Save3DConfig } from "../index";
 import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Modal from "webviz-core/src/components/Modal";
-import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
+import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { useArbitraryTopicMessage } from "webviz-core/src/PanelAPI";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import type { Topic } from "webviz-core/src/players/types";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STopicSettingsEditor = styled.div`
@@ -168,8 +168,8 @@ function TopicSettingsModal({
     onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
   }, [onSettingsChange]);
 
-  const columnIndex = topicName.startsWith(SECOND_SOURCE_PREFIX) ? 1 : 0;
-  const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+  const columnIndex = topicName.startsWith($WEBVIZ_SOURCE_2) ? 1 : 0;
+  const nonPrefixedTopic = columnIndex === 1 ? topicName.substr($WEBVIZ_SOURCE_2.length) : topicName;
   const message = useArbitraryTopicMessage(topicName);
 
   const editorElem = (
@@ -185,7 +185,7 @@ function TopicSettingsModal({
     />
   );
   return (
-    <RenderToBodyComponent>
+    <RenderToBodyPortal>
       <Modal
         onRequestClose={() => setCurrentEditingTopic(undefined)}
         contentStyle={{
@@ -204,13 +204,13 @@ function TopicSettingsModal({
                 activeKey={`${columnIndex}`}
                 onChange={(newKey) => {
                   const newEditingTopicName =
-                    newKey === "0" ? nonPrefixedTopic : `${SECOND_SOURCE_PREFIX}${nonPrefixedTopic}`;
+                    newKey === "0" ? nonPrefixedTopic : `${$WEBVIZ_SOURCE_2}${nonPrefixedTopic}`;
                   setCurrentEditingTopic({ datatype, name: newEditingTopicName });
                 }}>
                 <TabPane tab={"base"} key={"0"}>
                   {editorElem}
                 </TabPane>
-                <TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
+                <TabPane tab={$WEBVIZ_SOURCE_2} key={"1"}>
                   {editorElem}
                 </TabPane>
               </Tabs>
@@ -220,7 +220,7 @@ function TopicSettingsModal({
           )}
         </STopicSettingsEditor>
       </Modal>
-    </RenderToBodyComponent>
+    </RenderToBodyPortal>
   );
 }
 

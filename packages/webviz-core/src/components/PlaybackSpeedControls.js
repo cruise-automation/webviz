@@ -34,15 +34,18 @@ export default memo<{}>(function PlaybackSpeedControls() {
   // TODO(JP): Might be nice to move all this logic a bit deeper down. It's a bit weird to be doing
   // all this in what's otherwise just a view component.
   const dispatch = useDispatch();
-  const setSpeed = useCallback((newSpeed) => {
-    dispatch(setPlaybackConfig({ speed: newSpeed }));
+  const setSpeed = useCallback((newSpeed, options: ?{ skipPersist: boolean }) => {
+    if (!options?.skipPersist) {
+      dispatch(setPlaybackConfig({ speed: newSpeed }));
+    }
     if (canSetSpeed) {
       setPlaybackSpeed(newSpeed);
     }
   }, [canSetSpeed, dispatch, setPlaybackSpeed]);
 
   // Set the speed to the speed that we got from the config whenever we get a new Player.
-  useEffect(() => setSpeed(configSpeed), [configSpeed, setSpeed]);
+  // We skip saving to the store here since we just read from it.
+  useEffect(() => setSpeed(configSpeed, { skipPersist: true }), [configSpeed, setSpeed]);
 
   const displayedSpeed = speed || configSpeed;
   let speedText = ndash;

@@ -76,7 +76,7 @@ export default class Modal extends React.PureComponent<Props> {
             el.parentElement.id !== "root" &&
             el.parentElement.parentElement.id !== "root"
           ) {
-            throw new Error("`<Modal>` must be rendered using `renderToBody()` or `RenderToBodyComponent`.");
+            throw new Error("`<Modal>` must be rendered using `renderToBody()` or `<RenderToBodyPortal>`.");
           }
         }}>
         <StyledMask onClick={this.props.onRequestClose} />

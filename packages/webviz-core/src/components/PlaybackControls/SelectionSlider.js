@@ -23,6 +23,11 @@ const SContainer = styled.div`
   top: 4px;
   left: 0px;
   z-index: 3;
+  visibility: hidden;
+
+  > * {
+    visibility: visible;
+  }
 `;
 
 const STrack = styled.div.attrs((props) => ({
@@ -68,20 +73,21 @@ const SelectionSlider = () => {
     return setSelectionRange({ start: newStart, end: newEnd });
   }, [setSelectionRange]);
 
-  if (!selectionRange) {
-    return null;
-  }
+  // Always render the container so we can render something where the slider should go when
+  // there isn't a selection.
   return (
-    <SContainer>
-      <Slider
-        values={[selectionRange.start, selectionRange.end]}
-        min={MIN_MAX_RANGE[0]}
-        max={MIN_MAX_RANGE[1]}
-        step={MIN_DISTANCE}
-        overrides={{ Track: STrack, Thumb: SThumb }}
-        onChange={([start, end]) => setSelectionRange({ start, end })}
-        onFinalChange={onFinalChange}
-      />
+    <SContainer id="selection_slider">
+      {selectionRange ? (
+        <Slider
+          values={[selectionRange.start, selectionRange.end]}
+          min={MIN_MAX_RANGE[0]}
+          max={MIN_MAX_RANGE[1]}
+          step={MIN_DISTANCE}
+          overrides={{ Track: STrack, Thumb: SThumb }}
+          onChange={([start, end]) => setSelectionRange({ start, end })}
+          onFinalChange={onFinalChange}
+        />
+      ) : null}
     </SContainer>
   );
 };

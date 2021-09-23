@@ -17,6 +17,8 @@ import { useForceUpdate } from "webviz-core/src/util/hooks.js";
 
 type RenderedToBodyHandle = {| update: (React.Element<*>) => void, remove: () => void |};
 
+// Deprecated: Use RenderToBodyPortal instead so all React Contexts work as expected.
+// renderToBody doesn't use portals, so not all react contexts will be available to the modal content.
 // TODO(Audrey): change the `any` time to React.Element<*> and flow errors.
 export default function renderToBody(element: any): RenderedToBodyHandle {
   const container = document.createElement("div");
@@ -49,32 +51,6 @@ export default function renderToBody(element: any): RenderedToBodyHandle {
       document.body.removeChild(container);
     },
   };
-}
-
-// Deprecated: Use RenderToBodyPortal instead so all React Contexts work as expected.
-// RenderToBodyComponent doesn't use portals, so not all react contexts will be available to the modal content.
-export class RenderToBodyComponent extends React.Component<{| children: React.Element<*> |}> {
-  _renderedToBodyHandle: ?RenderedToBodyHandle;
-
-  componentDidMount() {
-    this._renderedToBodyHandle = renderToBody(this.props.children);
-  }
-
-  componentDidUpdate() {
-    if (this._renderedToBodyHandle) {
-      this._renderedToBodyHandle.update(this.props.children);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this._renderedToBodyHandle) {
-      this._renderedToBodyHandle.remove();
-    }
-  }
-
-  render() {
-    return null;
-  }
 }
 
 // Renders the children in the body of the page using a portal.

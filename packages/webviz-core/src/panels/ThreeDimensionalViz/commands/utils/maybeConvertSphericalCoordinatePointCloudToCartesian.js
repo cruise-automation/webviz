@@ -10,7 +10,7 @@ import { type FieldOffsetsAndReaders } from "webviz-core/src/panels/ThreeDimensi
 import { type VertexBuffer } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/types";
 
 // Allows converting azimuth, elevation, range points to x, y, z points.
-const createPointCloudPositionBuffer = ({
+const maybeConvertSphericalCoordinatePointCloudToCartesian = ({
   data,
   fields,
   pointCount,
@@ -55,4 +55,4 @@ const createPointCloudPositionBuffer = ({
   }
 };
 
-export default createPointCloudPositionBuffer;
+export default maybeConvertSphericalCoordinatePointCloudToCartesian;

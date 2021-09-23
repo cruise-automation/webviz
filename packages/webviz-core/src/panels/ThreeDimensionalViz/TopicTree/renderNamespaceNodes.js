@@ -22,7 +22,7 @@ import type {
 import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
-import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2, $TF } from "webviz-core/src/util/globalConstants";
 import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
@@ -104,7 +104,7 @@ function NamespaceNodeRow({
 
   const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
     if (visible) {
-      const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+      const topic = [topicName, joinTopics($WEBVIZ_SOURCE_2, topicName)][columnIndex];
       setHoveredMarkerMatchers([{ topic, checks: [{ markerKeyPath: ["ns"], value: namespace }] }]);
     }
   }, [namespace, setHoveredMarkerMatchers, topicName]);
@@ -218,7 +218,7 @@ export default function renderNamespaceNodes({
 
   // TODO(Audrey): remove the special tooltip once we add 2nd bag support for map and tf namespaces.
   const unavailableTooltip =
-    topicNode.topicName === TRANSFORM_TOPIC || topicNode.topicName === "/metadata" ? "Unsupported" : "Unavailable";
+    topicNode.topicName === $TF || topicNode.topicName === "/metadata" ? "Unsupported" : "Unavailable";
 
   const commonRowProps = {
     rowWidth,

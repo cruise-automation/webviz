@@ -3,7 +3,7 @@ ccad8c55a86776ab4c959888892697155ef77aa8  ./webviz-core/migrations/frozenMigrati
 d583ffb94d816bce9ecf555f466813abd4348c7d  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.test.js
 2e36b076614b28e9dad4f3a656cc2c12116bf2f5  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables.js
 cefcfbad95bd282c3e7f72b373a2e0394e8297a6  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:05.migrateSourcePrefix.js
-edce816a09dbc93e93f06aaf8b211bc15615f904  ./webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys.js
+f03b50c98a717628fd173c8cf130fc91e10f71ed  ./webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys.js
 c46f7288766bd7aa026f77d65d41e013d312162d  ./webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys.test.js
 ab684bfcf2ce591d974613ee8c07c56490970d20  ./webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors.js
 7bfac30079a4947418f37b730306ed36d117b6c6  ./webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors.test.js

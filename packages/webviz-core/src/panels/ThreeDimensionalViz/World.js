@@ -157,7 +157,7 @@ function World(
   ref: OffscreenWorldview
 ) {
   const markersByType = getMarkers(markerProviders, hooks);
-  const { text = [] } = markersByType;
+  const { text = [], overlayIcon } = markersByType;
   const textHighlighter = React.useMemo(() => new TextHighlighter(setSearchTextMatches), [setSearchTextMatches]);
   const processedMarkersByType = {
     ...markersByType,
@@ -171,7 +171,6 @@ function World(
     }),
   };
 
-  const { overlayIcon } = processedMarkersByType;
   const cameraDistance = cameraState.distance || DEFAULT_CAMERA_STATE.distance;
 
   return (

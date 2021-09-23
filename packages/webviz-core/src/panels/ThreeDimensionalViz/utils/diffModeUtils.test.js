@@ -16,7 +16,7 @@ import {
   SOURCE_2_COLOR_RGBA,
 } from "./diffModeUtils";
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 const marker = (topic: string): Interactive<any> => {
   return {
@@ -40,9 +40,9 @@ const markers = {
   instancedLineList: [],
   laserScan: [],
   linedConvexHull: [],
-  lineList: [marker("foo"), marker(`${SECOND_SOURCE_PREFIX}/foo`)],
+  lineList: [marker("foo"), marker(`${$WEBVIZ_SOURCE_2}/foo`)],
   lineStrip: [],
-  pointcloud: [marker(`${SECOND_SOURCE_PREFIX}/foo`)],
+  pointcloud: [marker(`${$WEBVIZ_SOURCE_2}/foo`)],
   points: [],
   poseMarker: [],
   radarPointCluster: [],
@@ -126,7 +126,7 @@ describe("getDiffBySource", () => {
       ...sharedExpected,
       lineList: [
         {
-          ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
+          ...marker(`${$WEBVIZ_SOURCE_2}/foo`),
           colors: [],
           color: BASE_COLOR_RGBA,
           depth: {
@@ -144,7 +144,7 @@ describe("getDiffBySource", () => {
       ],
       pointcloud: [
         {
-          ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
+          ...marker(`${$WEBVIZ_SOURCE_2}/foo`),
           colors: [],
           color: BASE_COLOR_RGBA,
           depth: {
@@ -165,7 +165,7 @@ describe("getDiffBySource", () => {
       ...sharedExpected,
       lineList: [
         {
-          ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
+          ...marker(`${$WEBVIZ_SOURCE_2}/foo`),
           colors: [],
           color: SOURCE_2_COLOR_RGBA,
           depth: {
@@ -183,7 +183,7 @@ describe("getDiffBySource", () => {
       ],
       pointcloud: [
         {
-          ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
+          ...marker(`${$WEBVIZ_SOURCE_2}/foo`),
           colors: [],
           color: SOURCE_2_COLOR_RGBA,
           depth: {

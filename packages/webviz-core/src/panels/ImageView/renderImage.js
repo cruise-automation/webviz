@@ -119,8 +119,10 @@ async function decodeMessageToBitmap(msg: Message, datatype: string): Promise<Im
   } else if (["sensor_msgs/CompressedImage", "sensor_msgs/Image"].includes(datatype) || msg.message.format) {
     // The Blob constructor does not like typed arrays backed by SharedArrayBuffers.
     const notSharedData =
-      // SharedArrayBuffer is missing if not cross origin isolated.
-      self.crossOriginIsolated && rawData.buffer instanceof SharedArrayBuffer ? new Uint8Array(rawData) : rawData;
+      // SharedArrayBuffer won't work if not cross origin isolated.
+      self.crossOriginIsolated && typeof SharedArrayBuffer === "function" && rawData.buffer instanceof SharedArrayBuffer
+        ? new Uint8Array(rawData)
+        : rawData;
     image = new Blob([notSharedData], { type: `image/${msg.message.format}` });
   } else {
     throw new Error(`Message type is not usable for rendering images.`);

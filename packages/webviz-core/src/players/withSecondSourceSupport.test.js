@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import { withSecondSourceSupport } from "webviz-core/src/players/withSecondSourceSupport";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { addTopicPrefix, joinTopics } from "webviz-core/src/util/topicUtils";
 
 describe("withSecondSourceSupport", () => {
-  it("returns a nodeDefinition that works with SECOND_SOURCE_PREFIX'd topics", () => {
+  it("returns a nodeDefinition that works with $WEBVIZ_SOURCE_2'd topics", () => {
     const message = {
       topic: "/webviz/abc",
       message: {},
@@ -34,15 +34,15 @@ describe("withSecondSourceSupport", () => {
       expect.objectContaining({
         callback: expect.any(Function),
         defaultState: {},
-        inputs: addTopicPrefix(nodeDefinition.inputs, SECOND_SOURCE_PREFIX),
-        output: { name: joinTopics(SECOND_SOURCE_PREFIX, "/baz"), datatype: "datatype" },
+        inputs: addTopicPrefix(nodeDefinition.inputs, $WEBVIZ_SOURCE_2),
+        output: { name: joinTopics($WEBVIZ_SOURCE_2, "/baz"), datatype: "datatype" },
         datatypes: {},
       })
     );
     expect(
       secondSourceNodeDefinition.callback({
         message: {
-          topic: joinTopics(SECOND_SOURCE_PREFIX, "/webviz/abc"),
+          topic: joinTopics($WEBVIZ_SOURCE_2, "/webviz/abc"),
           message: {},
           receiveTime: { sec: 0, nsec: 0 },
         },
@@ -52,7 +52,7 @@ describe("withSecondSourceSupport", () => {
       expect.objectContaining({
         messages: [
           {
-            topic: joinTopics(SECOND_SOURCE_PREFIX, message.topic),
+            topic: joinTopics($WEBVIZ_SOURCE_2, message.topic),
             message: {},
             receiveTime: { sec: 0, nsec: 0 },
           },

@@ -28,10 +28,10 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import DiagnosticsHistory from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
+import useDiagnostics, { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/useDiagnostics";
 import type { Topic } from "webviz-core/src/players/types";
 import type { PanelConfig } from "webviz-core/src/types/panels";
-import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $DIAGNOSTICS } from "webviz-core/src/util/globalConstants";
 import toggle from "webviz-core/src/util/toggle";
 
 const LevelClasses = {
@@ -82,154 +82,153 @@ type Props = {
   topics: Topic[],
 };
 
-class DiagnosticSummary extends React.Component<Props> {
-  static panelType = "DiagnosticSummary";
-  static defaultConfig = { ...getGlobalHooks().perPanelHooks().DiagnosticSummary.defaultConfig };
+function DiagnosticSummary({ config, saveConfig, openSiblingPanel, topics }: Props) {
+  const { hardwareIdFilter, topicToRender, sortByLevel = true } = config;
 
-  togglePinned = (info: DiagnosticInfo) => {
-    this.props.saveConfig({ pinnedIds: toggle(this.props.config.pinnedIds, info.id) });
-  };
-
-  showDetails = (info: DiagnosticInfo) => {
-    this.props.openSiblingPanel(
-      "DiagnosticStatusPanel",
-      () =>
-        ({
-          selectedHardwareId: info.status.hardware_id,
-          selectedName: info.status.name,
-          topicToRender: this.props.config.topicToRender,
-          collapsedSections: [],
-        }: DiagnosticStatusConfig)
-    );
-  };
-
-  renderRow = ({ item, style, key }) => {
-    return (
-      <div key={key} style={style}>
-        <NodeRow
-          info={item}
-          isPinned={this.props.config.pinnedIds.indexOf(item.id) !== -1}
-          onClick={this.showDetails}
-          onClickPin={this.togglePinned}
-        />
-      </div>
-    );
-  };
-
-  renderHardwareFilter() {
-    const {
-      config: { hardwareIdFilter },
-      saveConfig,
-    } = this.props;
-    return (
+  const hardwareFilter = React.useMemo(
+    () => (
       <input
         style={{ width: "100%", padding: "0", background: "transparent", opacity: "0.5" }}
         value={hardwareIdFilter}
         placeholder={"Filter hardware id"}
         onChange={(e) => saveConfig({ hardwareIdFilter: e.target.value })}
       />
-    );
-  }
+    ),
+    [hardwareIdFilter, saveConfig]
+  );
 
-  renderTopicToRenderMenu = (topics) => {
-    const {
-      config: { topicToRender },
-      saveConfig,
-    } = this.props;
-    return (
+  const topicToRenderMenu = React.useMemo(
+    () => (
       <TopicToRenderMenu
         topicToRender={topicToRender}
         onChange={(newTopicToRender) => saveConfig({ topicToRender: newTopicToRender })}
         topics={topics}
         singleTopicDatatype={"diagnostic_msgs/DiagnosticArray"}
-        defaultTopicToRender={DIAGNOSTIC_TOPIC}
+        defaultTopicToRender={$DIAGNOSTICS}
       />
-    );
-  };
+    ),
+    [topicToRender, topics, saveConfig]
+  );
 
-  _renderMenuContent() {
-    const { config, saveConfig } = this.props;
-    const { sortByLevel = true } = config;
-
-    return (
+  const menuContent = React.useMemo(
+    () => (
       <Item
         icon={sortByLevel ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
         onClick={() => saveConfig({ sortByLevel: !sortByLevel })}>
         Sort by level
       </Item>
-    );
-  }
+    ),
+    [saveConfig, sortByLevel]
+  );
 
-  render() {
-    const {
-      config: { topicToRender },
-      topics,
-    } = this.props;
-    return (
-      <Flex col className={styles.panel}>
-        <PanelToolbar
-          helpContent={helpContent}
-          additionalIcons={this.renderTopicToRenderMenu(topics)}
-          menuContent={this._renderMenuContent()}>
-          {this.renderHardwareFilter()}
-        </PanelToolbar>
-        <Flex col>
-          <DiagnosticsHistory topic={topicToRender}>
-            {(buffer) => {
-              if (buffer.diagnosticsByNameByTrimmedHardwareId.size === 0) {
-                return (
-                  <EmptyState>
-                    Waiting for <code>{topicToRender}</code> messages
-                  </EmptyState>
-                );
-              }
-              const { pinnedIds, hardwareIdFilter, sortByLevel = true } = this.props.config;
-              const pinnedNodes = filterMap(pinnedIds, (id) => {
-                const [_, trimmedHardwareId, name] = id.split("|");
-                const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(trimmedHardwareId);
-                if (diagnosticsByName == null) {
-                  return;
-                }
-                return diagnosticsByName.get(name);
-              });
+  const buffer = useDiagnostics(topicToRender);
 
-              const nodesByLevel = getDiagnosticsByLevel(buffer);
-              const sortedNodes = sortByLevel
-                ? [].concat(
-                    ...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) =>
-                      getSortedDiagnostics(nodesByLevel[level], hardwareIdFilter, pinnedIds)
-                    )
-                  )
-                : getSortedDiagnostics(
-                    [].concat(
-                      ...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) => nodesByLevel[level])
-                    ),
-                    hardwareIdFilter,
-                    pinnedIds
-                  );
-
-              const nodes: DiagnosticInfo[] = [...compact(pinnedNodes), ...sortedNodes];
-              return !nodes.length ? null : (
-                <AutoSizer>
-                  {({ height, width }) => (
-                    <List
-                      width={width}
-                      height={height}
-                      style={{ outline: "none" }}
-                      rowHeight={25}
-                      rowRenderer={(rowProps) => this.renderRow({ ...rowProps, item: nodes[rowProps.index] })}
-                      rowCount={nodes.length}
-                      overscanRowCount={10}
-                    />
-                  )}
-                </AutoSizer>
-              );
-            }}
-          </DiagnosticsHistory>
-        </Flex>
+  return (
+    <Flex col className={styles.panel}>
+      <PanelToolbar helpContent={helpContent} additionalIcons={topicToRenderMenu} menuContent={menuContent}>
+        {hardwareFilter}
+      </PanelToolbar>
+      <Flex col>
+        {buffer.diagnosticsByNameByTrimmedHardwareId.size === 0 ? (
+          <EmptyState>
+            Waiting for <code>{topicToRender}</code> messages
+          </EmptyState>
+        ) : (
+          <SummaryPanelContents
+            openSiblingPanel={openSiblingPanel}
+            saveConfig={saveConfig}
+            topics={topics}
+            config={config}
+            buffer={buffer}
+          />
+        )}
       </Flex>
-    );
-  }
+    </Flex>
+  );
 }
+
+function SummaryPanelContents({
+  buffer,
+  saveConfig,
+  openSiblingPanel,
+  config,
+}: {
+  ...Props,
+  buffer: DiagnosticsBuffer,
+}) {
+  const { hardwareIdFilter, pinnedIds, topicToRender, sortByLevel = true } = config;
+
+  const togglePinned = React.useCallback((info: DiagnosticInfo) => {
+    saveConfig({ pinnedIds: toggle(config.pinnedIds, info.id) });
+  }, [saveConfig, config.pinnedIds]);
+
+  const showDetails = React.useCallback((info: DiagnosticInfo) => {
+    openSiblingPanel(
+      "DiagnosticStatusPanel",
+      () =>
+        ({
+          selectedHardwareId: info.status.hardware_id,
+          selectedName: info.status.name,
+          topicToRender,
+          collapsedSections: [],
+        }: DiagnosticStatusConfig)
+    );
+  }, [openSiblingPanel, topicToRender]);
+
+  const renderRow = ({ item, style, key }) => {
+    return (
+      <div key={key} style={style}>
+        <NodeRow
+          info={item}
+          isPinned={pinnedIds.indexOf(item.id) !== -1}
+          onClick={showDetails}
+          onClickPin={togglePinned}
+        />
+      </div>
+    );
+  };
+
+  const pinnedNodes = filterMap(pinnedIds, (id) => {
+    const [_, trimmedHardwareId, name] = id.split("|");
+    const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(trimmedHardwareId);
+    if (diagnosticsByName == null) {
+      return;
+    }
+    return diagnosticsByName.get(name);
+  });
+
+  const nodesByLevel = getDiagnosticsByLevel(buffer);
+  const sortedNodes = sortByLevel
+    ? [].concat(
+        ...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) =>
+          getSortedDiagnostics(nodesByLevel[level], hardwareIdFilter, pinnedIds)
+        )
+      )
+    : getSortedDiagnostics(
+        [].concat(...[LEVELS.STALE, LEVELS.ERROR, LEVELS.WARN, LEVELS.OK].map((level) => nodesByLevel[level])),
+        hardwareIdFilter,
+        pinnedIds
+      );
+
+  const nodes: DiagnosticInfo[] = [...compact(pinnedNodes), ...sortedNodes];
+  return !nodes.length ? null : (
+    <AutoSizer>
+      {({ height, width }) => (
+        <List
+          width={width}
+          height={height}
+          style={{ outline: "none" }}
+          rowHeight={25}
+          rowRenderer={(rowProps) => renderRow({ ...rowProps, item: nodes[rowProps.index] })}
+          rowCount={nodes.length}
+          overscanRowCount={10}
+        />
+      )}
+    </AutoSizer>
+  );
+}
+
+DiagnosticSummary.panelType = "DiagnosticSummary";
+DiagnosticSummary.defaultConfig = { ...getGlobalHooks().perPanelHooks().DiagnosticSummary.defaultConfig };
 
 export default hot(Panel<Config>(DiagnosticSummary));

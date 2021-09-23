@@ -51,7 +51,7 @@ import {
   REMOTE_BAG_URL_2_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
-  SECOND_SOURCE_PREFIX,
+  $WEBVIZ_SOURCE_2,
 } from "webviz-core/src/util/globalConstants";
 import { useGetCurrentValue, useChangeDetector } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode, inPlaybackPerformanceMeasuringMode } from "webviz-core/src/util/inAutomatedRunMode";
@@ -116,7 +116,7 @@ function buildPlayerFromFiles(files: File[], initialMessageOrder: TimestampMetho
             getLocalBagDescriptor(files[0]),
             {
               name: CoreDataProviders.RenameDataProvider,
-              args: { prefix: SECOND_SOURCE_PREFIX },
+              args: { topicMapping: { [$WEBVIZ_SOURCE_2]: { excludeTopics: [] } } },
               children: [getLocalBagDescriptor(files[1])],
             },
           ],
@@ -160,7 +160,7 @@ async function buildPlayerFromBagURLs(
             getRemoteBagDescriptor(urls[0], guids[0]),
             {
               name: CoreDataProviders.RenameDataProvider,
-              args: { prefix: SECOND_SOURCE_PREFIX },
+              args: { topicMapping: { [$WEBVIZ_SOURCE_2]: { excludeTopics: [] } } },
               children: [getRemoteBagDescriptor(urls[1], guids[1])],
             },
           ],
@@ -311,7 +311,7 @@ function PlayerManager({
           <div style={{ fontSize: "2em" }}>
             (hold SHIFT while dropping a second bag file to add it
             <br />
-            with all topics prefixed with {SECOND_SOURCE_PREFIX})
+            with all topics prefixed with {$WEBVIZ_SOURCE_2})
           </div>
         </DropOverlay>
       </DocumentDropListener>

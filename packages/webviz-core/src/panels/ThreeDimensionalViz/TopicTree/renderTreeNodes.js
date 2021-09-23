@@ -34,7 +34,7 @@ import { canEditNamespaceOverrideColorDatatype } from "webviz-core/src/panels/Th
 import generateNodeKey from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/generateNodeKey";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -128,7 +128,7 @@ export function getNamespaceNodes({
   const topicName = node.topicName;
   const baseNamespacesSet = new Set((topicName && availableNamespacesByTopic[topicName]) || []);
   const featureNamespacesSet = new Set(
-    (topicName && hasFeatureColumn && availableNamespacesByTopic[`${SECOND_SOURCE_PREFIX}${topicName}`]) || []
+    (topicName && hasFeatureColumn && availableNamespacesByTopic[`${$WEBVIZ_SOURCE_2}${topicName}`]) || []
   );
   const uniqueNamespaces = uniq([...Array.from(baseNamespacesSet), ...Array.from(featureNamespacesSet)]);
   const columns = hasFeatureColumn ? [0, 1] : [0];

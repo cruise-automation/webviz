@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // TODO(Audrey): opaque type for node keys: https://flow.org/en/docs/types/opaque-types/
 export default function generateNodeKey({
@@ -20,11 +20,7 @@ export default function generateNodeKey({
   namespace?: ?string,
   isFeatureColumn?: boolean,
 |}): string {
-  const prefixedTopicName = topicName
-    ? isFeatureColumn
-      ? `${SECOND_SOURCE_PREFIX}${topicName}`
-      : topicName
-    : undefined;
+  const prefixedTopicName = topicName ? (isFeatureColumn ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName) : undefined;
   if (namespace) {
     if (prefixedTopicName) {
       return `ns:${prefixedTopicName}:${namespace}`;

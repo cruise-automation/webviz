@@ -8,7 +8,6 @@
 
 import signal from "webviz-core/shared/signal";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
-import NodePlayer from "webviz-core/src/players/NodePlayer";
 import type { SubscribePayload, Message, BobjectMessage } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import exampleDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/fixtures/example-datatypes.json";
@@ -18,29 +17,11 @@ import { wrapMessages } from "webviz-core/src/test/datatypes";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
 import { getSourceData } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
-import { DEFAULT_WEBVIZ_NODE_PREFIX, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
 const nodeId = "nodeId";
-
-const hardcodedNode = {
-  inputs: ["/input/foo", "/input/bar"],
-  output: { name: "/webviz/test", datatype: "test" },
-  datatypes: { test: { fields: [{ type: "string", name: "foo" }] } },
-  format: "parsedMessages",
-  defaultState: {},
-  callback: ({ message, state }) => ({
-    messages: [
-      {
-        topic: "/webviz/test",
-        receiveTime: message.receiveTime,
-        message: message.message,
-      },
-    ],
-    state,
-  }),
-};
 
 const nodeUserCode = `
   export const inputs = ["/np_input"];
@@ -228,59 +209,6 @@ describe("UserNodePlayer", () => {
       const publishPayload = { topic: "/foo", msg: {} };
       userNodePlayer.publish(publishPayload);
       expect(fakePlayer.publish).toHaveBeenCalledWith(publishPayload);
-    });
-  });
-
-  describe("behavior with NodePlayer as player", () => {
-    it("subscribes to general topics when subscribed to, without any Webviz nodes", () => {
-      const fakePlayer = new FakePlayer();
-      const nodePlayer = new NodePlayer(fakePlayer);
-      const userNodePlayer = new UserNodePlayer(nodePlayer, defaultUserNodeActions);
-      userNodePlayer.setListener(async () => {});
-      userNodePlayer.setSubscriptions([
-        { topic: "/input/foo", format: "parsedMessages" },
-        { topic: "/input/baz", format: "parsedMessages" },
-      ]);
-      expect(fakePlayer.subscriptions).toEqual([
-        { topic: "/input/foo", format: "parsedMessages" },
-        { topic: "/input/baz", format: "parsedMessages" },
-      ]);
-    });
-
-    it("subscribes to Webviz node topic when subscribed to, if it exists as an active Webviz node topic", () => {
-      const fakePlayer = new FakePlayer();
-      jest.spyOn(fakePlayer, "setSubscriptions");
-      const nodePlayer = new NodePlayer(fakePlayer, [hardcodedNode]);
-      const userNodePlayer = new UserNodePlayer(nodePlayer, defaultUserNodeActions);
-      const messages = [];
-      userNodePlayer.setListener(async (playerState) => {
-        messages.push(playerState);
-      });
-      userNodePlayer.setSubscriptions([
-        { topic: "/webviz/test", format: "parsedMessages" },
-        { topic: "/input/baz", format: "parsedMessages" },
-      ]);
-      expect(fakePlayer.setSubscriptions.mock.calls).toEqual([
-        [
-          [
-            { topic: "/input/baz", format: "parsedMessages" },
-            { requester: { name: "/webviz/test", type: "node" }, topic: "/input/foo", format: "parsedMessages" },
-            { requester: { name: "/webviz/test", type: "node" }, topic: "/input/bar", format: "parsedMessages" },
-          ],
-        ],
-      ]);
-    });
-
-    it("does not subscribe to Webviz node topic when subscribed to, if it doesn't exist as an active Webviz node", () => {
-      const fakePlayer = new FakePlayer();
-      const nodePlayer = new NodePlayer(fakePlayer);
-      const userNodePlayer = new UserNodePlayer(nodePlayer, defaultUserNodeActions);
-      userNodePlayer.setListener(async () => {});
-      userNodePlayer.setSubscriptions([
-        { topic: "/webviz/foo", format: "parsedMessages" },
-        { topic: "/input/baz", format: "parsedMessages" },
-      ]);
-      expect(fakePlayer.subscriptions).toEqual([{ topic: "/input/baz", format: "parsedMessages" }]);
     });
   });
 
@@ -1192,6 +1120,61 @@ describe("UserNodePlayer", () => {
           { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: "std_msgs/Header", inputTopics: ["/np_input"] },
         ]);
       });
+
+      it("can nest bag datatypes inside object expressions", async () => {
+        const sourceCode = `
+          import { Input, Messages } from 'ros';
+          type Output = { ref: Messages.sensor_msgs__TimeReference };
+          let innerState = 0;
+          export const inputs = ["/np_input"];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}state";
+          export default (message: Input<"/np_input">): Output => {
+            return {
+              ref: {
+                header: message.message,
+                time_ref: message.message.stamp,
+                source: "",
+              },
+            };
+          };
+        `;
+
+        const fakePlayer = new FakePlayer();
+
+        const mockSetNodeDiagnostics = jest.fn();
+        const userNodePlayer = new UserNodePlayer(fakePlayer, {
+          ...defaultUserNodeActions,
+          setUserNodeDiagnostics: mockSetNodeDiagnostics,
+        });
+        const firstName = `${DEFAULT_WEBVIZ_NODE_PREFIX}state`;
+
+        userNodePlayer.setUserNodes({
+          [nodeId]: { name: firstName, sourceCode },
+        });
+        userNodePlayer.setSubscriptions([{ topic: firstName, format: "parsedMessages" }]);
+
+        const [done] = setListenerHelper(userNodePlayer);
+
+        fakePlayer.emit({
+          ...basicPlayerState,
+          bobjects: [upstreamMessages[0]],
+          messageOrder: "receiveTime",
+          currentTime: upstreamMessages[0].receiveTime,
+          topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
+          datatypes: exampleDatatypes,
+        });
+
+        const { topics, datatypes } = await done;
+        // No errors
+        expect(mockSetNodeDiagnostics.mock.calls).toEqual([[{ nodeId: { diagnostics: [] } }]]);
+        expect(topics).toEqual([
+          { name: "/np_input", datatype: "std_msgs/Header" },
+          { name: firstName, datatype: firstName, inputTopics: ["/np_input"] },
+        ]);
+        expect(datatypes?.[firstName]).toEqual({
+          fields: [{ name: "ref", type: "sensor_msgs/TimeReference", isComplex: true, isArray: false }],
+        });
+      });
     });
 
     describe("global variable behavior", () => {
@@ -1247,14 +1230,14 @@ describe("UserNodePlayer", () => {
           message: { payload: "bar" },
         },
         {
-          topic: `${SECOND_SOURCE_PREFIX}/np_input`,
+          topic: `${$WEBVIZ_SOURCE_2}/np_input`,
           receiveTime: { sec: 0, nsec: 1 },
           message: { payload: "bar2" },
         },
       ]);
 
       const nodeUserCodeWithSourceTwoInputs = `
-        export const inputs = ["/np_input", "${SECOND_SOURCE_PREFIX}/np_input"];
+        export const inputs = ["/np_input", "${$WEBVIZ_SOURCE_2}/np_input"];
         export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
         let lastStamp, lastReceiveTime;
         export default (message: { message: { payload: string } }): { custom_np_field: string, value: string } => {
@@ -1269,7 +1252,7 @@ describe("UserNodePlayer", () => {
 
         userNodePlayer.setSubscriptions([
           { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
-          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
         ]);
         await userNodePlayer.setUserNodes({
           [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCodeWithSourceTwoInputs },
@@ -1282,13 +1265,13 @@ describe("UserNodePlayer", () => {
           currentTime: upstreamMessages[0].receiveTime,
           topics: [
             { name: "/np_input", datatype: "std_msgs/Header" },
-            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+            { name: `${$WEBVIZ_SOURCE_2}/np_input`, datatype: "std_msgs/Header" },
           ],
           datatypes: { foo: { fields: [] } },
         });
 
         const { messages } = await done;
-        // Expect no messages starting with SECOND_SOURCE_PREFIX
+        // Expect no messages starting with $WEBVIZ_SOURCE_2
         expect(messages).toEqual([
           {
             topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
@@ -1314,7 +1297,7 @@ describe("UserNodePlayer", () => {
 
         userNodePlayer.setSubscriptions([
           { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
-          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
         ]);
 
         await userNodePlayer.setUserNodes({
@@ -1338,7 +1321,7 @@ describe("UserNodePlayer", () => {
           topics: [
             { name: "/np_input", datatype: "std_msgs/Header" },
             { name: "/another_np_input", datatype: "std_msgs/Header" },
-            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+            { name: `${$WEBVIZ_SOURCE_2}/np_input`, datatype: "std_msgs/Header" },
           ],
           datatypes: { foo: { fields: [] } },
         });
@@ -1349,7 +1332,7 @@ describe("UserNodePlayer", () => {
             diagnostics: [
               {
                 severity: DiagnosticSeverity.Warning,
-                message: `Input "${SECOND_SOURCE_PREFIX}/another_np_input" is not yet available.`,
+                message: `Input "${$WEBVIZ_SOURCE_2}/another_np_input" is not yet available.`,
                 source: Sources.InputTopicsChecker,
                 code: ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL,
               },
@@ -1365,7 +1348,7 @@ describe("UserNodePlayer", () => {
 
         userNodePlayer.setSubscriptions([
           { topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
-          { topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
+          { topic: `${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}1`, format: "parsedMessages" },
         ]);
         await userNodePlayer.setUserNodes({
           [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
@@ -1378,7 +1361,7 @@ describe("UserNodePlayer", () => {
           currentTime: upstreamMessages[0].receiveTime,
           topics: [
             { name: "/np_input", datatype: "std_msgs/Header" },
-            { name: `${SECOND_SOURCE_PREFIX}/np_input`, datatype: "std_msgs/Header" },
+            { name: `${$WEBVIZ_SOURCE_2}/np_input`, datatype: "std_msgs/Header" },
           ],
           datatypes: { foo: { fields: [] } },
         });
@@ -1391,7 +1374,7 @@ describe("UserNodePlayer", () => {
             message: { custom_np_field: "abc", value: "bar" },
           },
           {
-            topic: `${SECOND_SOURCE_PREFIX}${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+            topic: `${$WEBVIZ_SOURCE_2}${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
             receiveTime: upstreamMessages[0].receiveTime,
             message: { custom_np_field: "abc", value: "bar2" },
           },

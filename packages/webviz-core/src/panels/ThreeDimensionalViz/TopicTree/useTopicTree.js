@@ -21,7 +21,7 @@ import type {
 } from "./types";
 import filterMap from "webviz-core/src/filterMap";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 
 const DEFAULT_TOPICS_COUNT_BY_KEY = {};
@@ -48,7 +48,7 @@ export function generateTreeNode(
   const providerAvailable = availableTopicsNamesSet.size > 0;
 
   if (topicName) {
-    const datatype = datatypesByTopic[topicName] || datatypesByTopic[`${SECOND_SOURCE_PREFIX}${topicName}`];
+    const datatype = datatypesByTopic[topicName] || datatypesByTopic[`${$WEBVIZ_SOURCE_2}${topicName}`];
     // Statically available namespace topics are always available to turn on or off.
     const isAlwaysAvailable = !!staticallyAvailableNamespacesByTopic[topicName];
     let availableByColumn;
@@ -56,7 +56,7 @@ export function generateTreeNode(
       availableByColumn = hasFeatureColumn ? [true, true] : [true];
     } else {
       availableByColumn = hasFeatureColumn
-        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${SECOND_SOURCE_PREFIX}${topicName}`)]
+        ? [availableTopicsNamesSet.has(topicName), availableTopicsNamesSet.has(`${$WEBVIZ_SOURCE_2}${topicName}`)]
         : [availableTopicsNamesSet.has(topicName)];
     }
     return {
@@ -113,7 +113,7 @@ export function* flattenNode<T: TreeNode | TopicTreeConfig>(node: T): Generator<
 }
 
 export function getBaseKey(key: string): string {
-  return key.replace(SECOND_SOURCE_PREFIX, "").replace("name_2:", "name:");
+  return key.replace($WEBVIZ_SOURCE_2, "").replace("name_2:", "name:");
 }
 
 const parseNamespaceKey = (key: string): { topicName: string, namespace: string } => {
@@ -148,13 +148,13 @@ export default function useTopicTree({
     [topicTreeConfig]
   );
 
-  const hasFeatureColumn = useMemo(() => providerTopics.some(({ name }) => name.startsWith(SECOND_SOURCE_PREFIX)), [
+  const hasFeatureColumn = useMemo(() => providerTopics.some(({ name }) => name.startsWith($WEBVIZ_SOURCE_2)), [
     providerTopics,
   ]);
 
   const rootTreeNode = useMemo((): TreeNode => {
     const allTopicNames = providerTopics.map((topic) => topic.name);
-    const nonPrefixedTopicNames = uniq(allTopicNames.map((name) => name.replace(SECOND_SOURCE_PREFIX, "")));
+    const nonPrefixedTopicNames = uniq(allTopicNames.map((name) => name.replace($WEBVIZ_SOURCE_2, "")));
     const availableTopicsNamesSet = new Set(allTopicNames);
 
     // Precompute uncategorized topics to add to the transformedTreeConfig before generating the TreeNodes.
@@ -224,7 +224,7 @@ export default function useTopicTree({
 
     const selectedTopicNamesSet = new Set(
       filterMap(checkedKeys, (key) => {
-        if (!key.startsWith("t:") || !isSelected(getBaseKey(key), key.includes(SECOND_SOURCE_PREFIX))) {
+        if (!key.startsWith("t:") || !isSelected(getBaseKey(key), key.includes($WEBVIZ_SOURCE_2))) {
           return;
         }
         return key.substr("t:".length);
@@ -278,7 +278,7 @@ export default function useTopicTree({
         const prefixedTopicName =
           node.type === "topic"
             ? isFeatureColumn
-              ? `${SECOND_SOURCE_PREFIX}${node.topicName}`
+              ? `${$WEBVIZ_SOURCE_2}${node.topicName}`
               : node.topicName
             : undefined;
         if (!prefixedTopicName) {
@@ -309,8 +309,8 @@ export default function useTopicTree({
     const ret = {};
 
     selectedTopicNames.forEach((topicName) => {
-      const isFeatureColumn = topicName.startsWith(SECOND_SOURCE_PREFIX);
-      const baseTopicName = isFeatureColumn ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+      const isFeatureColumn = topicName.startsWith($WEBVIZ_SOURCE_2);
+      const baseTopicName = isFeatureColumn ? topicName.substr($WEBVIZ_SOURCE_2.length) : topicName;
       const topicKey = generateNodeKey({ topicName: baseTopicName });
       const node = nodesByKey[topicKey];
       const isTopicNodeVisible = getIsTreeNodeVisibleInScene(node, isFeatureColumn ? 1 : 0);
@@ -334,15 +334,15 @@ export default function useTopicTree({
   const derivedCustomSettingsByKey = useMemo((): DerivedCustomSettingsByKey => {
     const result = {};
     for (const [topicKeyOrNamespaceKey, settings] of Object.entries(settingsByKey)) {
-      const isFeatureTopicOrNamespace = topicKeyOrNamespaceKey.includes(SECOND_SOURCE_PREFIX);
+      const isFeatureTopicOrNamespace = topicKeyOrNamespaceKey.includes($WEBVIZ_SOURCE_2);
       const columnIndex = isFeatureTopicOrNamespace ? 1 : 0;
       let key;
       if (topicKeyOrNamespaceKey.startsWith("ns:")) {
         // Settings for namespace. Currently only handle overrideColor and there are no defaultTopicSettings for namespaces.
         key = topicKeyOrNamespaceKey;
-        if (key.startsWith(`ns:${SECOND_SOURCE_PREFIX}`)) {
+        if (key.startsWith(`ns:${$WEBVIZ_SOURCE_2}`)) {
           // Remove the feature prefix since we are going to store overrideColorByColumn under the base prefix.
-          key = key.replace(`ns:${SECOND_SOURCE_PREFIX}`, "ns:");
+          key = key.replace(`ns:${$WEBVIZ_SOURCE_2}`, "ns:");
         }
         if (!result[key]) {
           result[key] = {};
@@ -350,7 +350,7 @@ export default function useTopicTree({
       } else if (topicKeyOrNamespaceKey.startsWith("t:/")) {
         // Settings for topic.
         const topicName = topicKeyOrNamespaceKey.substr("t:".length);
-        const baseTopicName = isFeatureTopicOrNamespace ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+        const baseTopicName = isFeatureTopicOrNamespace ? topicName.substr($WEBVIZ_SOURCE_2.length) : topicName;
         key = generateNodeKey({ topicName: baseTopicName });
         // If any topic has default settings, compare settings with default settings to determine if settings has changed.
         const isDefaultSettings = defaultTopicSettings[topicName]
@@ -398,7 +398,7 @@ export default function useTopicTree({
   const getIsNamespaceCheckedByDefault = useCallback(
     (topicName: string, columnIndex) =>
       !modifiedNamespaceTopics.includes(topicName) &&
-      !checkedNamespacesByTopicName[columnIndex === 1 ? `${SECOND_SOURCE_PREFIX}${topicName}` : topicName],
+      !checkedNamespacesByTopicName[columnIndex === 1 ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName],
     [checkedNamespacesByTopicName, modifiedNamespaceTopics]
   );
 
@@ -414,7 +414,7 @@ export default function useTopicTree({
     const isFeatureColumn = columnIndex === 1;
     const prefixedNamespaceKey = generateNodeKey({ topicName, namespace, isFeatureColumn });
 
-    const prefixedTopicName = isFeatureColumn ? `${SECOND_SOURCE_PREFIX}${topicName}` : topicName;
+    const prefixedTopicName = isFeatureColumn ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName;
     const isNamespaceCheckedByDefault = getIsNamespaceCheckedByDefault(topicName, columnIndex);
 
     let newCheckedKeys;
@@ -450,7 +450,7 @@ export default function useTopicTree({
     const topicNames = nodeAndChildren.map((item) => (item.type === "topic" ? item.topicName : null)).filter(Boolean);
     const namespaceChildrenKeys = flatten(
       topicNames.map((topicName) =>
-        (availableNamespacesByTopic[isFeatureColumn ? `${SECOND_SOURCE_PREFIX}${topicName}` : topicName] || []).map(
+        (availableNamespacesByTopic[isFeatureColumn ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName] || []).map(
           (namespace) => generateNodeKey({ topicName, namespace, isFeatureColumn })
         )
       )
@@ -458,7 +458,7 @@ export default function useTopicTree({
 
     let newModififiedNamespaceTopics = [...modifiedNamespaceTopics];
     topicNames.forEach((topicName) => {
-      const prefixedTopicName = isFeatureColumn ? `${SECOND_SOURCE_PREFIX}${topicName}` : topicName;
+      const prefixedTopicName = isFeatureColumn ? `${$WEBVIZ_SOURCE_2}${topicName}` : topicName;
       if (availableNamespacesByTopic[prefixedTopicName]) {
         newModififiedNamespaceTopics.push(prefixedTopicName);
       }
@@ -487,7 +487,7 @@ export default function useTopicTree({
     let keyWithPrefix = isFeatureColumn && node ? node.featureKey : nodeKey;
     const prefixedTopicName =
       isFeatureColumn && namespaceParentTopicName
-        ? `${SECOND_SOURCE_PREFIX}${namespaceParentTopicName}`
+        ? `${$WEBVIZ_SOURCE_2}${namespaceParentTopicName}`
         : namespaceParentTopicName;
 
     let newModififiedNamespaceTopics = modifiedNamespaceTopics;
@@ -603,7 +603,7 @@ export default function useTopicTree({
       return (
         node.topicName.toLowerCase().includes(searchText) ||
         (node.name != null && node.name.toLowerCase().includes(searchText)) ||
-        (hasFeatureColumn && `${SECOND_SOURCE_PREFIX}${node.topicName}`.toLowerCase().includes(searchText))
+        (hasFeatureColumn && `${$WEBVIZ_SOURCE_2}${node.topicName}`.toLowerCase().includes(searchText))
       );
     }
 
@@ -632,7 +632,7 @@ export default function useTopicTree({
         // Topic node: check if any namespace matches.
         const namespaces =
           availableNamespacesByTopic[node.topicName] ||
-          (hasFeatureColumn && availableNamespacesByTopic[`${SECOND_SOURCE_PREFIX}${node.topicName}`]) ||
+          (hasFeatureColumn && availableNamespacesByTopic[`${$WEBVIZ_SOURCE_2}${node.topicName}`]) ||
           [];
 
         for (const namespace of namespaces) {

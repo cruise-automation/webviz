@@ -30,7 +30,7 @@ import KeyListener from "webviz-core/src/components/KeyListener";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Modal from "webviz-core/src/components/Modal";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
+import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -72,8 +72,8 @@ import { useStructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalV
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Color, OverlayIconMarker } from "webviz-core/src/types/Messages";
 import { getField } from "webviz-core/src/util/binaryObjects";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
-import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
+import { useShallowMemo, useDeepMemo, useGetCurrentValue } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
@@ -180,8 +180,10 @@ export default function Layout({
     colorOverrideBySourceIdxByVariable,
     disableAutoOpenClickedObject,
     sphericalRangeScale,
+    searchText: savedSearchText,
   },
 }: Props) {
+  const getSaveConfig = useGetCurrentValue(saveConfig);
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
   const containerRef = useRef<?HTMLDivElement>();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
@@ -224,8 +226,20 @@ export default function Layout({
     );
   }, [setSceneErrorsByTopicKey]);
 
-  const searchTextProps = useSearchText();
-  const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
+  const searchTextProps = useSearchText({
+    initialSearchText: savedSearchText,
+    onSearchTextChanged: (newSearchText) => {
+      getSaveConfig()({ searchText: newSearchText });
+    },
+  });
+  const {
+    searchTextOpen,
+    searchTextWithInlinedVariables,
+    setSearchTextMatches,
+    searchTextMatches,
+    selectedMatchIndex,
+  } = searchTextProps;
+
   const searchCameraHandler = useMemo(() => new SearchCameraHandler(), []);
   searchCameraHandler.focusOnSearch(
     cameraState,
@@ -387,9 +401,9 @@ export default function Layout({
           ? [
               ..._activeColorOverrideMatchers,
               ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => {
-                const baseTopic = topic.replace(SECOND_SOURCE_PREFIX, "");
+                const baseTopic = topic.replace($WEBVIZ_SOURCE_2, "");
                 return {
-                  topic: i === 0 ? baseTopic : joinTopics(SECOND_SOURCE_PREFIX, baseTopic),
+                  topic: i === 0 ? baseTopic : joinTopics($WEBVIZ_SOURCE_2, baseTopic),
                   checks: [
                     {
                       markerKeyPath,
@@ -441,7 +455,6 @@ export default function Layout({
     autoSyncCameraState: !!autoSyncCameraState,
     isDrawing,
   };
-
   const setColorOverrideBySourceIdxByVariable = useCallback((_colorOverrideBySourceIdxByVariable) => {
     callbackInputsRef.current.saveConfig({ colorOverrideBySourceIdxByVariable: _colorOverrideBySourceIdxByVariable });
   }, []);
@@ -737,7 +750,7 @@ export default function Layout({
         isDemoMode,
         diffModeEnabled: hasFeatureColumn && diffModeEnabled,
         searchTextOpen,
-        searchText,
+        searchText: searchTextWithInlinedVariables,
         selectedMatchIndex,
         showCrosshair,
         polygons,
@@ -782,7 +795,7 @@ export default function Layout({
     hasFeatureColumn,
     diffModeEnabled,
     searchTextOpen,
-    searchText,
+    searchTextWithInlinedVariables,
     selectedMatchIndex,
     showCrosshair,
     polygons,
@@ -961,7 +974,7 @@ export default function Layout({
                 />
               )}
               {editingNamespace && (
-                <RenderToBodyComponent>
+                <RenderToBodyPortal>
                   <Modal
                     onRequestClose={() => setEditingNamespace(undefined)}
                     contentStyle={{
@@ -975,7 +988,7 @@ export default function Layout({
                       onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
                     />
                   </Modal>
-                </RenderToBodyComponent>
+                </RenderToBodyPortal>
               )}
             </div>
           </div>

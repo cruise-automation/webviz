@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { flatten, groupBy } from "lodash";
 import memoizeWeak from "memoize-weak";
 import { type Time } from "rosbag";
 
@@ -19,23 +20,31 @@ import type {
   GetMessagesTopics,
   InitializationResult,
   DataProvider,
+  TopicMapping,
 } from "webviz-core/src/dataProviders/types";
-import filterMap from "webviz-core/src/filterMap";
-import type { Message, Progress, Topic } from "webviz-core/src/players/types";
+import type { Message, Progress } from "webviz-core/src/players/types";
 
 export default class RenameDataProvider implements DataProvider {
   _provider: DataProvider;
-  _prefix: string;
+  _topicMapping: TopicMapping;
+  // Note: in the player (and parent data provider), topics /foo and /some_prefix/foo might both map
+  // to the topic /foo in the child data provider, depending on the contents of _topicMapping.
+  _childToParentTopicMapping: { [string]: string[] } = {};
+  _parentToChildTopicMapping: { [string]: string } = {};
 
-  constructor(args: {| prefix?: string |}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor(
+    args: {| topicMapping: TopicMapping |},
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to RenameDataProvider: ${children.length}`);
     }
-    if (args.prefix && !args.prefix.startsWith("/")) {
-      throw new Error(`Prefix must have a leading forward slash: ${JSON.stringify(args.prefix)}`);
+    if (!Object.keys(args.topicMapping).every((prefix) => prefix.length === 0 || prefix.startsWith("/"))) {
+      throw new Error(`Prefix must have a leading forward slash: ${JSON.stringify(Object.keys(args.topicMapping))}`);
     }
     this._provider = getDataProvider(children[0]);
-    this._prefix = args.prefix || "";
+    this._topicMapping = args.topicMapping;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
@@ -52,10 +61,25 @@ export default class RenameDataProvider implements DataProvider {
     });
     const { messageDefinitions } = result;
 
-    const convertTopicNameKey = (objWithTopicNameKeys) => {
+    // Initialize topic mappings.
+    Object.keys(this._topicMapping).forEach((prefix) => {
+      const excludedTopics = new Set(this._topicMapping[prefix].excludeTopics);
+      result.topics.forEach((topic) => {
+        if (!excludedTopics.has(topic.name)) {
+          const parentTopicName = `${prefix}${topic.name}`;
+          this._childToParentTopicMapping[topic.name] = this._childToParentTopicMapping[topic.name] ?? [];
+          this._childToParentTopicMapping[topic.name].push(parentTopicName);
+          this._parentToChildTopicMapping[parentTopicName] = topic.name;
+        }
+      });
+    });
+
+    const convertTopicNameKey = (objWithChildTopicNameKeys) => {
       const topicKeyResult = {};
-      for (const topicName of Object.keys(objWithTopicNameKeys)) {
-        topicKeyResult[`${this._prefix}${topicName}`] = objWithTopicNameKeys[topicName];
+      for (const childTopicName of Object.keys(objWithChildTopicNameKeys)) {
+        this._childToParentTopicMapping[childTopicName].forEach((parentTopicName) => {
+          topicKeyResult[parentTopicName] = objWithChildTopicNameKeys[childTopicName];
+        });
       }
       return topicKeyResult;
     };
@@ -79,14 +103,18 @@ export default class RenameDataProvider implements DataProvider {
 
     return {
       ...result,
-      topics: filterMap(result.topics, (topic: Topic) => ({
-        // Only map fields that we know are correctly mapped. Don't just splat in `...topic` here
-        // because we might miss an important mapping!
-        name: `${this._prefix}${topic.name}`,
-        originalTopic: topic.name,
-        datatype: topic.datatype, // TODO(JP): We might want to map datatypes with a prefix in the future, to avoid collisions.
-        numMessages: topic.numMessages,
-      })),
+      topics: flatten(
+        result.topics.map((topic) =>
+          this._childToParentTopicMapping[topic.name].map((parentTopicName) => ({
+            // Only map fields that we know are correctly mapped. Don't just splat in `...topic` here
+            // because we might miss an important mapping!
+            name: parentTopicName,
+            originalTopic: topic.name,
+            datatype: topic.datatype, // TODO(JP): We might want to map datatypes with a prefix in the future, to avoid collisions.
+            numMessages: topic.numMessages,
+          }))
+        )
+      ),
       messageDefinitions: newMessageDefinitions,
     };
   }
@@ -95,33 +123,56 @@ export default class RenameDataProvider implements DataProvider {
     return this._provider.close();
   }
 
-  _mapMessage = (message: Message) => ({
-    // Only map fields that we know are correctly mapped. Don't just splat in `...message` here
-    // because we might miss an important mapping!
-    topic: `${this._prefix}${message.topic}`,
-    receiveTime: message.receiveTime,
-    message: message.message,
-  });
+  _mapMessages = (messages: $ReadOnlyArray<Message>, childTopicToParentTopics: { [string]: string[] }) => {
+    const ret = [];
+    for (const message of messages) {
+      for (const parentTopic of childTopicToParentTopics[message.topic]) {
+        ret.push({
+          // Only map fields that we know are correctly mapped. Don't just splat in `...message` here
+          // because we might miss an important mapping!
+          topic: parentTopic,
+          receiveTime: message.receiveTime,
+          message: message.message,
+        });
+      }
+    }
+    return ret;
+  };
 
   async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     const childTopics = {};
+    const requestedChildTopicsToParentTopicsByType = {
+      parsedMessages: {},
+      rosBinaryMessages: {},
+      bobjects: {},
+    };
     for (const type of MESSAGE_FORMATS) {
+      const requestedChildTopicsToParentTopics = requestedChildTopicsToParentTopicsByType[type];
+      if (topics[type] == null) {
+        childTopics[type] = null;
+        continue;
+      }
       if (topics[type]) {
-        childTopics[type] = topics[type].map((topic) => {
-          if (!topic.startsWith(this._prefix)) {
-            throw new Error("RenameDataProvider#getMessages called with topic that doesn't match prefix");
-          }
-          return topic.slice(this._prefix.length);
+        topics[type].forEach((parentTopicName) => {
+          const childTopicName = this._parentToChildTopicMapping[parentTopicName];
+          requestedChildTopicsToParentTopics[childTopicName] = requestedChildTopicsToParentTopics[childTopicName] ?? [];
+          requestedChildTopicsToParentTopics[childTopicName].push(parentTopicName);
         });
       }
+      childTopics[type] = Object.keys(requestedChildTopicsToParentTopics);
     }
     const messages = await this._provider.getMessages(start, end, childTopics);
     const { parsedMessages, rosBinaryMessages, bobjects } = messages;
 
+    // If a child topic maps to several parent topics, only return messages for requested parent
+    // topics.
     return {
-      parsedMessages: parsedMessages && parsedMessages.map(this._mapMessage),
-      rosBinaryMessages: rosBinaryMessages && rosBinaryMessages.map(this._mapMessage),
-      bobjects: bobjects && bobjects.map(this._mapMessage),
+      parsedMessages:
+        parsedMessages && this._mapMessages(parsedMessages, requestedChildTopicsToParentTopicsByType.parsedMessages),
+      rosBinaryMessages:
+        rosBinaryMessages &&
+        this._mapMessages(rosBinaryMessages, requestedChildTopicsToParentTopicsByType.rosBinaryMessages),
+      bobjects: bobjects && this._mapMessages(bobjects, requestedChildTopicsToParentTopicsByType.bobjects),
     };
   }
 
@@ -141,8 +192,15 @@ export default class RenameDataProvider implements DataProvider {
       }
 
       const messagesByTopic = {};
-      for (const topicName of Object.keys(block.messagesByTopic)) {
-        messagesByTopic[`${this._prefix}${topicName}`] = block.messagesByTopic[topicName].map(this._mapMessage);
+      for (const childTopicName of Object.keys(block.messagesByTopic)) {
+        const childMessages = block.messagesByTopic[childTopicName];
+        // Even if no messages on this topic are present in this block, we need to signal that it
+        // has loaded with an empty array.
+        this._childToParentTopicMapping[childTopicName].forEach((parentTopic) => {
+          messagesByTopic[parentTopic] = [];
+        });
+        const parentMessages = this._mapMessages(childMessages, this._childToParentTopicMapping);
+        Object.assign(messagesByTopic, groupBy(parentMessages, "topic"));
       }
       return { messagesByTopic, sizeInBytes: block.sizeInBytes };
     }

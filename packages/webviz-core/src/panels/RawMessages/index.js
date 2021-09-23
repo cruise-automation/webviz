@@ -58,7 +58,7 @@ import {
   isArrayView,
   isBobject,
 } from "webviz-core/src/util/binaryObjects";
-import { jsonTreeTheme, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { jsonTreeTheme, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
 export const CUSTOM_METHOD = "custom";
@@ -144,9 +144,9 @@ function RawMessages(props: Props) {
     useLatestMessageDataItem(topicPath, "bobjects", true),
   ];
 
-  const otherSourceTopic = topicName.startsWith(SECOND_SOURCE_PREFIX)
-    ? topicName.replace(SECOND_SOURCE_PREFIX, "")
-    : `${SECOND_SOURCE_PREFIX}${topicName}`;
+  const otherSourceTopic = topicName.startsWith($WEBVIZ_SOURCE_2)
+    ? topicName.replace($WEBVIZ_SOURCE_2, "")
+    : `${$WEBVIZ_SOURCE_2}${topicName}`;
   const inOtherSourceDiffMode = diffEnabled && diffMethod === OTHER_SOURCE_METHOD;
   const diffTopicObj = useLatestMessageDataItem(
     diffEnabled ? (inOtherSourceDiffMode ? otherSourceTopic : diffTopicPath) : "",
@@ -384,6 +384,7 @@ function RawMessages(props: Props) {
                 if (
                   val != null &&
                   typeof val === "object" &&
+                  (!Array.isArray(val) && !ArrayBuffer.isView(val)) &&
                   Object.keys(val).length === 1 &&
                   diffLabelTexts.includes(Object.keys(val)[0])
                 ) {

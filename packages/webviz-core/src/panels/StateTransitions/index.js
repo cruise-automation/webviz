@@ -309,7 +309,7 @@ const StateTransitions = (props: Props) => {
                 const dataPoint: DataPoint = { x, y };
                 const showDatalabel = previousValue === undefined || previousValue !== value;
                 // Use "auto" here so that the datalabels library can clip datalabels if they overlap.
-                dataItem.datalabels.display.unshift(showDatalabel ? "auto" : false);
+                dataItem.datalabels.display.unshift(showDatalabel ? "auto" : undefined);
                 if (showDatalabel) {
                   dataPoint.label = label;
                   dataPoint.labelColor = color;

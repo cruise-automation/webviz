@@ -20,7 +20,7 @@ import {
 } from "./fixture";
 import RawMessages, { CUSTOM_METHOD, PREV_MSG_METHOD, OTHER_SOURCE_METHOD } from "webviz-core/src/panels/RawMessages";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 const noDiffConfig = { diffMethod: "custom", diffTopicPath: "", diffEnabled: false, showFullMessageForDiff: false };
 const diffConfig = {
@@ -262,7 +262,7 @@ storiesOf("<RawMessages>", module)
       <PanelSetup fixture={fixture} style={{ width: 350 }} onMount={expandAll}>
         <RawMessages
           config={{
-            topicPath: `${SECOND_SOURCE_PREFIX}/foo`,
+            topicPath: `${$WEBVIZ_SOURCE_2}/foo`,
             diffMethod: OTHER_SOURCE_METHOD,
             diffTopicPath: "",
             diffEnabled: true,

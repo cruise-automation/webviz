@@ -9,7 +9,7 @@
 import { sortBy, truncate } from "lodash";
 import type { Time } from "rosbag";
 
-import { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
+import { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/useDiagnostics";
 import type { Header } from "webviz-core/src/types/Messages";
 import fuzzyFilter from "webviz-core/src/util/fuzzyFilter";
 

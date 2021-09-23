@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { sortedIndexBy } from "lodash";
-import { type Node } from "react";
 
 import {
   type DiagnosticStatusArrayMsg,
@@ -31,11 +30,6 @@ export type DiagnosticAutocompleteEntry = {|
 export type DiagnosticsBuffer = {|
   diagnosticsByNameByTrimmedHardwareId: Map<string, DiagnosticsById>,
   sortedAutocompleteEntries: DiagnosticAutocompleteEntry[],
-|};
-
-type Props = {|
-  children: (DiagnosticsBuffer) => Node,
-  topic: string,
 |};
 
 // Returns whether the buffer has been modified
@@ -110,15 +104,10 @@ export function defaultDiagnosticsBuffer(): DiagnosticsBuffer {
   };
 }
 
-export function useDiagnostics(topic: string): DiagnosticsBuffer {
+export default function useDiagnostics(topic: string): DiagnosticsBuffer {
   return PanelAPI.useMessageReducer<DiagnosticsBuffer>({
     topics: [topic],
     restore: defaultDiagnosticsBuffer,
     addMessages,
   });
-}
-
-export default function DiagnosticsHistory({ children, topic }: Props) {
-  const diagnostics = useDiagnostics(topic);
-  return children(diagnostics);
 }

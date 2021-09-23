@@ -5,12 +5,12 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
 
 import delay from "webviz-core/shared/delay";
 import Flex from "webviz-core/src/components/Flex";
 import ThreeDimensionalViz from "webviz-core/src/panels/ThreeDimensionalViz";
+import storiesWithEventsOf from "webviz-core/src/panels/ThreeDimensionalViz/stories/storiesWithEventsOf";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { SExpectedResult } from "webviz-core/src/stories/storyHelpers";
 
@@ -44,7 +44,7 @@ const LayoutStory = ({ onFirstMount, perspective }) => {
   );
 };
 
-storiesOf("<3DViz> / Layout", module)
+storiesWithEventsOf("<3DViz> / Layout", module)
   .addParameters({ screenshot: { delay: 500 } })
   .add("enables height when enabling 3D camera perspective", () => {
     const onSaveConfig = () => {};

@@ -6,13 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 export const fixture = {
   topics: [
     { name: "/msgs/big_topic", datatype: "msgs/big_topic" },
     { name: "/foo", datatype: "std_msgs/String" },
-    { name: `${SECOND_SOURCE_PREFIX}/foo`, datatype: "std_msgs/String" },
+    { name: `${$WEBVIZ_SOURCE_2}/foo`, datatype: "std_msgs/String" },
     { name: "/baz/num", datatype: "baz/num" },
     { name: "/baz/text", datatype: "baz/text" },
     { name: "/baz/array", datatype: "baz/array" },
@@ -61,9 +61,9 @@ export const fixture = {
         },
       },
     ],
-    [`${SECOND_SOURCE_PREFIX}/foo`]: [
+    [`${$WEBVIZ_SOURCE_2}/foo`]: [
       {
-        topic: `${SECOND_SOURCE_PREFIX}/foo`,
+        topic: `${$WEBVIZ_SOURCE_2}/foo`,
         receiveTime: { sec: 123, nsec: 456789011 },
         message: {
           some_array: ["a", "f", "n", "o", "p"],

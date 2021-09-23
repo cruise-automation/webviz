@@ -19,7 +19,7 @@ import { makeTransformElement } from "webviz-core/src/panels/ThreeDimensionalViz
 import type { TypedMessage } from "webviz-core/src/players/types";
 import type { BinaryTfMessage, BinaryTransformStamped } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
-import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $TF_STATIC, $TF } from "webviz-core/src/util/globalConstants";
 import { toSec } from "webviz-core/src/util/time";
 
 const {
@@ -55,7 +55,7 @@ type FrameIndex = { [frameId: string]: BinaryTransformStamped[][] };
 const getBlockFrameIndex = (blocks: BlocksForTopics, framesToIgnore: Set<string>): FrameIndex => {
   const ret = {};
   for (const block of blocks) {
-    [block[TRANSFORM_TOPIC], block[TRANSFORM_STATIC_TOPIC]]
+    [block[$TF], block[$TF_STATIC]]
       .filter(Boolean)
       .map((topicBlock) => getTransformElementBlock(topicBlock, framesToIgnore))
       .forEach((processedBlock) => {
@@ -110,7 +110,7 @@ export const findNearestTransformElementInBlocks = (
 ): TransformElement => makeTransformElement(deepParse(findNearestTransformInBlocks(frameBlocks, timeSecs)));
 
 const useDynamicTransformsNear = (time: Time, framesToIgnore: Set<string>): $ReadOnlyArray<TransformElement> => {
-  const blocks = useBlocksByTopicWithFallback([TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC]);
+  const blocks = useBlocksByTopicWithFallback([$TF_STATIC, $TF]);
   const blockFrameIndex = React.useMemo(() => getBlockFrameIndex(blocks, framesToIgnore), [blocks, framesToIgnore]);
   const timeSecs = toSec(time);
   return React.useMemo(

@@ -12,7 +12,7 @@ import styled from "styled-components";
 import TextHighlight from "./TextHighlight";
 import TextMiddleTruncate from "./TextMiddleTruncate";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // Extra text length to make sure text such as `1000 visible topics` don't get truncated.
 const DEFAULT_END_TEXT_LENGTH = 22;
@@ -69,7 +69,7 @@ export default function NodeName({
 
   if (searchText) {
     let topicNameToShow = topicName;
-    const prefixedTopicName = `${SECOND_SOURCE_PREFIX}${topicName}`;
+    const prefixedTopicName = `${$WEBVIZ_SOURCE_2}${topicName}`;
 
     // Show feature topic if base topicName does not include searchText and it's still a match.
     if (topicName && !topicName.includes(searchText) && prefixedTopicName.includes(searchText)) {

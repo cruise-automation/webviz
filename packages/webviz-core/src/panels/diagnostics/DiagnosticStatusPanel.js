@@ -10,9 +10,9 @@ import { sortBy } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 
-import DiagnosticsHistory, { type DiagnosticAutocompleteEntry } from "./DiagnosticsHistory";
 import DiagnosticStatus from "./DiagnosticStatus";
 import helpContent from "./DiagnosticStatusPanel.help.md";
+import useDiagnostics, { type DiagnosticAutocompleteEntry } from "./useDiagnostics";
 import { getDisplayName, trimHardwareId } from "./util";
 import Autocomplete from "webviz-core/src/components/Autocomplete";
 import EmptyState from "webviz-core/src/components/EmptyState";
@@ -22,7 +22,7 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import type { Topic } from "webviz-core/src/players/types";
 import type { PanelConfig } from "webviz-core/src/types/panels";
-import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $DIAGNOSTICS } from "webviz-core/src/util/globalConstants";
 
 export type Config = {
   selectedHardwareId?: ?string,
@@ -39,12 +39,12 @@ type Props = {
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 };
 // component to display a single diagnostic status from list
-class DiagnosticStatusPanel extends React.Component<Props> {
-  static panelType = "DiagnosticStatusPanel";
-  static defaultConfig: Config = { topicToRender: DIAGNOSTIC_TOPIC, collapsedSections: [] };
-
-  _onSelect = (value: string, entry: DiagnosticAutocompleteEntry, autocomplete: Autocomplete) => {
-    const { saveConfig, config } = this.props;
+function DiagnosticStatusPanel({ config, saveConfig, topics, openSiblingPanel }: Props) {
+  const onSelect = React.useCallback((
+    value: string,
+    entry: DiagnosticAutocompleteEntry,
+    autocomplete: Autocomplete
+  ) => {
     const hasNewHardwareId = config.selectedHardwareId !== entry.hardware_id;
     const hasNewName = config.selectedName !== entry.name;
     saveConfig({
@@ -53,103 +53,83 @@ class DiagnosticStatusPanel extends React.Component<Props> {
       collapsedSections: hasNewHardwareId || hasNewName ? [] : config.collapsedSections,
     });
     autocomplete.blur();
-  };
+  }, [config, saveConfig]);
 
-  renderTopicToRenderMenu = (topics) => {
-    const {
-      config: { topicToRender },
-      saveConfig,
-    } = this.props;
-    return (
+  const { selectedHardwareId, selectedName, splitFraction, topicToRender, collapsedSections = [] } = config;
+  const topicToRenderMenu = React.useMemo(
+    () => (
       <TopicToRenderMenu
         topicToRender={topicToRender}
         onChange={(newTopicToRender) => saveConfig({ topicToRender: newTopicToRender })}
         topics={topics}
         singleTopicDatatype={"diagnostic_msgs/DiagnosticArray"}
-        defaultTopicToRender={DIAGNOSTIC_TOPIC}
+        defaultTopicToRender={$DIAGNOSTICS}
       />
-    );
-  };
+    ),
+    [topics, topicToRender, saveConfig]
+  );
 
-  render() {
-    const { openSiblingPanel, config, saveConfig } = this.props;
-    const { selectedHardwareId, selectedName, splitFraction, topicToRender, collapsedSections = [] } = config;
-
-    const selectedDisplayName =
-      selectedHardwareId != null ? getDisplayName(selectedHardwareId, selectedName || "") : null;
-    return (
-      <Flex scroll scrollX col>
-        <DiagnosticsHistory topic={topicToRender}>
-          {(buffer) => {
-            let selectedItem; // selected by name+hardware_id
-            let selectedItems; // [selectedItem], or all diagnostics with selectedHardwareId if no name is selected
-            if (selectedHardwareId != null) {
-              const items = [];
-              const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(
-                trimHardwareId(selectedHardwareId)
-              );
-              if (diagnosticsByName != null) {
-                for (const diagnostic of diagnosticsByName.values()) {
-                  if (selectedName == null || selectedName === diagnostic.status.name) {
-                    items.push(diagnostic);
-                    if (selectedName != null) {
-                      selectedItem = diagnostic;
-                    }
-                  }
-                }
-              }
-              selectedItems = items;
-            }
-
-            return (
-              <>
-                <PanelToolbar
-                  floating
-                  helpContent={helpContent}
-                  additionalIcons={this.renderTopicToRenderMenu(this.props.topics)}>
-                  <Autocomplete
-                    placeholder={selectedDisplayName ?? "Select a diagnostic"}
-                    items={buffer.sortedAutocompleteEntries}
-                    getItemText={(entry) => entry.displayName}
-                    getItemValue={(entry) => entry.id}
-                    onSelect={this._onSelect}
-                    selectedItem={selectedItem}
-                    inputStyle={{ height: "100%" }}
-                  />
-                </PanelToolbar>
-                {selectedItems && selectedItems.length ? (
-                  <Flex col scroll>
-                    {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((item) => (
-                      <DiagnosticStatus
-                        key={item.id}
-                        info={item}
-                        splitFraction={splitFraction}
-                        onChangeSplitFraction={(newSplitFraction) =>
-                          this.props.saveConfig({ splitFraction: newSplitFraction })
-                        }
-                        topicToRender={topicToRender}
-                        openSiblingPanel={openSiblingPanel}
-                        saveConfig={saveConfig}
-                        collapsedSections={collapsedSections}
-                      />
-                    ))}
-                  </Flex>
-                ) : selectedDisplayName ? (
-                  <EmptyState>
-                    Waiting for diagnostics from <br />
-                    <br />
-                    <code>{selectedDisplayName}</code>
-                  </EmptyState>
-                ) : (
-                  <EmptyState>No diagnostic node selected</EmptyState>
-                )}
-              </>
-            );
-          }}
-        </DiagnosticsHistory>
-      </Flex>
-    );
+  const selectedDisplayName =
+    selectedHardwareId != null ? getDisplayName(selectedHardwareId, selectedName || "") : null;
+  const buffer = useDiagnostics(topicToRender);
+  let selectedItem; // selected by name+hardware_id
+  let selectedItems; // [selectedItem], or all diagnostics with selectedHardwareId if no name is selected
+  if (selectedHardwareId != null) {
+    const items = [];
+    const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(trimHardwareId(selectedHardwareId));
+    if (diagnosticsByName != null) {
+      for (const diagnostic of diagnosticsByName.values()) {
+        if (selectedName == null || selectedName === diagnostic.status.name) {
+          items.push(diagnostic);
+          if (selectedName != null) {
+            selectedItem = diagnostic;
+          }
+        }
+      }
+    }
+    selectedItems = items;
   }
+  return (
+    <Flex scroll scrollX col>
+      <PanelToolbar floating helpContent={helpContent} additionalIcons={topicToRenderMenu}>
+        <Autocomplete
+          placeholder={selectedDisplayName ?? "Select a diagnostic"}
+          items={buffer.sortedAutocompleteEntries}
+          getItemText={(entry) => entry.displayName}
+          getItemValue={(entry) => entry.id}
+          onSelect={onSelect}
+          selectedItem={selectedItem}
+          inputStyle={{ height: "100%" }}
+        />
+      </PanelToolbar>
+      {selectedItems && selectedItems.length ? (
+        <Flex col scroll>
+          {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((item) => (
+            <DiagnosticStatus
+              key={item.id}
+              info={item}
+              splitFraction={splitFraction}
+              onChangeSplitFraction={(newSplitFraction) => saveConfig({ splitFraction: newSplitFraction })}
+              topicToRender={topicToRender}
+              openSiblingPanel={openSiblingPanel}
+              saveConfig={saveConfig}
+              collapsedSections={collapsedSections}
+            />
+          ))}
+        </Flex>
+      ) : selectedDisplayName ? (
+        <EmptyState>
+          Waiting for diagnostics from <br />
+          <br />
+          <code>{selectedDisplayName}</code>
+        </EmptyState>
+      ) : (
+        <EmptyState>No diagnostic node selected</EmptyState>
+      )}
+    </Flex>
+  );
 }
+DiagnosticStatusPanel.panelType = "DiagnosticStatusPanel";
+DiagnosticStatusPanel.defaultConfig = ({ topicToRender: $DIAGNOSTICS, collapsedSections: [] }: Config);
 
 export default hot(Panel<Config>(DiagnosticStatusPanel));

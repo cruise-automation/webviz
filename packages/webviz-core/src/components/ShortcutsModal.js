@@ -16,8 +16,9 @@ import {
   ARROW_SEEK_BIG_MS,
   ARROW_SEEK_DEFAULT_MS,
   ARROW_SEEK_SMALL_MS,
+  ARROW_SEEK_TINY_MS,
 } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
-import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
+import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type PanelListItem } from "webviz-core/src/panels/PanelList/index";
 
@@ -46,9 +47,11 @@ const EXISTING_CONFIG = [
       { description: "Pause or play", keys: ["Space"] },
       { description: `Seek forward ${ARROW_SEEK_DEFAULT_MS}ms`, keys: ["⇢"] },
       { description: `Seek forward ${ARROW_SEEK_SMALL_MS}ms`, keys: ["⇧", "⇢"] },
+      { description: `Seek forward ${ARROW_SEEK_TINY_MS}ms`, keys: ["⌘", "⇢"] },
       { description: `Seek forward ${ARROW_SEEK_BIG_MS}ms`, keys: ["⌥", "⇢"] },
       { description: `Seek backward ${ARROW_SEEK_DEFAULT_MS}ms`, keys: ["⇠"] },
       { description: `Seek backward ${ARROW_SEEK_SMALL_MS}ms`, keys: ["⇧", "⇠"] },
+      { description: `Seek backward ${ARROW_SEEK_TINY_MS}ms`, keys: ["⌘", "⇠"] },
       { description: `Seek backward ${ARROW_SEEK_BIG_MS}ms`, keys: ["⌥", "⇠"] },
     ],
   },
@@ -83,7 +86,7 @@ export default function ShortcutsModal({ history }: Props) {
   }, []);
 
   return (
-    <RenderToBodyComponent>
+    <RenderToBodyPortal>
       <HelpModal
         rootStyle={{ maxWidth: 480, minWidth: 320 }}
         onRequestClose={() => history.push(`/${window.location.search}`)}>
@@ -99,6 +102,6 @@ export default function ShortcutsModal({ history }: Props) {
           </React.Fragment>
         ))}
       </HelpModal>
-    </RenderToBodyComponent>
+    </RenderToBodyPortal>
   );
 }

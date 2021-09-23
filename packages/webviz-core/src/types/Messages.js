@@ -427,3 +427,9 @@ export type RadarPointCluster = $ReadOnly<{
   header: Header,
   points: RadarPoint[],
 }>;
+
+export type WebvizTickProps = $ReadOnly<{|
+  stamp: Time,
+  text: string, // markdown
+  color: Color,
+|}>;

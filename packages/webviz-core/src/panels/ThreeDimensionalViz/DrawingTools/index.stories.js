@@ -12,6 +12,7 @@ import { PolygonBuilder } from "regl-worldview";
 
 import DrawingTools, { POLYGON_TAB_TYPE } from "./index";
 import { pointsToPolygons } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";
+import { useDelayedEffect } from "webviz-core/src/util/hooks";
 
 const polygons = pointsToPolygons([
   [{ x: 1, y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }],
@@ -36,15 +37,33 @@ const DEFAULT_PROPS = {
   updatePanelConfig: () => {},
 };
 
-storiesOf("<DrawingTools>", module).add("Polygon", () => {
-  return (
-    <div style={containerStyle}>
-      <div style={{ margin: 8 }}>
-        <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
+storiesOf("<DrawingTools>", module)
+  .add("Polygon", () => {
+    return (
+      <div style={containerStyle}>
+        <div style={{ margin: 8 }}>
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
+        </div>
+        <div style={{ margin: 8 }}>
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="json" />
+        </div>
       </div>
-      <div style={{ margin: 8 }}>
-        <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="json" />
+    );
+  })
+  .add("Polygon clearing", () => {
+    // Click the clear button
+    useDelayedEffect(
+      React.useCallback(() => {
+        Array.from(document.querySelectorAll("button"))
+          .filter((el) => el.innerText === "Clear")[0]
+          .click();
+      }, [])
+    );
+    return (
+      <div style={containerStyle}>
+        <div style={{ margin: 8 }}>
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  });

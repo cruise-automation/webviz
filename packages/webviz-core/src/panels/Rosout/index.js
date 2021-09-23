@@ -32,7 +32,7 @@ import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import { cast, type ReflectiveMessage, type Topic } from "webviz-core/src/players/types";
 import { type Header } from "webviz-core/src/types/Messages";
 import clipboard from "webviz-core/src/util/clipboard";
-import { ROSOUT_TOPIC } from "webviz-core/src/util/globalConstants";
+import { $ROSOUT } from "webviz-core/src/util/globalConstants";
 
 // Remove creatable warning https://github.com/JedWatson/react-select/issues/2181
 class Creatable extends React.Component<{}, {}> {
@@ -104,7 +104,7 @@ export const getShouldDisplayMsg = (
 };
 
 class RosoutPanel extends PureComponent<Props> {
-  static defaultConfig = { searchTerms: [], minLogLevel: 1, topicToRender: ROSOUT_TOPIC };
+  static defaultConfig = { searchTerms: [], minLogLevel: 1, topicToRender: $ROSOUT };
   static panelType = "RosOut";
 
   _onNodeFilterChange = (selectedOptions: Option[]) => {
@@ -201,7 +201,7 @@ class RosoutPanel extends PureComponent<Props> {
         onChange={(topicToRender) => this.props.saveConfig({ ...this.props.config, topicToRender })}
         topics={topics}
         singleTopicDatatype="rosgraph_msgs/Log"
-        defaultTopicToRender={ROSOUT_TOPIC}
+        defaultTopicToRender={$ROSOUT}
       />
     );
 

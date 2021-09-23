@@ -14,6 +14,9 @@ import { setGlobalVariables, overwriteGlobalVariables } from "webviz-core/src/ac
 
 export type GlobalVariables = { [string]: any };
 
+// Keep this in sync with the variable syntax in MessagePathSyntax's grammar.ne:
+const GLOBAL_VARIABLE_REGEX = /\$\{([a-zA-Z0-9_]+)\}/g;
+
 export default function useGlobalVariables(): {|
   globalVariables: GlobalVariables,
   setGlobalVariables: (GlobalVariables) => void,
@@ -25,4 +28,14 @@ export default function useGlobalVariables(): {|
     dispatch,
   ]);
   return { ...actionCreators, globalVariables };
+}
+
+// Replaces any text matching a ${global_variable} with the current variable value
+export function useStringWithInlinedGlobalVariables(inputString: string) {
+  const { globalVariables } = useGlobalVariables();
+  const stringWithInlinedVariables = useMemo(
+    () => inputString.replace(GLOBAL_VARIABLE_REGEX, (keyExpr, key) => globalVariables[key] || ""),
+    [globalVariables, inputString]
+  );
+  return stringWithInlinedVariables;
 }

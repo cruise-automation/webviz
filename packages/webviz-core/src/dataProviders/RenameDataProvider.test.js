@@ -16,7 +16,7 @@ import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // reusable providers
 function getProvider() {
@@ -36,30 +36,30 @@ function getProvider() {
   });
 }
 
-function getRenameDataProvider(provider, prefix) {
+function getRenameDataProvider(provider, topicMapping) {
   // $FlowFixMe: This is not how the getProvider callback is meant to work.
-  return new RenameDataProvider({ prefix }, [provider], (child) => child);
+  return new RenameDataProvider({ topicMapping }, [provider], (child) => child);
 }
+
+const topicMappingForPrefix = (prefix: string) => ({ [prefix]: { excludeTopics: [] } });
 
 describe("RenameDataProvider", () => {
   describe("error handling", () => {
     it("throws if a prefix does not have a leading forward slash", () => {
-      expect(() => getRenameDataProvider(getProvider(), "foo")).toThrow();
+      expect(() => getRenameDataProvider(getProvider(), topicMappingForPrefix("foo"))).toThrow();
     });
   });
 
   describe("features", () => {
     it("renames initialization data", async () => {
-      const provider = getRenameDataProvider(getProvider(), SECOND_SOURCE_PREFIX);
+      const provider = getRenameDataProvider(getProvider(), topicMappingForPrefix($WEBVIZ_SOURCE_2));
       expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
         start: { nsec: 0, sec: 101 },
         end: { nsec: 0, sec: 103 },
-        topics: [
-          { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic1`, originalTopic: "/some_topic1" },
-        ],
+        topics: [{ datatype: "some_datatype", name: `${$WEBVIZ_SOURCE_2}/some_topic1`, originalTopic: "/some_topic1" }],
         messageDefinitions: {
           type: "raw",
-          messageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: "int32 value" },
+          messageDefinitionsByTopic: { [`${$WEBVIZ_SOURCE_2}/some_topic1`]: "int32 value" },
         },
         numMessages: undefined,
         providesParsedMessages: true,
@@ -69,18 +69,16 @@ describe("RenameDataProvider", () => {
     it("renames initialization data - parsed message definitions", async () => {
       const baseProvider = getProvider();
       baseProvider.parsedMessageDefinitionsByTopic = { "/some_topic1": [] };
-      const provider = getRenameDataProvider(baseProvider, SECOND_SOURCE_PREFIX);
+      const provider = getRenameDataProvider(baseProvider, topicMappingForPrefix($WEBVIZ_SOURCE_2));
       expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
         start: { nsec: 0, sec: 101 },
         end: { nsec: 0, sec: 103 },
-        topics: [
-          { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic1`, originalTopic: "/some_topic1" },
-        ],
+        topics: [{ datatype: "some_datatype", name: `${$WEBVIZ_SOURCE_2}/some_topic1`, originalTopic: "/some_topic1" }],
         messageDefinitions: {
           type: "parsed",
-          messageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: "int32 value" },
+          messageDefinitionsByTopic: { [`${$WEBVIZ_SOURCE_2}/some_topic1`]: "int32 value" },
           datatypes: {},
-          parsedMessageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: [] },
+          parsedMessageDefinitionsByTopic: { [`${$WEBVIZ_SOURCE_2}/some_topic1`]: [] },
         },
         numMessages: undefined,
         providesParsedMessages: true,
@@ -88,19 +86,44 @@ describe("RenameDataProvider", () => {
     });
 
     it("adds the prefix to streamed message topics", async () => {
-      const provider = getRenameDataProvider(getProvider(), SECOND_SOURCE_PREFIX);
+      const provider = getRenameDataProvider(getProvider(), topicMappingForPrefix($WEBVIZ_SOURCE_2));
       await provider.initialize(mockExtensionPoint().extensionPoint);
       const result = await provider.getMessages(
         { sec: 101, nsec: 0 },
         { sec: 103, nsec: 0 },
-        { parsedMessages: [`${SECOND_SOURCE_PREFIX}/some_topic1`] }
+        { parsedMessages: [`${$WEBVIZ_SOURCE_2}/some_topic1`] }
       );
       expect(result.bobjects).toBe(undefined);
       expect(result.rosBinaryMessages).toBe(undefined);
       expect(result.parsedMessages).toEqual([
-        { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
-        { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
+        { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${$WEBVIZ_SOURCE_2}/some_topic1` },
+        { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${$WEBVIZ_SOURCE_2}/some_topic1` },
       ]);
+    });
+
+    it("handles more complex topping mappings", async () => {
+      const topicsForTopicMapping = async (topicMapping) => {
+        const provider = getRenameDataProvider(getProvider(), topicMapping);
+        const result = await provider.initialize(mockExtensionPoint().extensionPoint);
+        return result.topics.map(({ name }) => name);
+      };
+
+      const alwaysPrefixMapping = {
+        "": { excludeTopics: ["/some_topic1"] },
+        "/prefix": { excludeTopics: ["/other_topic"] },
+      };
+      expect(await topicsForTopicMapping(alwaysPrefixMapping)).toEqual(["/prefix/some_topic1"]);
+      const neverPrefixMapping = {
+        "": { excludeTopics: ["/other_topic"] },
+        "/prefix": { excludeTopics: ["/some_topic1"] },
+      };
+      expect(await topicsForTopicMapping(neverPrefixMapping)).toEqual(["/some_topic1"]);
+      const ambiguousPrefixMapping = {
+        "": { excludeTopics: [] },
+        "/prefix": { excludeTopics: [] },
+      };
+      // Map child topic to two parent topics: One for each prefix.
+      expect(await topicsForTopicMapping(ambiguousPrefixMapping)).toEqual(["/some_topic1", "/prefix/some_topic1"]);
     });
   });
 
@@ -108,7 +131,7 @@ describe("RenameDataProvider", () => {
     describe("progressCallback", () => {
       it("calls progressCallback with the progress data passed from child provider", async () => {
         const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, "/generic_topic");
+        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
         const extensionPoint = mockExtensionPoint().extensionPoint;
         const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
         await combinedProvider.initialize(extensionPoint);
@@ -160,7 +183,7 @@ describe("RenameDataProvider", () => {
 
       it("preserves block identity across successive calls", async () => {
         const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, "/generic_topic");
+        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
         const extensionPoint = mockExtensionPoint().extensionPoint;
         const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
         await combinedProvider.initialize(extensionPoint);
@@ -189,7 +212,7 @@ describe("RenameDataProvider", () => {
 
       it("can preserve cache identity across successive calls", async () => {
         const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, "/generic_topic");
+        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
         const extensionPoint = mockExtensionPoint().extensionPoint;
         const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
         await combinedProvider.initialize(extensionPoint);

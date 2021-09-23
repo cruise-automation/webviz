@@ -15,6 +15,7 @@ import delay from "./delay";
 import promiseTimeout from "./promiseTimeout";
 import puppeteerConfig from "./puppeteerConfig";
 import ServerLogger from "./ServerLogger";
+import { USER_ERROR_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const log = new ServerLogger(__filename);
 
@@ -112,11 +113,16 @@ export async function runInPage<T>(
     }
     await delay(250); // Occasionally things crash otherwise. See https://github.com/GoogleChrome/puppeteer/issues?q=target+closed
 
-    log.info(`Navigating to URL: ${url}`);
-    await page.goto(url, { waitUntil: "networkidle2", timeout: pageLoadTimeout });
-    await page.waitForFunction(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
+    // Ordering these page calls is particularly tricky because we need some of our code to run after the page loads, but before the data providers spin up.
+    // Make sure we setup the page logging as soon as the page loads, but BEFORE the MessagePipeline code runs so we don't miss any errors thrown there.
+    log.info(`Navigating to URL: ${url}...`);
+    await page.goto(url, { timeout: pageLoadTimeout }); // Don't want for network idle or else the notification handling might not be setup by the time errors occur
 
+    log.info(`Setting up logging...`);
     await setupPageLogging(page, pageOptions);
+
+    log.info(`Waiting for page to finish loading...`);
+    await page.waitForFunction(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
     await setupWebvizLayout(page, layoutOptions);
     return await onPageLoaded(page);
   } catch (error) {
@@ -218,6 +224,22 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
   page.on("error", (error) => {
     onPuppeteerError(error);
   });
+
+  await page.evaluate((_USER_ERROR_PREFIX) => {
+    window.setNotificationHandler((message, details, type, severity) => {
+      if (severity !== "error") {
+        // We can ignore warnings and info messages in automated runs
+        return;
+      }
+      if (type === "user") {
+        console.error(`${(_USER_ERROR_PREFIX: any)} ${message} // ${details}`);
+      } else if (type === "app") {
+        console.error(`[WEBVIZ APPLICATION ERROR] ${details}`);
+      } else {
+        console.error(`Unknown error type! ${type} // ${details}`);
+      }
+    });
+  }, USER_ERROR_PREFIX);
 
   await page.evaluate(() => {
     window.addEventListener("error", (error) => {

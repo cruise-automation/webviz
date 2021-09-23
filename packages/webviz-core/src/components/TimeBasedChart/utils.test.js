@@ -48,6 +48,116 @@ describe("filterDatasets", () => {
     ]);
   });
 
+  it("does not filter out color transition points, even if they are too close to each other", () => {
+    const data = new Array(101).fill().map((_, x) => ({ y: 0, x }));
+    const colors = new Array(101).fill().map((_, x) => {
+      if (x < 12) {
+        return "#AAA";
+      }
+      return "#BBB";
+    });
+    expect(data[0]).toEqual({ y: 0, x: 0 });
+    expect(data[100]).toEqual({ y: 0, x: 100 });
+
+    const datasets = [{ data, label: "1", colors }];
+    const linesToHide = {};
+    expect(filterDatasets(datasets, linesToHide, 10, 10)[0].data.map(({ x }) => x)).toEqual([
+      0,
+      10,
+      12, // this point is where the color transitions, so it should always appear
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+    ]);
+  });
+
+  it("does not filter out background color transition points, even if they are too close to each other", () => {
+    const data = new Array(101).fill().map((_, x) => ({ y: 0, x }));
+    const pointBackgroundColor = new Array(101).fill().map((_, x) => {
+      if (x < 15) {
+        return "#AAA";
+      }
+      return "#BBB";
+    });
+    expect(data[0]).toEqual({ y: 0, x: 0 });
+    expect(data[100]).toEqual({ y: 0, x: 100 });
+
+    const datasets = [{ data, label: "1", pointBackgroundColor }];
+    const linesToHide = {};
+    expect(filterDatasets(datasets, linesToHide, 10, 10)[0].data.map(({ x }) => x)).toEqual([
+      0,
+      10,
+      15, // this point is where the color transitions, so it should always appear
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+    ]);
+  });
+
+  it("does not filter out datalabel transition points, even if they are too close to each other", () => {
+    const data = new Array(101).fill().map((_, x) => ({ y: 0, x }));
+    const display = new Array(101).fill().map((_, x) => {
+      if (x < 17) {
+        return "auto";
+      }
+      return false;
+    });
+    expect(data[0]).toEqual({ y: 0, x: 0 });
+    expect(data[100]).toEqual({ y: 0, x: 100 });
+
+    const datasets = [{ data, label: "1", datalabels: { display } }];
+    const linesToHide = {};
+    expect(filterDatasets(datasets, linesToHide, 10, 10)[0].data.map(({ x }) => x)).toEqual([
+      0,
+      10,
+      17, // this point is where the color transitions, so it should always appear
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+    ]);
+  });
+
+  it("does not filter non-array values for background colors", () => {
+    const data = new Array(101).fill().map((_, x) => ({ y: 0, x }));
+    const pointBackgroundColor = "#AABBCC";
+    expect(data[0]).toEqual({ y: 0, x: 0 });
+    expect(data[100]).toEqual({ y: 0, x: 100 });
+
+    const datasets = [{ data, label: "1", pointBackgroundColor }];
+    const linesToHide = {};
+    expect(filterDatasets(datasets, linesToHide, 10, 10)[0].data.map(({ x }) => x)).toEqual([
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+    ]);
+  });
+
   it("preserves non-adjacent NaNs in line charts", () => {
     const datasets = [
       {

@@ -98,7 +98,7 @@ export function perPanelHooks() {
     VISUALIZATION_MSGS$WEBVIZ_MARKER,
     VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
-    DIAGNOSTIC_TOPIC,
+    $DIAGNOSTICS,
     RADAR_POINT_CLOUD,
     WRAPPED_POINT_CLOUD,
   } = require("webviz-core/src/util/globalConstants");
@@ -131,7 +131,7 @@ export function perPanelHooks() {
       defaultConfig: {
         pinnedIds: [],
         hardwareIdFilter: "",
-        topicToRender: DIAGNOSTIC_TOPIC,
+        topicToRender: $DIAGNOSTICS,
       },
     },
     ImageView: {

@@ -67,6 +67,7 @@ function LayoutToolbar({
   searchText,
   searchTextMatches,
   searchTextOpen,
+  searchTextWithInlinedVariables,
   selectedMatchIndex,
   selectedObject,
   selectedPolygonEditFormat,
@@ -104,6 +105,7 @@ function LayoutToolbar({
           <SearchText
             searchTextOpen={searchTextOpen}
             toggleSearchTextOpen={toggleSearchTextOpen}
+            searchTextWithInlinedVariables={searchTextWithInlinedVariables}
             searchText={searchText}
             setSearchText={setSearchText}
             setSearchTextMatches={setSearchTextMatches}

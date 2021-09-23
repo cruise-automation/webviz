@@ -127,7 +127,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ../types */
 
-/*! ../utils/createPointCloudPositionBuffer */
+/*! ../utils/maybeConvertSphericalCoordinatePointCloudToCartesian */
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
@@ -3141,16 +3141,16 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData.js ***!
   \***********************************************************************************************************/
 
-/*!**************************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/utils/createPointCloudPositionBuffer.js ***!
-  \**************************************************************************************************************/
-
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-reconciler/node_modules/scheduler/cjs/scheduler.production.min.js ***!
   \*******************************************************************************************************************/
 
 /*!************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib?cacheDirectory!./packages/webviz-core/src/panels/ThreeDimensionalViz/Layout/Layout.worker.js ***!
+  \************************************************************************************************************************************/
+
+/*!************************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/utils/maybeConvertSphericalCoordinatePointCloudToCartesian.js ***!
   \************************************************************************************************************************************/
 
 /**

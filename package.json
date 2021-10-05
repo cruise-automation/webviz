@@ -27,7 +27,6 @@
     "@storybook/react": "^5.3.19",
     "autoprefixer": "^9.4.2",
     "babel-core": "^7.0.0-bridge.0",
-    "babel-eslint": "^10.0.1",
     "babel-jest": "^23.4.2",
     "babel-loader": "^8.0.4",
     "case-sensitive-paths-webpack-plugin": "^2.1.2",

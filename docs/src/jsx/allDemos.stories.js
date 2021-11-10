@@ -82,14 +82,9 @@ Object.keys(allDemos).map((demoName) => {
     );
   };
   const hasScreenshotTest = !demosWithoutScreenshotTests.includes(Component);
-  return stories.add(
-    demoName,
-    hasScreenshotTest
-      ? story
-      : addParameters({
-          screenshot: {
-            skip: true,
-          },
-        })(story)
-  );
+  const fullStory = stories.add(demoName, story);
+  if (!hasScreenshotTest) {
+    fullStory.addParameters({ screenshot: { skip: true } });
+  }
+  return fullStory;
 });

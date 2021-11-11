@@ -193,7 +193,7 @@ const vert = `
 
   // per-instance (character) attributes
   attribute vec2 srcOffset;
-  attribute float srcWidth;
+  attribute vec2 srcSize;
   attribute vec2 destOffset;
 
   // per-marker attributes
@@ -205,14 +205,17 @@ const vert = `
   attribute vec4 foregroundColor;
   attribute vec4 backgroundColor;
   attribute vec4 highlightColor;
+  attribute vec4 borderRadius;
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
+  varying vec2 vPosition;
   varying vec2 vTexCoord;
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
+  varying vec4 vBorderRadius;
   varying float vEnableHighlight;
   varying float vBillboard;
 
@@ -237,7 +240,6 @@ const vert = `
     // Scale invariance only works for billboards
     bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
 
-    vec2 srcSize = vec2(srcWidth, fontSize);
     vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
 
     if (!scaleInvariantEnabled) {
@@ -272,11 +274,13 @@ const vert = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
+    vPosition = vec2(position.x, -position.y);
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
     vBackgroundColor = backgroundColor;
     vHighlightColor = highlightColor;
+    vBorderRadius = borderRadius;
     vEnableHighlight = enableHighlight;
     vBillboard = billboard;
   }
@@ -285,6 +289,7 @@ const vert = `
 const frag = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
+
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform float cutoff;
@@ -292,11 +297,13 @@ const frag = `
   uniform float scaleInvariantSize;
   uniform bool isHitmap;
 
+  varying vec2 vPosition;
   varying vec2 vTexCoord;
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
+  varying vec4 vBorderRadius;
   varying float vEnableHighlight;
   varying float vBillboard;
 
@@ -317,6 +324,17 @@ const frag = `
       edgeStep = dist;
     }
 
+    float aliasOffset = 0.0;
+    vec2 positionCentereed = (vPosition * 2. - 1.);
+    vec4 radius = vec4(vBorderRadius);
+    radius.xy = (positionCentereed.x > 0.0) ? radius.xy : radius.zw;
+    radius.x  = (positionCentereed.y > 0.0) ? radius.x  : radius.y;
+
+    vec2 b = vec2(1., 1.);
+    vec2 q = abs(positionCentereed) - b + radius.x;
+    float borderRadius = (min(max(q.x,q.y),0.0) + length(max(q,0.0)) - radius.x);
+    float borderRadiusStep = step(1., 1. - borderRadius + (1. - sign(radius.x)));
+    
     if (isHitmap) {
       // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
       // instead of the actual glyphs. This way we increase the selection range and provide a
@@ -324,8 +342,10 @@ const frag = `
       gl_FragColor = vForegroundColor;
     } else if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
+      gl_FragColor.a *= borderRadiusStep;
     } else if (vEnableBackground > 0.5) {
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
+      gl_FragColor.a *= borderRadiusStep;
     } else {
       gl_FragColor = vForegroundColor;
       gl_FragColor.a *= edgeStep;
@@ -383,13 +403,14 @@ function makeTextCommand(alphabet?: string[]) {
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
         srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
         foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
         backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
         highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
+        borderRadius: (ctx, props) => ({ buffer: props.borderRadius, divisor: 1 }),
         enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
         enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
@@ -423,7 +444,7 @@ function makeTextCommand(alphabet?: string[]) {
       memoizedDrawAtlasTexture(generatedAtlas, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
-      const srcWidths = new Float32Array(estimatedInstances);
+      const srcSizes = new Float32Array(estimatedInstances * 2);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
 
       // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
@@ -432,6 +453,7 @@ function makeTextCommand(alphabet?: string[]) {
       const foregroundColor = new Float32Array(estimatedInstances * 4);
       const backgroundColor = new Float32Array(estimatedInstances * 4);
       const highlightColor = new Float32Array(estimatedInstances * 4);
+      const borderRadius = new Float32Array(estimatedInstances * 4);
       const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
@@ -465,29 +487,43 @@ function makeTextCommand(alphabet?: string[]) {
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)
         );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
+        const borderRadiusSize = 1; //0.35;
 
-        for (let i = 0; i < marker.text.length; i++) {
-          const char = marker.text[i];
+        const chars = Array.from(marker.text);
+        for (let i = 0; i < chars.length; i++) {
+          const char = chars[i];
+          const info = generatedAtlas.charInfo[char];
+          const index = totalInstances + markerInstances;
           if (char === "\n") {
             x = 0;
             // Make sure every line in the text is offsetted correctly
             y += command.resolution;
             lineCount++;
+
+            if (index > 0) {
+              const previousIndex = index - 1;
+              borderRadius[4 * previousIndex + 0] = borderRadiusSize;
+              borderRadius[4 * previousIndex + 1] = borderRadiusSize;
+              borderRadius[4 * previousIndex + 2] = 0;
+              borderRadius[4 * previousIndex + 3] = 0;
+            }
             continue;
           }
-          const info = generatedAtlas.charInfo[char];
-          const index = totalInstances + markerInstances;
 
           // Calculate per-character attributes
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
-          srcOffsets[2 * index + 0] = info.x + BUFFER;
+
           // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
           // we need to apply an extra offset based on the font resolution.
           // The value used to compute the offset is a result of experimentation.
+          srcOffsets[2 * index + 0] = info.x + BUFFER;
           srcOffsets[2 * index + 1] = info.y + BUFFER + 0.05 * command.resolution;
-          srcWidths[index] = info.width;
 
+          srcSizes[2 * index + 0] = info.width;
+          srcSizes[2 * index + 1] = command.resolution;
+
+          const firstCharOnLine = x === 0;
           x += info.width;
           totalWidth = Math.max(totalWidth, x);
 
@@ -524,12 +560,23 @@ function makeTextCommand(alphabet?: string[]) {
           highlightColor[4 * index + 2] = hlColor.b;
           highlightColor[4 * index + 3] = hlColor.a;
 
+          borderRadius[4 * index + 0] = 0;
+          borderRadius[4 * index + 1] = 0;
+          borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
+          borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
+
           enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
           enableBackground[index] = outline ? 1 : 0;
 
           ++markerInstances;
         }
+
+        // Round the last corner
+        borderRadius[4 * (totalInstances + markerInstances - 1) + 0] = borderRadiusSize;
+        borderRadius[4 * (totalInstances + markerInstances - 1) + 1] = borderRadiusSize;
+        borderRadius[4 * (totalInstances + markerInstances - 1) + 2] = 0;
+        borderRadius[4 * (totalInstances + markerInstances - 1) + 3] = 0;
 
         const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
@@ -557,7 +604,7 @@ function makeTextCommand(alphabet?: string[]) {
         // per-character
         srcOffsets,
         destOffsets,
-        srcWidths,
+        srcSizes,
 
         // per-marker
         alignmentOffset,
@@ -567,6 +614,7 @@ function makeTextCommand(alphabet?: string[]) {
         foregroundColor,
         backgroundColor,
         highlightColor,
+        borderRadius,
         poseOrientation,
         posePosition,
         scale,

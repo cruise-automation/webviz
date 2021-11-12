@@ -109,44 +109,57 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
 };
 
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
-const createMemoizedGenerateAtlas = () =>
+export const createMemoizedGenerateAtlas = () =>
   memoizeOne(
     // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
     (charSet: Set<string>, _setSize, resolution: number, maxAtlasWidth: number): GeneratedAtlas => {
-      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
-
+      const tinySDF = new TinySDF({
+        fontSize: resolution, // Font size in pixels
+        fontFamily: "sans-serif", // CSS font-family
+        fontWeight: "normal", // CSS font-weight
+        fontStyle: "normal", // CSS font-style
+        buffer: BUFFER, // Whitespace buffer around a glyph in pixels
+        radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
+        cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
+      });
       let textureWidth = 0;
-      const rowHeight = resolution + 2 * BUFFER;
-      const charInfo = {};
+
+      // Render and measure each char using tinySDF
+      const sdfDataByChar = {};
+      charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
 
       // Measure and assign positions to all characters
+      const charInfo = {};
       let x = 0;
       let y = 0;
+      const rowHeight = resolution;
       for (const char of charSet) {
-        const width = ctx.measureText(char).width;
+        const { width, glyphAdvance } = sdfDataByChar[char];
+
         const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx > maxAtlasWidth) {
+        if (x + dx + glyphAdvance > maxAtlasWidth) {
           x = 0;
           y += rowHeight;
         }
-        charInfo[char] = { x, y, width };
+        charInfo[char] = { x, y, width: glyphAdvance };
         x += dx;
         textureWidth = Math.max(textureWidth, x);
       }
 
-      const textureHeight = y + rowHeight;
+      // Copy each SDF image into a single texture
+      const textureHeight = y + rowHeight * 2;
       const textureData = new Uint8Array(textureWidth * textureHeight);
-
-      // Use tiny-sdf to create SDF images for each character and copy them into a single texture
       for (const char of charSet) {
         const { x, y } = charInfo[char];
-        const data = tinySDF.draw(char);
-        for (let i = 0; i < tinySDF.size; i++) {
-          for (let j = 0; j < tinySDF.size; j++) {
+        const { data, width, height, glyphTop, glyphHeight } = sdfDataByChar[char];
+
+        const charY = y + (glyphHeight - glyphTop) + (rowHeight - glyphHeight);
+
+        for (let i = 0; i < height; i++) {
+          for (let j = 0; j < width; j++) {
             // if this character is near the right edge, we don't actually copy the whole square of data
             if (x + j < textureWidth) {
-              textureData[textureWidth * (y + i) + x + j] = data[i * tinySDF.size + j];
+              textureData[textureWidth * (charY + i) + x + j] = data[i * width + j];
             }
           }
         }
@@ -485,7 +498,7 @@ function makeTextCommand(alphabet?: string[]) {
           // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
           // we need to apply an extra offset based on the font resolution.
           // The value used to compute the offset is a result of experimentation.
-          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.05 * command.resolution;
+          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.25 * command.resolution;
           srcWidths[index] = info.width;
 
           x += info.width;

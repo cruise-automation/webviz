@@ -139,7 +139,7 @@ export const createMemoizedGenerateAtlas = () =>
         const dx = Math.ceil(width) + 2 * BUFFER;
         if (x + dx + glyphAdvance > maxAtlasWidth) {
           x = 0;
-          y += rowHeight;
+          y += rowHeight + 2 * BUFFER;
         }
         charInfo[char] = { x, y, width: glyphAdvance };
         x += dx;
@@ -483,7 +483,7 @@ function makeTextCommand(alphabet?: string[]) {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            // Make sure every line in the text is offsetted correctly
+            // Make sure every line in the text is offset correctly
             y += command.resolution;
             lineCount++;
             continue;

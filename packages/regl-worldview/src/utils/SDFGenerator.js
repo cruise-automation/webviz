@@ -63,9 +63,13 @@ const SDFGenerator = ({ fontSize }) => {
   useLayoutEffect(() => generateAtlas(), []);
 
   return (
-    <div>
-      <button onClick={generateAtlas}>generate</button>
-      <button onClick={onClick}>download</button>
+    <div style={{ margin: 16 }}>
+      <button style={{ margin: 16 }} onClick={generateAtlas}>
+        Regenerate atlas
+      </button>
+      <button style={{ margin: 16 }} onClick={onClick}>
+        Download atlas files
+      </button>
       <canvas
         ref={canvasRef}
         width={sdfsRef.current.textureWidth}

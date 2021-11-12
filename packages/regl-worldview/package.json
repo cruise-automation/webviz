@@ -27,6 +27,7 @@
   "dependencies": {
     "@babel/runtime": "^7.3.1",
     "@mapbox/tiny-sdf": "2.0.4",
+    "@mdi/font": "^6.4.95",
     "distance-to-line-segment": "0.2.0",
     "draco3d": "^1.4.1",
     "earcut": "^2.1.3",

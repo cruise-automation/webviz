@@ -417,7 +417,8 @@ function makeTextCommand(alphabet?: string[]) {
           throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
         }
 
-        for (const char of text) {
+        const chars = Array.from(text);
+        for (const char of chars) {
           ++estimatedInstances;
           charSet.add(char);
         }
@@ -479,8 +480,9 @@ function makeTextCommand(alphabet?: string[]) {
         );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
-        for (let i = 0; i < marker.text.length; i++) {
-          const char = marker.text[i];
+        const chars = Array.from(marker.text);
+        for (let i = 0; i < chars.length; i++) {
+          const char = chars[i];
           if (char === "\n") {
             x = 0;
             // Make sure every line in the text is offset correctly

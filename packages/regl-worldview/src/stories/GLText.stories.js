@@ -236,7 +236,10 @@ storiesOf("Worldview/GLText", module)
     );
   })
   .add("with pregenerated text atlas", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const markers = textMarkers({ text: "\u{F053D}", billboard: true }).map((marker) => ({
+      ...marker,
+      text: "\u{F079F}",
+    }));
     function Example() {
       const [textAtlas, setTextAtlas] = useState();
       useEffect(() => {
@@ -247,7 +250,11 @@ storiesOf("Worldview/GLText", module)
 
       return (
         <Container cameraState={{ perspective: true, distance: 25 }}>
-          {textAtlas && <GLText textAtlas={textAtlas}>{markers}</GLText>}
+          {textAtlas && (
+            <GLText textAtlas={textAtlas} resolution={40} borderRadius={1}>
+              {markers}
+            </GLText>
+          )}
           <Axes />
         </Container>
       );

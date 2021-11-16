@@ -67,6 +67,7 @@ type GLTextProps = {|
   resolution?: number,
   alphabet?: string[],
   textAtlas?: GeneratedAtlas,
+  borderRadius?: number,
 |};
 
 type Props = {
@@ -108,71 +109,77 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
   offsets.set(hashMarkerPosition(marker), yOffset);
 };
 
-// Build a single font atlas: a texture containing all characters and position/size data for each character.
-export const createMemoizedGenerateAtlas = () =>
-  memoizeOne(
-    // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
-    (charSet: Set<string>, _setSize, resolution: number, maxAtlasWidth: number): GeneratedAtlas => {
-      const tinySDF = new TinySDF({
-        fontSize: resolution, // Font size in pixels
-        fontFamily: "sans-serif", // CSS font-family
-        fontWeight: "normal", // CSS font-weight
-        fontStyle: "normal", // CSS font-style
-        buffer: BUFFER, // Whitespace buffer around a glyph in pixels
-        radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
-        cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
-      });
-      let textureWidth = 0;
+export const generateAtlas = (
+  charSet: Set<string>,
+  _setSize,
+  resolution: number,
+  maxAtlasWidth: number,
+  fontFamily?: string
+): GeneratedAtlas => {
+  const tinySDF = new TinySDF({
+    fontSize: resolution, // Font size in pixels
+    fontFamily: fontFamily || "sans-serif", // CSS font-family
+    fontWeight: "normal", // CSS font-weight
+    fontStyle: "normal", // CSS font-style
+    buffer: BUFFER, // Whitespace buffer around a glyph in pixels
+    radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
+    cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
+  });
 
-      // Render and measure each char using tinySDF
-      const sdfDataByChar = {};
-      charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
+  // Render and measure each char using tinySDF
+  const sdfDataByChar = {};
+  charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
 
-      // Measure and assign positions to all characters
-      const charInfo = {};
-      let x = 0;
-      let y = 0;
-      const rowHeight = resolution;
-      for (const char of charSet) {
-        const { width, glyphAdvance } = sdfDataByChar[char];
+  // Measure and assign positions to all characters
+  const charInfo = {};
+  let x = 0;
+  let y = 0;
+  let textureWidth = 0;
+  let maxHeight = 0;
+  for (const char of charSet) {
+    const { height, width, glyphAdvance, glyphHeight, glyphTop } = sdfDataByChar[char];
+    const lineHeight = height; //glyphHeight + BUFFER * 2
 
-        const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx + glyphAdvance > maxAtlasWidth) {
-          x = 0;
-          y += rowHeight + 2 * BUFFER;
-        }
-        charInfo[char] = { x, y, width: glyphAdvance };
-        x += dx;
-        textureWidth = Math.max(textureWidth, x);
-      }
-
-      // Copy each SDF image into a single texture
-      const textureHeight = y + rowHeight * 2;
-      const textureData = new Uint8Array(textureWidth * textureHeight);
-      for (const char of charSet) {
-        const { x, y } = charInfo[char];
-        const { data, width, height, glyphTop, glyphHeight } = sdfDataByChar[char];
-
-        const charY = y + (glyphHeight - glyphTop) + (rowHeight - glyphHeight);
-
-        for (let i = 0; i < height; i++) {
-          for (let j = 0; j < width; j++) {
-            // if this character is near the right edge, we don't actually copy the whole square of data
-            if (x + j < textureWidth) {
-              textureData[textureWidth * (charY + i) + x + j] = data[i * width + j];
-            }
-          }
-        }
-      }
-
-      return {
-        charInfo,
-        textureWidth,
-        textureHeight,
-        textureData,
-      };
+    const dx = Math.ceil(width);
+    if (x + dx + glyphAdvance > maxAtlasWidth) {
+      x = 0;
+      y += Math.max(maxHeight, resolution);
+      maxHeight = lineHeight;
     }
-  );
+    charInfo[char] = { x, y, width: glyphAdvance, yOffset: resolution - glyphTop };
+    x += dx + BUFFER;
+    textureWidth = Math.max(textureWidth, x);
+    maxHeight = Math.max(maxHeight, lineHeight);
+  }
+
+  // Copy each SDF image into a single texture
+  const textureHeight = y + Math.max(maxHeight, resolution);
+  const textureData = new Uint8Array(textureWidth * textureHeight);
+  for (const char of charSet) {
+    const { x, y } = charInfo[char];
+    const { data, width, height } = sdfDataByChar[char];
+
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        // if this character is near the right edge, we don't actually copy the whole square of data
+        if (x + j < textureWidth) {
+          textureData[textureWidth * (y + i) + x + j] = data[i * width + j];
+        }
+      }
+    }
+  }
+
+  return {
+    charInfo,
+    textureWidth,
+    textureHeight,
+    textureData,
+  };
+};
+
+// Build a single font atlas: a texture containing all characters and position/size data for each character.
+// We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
+const createMemoizedGenerateAtlas = () => memoizeOne(generateAtlas);
 
 const createMemoizedDrawAtlasTexture = () =>
   memoizeOne((textAtlas: GeneratedAtlas, atlasTexture: any) => {
@@ -206,27 +213,21 @@ const vert = `
 
   // per-instance (character) attributes
   attribute vec2 srcOffset;
-  attribute float srcWidth;
+  attribute vec2 srcSize;
   attribute vec2 destOffset;
 
   // per-marker attributes
-  attribute vec3 scale;
   attribute float billboard;
   attribute vec2 alignmentOffset;
-  attribute float enableBackground;
-  attribute float enableHighlight;
-  attribute vec4 foregroundColor;
-  attribute vec4 backgroundColor;
-  attribute vec4 highlightColor;
   attribute vec3 posePosition;
+  attribute vec3 scale;
+  attribute vec4 borderRadius;
+  attribute vec4 color;
   attribute vec4 poseOrientation;
 
+  varying vec2 vPosition;
   varying vec2 vTexCoord;
-  varying float vEnableBackground;
-  varying vec4 vForegroundColor;
-  varying vec4 vBackgroundColor;
-  varying vec4 vHighlightColor;
-  varying float vEnableHighlight;
+  varying vec4 vColor;
   varying float vBillboard;
 
   // rotate a 3d point v by a rotation quaternion q
@@ -250,7 +251,6 @@ const vert = `
     // Scale invariance only works for billboards
     bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
 
-    vec2 srcSize = vec2(srcWidth, fontSize);
     vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
 
     if (!scaleInvariantEnabled) {
@@ -285,12 +285,9 @@ const vert = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
+    vPosition = vec2(position.x, -position.y);
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
-    vEnableBackground = enableBackground;
-    vForegroundColor = foregroundColor;
-    vBackgroundColor = backgroundColor;
-    vHighlightColor = highlightColor;
-    vEnableHighlight = enableHighlight;
+    vColor = color;
     vBillboard = billboard;
   }
 `;
@@ -298,20 +295,16 @@ const vert = `
 const frag = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
-  uniform mat4 projection;
+
   uniform sampler2D atlas;
   uniform float cutoff;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
-  uniform bool isHitmap;
 
+  varying vec2 vPosition;
   varying vec2 vTexCoord;
-  varying float vEnableBackground;
-  varying vec4 vForegroundColor;
-  varying vec4 vBackgroundColor;
-  varying vec4 vHighlightColor;
-  varying float vEnableHighlight;
   varying float vBillboard;
+  varying vec4 vColor;
 
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
@@ -330,23 +323,109 @@ const frag = `
       edgeStep = dist;
     }
 
-    if (isHitmap) {
-      // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
-      // instead of the actual glyphs. This way we increase the selection range and provide a
-      // better user experience.
-      gl_FragColor = vForegroundColor;
-    } else if (vEnableHighlight > 0.5) {
-      gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
-    } else if (vEnableBackground > 0.5) {
-      gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
-    } else {
-      gl_FragColor = vForegroundColor;
-      gl_FragColor.a *= edgeStep;
-    }
+    gl_FragColor = vColor;
+    gl_FragColor.a *= edgeStep;
 
     if (gl_FragColor.a == 0.) {
       discard;
     }
+  }
+`;
+
+const vertBackground = `
+  precision mediump float;
+
+  uniform mat4 projection, view, billboardRotation;
+  uniform float fontSize;
+  uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
+  uniform float viewportHeight;
+  uniform float viewportWidth;
+  uniform bool isPerspective;
+  uniform float cameraFovY;
+
+  // per-vertex attributes
+  attribute vec2 position;
+
+  // per-instance (character) attributes
+  attribute vec2 srcOffset;
+  attribute vec2 srcSize;
+  attribute vec2 destOffset;
+
+  // per-marker attributes
+  attribute vec3 scale;
+  attribute float billboard;
+  attribute vec2 alignmentOffset;
+  attribute vec4 backgroundColor;
+  attribute vec4 borderRadius;
+  attribute vec3 posePosition;
+  attribute vec4 poseOrientation;
+
+  // rotate a 3d point v by a rotation quaternion q
+  // like applyPose(), but we need to use a custom per-instance pose
+  vec3 rotate(vec3 v, vec4 q) {
+    vec3 temp = cross(q.xyz, v) + q.w * v;
+    return v + (2.0 * cross(q.xyz, temp));
+  }
+
+  vec4 computeVertexPosition(vec3 markerPos) {
+    vec3 pos;
+    if (billboard == 1.0) {
+      pos = (billboardRotation * vec4(markerPos, 1.0)).xyz + posePosition;
+    } else {
+      pos = rotate(markerPos, poseOrientation) + posePosition;
+    }
+    return projection * view * vec4(pos, 1.0);
+  }
+
+  void main () {
+    // Scale invariance only works for billboards
+    bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+
+    if (!scaleInvariantEnabled) {
+      // Apply marker scale only when scale invariance is disabled
+      markerSpacePos *= scale;
+    } else {
+      // If scale invariance is enabled, the text will be rendered at a constant
+      // scale regardless of the zoom level.
+      // The given scaleInvariantSize is in pixels. We need to scale it based on
+      // the current canvas resolution to get the proper dimensions later in NDC
+      float scaleInvariantFactor = scaleInvariantSize / viewportHeight;
+      if (isPerspective) {
+        // When using a perspective projection, the effect is achieved by using
+        // the w-component for scaling, which is obtained by first projecting
+        // the marker position into clip space.
+        gl_Position = computeVertexPosition(markerSpacePos);
+        scaleInvariantFactor *= gl_Position.w;
+        // We also need to take into account the camera's half vertical FOV
+        scaleInvariantFactor *= cameraFovY;
+      } else {
+        // Compute inverse aspect ratio
+        float invAspect = viewportHeight / viewportWidth;
+        // When using orthographic projection, the scaling factor is obtain from
+        // the camera projection itself.
+        // We also need applied the inverse aspect ratio
+        scaleInvariantFactor *= 2.0 * invAspect / length(projection[0].xyz);
+      }
+      // Apply scale invariant factor
+      markerSpacePos *= scaleInvariantFactor;
+    }
+
+    // Compute final vertex position
+    gl_Position = computeVertexPosition(markerSpacePos);
+  }
+`;
+
+const fragBackground = `
+  #extension GL_OES_standard_derivatives : enable
+  precision mediump float;
+
+  uniform float viewportHeight;
+  uniform float viewportWidth;
+
+  void main() {
+    gl_FragColor = vec4(gl_FragCoord.x / viewportWidth, gl_FragCoord.y / viewportHeight, 0., 1.);
   }
 `;
 
@@ -363,14 +442,53 @@ function makeTextCommand(alphabet?: string[]) {
 
     const atlasTexture = regl.texture();
 
+    const drawBackground = regl({
+      // When using scale invariance, we want the text to be drawn on top
+      // of other elements. This is achieved by disabling depth testing
+      // In addition, make sure the <GLText /> command is the last one
+      // being rendered.
+      depth: {
+        // enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        // mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+      },
+      blend: defaultBlend,
+      primitive: "triangle strip",
+      vert: vertBackground,
+      frag: fragBackground,
+      uniforms: {
+        fontSize: regl.prop("resolution"),
+        scaleInvariant: regl.prop("scaleInvariant"),
+        scaleInvariantSize: regl.prop("scaleInvariantSize"),
+        viewportHeight: regl.context("viewportHeight"),
+        viewportWidth: regl.context("viewportWidth"),
+        isPerspective: regl.context("isPerspective"),
+        cameraFovY: regl.context("fovy"),
+      },
+      instances: regl.prop("instances"),
+      count: 4,
+      attributes: {
+        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+        srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
+        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
+        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+        borderRadius: (ctx, props) => ({ buffer: props.borderRadius, divisor: 1 }),
+        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+      },
+    });
+
     const drawText = regl({
       // When using scale invariance, we want the text to be drawn on top
       // of other elements. This is achieved by disabling depth testing
       // In addition, make sure the <GLText /> command is the last one
       // being rendered.
       depth: {
-        enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
-        mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+        // enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        // mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
       },
       blend: defaultBlend,
       primitive: "triangle strip",
@@ -396,15 +514,11 @@ function makeTextCommand(alphabet?: string[]) {
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
         srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
+        color: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
         poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
       },
@@ -417,8 +531,7 @@ function makeTextCommand(alphabet?: string[]) {
           throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
         }
 
-        const chars = Array.from(text);
-        for (const char of chars) {
+        for (const char of text) {
           ++estimatedInstances;
           charSet.add(char);
         }
@@ -437,7 +550,7 @@ function makeTextCommand(alphabet?: string[]) {
       memoizedDrawAtlasTexture(generatedAtlas, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
-      const srcWidths = new Float32Array(estimatedInstances);
+      const srcSizes = new Float32Array(estimatedInstances * 2);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
 
       // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
@@ -446,6 +559,7 @@ function makeTextCommand(alphabet?: string[]) {
       const foregroundColor = new Float32Array(estimatedInstances * 4);
       const backgroundColor = new Float32Array(estimatedInstances * 4);
       const highlightColor = new Float32Array(estimatedInstances * 4);
+      const borderRadius = new Float32Array(estimatedInstances * 4);
       const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
@@ -479,30 +593,43 @@ function makeTextCommand(alphabet?: string[]) {
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)
         );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
+        const borderRadiusSize = command.borderRadius || 0;
 
         const chars = Array.from(marker.text);
         for (let i = 0; i < chars.length; i++) {
           const char = chars[i];
-          if (char === "\n") {
-            x = 0;
-            // Make sure every line in the text is offset correctly
-            y += command.resolution;
-            lineCount++;
-            continue;
-          }
           const info = generatedAtlas.charInfo[char];
           const index = totalInstances + markerInstances;
+          if (char === "\n") {
+            x = 0;
+            // Make sure every line in the text is offsetted correctly
+            y += command.resolution;
+            lineCount++;
+
+            if (borderRadiusSize && index > 0) {
+              const previousIndex = index - 1;
+              borderRadius[4 * previousIndex + 0] = borderRadiusSize;
+              borderRadius[4 * previousIndex + 1] = borderRadiusSize;
+              borderRadius[4 * previousIndex + 2] = 0;
+              borderRadius[4 * previousIndex + 3] = 0;
+            }
+            continue;
+          }
 
           // Calculate per-character attributes
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
-          srcOffsets[2 * index + 0] = info.x + BUFFER;
+
           // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
           // we need to apply an extra offset based on the font resolution.
           // The value used to compute the offset is a result of experimentation.
-          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.25 * command.resolution;
-          srcWidths[index] = info.width;
+          srcOffsets[2 * index + 0] = info.x + BUFFER;
+          srcOffsets[2 * index + 1] = info.y + BUFFER;
 
+          srcSizes[2 * index + 0] = info.width;
+          srcSizes[2 * index + 1] = command.resolution;
+
+          const firstCharOnLine = x === 0 && !!borderRadiusSize;
           x += info.width;
           totalWidth = Math.max(totalWidth, x);
 
@@ -539,11 +666,35 @@ function makeTextCommand(alphabet?: string[]) {
           highlightColor[4 * index + 2] = hlColor.b;
           highlightColor[4 * index + 3] = hlColor.a;
 
+          borderRadius[4 * index + 0] = 0;
+          borderRadius[4 * index + 1] = 0;
+          borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
+          borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
+
           enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
           enableBackground[index] = outline ? 1 : 0;
 
           ++markerInstances;
+        }
+
+        // Round the last corner
+        if (borderRadiusSize) {
+          borderRadius[4 * (totalInstances + markerInstances - 1) + 0] = borderRadiusSize;
+          borderRadius[4 * (totalInstances + markerInstances - 1) + 1] = borderRadiusSize;
+
+          // Add in the padding
+          const paddedSize = command.resolution; // * 1.5;
+          const origWidth = srcSizes[2 * (totalInstances + markerInstances - 1) + 0];
+          const origHeight = srcSizes[2 * (totalInstances + markerInstances - 1) + 1];
+          const origOffsetX = srcOffsets[2 * (totalInstances + markerInstances - 1) + 0];
+          const origOffsetY = srcOffsets[2 * (totalInstances + markerInstances - 1) + 1];
+
+          srcSizes[2 * (totalInstances + markerInstances - 1) + 0] = paddedSize;
+          srcSizes[2 * (totalInstances + markerInstances - 1) + 1] = paddedSize;
+
+          srcOffsets[2 * (totalInstances + markerInstances - 1) + 0] = -(paddedSize - origWidth) / 2 + origOffsetX;
+          srcOffsets[2 * (totalInstances + markerInstances - 1) + 1] = -(paddedSize - origHeight) / 2 + origOffsetY;
         }
 
         const totalHeight = y + command.resolution;
@@ -572,7 +723,7 @@ function makeTextCommand(alphabet?: string[]) {
         // per-character
         srcOffsets,
         destOffsets,
-        srcWidths,
+        srcSizes,
 
         // per-marker
         alignmentOffset,
@@ -582,6 +733,33 @@ function makeTextCommand(alphabet?: string[]) {
         foregroundColor,
         backgroundColor,
         highlightColor,
+        borderRadius,
+        poseOrientation,
+        posePosition,
+        scale,
+      });
+
+      drawBackground({
+        instances: totalInstances,
+
+        scaleInvariant: command.scaleInvariant,
+        resolution: command.resolution,
+        scaleInvariantSize: command.scaleInvariantSize,
+
+        // per-character
+        srcOffsets,
+        destOffsets,
+        srcSizes,
+
+        // per-marker
+        alignmentOffset,
+        billboard,
+        enableBackground,
+        enableHighlight,
+        foregroundColor,
+        backgroundColor,
+        highlightColor,
+        borderRadius,
         poseOrientation,
         posePosition,
         scale,
@@ -601,6 +779,7 @@ export const makeGLTextCommand = (props: GLTextProps) => {
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
   command.textAtlas = props.textAtlas;
+  command.borderRadius = props.borderRadius;
   return command;
 };
 

@@ -147,7 +147,7 @@ export const generateAtlas = (
       maxHeight = lineHeight;
     }
     charInfo[char] = { x, y, width: glyphAdvance, yOffset: resolution - glyphTop };
-    x += dx + BUFFER;
+    x += dx + BUFFER * 2;
     textureWidth = Math.max(textureWidth, x);
     maxHeight = Math.max(maxHeight, lineHeight);
   }
@@ -361,6 +361,8 @@ const vertBackground = `
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
+  varying vec4 vBackgroundColor;
+
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
   vec3 rotate(vec3 v, vec4 q) {
@@ -414,6 +416,8 @@ const vertBackground = `
 
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
+
+    vBackgroundColor = backgroundColor;
   }
 `;
 
@@ -424,8 +428,10 @@ const fragBackground = `
   uniform float viewportHeight;
   uniform float viewportWidth;
 
+  varying vec4 vBackgroundColor;
+
   void main() {
-    gl_FragColor = vec4(gl_FragCoord.x / viewportWidth, gl_FragCoord.y / viewportHeight, 0., 1.);
+    gl_FragColor = vBackgroundColor;
   }
 `;
 
@@ -448,8 +454,8 @@ function makeTextCommand(alphabet?: string[]) {
       // In addition, make sure the <GLText /> command is the last one
       // being rendered.
       depth: {
-        // enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
-        // mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+        enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
       },
       blend: defaultBlend,
       primitive: "triangle strip",
@@ -487,8 +493,8 @@ function makeTextCommand(alphabet?: string[]) {
       // In addition, make sure the <GLText /> command is the last one
       // being rendered.
       depth: {
-        // enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
-        // mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+        enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
       },
       blend: defaultBlend,
       primitive: "triangle strip",
@@ -518,7 +524,7 @@ function makeTextCommand(alphabet?: string[]) {
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        color: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+        color: (ctx, props) => ({ buffer: props.color, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
         poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
       },
@@ -724,15 +730,11 @@ function makeTextCommand(alphabet?: string[]) {
         srcOffsets,
         destOffsets,
         srcSizes,
+        color: foregroundColor,
 
         // per-marker
         alignmentOffset,
         billboard,
-        enableBackground,
-        enableHighlight,
-        foregroundColor,
-        backgroundColor,
-        highlightColor,
         borderRadius,
         poseOrientation,
         posePosition,

@@ -213,6 +213,7 @@ const vert = `
 
   // per-instance (character) attributes
   attribute vec2 srcOffset;
+  attribute vec2 charOffset;
   attribute vec2 srcSize;
   attribute vec2 destOffset;
 
@@ -225,7 +226,6 @@ const vert = `
   attribute vec4 color;
   attribute vec4 poseOrientation;
 
-  varying vec2 vPosition;
   varying vec2 vTexCoord;
   varying vec4 vColor;
   varying float vBillboard;
@@ -251,7 +251,7 @@ const vert = `
     // Scale invariance only works for billboards
     bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
 
-    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset + charOffset) / fontSize, 0.01);
 
     if (!scaleInvariantEnabled) {
       // Apply marker scale only when scale invariance is disabled
@@ -285,7 +285,6 @@ const vert = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
-    vPosition = vec2(position.x, -position.y);
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vColor = color;
     vBillboard = billboard;
@@ -301,7 +300,6 @@ const frag = `
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
 
-  varying vec2 vPosition;
   varying vec2 vTexCoord;
   varying float vBillboard;
   varying vec4 vColor;
@@ -348,9 +346,9 @@ const vertBackground = `
   attribute vec2 position;
 
   // per-instance (character) attributes
-  attribute vec2 srcOffset;
   attribute vec2 srcSize;
   attribute vec2 destOffset;
+  attribute float enableBackground;
 
   // per-marker attributes
   attribute vec3 scale;
@@ -361,7 +359,10 @@ const vertBackground = `
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
+  varying vec2 vPosition;
+  varying vec4 vBorderRadius;
   varying vec4 vBackgroundColor;
+  varying float vEnableBackground;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -417,7 +418,13 @@ const vertBackground = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
+    vec2 srcSizeRatioFix = vec2(srcSize.x/srcSize.y, 1.);
+    vec2 centeredPosition = vec2(position.x, -position.y) * 2. - 1.;
+
+    vPosition = centeredPosition;
     vBackgroundColor = backgroundColor;
+    vEnableBackground = enableBackground;
+    vBorderRadius = borderRadius;
   }
 `;
 
@@ -428,10 +435,34 @@ const fragBackground = `
   uniform float viewportHeight;
   uniform float viewportWidth;
 
+  varying vec2 vPosition;
+  varying vec4 vBorderRadius;
   varying vec4 vBackgroundColor;
+  varying float vEnableBackground;
 
   void main() {
+    if (vEnableBackground != 1.0) {
+      discard;
+      return;
+    }
+
+    float aliasOffset = 0.0;
+    vec4 radius = vec4(vBorderRadius);
+    radius.xy = (vPosition.x > 0.0) ? radius.xy : radius.zw;
+    radius.x  = (vPosition.y > 0.0) ? radius.x  : radius.y;
+
+    vec2 b = vec2(1., 1.);
+    vec2 q = abs(vPosition) - b + radius.x;
+    float borderRadius = (min(max(q.x,q.y),0.0) + length(max(q,0.0)) - radius.x);
+    float borderRadiusRaw = 1. - borderRadius + (1. - sign(radius.x));
+    float borderRadiusStep = smoothstep(0.99, 1., borderRadiusRaw);
+
     gl_FragColor = vBackgroundColor;
+    gl_FragColor.a *= borderRadiusStep;
+        
+    if (gl_FragColor.a == 0.) {
+      discard;
+    }
   }
 `;
 
@@ -474,12 +505,12 @@ function makeTextCommand(alphabet?: string[]) {
       count: 4,
       attributes: {
         position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
         srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
         backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
         borderRadius: (ctx, props) => ({ buffer: props.borderRadius, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
@@ -519,6 +550,7 @@ function makeTextCommand(alphabet?: string[]) {
         position: [[0, 0], [0, -1], [1, 0], [1, -1]],
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
         srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        charOffset: (ctx, props) => ({ buffer: props.charOffsets, divisor: 1 }),
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
         srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
@@ -558,13 +590,13 @@ function makeTextCommand(alphabet?: string[]) {
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcSizes = new Float32Array(estimatedInstances * 2);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
+      const charOffsets = new Float32Array(estimatedInstances * 2);
 
       // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
       const alignmentOffset = new Float32Array(estimatedInstances * 2);
       const scale = new Float32Array(estimatedInstances * 3);
       const foregroundColor = new Float32Array(estimatedInstances * 4);
       const backgroundColor = new Float32Array(estimatedInstances * 4);
-      const highlightColor = new Float32Array(estimatedInstances * 4);
       const borderRadius = new Float32Array(estimatedInstances * 4);
       const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
@@ -608,7 +640,7 @@ function makeTextCommand(alphabet?: string[]) {
           const index = totalInstances + markerInstances;
           if (char === "\n") {
             x = 0;
-            // Make sure every line in the text is offsetted correctly
+            // Make sure every line in the text is offset correctly
             y += command.resolution;
             lineCount++;
 
@@ -631,6 +663,9 @@ function makeTextCommand(alphabet?: string[]) {
           // The value used to compute the offset is a result of experimentation.
           srcOffsets[2 * index + 0] = info.x + BUFFER;
           srcOffsets[2 * index + 1] = info.y + BUFFER;
+
+          charOffsets[2 * index + 0] = 0;
+          charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution;
 
           srcSizes[2 * index + 0] = info.width;
           srcSizes[2 * index + 1] = command.resolution;
@@ -657,20 +692,16 @@ function makeTextCommand(alphabet?: string[]) {
           poseOrientation[4 * index + 2] = marker.pose.orientation.z;
           poseOrientation[4 * index + 3] = marker.pose.orientation.w;
 
-          foregroundColor[4 * index + 0] = fgColor.r;
-          foregroundColor[4 * index + 1] = fgColor.g;
-          foregroundColor[4 * index + 2] = fgColor.b;
-          foregroundColor[4 * index + 3] = fgColor.a;
+          const colorToUse = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? hlColor : fgColor;
+          foregroundColor[4 * index + 0] = colorToUse.r;
+          foregroundColor[4 * index + 1] = colorToUse.g;
+          foregroundColor[4 * index + 2] = colorToUse.b;
+          foregroundColor[4 * index + 3] = colorToUse.a;
 
           backgroundColor[4 * index + 0] = bgColor.r;
           backgroundColor[4 * index + 1] = bgColor.g;
           backgroundColor[4 * index + 2] = bgColor.b;
           backgroundColor[4 * index + 3] = bgColor.a;
-
-          highlightColor[4 * index + 0] = hlColor.r;
-          highlightColor[4 * index + 1] = hlColor.g;
-          highlightColor[4 * index + 2] = hlColor.b;
-          highlightColor[4 * index + 3] = hlColor.a;
 
           borderRadius[4 * index + 0] = 0;
           borderRadius[4 * index + 1] = 0;
@@ -690,17 +721,17 @@ function makeTextCommand(alphabet?: string[]) {
           borderRadius[4 * (totalInstances + markerInstances - 1) + 1] = borderRadiusSize;
 
           // Add in the padding
-          const paddedSize = command.resolution; // * 1.5;
-          const origWidth = srcSizes[2 * (totalInstances + markerInstances - 1) + 0];
-          const origHeight = srcSizes[2 * (totalInstances + markerInstances - 1) + 1];
-          const origOffsetX = srcOffsets[2 * (totalInstances + markerInstances - 1) + 0];
-          const origOffsetY = srcOffsets[2 * (totalInstances + markerInstances - 1) + 1];
+          // const paddedSize = command.resolution * 1.5;
+          // const origWidth = srcSizes[2 * (totalInstances + markerInstances - 1) + 0];
+          // const origHeight = srcSizes[2 * (totalInstances + markerInstances - 1) + 1];
+          // const origOffsetX = srcOffsets[2 * (totalInstances + markerInstances - 1) + 0];
+          // const origOffsetY = srcOffsets[2 * (totalInstances + markerInstances - 1) + 1];
 
-          srcSizes[2 * (totalInstances + markerInstances - 1) + 0] = paddedSize;
-          srcSizes[2 * (totalInstances + markerInstances - 1) + 1] = paddedSize;
+          // srcSizes[2 * (totalInstances + markerInstances - 1) + 0] = paddedSize;
+          // srcSizes[2 * (totalInstances + markerInstances - 1) + 1] = paddedSize;
 
-          srcOffsets[2 * (totalInstances + markerInstances - 1) + 0] = -(paddedSize - origWidth) / 2 + origOffsetX;
-          srcOffsets[2 * (totalInstances + markerInstances - 1) + 1] = -(paddedSize - origHeight) / 2 + origOffsetY;
+          // srcOffsets[2 * (totalInstances + markerInstances - 1) + 0] = -(paddedSize - origWidth) / 2 + origOffsetX;
+          // srcOffsets[2 * (totalInstances + markerInstances - 1) + 1] = -(paddedSize - origHeight) / 2 + origOffsetY;
         }
 
         const totalHeight = y + command.resolution;
@@ -718,38 +749,14 @@ function makeTextCommand(alphabet?: string[]) {
         totalInstances += markerInstances;
       }
 
-      drawText({
-        instances: totalInstances,
-
-        isHitmap: !!isHitmap,
-        scaleInvariant: command.scaleInvariant,
-        resolution: command.resolution,
-        scaleInvariantSize: command.scaleInvariantSize,
-
-        // per-character
-        srcOffsets,
-        destOffsets,
-        srcSizes,
-        color: foregroundColor,
-
-        // per-marker
-        alignmentOffset,
-        billboard,
-        borderRadius,
-        poseOrientation,
-        posePosition,
-        scale,
-      });
-
       drawBackground({
         instances: totalInstances,
 
-        scaleInvariant: command.scaleInvariant,
         resolution: command.resolution,
+        scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
 
         // per-character
-        srcOffsets,
         destOffsets,
         srcSizes,
 
@@ -757,10 +764,31 @@ function makeTextCommand(alphabet?: string[]) {
         alignmentOffset,
         billboard,
         enableBackground,
-        enableHighlight,
-        foregroundColor,
         backgroundColor,
-        highlightColor,
+        borderRadius,
+        poseOrientation,
+        posePosition,
+        scale,
+      });
+
+      drawText({
+        instances: totalInstances,
+
+        isHitmap: !!isHitmap,
+        resolution: command.resolution,
+        scaleInvariant: command.scaleInvariant,
+        scaleInvariantSize: command.scaleInvariantSize,
+
+        // per-character
+        srcOffsets,
+        charOffsets,
+        destOffsets,
+        srcSizes,
+        color: foregroundColor,
+
+        // per-marker
+        alignmentOffset,
+        billboard,
         borderRadius,
         poseOrientation,
         posePosition,

@@ -363,6 +363,7 @@ const vertBackground = `
   varying vec4 vBorderRadius;
   varying vec4 vBackgroundColor;
   varying float vEnableBackground;
+  varying float vRatio;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -418,8 +419,10 @@ const vertBackground = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
-    vec2 srcSizeRatioFix = vec2(srcSize.x/srcSize.y, 1.);
-    vec2 centeredPosition = vec2(position.x, -position.y) * 2. - 1.;
+    vec2 srcSizeAspectRatio = vec2(1., srcSize.y/srcSize.x);
+    vec2 centeredPosition = (2. * vec2(position.x, -position.y) - 1.) * srcSizeAspectRatio;
+
+    vRatio = srcSize.y/srcSize.x;
 
     vPosition = centeredPosition;
     vBackgroundColor = backgroundColor;
@@ -432,13 +435,14 @@ const fragBackground = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
 
+  uniform float fontSize;
   uniform float viewportHeight;
-  uniform float viewportWidth;
 
   varying vec2 vPosition;
   varying vec4 vBorderRadius;
   varying vec4 vBackgroundColor;
   varying float vEnableBackground;
+  varying float vRatio;
 
   void main() {
     if (vEnableBackground != 1.0) {
@@ -451,11 +455,13 @@ const fragBackground = `
     radius.xy = (vPosition.x > 0.0) ? radius.xy : radius.zw;
     radius.x  = (vPosition.y > 0.0) ? radius.x  : radius.y;
 
-    vec2 b = vec2(1., 1.);
-    vec2 q = abs(vPosition) - b + radius.x;
-    float borderRadius = (min(max(q.x,q.y),0.0) + length(max(q,0.0)) - radius.x);
-    float borderRadiusRaw = 1. - borderRadius + (1. - sign(radius.x));
-    float borderRadiusStep = smoothstep(0.99, 1., borderRadiusRaw);
+    vec2 b = vec2(1., vRatio);
+    float cornerRadius =  min(min(radius.x, b.x), b.y);
+
+    vec2 q = abs(vPosition) - b + cornerRadius;
+    float borderRadius = min(max(q.x,q.y),0.0) + length(max(q,0.0)) - cornerRadius;
+    float borderRadiusRaw = 1. - borderRadius + (1. - sign(cornerRadius));
+    float borderRadiusStep = smoothstep((viewportHeight - 3.)/viewportHeight, 1., borderRadiusRaw);
 
     gl_FragColor = vBackgroundColor;
     gl_FragColor.a *= borderRadiusStep;
@@ -588,6 +594,8 @@ function makeTextCommand(alphabet?: string[]) {
       memoizedDrawAtlasTexture(generatedAtlas, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
+      const backgroundDestOffsets = new Float32Array(estimatedInstances * 2);
+      const backgroundDestSizes = new Float32Array(estimatedInstances * 2);
       const srcSizes = new Float32Array(estimatedInstances * 2);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
       const charOffsets = new Float32Array(estimatedInstances * 2);
@@ -618,7 +626,6 @@ function makeTextCommand(alphabet?: string[]) {
         let x = 0;
         let y = getMarkerYOffset(yOffsets, marker);
         let markerInstances = 0;
-        let lineCount = 1; // every text has at least one line
 
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
@@ -633,105 +640,94 @@ function makeTextCommand(alphabet?: string[]) {
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
         const borderRadiusSize = command.borderRadius || 0;
 
-        const chars = Array.from(marker.text);
-        for (let i = 0; i < chars.length; i++) {
-          const char = chars[i];
-          const info = generatedAtlas.charInfo[char];
-          const index = totalInstances + markerInstances;
-          if (char === "\n") {
-            x = 0;
-            // Make sure every line in the text is offset correctly
-            y += command.resolution;
-            lineCount++;
+        const charsByLine = marker.text.split("\n").map((line) => Array.from(line));
+        for (let lineIndex = 0; lineIndex < charsByLine.length; lineIndex++) {
+          const chars = charsByLine[lineIndex];
 
-            if (borderRadiusSize && index > 0) {
-              const previousIndex = index - 1;
-              borderRadius[4 * previousIndex + 0] = borderRadiusSize;
-              borderRadius[4 * previousIndex + 1] = borderRadiusSize;
-              borderRadius[4 * previousIndex + 2] = 0;
-              borderRadius[4 * previousIndex + 3] = 0;
-            }
-            continue;
+          for (let i = 0; i < chars.length; i++) {
+            const char = chars[i];
+            const info = generatedAtlas.charInfo[char];
+            const index = totalInstances + markerInstances;
+
+            const firstCharOnLine = i === 0 && !!borderRadiusSize;
+            const lastCharOnLine = i === chars.length - 1 && !!borderRadiusSize;
+
+            // Calculate per-character attributes
+            destOffsets[2 * index + 0] = x;
+            destOffsets[2 * index + 1] = -y;
+
+            const paddingX = firstCharOnLine || lastCharOnLine ? command.resolution / 2 : 0;
+            const paddingY = 0; //command.resolution / 4; // - info.width / 2;
+            backgroundDestOffsets[2 * index + 0] = x + (i === 0 ? -paddingX : 0);
+            backgroundDestOffsets[2 * index + 1] = -y;
+
+            // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
+            // we need to apply an extra offset based on the font resolution.
+            // The value used to compute the offset is a result of experimentation.
+            srcOffsets[2 * index + 0] = info.x + BUFFER;
+            srcOffsets[2 * index + 1] = info.y + BUFFER;
+
+            charOffsets[2 * index + 0] = 0;
+            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution;
+
+            srcSizes[2 * index + 0] = info.width;
+            srcSizes[2 * index + 1] = command.resolution;
+
+            backgroundDestSizes[2 * index + 0] =
+              srcSizes[2 * index + 0] + (i === 0 ? paddingX * 2 : 0) + (i === chars.length - 1 ? paddingX : 0);
+            backgroundDestSizes[2 * index + 1] = srcSizes[2 * index + 1];
+
+            x += info.width;
+            totalWidth = Math.max(totalWidth, x);
+
+            // Copy per-marker attributes. These are duplicated per character so that we can draw
+            // all characters from all markers in a single draw call.
+
+            billboard[index] = marker.billboard ?? true ? 1 : 0;
+
+            scale[3 * index + 0] = marker.scale.x;
+            scale[3 * index + 1] = marker.scale.y;
+            scale[3 * index + 2] = marker.scale.z;
+
+            posePosition[3 * index + 0] = marker.pose.position.x;
+            posePosition[3 * index + 1] = marker.pose.position.y;
+            posePosition[3 * index + 2] = marker.pose.position.z;
+
+            poseOrientation[4 * index + 0] = marker.pose.orientation.x;
+            poseOrientation[4 * index + 1] = marker.pose.orientation.y;
+            poseOrientation[4 * index + 2] = marker.pose.orientation.z;
+            poseOrientation[4 * index + 3] = marker.pose.orientation.w;
+
+            const colorToUse = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? hlColor : fgColor;
+            foregroundColor[4 * index + 0] = colorToUse.r;
+            foregroundColor[4 * index + 1] = colorToUse.g;
+            foregroundColor[4 * index + 2] = colorToUse.b;
+            foregroundColor[4 * index + 3] = colorToUse.a;
+
+            backgroundColor[4 * index + 0] = bgColor.r;
+            backgroundColor[4 * index + 1] = bgColor.g;
+            backgroundColor[4 * index + 2] = bgColor.b;
+            backgroundColor[4 * index + 3] = bgColor.a;
+
+            // borderRadius[4 * index + 0] = lastCharOnLine ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 1] = lastCharOnLine ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
+            borderRadius[4 * index + 0] = true ? borderRadiusSize : 0;
+            borderRadius[4 * index + 1] = true ? borderRadiusSize : 0;
+            borderRadius[4 * index + 2] = true ? borderRadiusSize : 0;
+            borderRadius[4 * index + 3] = true ? borderRadiusSize : 0;
+
+            enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
+
+            enableBackground[index] = outline ? 1 : 0;
+
+            ++markerInstances;
           }
 
-          // Calculate per-character attributes
-          destOffsets[2 * index + 0] = x;
-          destOffsets[2 * index + 1] = -y;
-
-          // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
-          // we need to apply an extra offset based on the font resolution.
-          // The value used to compute the offset is a result of experimentation.
-          srcOffsets[2 * index + 0] = info.x + BUFFER;
-          srcOffsets[2 * index + 1] = info.y + BUFFER;
-
-          charOffsets[2 * index + 0] = 0;
-          charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution;
-
-          srcSizes[2 * index + 0] = info.width;
-          srcSizes[2 * index + 1] = command.resolution;
-
-          const firstCharOnLine = x === 0 && !!borderRadiusSize;
-          x += info.width;
-          totalWidth = Math.max(totalWidth, x);
-
-          // Copy per-marker attributes. These are duplicated per character so that we can draw
-          // all characters from all markers in a single draw call.
-
-          billboard[index] = marker.billboard ?? true ? 1 : 0;
-
-          scale[3 * index + 0] = marker.scale.x;
-          scale[3 * index + 1] = marker.scale.y;
-          scale[3 * index + 2] = marker.scale.z;
-
-          posePosition[3 * index + 0] = marker.pose.position.x;
-          posePosition[3 * index + 1] = marker.pose.position.y;
-          posePosition[3 * index + 2] = marker.pose.position.z;
-
-          poseOrientation[4 * index + 0] = marker.pose.orientation.x;
-          poseOrientation[4 * index + 1] = marker.pose.orientation.y;
-          poseOrientation[4 * index + 2] = marker.pose.orientation.z;
-          poseOrientation[4 * index + 3] = marker.pose.orientation.w;
-
-          const colorToUse = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? hlColor : fgColor;
-          foregroundColor[4 * index + 0] = colorToUse.r;
-          foregroundColor[4 * index + 1] = colorToUse.g;
-          foregroundColor[4 * index + 2] = colorToUse.b;
-          foregroundColor[4 * index + 3] = colorToUse.a;
-
-          backgroundColor[4 * index + 0] = bgColor.r;
-          backgroundColor[4 * index + 1] = bgColor.g;
-          backgroundColor[4 * index + 2] = bgColor.b;
-          backgroundColor[4 * index + 3] = bgColor.a;
-
-          borderRadius[4 * index + 0] = 0;
-          borderRadius[4 * index + 1] = 0;
-          borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
-          borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
-
-          enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
-
-          enableBackground[index] = outline ? 1 : 0;
-
-          ++markerInstances;
-        }
-
-        // Round the last corner
-        if (borderRadiusSize) {
-          borderRadius[4 * (totalInstances + markerInstances - 1) + 0] = borderRadiusSize;
-          borderRadius[4 * (totalInstances + markerInstances - 1) + 1] = borderRadiusSize;
-
-          // Add in the padding
-          // const paddedSize = command.resolution * 1.5;
-          // const origWidth = srcSizes[2 * (totalInstances + markerInstances - 1) + 0];
-          // const origHeight = srcSizes[2 * (totalInstances + markerInstances - 1) + 1];
-          // const origOffsetX = srcOffsets[2 * (totalInstances + markerInstances - 1) + 0];
-          // const origOffsetY = srcOffsets[2 * (totalInstances + markerInstances - 1) + 1];
-
-          // srcSizes[2 * (totalInstances + markerInstances - 1) + 0] = paddedSize;
-          // srcSizes[2 * (totalInstances + markerInstances - 1) + 1] = paddedSize;
-
-          // srcOffsets[2 * (totalInstances + markerInstances - 1) + 0] = -(paddedSize - origWidth) / 2 + origOffsetX;
-          // srcOffsets[2 * (totalInstances + markerInstances - 1) + 1] = -(paddedSize - origHeight) / 2 + origOffsetY;
+          // Reset values for the next line
+          x = 0;
+          y += command.resolution;
         }
 
         const totalHeight = y + command.resolution;
@@ -744,7 +740,7 @@ function makeTextCommand(alphabet?: string[]) {
         // Basically, we add as many offsets as numbers of lines in the marker's text.
         // Since the y-coordinate is inverted when computing destOffset[] a few lines above
         // we need an additional command.resolution offset (precomputed in totalHeight).
-        setMarkerYOffset(yOffsets, marker, totalHeight + lineCount * command.resolution);
+        setMarkerYOffset(yOffsets, marker, totalHeight + charsByLine.length * command.resolution);
 
         totalInstances += markerInstances;
       }
@@ -757,8 +753,8 @@ function makeTextCommand(alphabet?: string[]) {
         scaleInvariantSize: command.scaleInvariantSize,
 
         // per-character
-        destOffsets,
-        srcSizes,
+        destOffsets: backgroundDestOffsets,
+        srcSizes: backgroundDestSizes,
 
         // per-marker
         alignmentOffset,

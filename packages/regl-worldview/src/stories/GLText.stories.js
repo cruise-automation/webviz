@@ -100,11 +100,13 @@ storiesOf("Worldview/GLText", module)
           distance: 3,
         }}>
         <Axes />
-        <GLText borderRadius={1}>{markers}</GLText>
+        <GLText borderRadius={1} paddingScale={[0.2, 0.2]}>
+          {markers}
+        </GLText>
       </Container>
     );
   })
-  .add("borderRadius - 0.5", () => {
+  .add("borderRadius - 0.25", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
@@ -115,7 +117,9 @@ storiesOf("Worldview/GLText", module)
           distance: 3,
         }}>
         <Axes />
-        <GLText borderRadius={0.2}>{markers}</GLText>
+        <GLText borderRadius={0.25} paddingScale={[0.2, 0.2]}>
+          {markers}
+        </GLText>
       </Container>
     );
   })
@@ -282,7 +286,7 @@ storiesOf("Worldview/GLText", module)
         <Container cameraState={{ perspective: true, distance: 25 }}>
           <Axes />
           {textAtlas && (
-            <GLText textAtlas={textAtlas} resolution={40} borderRadius={1}>
+            <GLText textAtlas={textAtlas} resolution={40} borderRadius={1} paddingScale={[1, 1]}>
               {markers}
             </GLText>
           )}

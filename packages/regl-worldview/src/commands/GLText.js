@@ -68,6 +68,7 @@ type GLTextProps = {|
   alphabet?: string[],
   textAtlas?: GeneratedAtlas,
   borderRadius?: number,
+  paddingScale?: [number, number],
 |};
 
 type Props = {
@@ -137,8 +138,8 @@ export const generateAtlas = (
   let textureWidth = 0;
   let maxHeight = 0;
   for (const char of charSet) {
-    const { height, width, glyphAdvance, glyphHeight, glyphTop } = sdfDataByChar[char];
-    const lineHeight = height; //glyphHeight + BUFFER * 2
+    const { height, width, glyphAdvance, glyphTop, glyphHeight } = sdfDataByChar[char];
+    const lineHeight = height;
 
     const dx = Math.ceil(width);
     if (x + dx + glyphAdvance > maxAtlasWidth) {
@@ -146,8 +147,8 @@ export const generateAtlas = (
       y += Math.max(maxHeight, resolution);
       maxHeight = lineHeight;
     }
-    charInfo[char] = { x, y, width: glyphAdvance, yOffset: resolution - glyphTop };
-    x += dx + BUFFER * 2;
+    charInfo[char] = { x, y, height: glyphHeight, width: glyphAdvance, yOffset: resolution - glyphTop };
+    x += dx + BUFFER;
     textureWidth = Math.max(textureWidth, x);
     maxHeight = Math.max(maxHeight, lineHeight);
   }
@@ -323,6 +324,7 @@ const frag = `
 
     gl_FragColor = vColor;
     gl_FragColor.a *= edgeStep;
+    // gl_FragColor = vec4(1.,0.,0.,0.5);
 
     if (gl_FragColor.a == 0.) {
       discard;
@@ -461,9 +463,9 @@ const fragBackground = `
     vec2 q = abs(vPosition) - b + cornerRadius;
     float borderRadius = min(max(q.x,q.y),0.0) + length(max(q,0.0)) - cornerRadius;
     float borderRadiusRaw = 1. - borderRadius + (1. - sign(cornerRadius));
-    float borderRadiusStep = smoothstep((viewportHeight - 3.)/viewportHeight, 1., borderRadiusRaw);
+    float borderRadiusStep = step(1., borderRadiusRaw);
 
-    gl_FragColor = vBackgroundColor;
+    gl_FragColor = vBackgroundColor; 
     gl_FragColor.a *= borderRadiusStep;
         
     if (gl_FragColor.a == 0.) {
@@ -649,33 +651,35 @@ function makeTextCommand(alphabet?: string[]) {
             const info = generatedAtlas.charInfo[char];
             const index = totalInstances + markerInstances;
 
-            const firstCharOnLine = i === 0 && !!borderRadiusSize;
-            const lastCharOnLine = i === chars.length - 1 && !!borderRadiusSize;
+            const firstCharOnLine = i === 0;
+            const lastCharOnLine = i === chars.length - 1;
+
+            const paddingX =
+              firstCharOnLine || lastCharOnLine ? (command.paddingScale?.[0] ?? 0) * command.resolution * 0.45 : 0;
+            const paddingY = (command.paddingScale?.[1] ?? 0) * command.resolution * 0.65;
 
             // Calculate per-character attributes
             destOffsets[2 * index + 0] = x;
             destOffsets[2 * index + 1] = -y;
 
-            const paddingX = firstCharOnLine || lastCharOnLine ? command.resolution / 2 : 0;
-            const paddingY = 0; //command.resolution / 4; // - info.width / 2;
-            backgroundDestOffsets[2 * index + 0] = x + (i === 0 ? -paddingX : 0);
+            backgroundDestOffsets[2 * index + 0] = x + (firstCharOnLine ? -paddingX : 0);
             backgroundDestOffsets[2 * index + 1] = -y;
+
+            srcOffsets[2 * index + 0] = info.x + BUFFER;
+            srcOffsets[2 * index + 1] = info.y + BUFFER;
 
             // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
             // we need to apply an extra offset based on the font resolution.
             // The value used to compute the offset is a result of experimentation.
-            srcOffsets[2 * index + 0] = info.x + BUFFER;
-            srcOffsets[2 * index + 1] = info.y + BUFFER;
-
             charOffsets[2 * index + 0] = 0;
-            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution;
+            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution - paddingY / 2;
 
             srcSizes[2 * index + 0] = info.width;
-            srcSizes[2 * index + 1] = command.resolution;
+            srcSizes[2 * index + 1] = info.height ?? command.resolution;
 
             backgroundDestSizes[2 * index + 0] =
-              srcSizes[2 * index + 0] + (i === 0 ? paddingX * 2 : 0) + (i === chars.length - 1 ? paddingX : 0);
-            backgroundDestSizes[2 * index + 1] = srcSizes[2 * index + 1];
+              info.width + (firstCharOnLine ? paddingX : 0) + (lastCharOnLine ? paddingX : 0);
+            backgroundDestSizes[2 * index + 1] = command.resolution + paddingY;
 
             x += info.width;
             totalWidth = Math.max(totalWidth, x);
@@ -709,14 +713,14 @@ function makeTextCommand(alphabet?: string[]) {
             backgroundColor[4 * index + 2] = bgColor.b;
             backgroundColor[4 * index + 3] = bgColor.a;
 
-            // borderRadius[4 * index + 0] = lastCharOnLine ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 1] = lastCharOnLine ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
-            borderRadius[4 * index + 0] = true ? borderRadiusSize : 0;
-            borderRadius[4 * index + 1] = true ? borderRadiusSize : 0;
-            borderRadius[4 * index + 2] = true ? borderRadiusSize : 0;
-            borderRadius[4 * index + 3] = true ? borderRadiusSize : 0;
+            borderRadius[4 * index + 0] = lastCharOnLine ? borderRadiusSize : 0;
+            borderRadius[4 * index + 1] = lastCharOnLine ? borderRadiusSize : 0;
+            borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
+            borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 0] = true ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 1] = true ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 2] = true ? borderRadiusSize : 0;
+            // borderRadius[4 * index + 3] = true ? borderRadiusSize : 0;
 
             enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
@@ -806,6 +810,7 @@ export const makeGLTextCommand = (props: GLTextProps) => {
   command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
   command.textAtlas = props.textAtlas;
   command.borderRadius = props.borderRadius;
+  command.paddingScale = props.paddingScale;
   return command;
 };
 

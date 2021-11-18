@@ -76,7 +76,6 @@ const SDFGenerator = ({ fontSize }) => {
         charSet.size,
         fontSize,
         maxWidth
-        // 'Material Design Icons'
       );
       sdfsRef.current = { charInfo, textureData, textureWidth, textureHeight };
 

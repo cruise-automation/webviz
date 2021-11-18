@@ -51,7 +51,7 @@ function textMarkers({
       },
       scale: scale(i),
       color,
-      colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
+      colors: [color, { r: i / count, g: 1, b: 1 - i / count, a: 1 }],
       billboard,
     };
   });
@@ -270,9 +270,9 @@ storiesOf("Worldview/GLText", module)
     );
   })
   .add("with pregenerated text atlas", () => {
-    const markers = textMarkers({ text: "\u{F053D}", billboard: true }).map((marker) => ({
+    const markers = textMarkers({ text: "\u{F167A}Bus\u{F053D}", billboard: true }).map((marker) => ({
       ...marker,
-      text: "\u{F079F}",
+      text: "\u{F167A}Bus\u{F053D}",
     }));
     function Example() {
       const [textAtlas, setTextAtlas] = useState();

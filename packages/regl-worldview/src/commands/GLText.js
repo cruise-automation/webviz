@@ -88,14 +88,6 @@ const BUFFER = 10;
 const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
-const memoizedCreateCanvas = memoizeOne((font) => {
-  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
-  const canvas: HTMLCanvasElement = self.OffscreenCanvas ? new OffscreenCanvas(0, 0) : document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  ctx.font = font;
-  return ctx;
-});
-
 const hashMarkerPosition = (marker: TextMarker): string => {
   const { x, y, z } = marker.pose.position;
   // The hash is a simple string with all three components
@@ -110,65 +102,121 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
   offsets.set(hashMarkerPosition(marker), yOffset);
 };
 
+export const ICON_SVG_BY_TYPE2 = {
+  // Supported icons, add more if needed.
+  "alpha-r": "\u{F0AFF}",
+  "alpha-t": "\u{F0B01}",
+  "arrow-collapse-down": "\u{F0792}",
+  "arrow-collapse-left": "\u{F0793}",
+  "arrow-collapse-right": "\u{F0794}",
+  "arrow-collapse-up": "\u{F0795}",
+  "arrow-decision": "\u{F09BB}",
+  "arrow-left": "\u{F004D}",
+  "arrow-right": "\u{F0054}",
+  "arrow-top-left": "\u{F005B}",
+  "arrow-top-right": "\u{F005C}",
+  "bus-school": "\u{F079F}",
+  "car-brake-alert": "\u{F0C48}",
+  "car-parking-lights": "\u{F0D63}",
+  "hazard-lights": "\u{F0C89}",
+  "help-circle-outline": "\u{F0625}",
+  "road-variant": "\u{F0462}",
+  "signal-off": "\u{F0783}",
+  "robot-outline": "\u{F167A}",
+  "robot-off-outline": "\u{F167B}",
+  bike: "\u{F00A3}",
+  bus: "\u{F00E7}",
+  car: "\u{F010B}",
+  DEFAULT: "\u{F01A7}",
+  help: "\u{F02D6}",
+  motorbike: "\u{F037C}",
+  octagon: "\u{F03C3}",
+  train: "\u{F052C}",
+  truck: "\u{F053D}",
+  walk: "\u{F0583}",
+};
+
 export const generateAtlas = (
   charSet: Set<string>,
-  _setSize,
+  _setSize: number,
   resolution: number,
   maxAtlasWidth: number,
   fontFamily?: string
 ): GeneratedAtlas => {
-  const tinySDF = new TinySDF({
-    fontSize: resolution, // Font size in pixels
-    fontFamily: fontFamily || "sans-serif", // CSS font-family
-    fontWeight: "normal", // CSS font-weight
-    fontStyle: "normal", // CSS font-style
-    buffer: BUFFER, // Whitespace buffer around a glyph in pixels
-    radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
-    cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
-  });
-
-  // Render and measure each char using tinySDF
-  const sdfDataByChar = {};
-  charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
+  console.log("generateAtlas!");
+  const atlasConfigs = [
+    {
+      fontSize: resolution,
+      fontFamily: fontFamily || "sans-serif",
+      charSet,
+    },
+    {
+      fontSize: resolution,
+      fontFamily: "Material Design Icons",
+      charSet: new Set(Object.values(ICON_SVG_BY_TYPE2)),
+    },
+  ];
 
   // Measure and assign positions to all characters
+  const sdfDataByChar = {};
   const charInfo = {};
   let x = 0;
   let y = 0;
   let textureWidth = 0;
   let maxHeight = 0;
-  for (const char of charSet) {
-    const { height, width, glyphAdvance, glyphTop, glyphHeight } = sdfDataByChar[char];
-    const lineHeight = height;
 
-    const dx = Math.ceil(width);
-    if (x + dx + glyphAdvance > maxAtlasWidth) {
-      x = 0;
-      y += Math.max(maxHeight, resolution);
-      maxHeight = lineHeight;
+  // Render and measure each char using tinySDF
+  atlasConfigs.forEach((atlasConfig) => {
+    const { charSet, fontSize, fontFamily } = atlasConfig;
+    const tinySDF = new TinySDF({
+      fontSize, // Font size in pixels
+      fontFamily: fontFamily || "sans-serif", // CSS font-family
+      fontWeight: "normal", // CSS font-weight
+      fontStyle: "normal", // CSS font-style
+      buffer: BUFFER, // Whitespace buffer around a glyph in pixels
+      radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
+      cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
+    });
+    charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
+  });
+
+  atlasConfigs.forEach(({ charSet }) => {
+    for (const char of charSet) {
+      const { height, width, glyphAdvance, glyphTop, glyphHeight } = sdfDataByChar[char];
+      const lineHeight = height;
+
+      const dx = Math.ceil(width);
+      if (x + dx + glyphAdvance > maxAtlasWidth) {
+        x = 0;
+        y += Math.max(maxHeight, resolution);
+        maxHeight = lineHeight;
+      }
+      charInfo[char] = { x, y, height: glyphHeight, width: glyphAdvance, yOffset: resolution - glyphTop };
+      x += dx;
+      textureWidth = Math.max(textureWidth, x);
+      maxHeight = Math.max(maxHeight, lineHeight);
     }
-    charInfo[char] = { x, y, height: glyphHeight, width: glyphAdvance, yOffset: resolution - glyphTop };
-    x += dx + BUFFER;
-    textureWidth = Math.max(textureWidth, x);
-    maxHeight = Math.max(maxHeight, lineHeight);
-  }
+  });
 
   // Copy each SDF image into a single texture
   const textureHeight = y + Math.max(maxHeight, resolution);
   const textureData = new Uint8Array(textureWidth * textureHeight);
-  for (const char of charSet) {
-    const { x, y } = charInfo[char];
-    const { data, width, height } = sdfDataByChar[char];
 
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
-        // if this character is near the right edge, we don't actually copy the whole square of data
-        if (x + j < textureWidth) {
-          textureData[textureWidth * (y + i) + x + j] = data[i * width + j];
+  atlasConfigs.forEach(({ charSet }) => {
+    for (const char of charSet) {
+      const { x, y } = charInfo[char];
+      const { data, width, height } = sdfDataByChar[char];
+
+      for (let i = 0; i < height; i++) {
+        for (let j = 0; j < width; j++) {
+          // if this character is near the right edge, we don't actually copy the whole square of data
+          if (x + j < textureWidth) {
+            textureData[textureWidth * (y + i) + x + j] = data[i * width + j];
+          }
         }
       }
     }
-  }
+  });
 
   return {
     charInfo,
@@ -251,8 +299,7 @@ const vert = `
   void main () {
     // Scale invariance only works for billboards
     bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
-
-    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset + charOffset) / fontSize, 0.01);
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset + charOffset) / fontSize, 0);
 
     if (!scaleInvariantEnabled) {
       // Apply marker scale only when scale invariance is disabled
@@ -324,7 +371,6 @@ const frag = `
 
     gl_FragColor = vColor;
     gl_FragColor.a *= edgeStep;
-    // gl_FragColor = vec4(1.,0.,0.,0.5);
 
     if (gl_FragColor.a == 0.) {
       discard;
@@ -361,11 +407,11 @@ const vertBackground = `
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
+  varying float vRatio;
   varying vec2 vPosition;
   varying vec4 vBorderRadius;
   varying vec4 vBackgroundColor;
   varying float vEnableBackground;
-  varying float vRatio;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -672,7 +718,7 @@ function makeTextCommand(alphabet?: string[]) {
             // we need to apply an extra offset based on the font resolution.
             // The value used to compute the offset is a result of experimentation.
             charOffsets[2 * index + 0] = 0;
-            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) + 0.1 * command.resolution - paddingY / 2;
+            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) - paddingY / 2 + 0.25 * command.resolution;
 
             srcSizes[2 * index + 0] = info.width;
             srcSizes[2 * index + 1] = info.height ?? command.resolution;
@@ -717,10 +763,6 @@ function makeTextCommand(alphabet?: string[]) {
             borderRadius[4 * index + 1] = lastCharOnLine ? borderRadiusSize : 0;
             borderRadius[4 * index + 2] = firstCharOnLine ? borderRadiusSize : 0;
             borderRadius[4 * index + 3] = firstCharOnLine ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 0] = true ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 1] = true ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 2] = true ? borderRadiusSize : 0;
-            // borderRadius[4 * index + 3] = true ? borderRadiusSize : 0;
 
             enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 

@@ -30,4 +30,11 @@ storiesOf("Worldview/SDFGenerator", module)
         <SDFGenerator fontSize={40} />
       </div>
     );
+  })
+  .add("default 14", () => {
+    return (
+      <div>
+        <SDFGenerator fontSize={14} />
+      </div>
+    );
   });

@@ -316,10 +316,13 @@ export declare const Axes: React.ComponentType<{}>;
 export declare const Lines: ShapeComponent<Line>;
 export declare const Spheres: ShapeComponent<Sphere>;
 export declare const Triangles: ShapeComponent<Triangle>;
-export declare const Points: ShapeComponent<PointType>;
+export declare const Points: React.ComponentType<{
+  children: PointType[];
+  useWorldSpaceSize: boolean;
+}>;
 export declare const Grid: React.ComponentType<{
-  count: number
-  size: number,
+  count: number;
+  size: number;
 }>;
 export declare const Text: React.ComponentType<{
   children: TextMarker[];

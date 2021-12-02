@@ -24,6 +24,7 @@ export * from "./utils/Raycast";
 export * from "./commands/index";
 export * from "./types/index";
 export * from "./utils/getChildrenForHitmapDefaults";
+export { default as SDFGenerator } from "./utils/SDFGenerator";
 export { default as WorldviewReactContext } from "./WorldviewReactContext";
 export { Worldview, OffscreenWorldview };
 export default Worldview;

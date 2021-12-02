@@ -45,6 +45,8 @@ type CharacterLocations = {
     x: number,
     y: number,
     width: number,
+    height: number,
+    yOffset: number,
   |},
 };
 
@@ -53,6 +55,12 @@ export type GeneratedAtlas = {|
   textureWidth: number,
   textureHeight: number,
   textureData: Uint8Array,
+|};
+
+export type AtlasConfig = {|
+  fontSize: number,
+  fontFamily: string,
+  charSet: Set<string>,
 |};
 
 type TextMarkerProps = TextMarker & {
@@ -67,6 +75,8 @@ type GLTextProps = {|
   resolution?: number,
   alphabet?: string[],
   textAtlas?: GeneratedAtlas,
+  borderRadius?: number,
+  paddingScale?: [number, number],
 |};
 
 type Props = {
@@ -85,14 +95,7 @@ const BUFFER = 10;
 
 const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
-
-const memoizedCreateCanvas = memoizeOne((font) => {
-  // $FlowFixMe: Flow doesn't know about OffscreenCanvas.
-  const canvas: HTMLCanvasElement = self.OffscreenCanvas ? new OffscreenCanvas(0, 0) : document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  ctx.font = font;
-  return ctx;
-});
+const BG_COLOR_TRANSPARENT = Object.freeze({ r: 0, b: 0, g: 0, a: 0 });
 
 const hashMarkerPosition = (marker: TextMarker): string => {
   const { x, y, z } = marker.pose.position;
@@ -108,58 +111,80 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
   offsets.set(hashMarkerPosition(marker), yOffset);
 };
 
-// Build a single font atlas: a texture containing all characters and position/size data for each character.
-const createMemoizedGenerateAtlas = () =>
-  memoizeOne(
-    // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
-    (charSet: Set<string>, _setSize, resolution: number, maxAtlasWidth: number): GeneratedAtlas => {
-      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
+// Build a single font atlas: a texture containing all characters from all atlasConfigs
+export const generateAtlas = (atlasConfigs: AtlasConfig[], maxAtlasWidth: number): GeneratedAtlas => {
+  // Render and measure each character using tinySDF
+  const sdfDataByChar = {};
+  atlasConfigs.forEach((atlasConfig) => {
+    const { charSet, fontSize, fontFamily } = atlasConfig;
+    const tinySDF = new TinySDF({
+      fontSize, // Font size in pixels
+      fontFamily: fontFamily || "sans-serif", // CSS font-family
+      fontWeight: "normal", // CSS font-weight
+      fontStyle: "normal", // CSS font-style
+      buffer: BUFFER, // Whitespace buffer around a glyph in pixels
+      radius: SDF_RADIUS, // How many pixels around the glyph shape to use for encoding distance
+      cutoff: CUTOFF, // How much of the radius (relative) is used for the inside part of the glyph
+    });
+    charSet.forEach((char) => (sdfDataByChar[char] = tinySDF.draw(char)));
+  });
 
-      let textureWidth = 0;
-      const rowHeight = resolution + 2 * BUFFER;
-      const charInfo = {};
+  // Compute positions for every character in the atlas
+  const charInfo = {};
 
-      // Measure and assign positions to all characters
-      let x = 0;
-      let y = 0;
-      for (const char of charSet) {
-        const width = ctx.measureText(char).width;
-        const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx > maxAtlasWidth) {
-          x = 0;
-          y += rowHeight;
-        }
-        charInfo[char] = { x, y, width };
-        x += dx;
-        textureWidth = Math.max(textureWidth, x);
+  let x = 0;
+  let y = 0;
+  let maxHeight = 0;
+  let textureWidth = 0;
+  atlasConfigs.forEach(({ charSet, fontSize }) => {
+    for (const char of charSet) {
+      const { height, width, glyphAdvance, glyphTop, glyphHeight } = sdfDataByChar[char];
+      const lineHeight = height;
+
+      const dx = Math.ceil(width);
+      if (x + dx + glyphAdvance > maxAtlasWidth) {
+        x = 0;
+        y += Math.max(maxHeight, fontSize);
+        maxHeight = lineHeight;
       }
+      charInfo[char] = { x, y, height: glyphHeight, width: glyphAdvance, yOffset: fontSize - glyphTop };
+      x += dx;
+      textureWidth = Math.max(textureWidth, x);
+      maxHeight = Math.max(maxHeight, lineHeight);
+    }
+  });
 
-      const textureHeight = y + rowHeight;
-      const textureData = new Uint8Array(textureWidth * textureHeight);
+  // Copy each character's SDF image into a single texture
+  const textureHeight = y + Math.max(maxHeight);
+  const textureData = new Uint8Array(textureWidth * textureHeight);
 
-      // Use tiny-sdf to create SDF images for each character and copy them into a single texture
-      for (const char of charSet) {
-        const { x, y } = charInfo[char];
-        const data = tinySDF.draw(char);
-        for (let i = 0; i < tinySDF.size; i++) {
-          for (let j = 0; j < tinySDF.size; j++) {
-            // if this character is near the right edge, we don't actually copy the whole square of data
-            if (x + j < textureWidth) {
-              textureData[textureWidth * (y + i) + x + j] = data[i * tinySDF.size + j];
-            }
+  atlasConfigs.forEach(({ charSet }) => {
+    for (const char of charSet) {
+      const { x, y } = charInfo[char];
+      const { data, width, height } = sdfDataByChar[char];
+
+      for (let i = 0; i < height; i++) {
+        for (let j = 0; j < width; j++) {
+          // if this character is near the right edge, we don't actually copy the whole square of data
+          if (x + j < textureWidth) {
+            textureData[textureWidth * (y + i) + x + j] = data[i * width + j];
           }
         }
       }
-
-      return {
-        charInfo,
-        textureWidth,
-        textureHeight,
-        textureData,
-      };
     }
-  );
+  });
+
+  return {
+    charInfo,
+    textureWidth,
+    textureHeight,
+    textureData,
+  };
+};
+
+// Build a single font atlas: a texture containing all characters and position/size data for each character.
+// We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
+const createMemoizedGenerateAtlas = () => memoizeOne(generateAtlas);
 
 const createMemoizedDrawAtlasTexture = () =>
   memoizeOne((textAtlas: GeneratedAtlas, atlasTexture: any) => {
@@ -193,28 +218,32 @@ const vert = `
 
   // per-instance (character) attributes
   attribute vec2 srcOffset;
-  attribute float srcWidth;
+  attribute vec2 charOffset;
+  attribute vec2 srcSize;
+  attribute vec2 roundedBackgroundSize;
+  attribute vec2 backgroundDestSize;
   attribute vec2 destOffset;
 
   // per-marker attributes
-  attribute vec3 scale;
   attribute float billboard;
   attribute vec2 alignmentOffset;
-  attribute float enableBackground;
-  attribute float enableHighlight;
-  attribute vec4 foregroundColor;
-  attribute vec4 backgroundColor;
-  attribute vec4 highlightColor;
   attribute vec3 posePosition;
+  attribute vec3 scale;
+  attribute vec4 textColor;
   attribute vec4 poseOrientation;
+  attribute vec4 backgroundColor;
 
-  varying vec2 vTexCoord;
-  varying float vEnableBackground;
-  varying vec4 vForegroundColor;
-  varying vec4 vBackgroundColor;
-  varying vec4 vHighlightColor;
-  varying float vEnableHighlight;
+  varying vec2 vLineSize;
+
+  varying vec2 vCharBackgroundCoord;
+  varying vec2 vTextAtlasCoord;
+  varying vec4 vTextColor;
   varying float vBillboard;
+  varying vec2 vCharOffset;
+  varying float vLineBackgroundRadiusRatio;
+  varying vec2 vCharToBackgroundSizeRatio;
+  varying vec2 vLineBackgroundCoord;
+  varying vec4 vBackgroundColor;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -236,9 +265,7 @@ const vert = `
   void main () {
     // Scale invariance only works for billboards
     bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
-
-    vec2 srcSize = vec2(srcWidth, fontSize);
-    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+    vec3 markerSpacePos = vec3((position * backgroundDestSize + destOffset + alignmentOffset) / fontSize, 0);
 
     if (!scaleInvariantEnabled) {
       // Apply marker scale only when scale invariance is disabled
@@ -260,7 +287,7 @@ const vert = `
       } else {
         // Compute inverse aspect ratio
         float invAspect = viewportHeight / viewportWidth;
-        // When using orthographic projection, the scaling factor is obtain from
+        // When using orthographic projection, the scaling factor is obtained from
         // the camera projection itself.
         // We also need applied the inverse aspect ratio
         scaleInvariantFactor *= 2.0 * invAspect / length(projection[0].xyz);
@@ -272,63 +299,100 @@ const vert = `
     // Compute final vertex position
     gl_Position = computeVertexPosition(markerSpacePos);
 
-    vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
-    vEnableBackground = enableBackground;
-    vForegroundColor = foregroundColor;
+    // Compute additions offsets for the char within the background char within the atlas
+    vec2 charOffsetCoord = vec2(0.5) - ((backgroundDestSize - srcSize) / 2. + charOffset) / backgroundDestSize;
+    vec2 textAtlasCoord = (charOffset + srcOffset + texCoord * backgroundDestSize) / atlasSize;
+
+    // Compute the coords for the full line
+    vec2 lineCoord = (texCoord * backgroundDestSize + destOffset) / roundedBackgroundSize;
+    vLineBackgroundCoord = vec2(lineCoord.x, texCoord.y) * 2. - 1.; // Transform from [0,1] to [-1,1]
+
+    vCharToBackgroundSizeRatio = srcSize / backgroundDestSize;
+    vLineBackgroundRadiusRatio = roundedBackgroundSize.y / roundedBackgroundSize.x;
+    
     vBackgroundColor = backgroundColor;
-    vHighlightColor = highlightColor;
-    vEnableHighlight = enableHighlight;
     vBillboard = billboard;
+    vCharOffset = charOffsetCoord;
+    vCharBackgroundCoord = texCoord;
+    vTextColor = textColor;
+    vTextAtlasCoord = textAtlasCoord;
   }
 `;
 
 const frag = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
-  uniform mat4 projection;
+
   uniform sampler2D atlas;
   uniform float cutoff;
+  uniform bool isHitmap;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
-  uniform bool isHitmap;
+  uniform float borderRadiusSize;
+  
+  varying vec2 vLineSize;
 
-  varying vec2 vTexCoord;
-  varying float vEnableBackground;
-  varying vec4 vForegroundColor;
-  varying vec4 vBackgroundColor;
-  varying vec4 vHighlightColor;
-  varying float vEnableHighlight;
+  varying float vLineBackgroundRadiusRatio;
+  varying vec2 vCharBackgroundCoord;
+  varying vec2 vTextAtlasCoord;
+  varying vec4 vTextColor;
+  varying vec2 vCharOffset;
+  varying vec2 vCharToBackgroundSizeRatio;
   varying float vBillboard;
+  varying vec2 vLineBackgroundCoord;
+  varying vec4 vBackgroundColor;
+
+  // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
+  // when the solid background is enabled, because the alpha blending and
+  // depth test don't work together nicely for partially-transparent pixels.
+  float getAntialisedStep(float dist, float cutoff) {
+    return smoothstep(1. - cutoff - fwidth(dist), 1. - cutoff, dist);
+  }
+
+  float rectangleMask(vec2 uv, vec2 position, vec2 size) {
+    float t = 0.;
+    if ((uv.x > position.x - size.x / 2.) && (uv.x < position.x + size.x / 2.)
+      && (uv.y > position.y - size.y / 2.) && (uv.y < position.y + size.y / 2.)) {
+      t = 1.;
+    }
+    return t;
+  }
+
+  float roundedRectangleMask(vec2 position, vec2 size, float radius) {
+    vec2 q = abs(position) - size + radius;
+    float borderRadius = min(max(q.x,q.y), 0.) + length(max(q, 0.)) - radius;
+    float borderRadiusRaw = 2. - sign(radius) - borderRadius;
+    return getAntialisedStep(borderRadiusRaw, 0.);
+  }
 
   void main() {
-    float dist = texture2D(atlas, vTexCoord).a;
+    float dist = texture2D(atlas, vTextAtlasCoord).a;
+    float charEdgeStep = getAntialisedStep(dist, cutoff); 
 
-    // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
-    // when the solid background is enabled, because the alpha blending and
-    // depth test don't work together nicely for partially-transparent pixels.
-    float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
-
-    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize <= 20.0) {
+    if (scaleInvariant && vBillboard == 1. && scaleInvariantSize <= 20.) {
       // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
       // the raw distance value since at such small scale, the SDF approach causes some
       // visual artifacts.
       // The value used for checking if scaleInvariantSize is "too small" is arbitrary and
       // was defined after some experimentation.
-      edgeStep = dist;
+      charEdgeStep = dist;
     }
 
-    if (isHitmap) {
-      // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
-      // instead of the actual glyphs. This way we increase the selection range and provide a
-      // better user experience.
-      gl_FragColor = vForegroundColor;
-    } else if (vEnableHighlight > 0.5) {
-      gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
-    } else if (vEnableBackground > 0.5) {
-      gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
+    // Since the background can be bigger than the character from the atlas,
+    // mask out parts of the atlas that fall outside of the character bounds
+    float charMask = rectangleMask(vCharBackgroundCoord, vCharOffset, vCharToBackgroundSizeRatio);
+
+    vec4 finalColor = mix(vBackgroundColor, vTextColor, charEdgeStep * charMask);
+
+    // Apply rounded corners
+    vec2 backgroundSize = vec2(1., vLineBackgroundRadiusRatio);
+    vec2 backgroundPosition = vec2(vLineBackgroundCoord.x, vLineBackgroundCoord.y * vLineBackgroundRadiusRatio);
+    float roundedCornerMask = roundedRectangleMask(backgroundPosition, backgroundSize, borderRadiusSize * vLineBackgroundRadiusRatio);
+    
+    if (!isHitmap) {
+      gl_FragColor = vec4(finalColor.rgb, finalColor.a * roundedCornerMask);
     } else {
-      gl_FragColor = vForegroundColor;
-      gl_FragColor.a *= edgeStep;
+      gl_FragColor = vTextColor;
     }
 
     if (gl_FragColor.a == 0.) {
@@ -370,6 +434,7 @@ function makeTextCommand(alphabet?: string[]) {
         cutoff: CUTOFF,
         scaleInvariant: regl.prop("scaleInvariant"),
         scaleInvariantSize: regl.prop("scaleInvariantSize"),
+        borderRadiusSize: regl.prop("borderRadiusSize"),
         isHitmap: regl.prop("isHitmap"),
         viewportHeight: regl.context("viewportHeight"),
         viewportWidth: regl.context("viewportWidth"),
@@ -382,61 +447,80 @@ function makeTextCommand(alphabet?: string[]) {
         position: [[0, 0], [0, -1], [1, 0], [1, -1]],
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
         srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        charOffset: (ctx, props) => ({ buffer: props.charOffsets, divisor: 1 }),
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        srcSize: (ctx, props) => ({ buffer: props.srcSizes, divisor: 1 }),
+        roundedBackgroundSize: (ctx, props) => ({ buffer: props.lineSizes, divisor: 1 }),
+        backgroundDestSize: (ctx, props) => ({ buffer: props.backgroundDestSizes, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+        textColor: (ctx, props) => ({ buffer: props.textColor, divisor: 1 }),
         backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
         poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
       },
     });
 
     return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
+      // Split the text into lines
       let estimatedInstances = 0;
-      for (const { text } of props) {
+      const markersWithSplitText = props.map((marker) => {
+        const { text } = marker;
         if (typeof text !== "string") {
           throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
         }
 
-        for (const char of text) {
-          ++estimatedInstances;
-          charSet.add(char);
-        }
-      }
+        const charsByLine = text.split("\n").map((line) => Array.from(line));
+        charsByLine.forEach((line) => {
+          for (const char of text) {
+            ++estimatedInstances;
+            charSet.add(char);
+          }
+        });
+        return { marker, charsByLine };
+      });
 
-      let generatedAtlas = command.textAtlas;
-      const generatedAtlasChars = generatedAtlas ? Object.keys(generatedAtlas.charInfo) : [];
+      let maybeGeneratedAtlas: ?GeneratedAtlas = command.textAtlas;
+      const generatedAtlasChars = maybeGeneratedAtlas ? Object.keys(maybeGeneratedAtlas.charInfo) : [];
       const textChars = Array.from(charSet);
       const generatedAtlasHasAllChars = difference(textChars, generatedAtlasChars).length === 0;
-      if (!generatedAtlas || !generatedAtlasHasAllChars) {
+      if (!maybeGeneratedAtlas || !generatedAtlasHasAllChars) {
         // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
         // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
         const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
-        generatedAtlas = memoizedGenerateAtlas(charSet, charSet.size, command.resolution, maxAtlasWidth);
+        maybeGeneratedAtlas = memoizedGenerateAtlas(
+          [
+            {
+              charSet,
+              fontSize: command.resolution,
+              fontFamily: "sans-serif",
+            },
+          ],
+          maxAtlasWidth
+        );
       }
+      if (!maybeGeneratedAtlas) {
+        return; // Make flow happy
+      }
+      const generatedAtlas: GeneratedAtlas = maybeGeneratedAtlas;
       memoizedDrawAtlasTexture(generatedAtlas, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
-      const srcWidths = new Float32Array(estimatedInstances);
+      const backgroundDestSizes = new Float32Array(estimatedInstances * 2);
+      const srcSizes = new Float32Array(estimatedInstances * 2);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
+      const charOffsets = new Float32Array(estimatedInstances * 2);
+      const lineSizes = new Float32Array(estimatedInstances * 2);
 
       // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
       const alignmentOffset = new Float32Array(estimatedInstances * 2);
       const scale = new Float32Array(estimatedInstances * 3);
-      const foregroundColor = new Float32Array(estimatedInstances * 4);
+      const textColor = new Float32Array(estimatedInstances * 4);
       const backgroundColor = new Float32Array(estimatedInstances * 4);
-      const highlightColor = new Float32Array(estimatedInstances * 4);
-      const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
       const poseOrientation = new Float32Array(estimatedInstances * 4);
-      const enableHighlight = new Float32Array(estimatedInstances);
 
       let totalInstances = 0;
 
@@ -447,12 +531,11 @@ function makeTextCommand(alphabet?: string[]) {
       // (see hashMarkerPosition() above).
       const yOffsets = new Map<string, number>();
 
-      for (const marker of props) {
+      for (const { marker, charsByLine } of markersWithSplitText) {
         let totalWidth = 0;
         let x = 0;
         let y = getMarkerYOffset(yOffsets, marker);
         let markerInstances = 0;
-        let lineCount = 1; // every text has at least one line
 
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
@@ -460,76 +543,115 @@ function makeTextCommand(alphabet?: string[]) {
         const fgColor = toColor(
           isHitmap ? marker.color || [0, 0, 0, 1] : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT
         );
-        const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
         const bgColor = toColor(
-          marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)
+          marker.colors?.[1] ||
+            (command.autoBackgroundColor && (isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)) ||
+            BG_COLOR_TRANSPARENT
         );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
+        const hlColorText = isColorDark(hlColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK;
 
-        for (let i = 0; i < marker.text.length; i++) {
-          const char = marker.text[i];
-          if (char === "\n") {
-            x = 0;
-            // Make sure every line in the text is offsetted correctly
-            y += command.resolution;
-            lineCount++;
-            continue;
+        const paddingScaleX = command.paddingScale?.[0] ?? 1;
+        const paddingScaleY = command.paddingScale?.[1] ?? paddingScaleX;
+
+        const paddingX = ((paddingScaleX - 1) * command.resolution) / 2;
+        const paddingY = ((paddingScaleY - 1) * command.resolution) / 2;
+
+        const lineHeight = command.resolution + paddingY * 2;
+
+        // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
+        // we need to apply an extra offset based on the font resolution.
+        // The value used to compute the offset is a result of experimentation.
+        const charDescenderLineShift = -0.25 * command.resolution;
+
+        let runningGlyphCount = 0;
+        for (let lineIndex = 0; lineIndex < charsByLine.length; lineIndex++) {
+          const chars = charsByLine[lineIndex];
+
+          // Calculate the entire line's width ahead of time in order to calculate the rounded corners properly
+          const totalLineWidth = chars.reduce((total, char) => {
+            const info = generatedAtlas.charInfo[char];
+            return total + info.width;
+          }, paddingX * 2);
+
+          for (let i = 0; i < chars.length; i++) {
+            const char = chars[i];
+            const info = generatedAtlas.charInfo[char];
+            const index = totalInstances + markerInstances;
+
+            const firstCharOnLine = i === 0;
+            const lastCharOnLine = i === chars.length - 1;
+
+            const charIndex = runningGlyphCount + lineIndex + i;
+            const charHighlighted =
+              !isHitmap && marker.highlightedIndices && marker.highlightedIndices.includes(charIndex);
+            const charTextColor = charHighlighted ? hlColorText : fgColor;
+            const charBackgroundColor = charHighlighted ? hlColor : bgColor;
+
+            // Calculate per-character attributes
+            destOffsets[2 * index + 0] = x;
+            destOffsets[2 * index + 1] = -y;
+
+            // The offset from the top-left of the atlas to the top-left corner of each character
+            srcOffsets[2 * index + 0] = info.x + BUFFER;
+            srcOffsets[2 * index + 1] = info.y + BUFFER;
+
+            // Size of each character in the atlas in pixels
+            srcSizes[2 * index + 0] = info.width;
+            srcSizes[2 * index + 1] = info.height;
+
+            // The size of the background rectangle in pixels
+            backgroundDestSizes[2 * index + 0] = info.width + (firstCharOnLine || lastCharOnLine ? paddingX : 0);
+            backgroundDestSizes[2 * index + 1] = lineHeight;
+
+            // The size of all characters in the line in pixels. Used for rounded corners
+            lineSizes[2 * index + 0] = totalLineWidth;
+            lineSizes[2 * index + 1] = lineHeight;
+
+            // Additional offset for each character within the background rectangle in pixels
+            charOffsets[2 * index + 0] = firstCharOnLine && !lastCharOnLine ? -paddingX : 0;
+            charOffsets[2 * index + 1] = -(info.yOffset ?? 0) - charDescenderLineShift - paddingY;
+
+            x += backgroundDestSizes[2 * index + 0];
+            totalWidth = Math.max(totalWidth, x);
+
+            // Copy per-marker attributes. These are duplicated per character so that we can draw
+            // all characters from all markers in a single draw call.
+
+            billboard[index] = Number(marker.billboard ?? true);
+
+            scale[3 * index + 0] = marker.scale.x;
+            scale[3 * index + 1] = marker.scale.y;
+            scale[3 * index + 2] = marker.scale.z;
+
+            posePosition[3 * index + 0] = marker.pose.position.x;
+            posePosition[3 * index + 1] = marker.pose.position.y;
+            posePosition[3 * index + 2] = marker.pose.position.z;
+
+            poseOrientation[4 * index + 0] = marker.pose.orientation.x;
+            poseOrientation[4 * index + 1] = marker.pose.orientation.y;
+            poseOrientation[4 * index + 2] = marker.pose.orientation.z;
+            poseOrientation[4 * index + 3] = marker.pose.orientation.w;
+
+            textColor[4 * index + 0] = charTextColor.r;
+            textColor[4 * index + 1] = charTextColor.g;
+            textColor[4 * index + 2] = charTextColor.b;
+            textColor[4 * index + 3] = charTextColor.a;
+
+            backgroundColor[4 * index + 0] = charBackgroundColor.r;
+            backgroundColor[4 * index + 1] = charBackgroundColor.g;
+            backgroundColor[4 * index + 2] = charBackgroundColor.b;
+            backgroundColor[4 * index + 3] = charBackgroundColor.a;
+
+            ++markerInstances;
           }
-          const info = generatedAtlas.charInfo[char];
-          const index = totalInstances + markerInstances;
 
-          // Calculate per-character attributes
-          destOffsets[2 * index + 0] = x;
-          destOffsets[2 * index + 1] = -y;
-          srcOffsets[2 * index + 0] = info.x + BUFFER;
-          // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
-          // we need to apply an extra offset based on the font resolution.
-          // The value used to compute the offset is a result of experimentation.
-          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.05 * command.resolution;
-          srcWidths[index] = info.width;
-
-          x += info.width;
-          totalWidth = Math.max(totalWidth, x);
-
-          // Copy per-marker attributes. These are duplicated per character so that we can draw
-          // all characters from all markers in a single draw call.
-
-          billboard[index] = marker.billboard ?? true ? 1 : 0;
-
-          scale[3 * index + 0] = marker.scale.x;
-          scale[3 * index + 1] = marker.scale.y;
-          scale[3 * index + 2] = marker.scale.z;
-
-          posePosition[3 * index + 0] = marker.pose.position.x;
-          posePosition[3 * index + 1] = marker.pose.position.y;
-          posePosition[3 * index + 2] = marker.pose.position.z;
-
-          poseOrientation[4 * index + 0] = marker.pose.orientation.x;
-          poseOrientation[4 * index + 1] = marker.pose.orientation.y;
-          poseOrientation[4 * index + 2] = marker.pose.orientation.z;
-          poseOrientation[4 * index + 3] = marker.pose.orientation.w;
-
-          foregroundColor[4 * index + 0] = fgColor.r;
-          foregroundColor[4 * index + 1] = fgColor.g;
-          foregroundColor[4 * index + 2] = fgColor.b;
-          foregroundColor[4 * index + 3] = fgColor.a;
-
-          backgroundColor[4 * index + 0] = bgColor.r;
-          backgroundColor[4 * index + 1] = bgColor.g;
-          backgroundColor[4 * index + 2] = bgColor.b;
-          backgroundColor[4 * index + 3] = bgColor.a;
-
-          highlightColor[4 * index + 0] = hlColor.r;
-          highlightColor[4 * index + 1] = hlColor.g;
-          highlightColor[4 * index + 2] = hlColor.b;
-          highlightColor[4 * index + 3] = hlColor.a;
-
-          enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
-
-          enableBackground[index] = outline ? 1 : 0;
-
-          ++markerInstances;
+          // Reset values for the next line
+          x = 0;
+          y += lineHeight;
+          runningGlyphCount += chars.length;
         }
+        y -= lineHeight;
 
         const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
@@ -541,7 +663,7 @@ function makeTextCommand(alphabet?: string[]) {
         // Basically, we add as many offsets as numbers of lines in the marker's text.
         // Since the y-coordinate is inverted when computing destOffset[] a few lines above
         // we need an additional command.resolution offset (precomputed in totalHeight).
-        setMarkerYOffset(yOffsets, marker, totalHeight + lineCount * command.resolution);
+        setMarkerYOffset(yOffsets, marker, totalHeight + charsByLine.length * command.resolution);
 
         totalInstances += markerInstances;
       }
@@ -550,23 +672,24 @@ function makeTextCommand(alphabet?: string[]) {
         instances: totalInstances,
 
         isHitmap: !!isHitmap,
-        scaleInvariant: command.scaleInvariant,
         resolution: command.resolution,
+        borderRadiusSize: command.borderRadius || 0,
+        scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
 
         // per-character
         srcOffsets,
+        charOffsets,
         destOffsets,
-        srcWidths,
+        srcSizes,
+        lineSizes,
+        backgroundDestSizes,
+        textColor,
+        backgroundColor,
 
         // per-marker
         alignmentOffset,
         billboard,
-        enableBackground,
-        enableHighlight,
-        foregroundColor,
-        backgroundColor,
-        highlightColor,
         poseOrientation,
         posePosition,
         scale,
@@ -586,6 +709,9 @@ export const makeGLTextCommand = (props: GLTextProps) => {
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
   command.textAtlas = props.textAtlas;
+  command.borderRadius = props.borderRadius;
+  command.paddingScale = props.paddingScale;
+
   return command;
 };
 

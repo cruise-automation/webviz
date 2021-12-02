@@ -4,7 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { storiesOf, addParameters } from "@storybook/react";
+import { storiesOf } from "@storybook/react";
 import React from "react";
 
 import CameraStateControlled from "./api/CameraStateControlled";

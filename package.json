@@ -151,5 +151,9 @@
     "ci": "npm run ci-commands-for-cruise-open-source-repo && reg-suit run --verbose",
     "webviz-dev": "NODE_OPTIONS='--max-old-space-size=4096' DEV_SERVER=true WEBVIZ_DEV=true webpack-dev-server",
     "publish-zipline": "gh-pages -d __static_webviz__"
+  },
+  "dependencies": {
+    "@cruise-automation/button": "0.0.7",
+    "@cruise-automation/tooltip": "0.0.7"
   }
 }

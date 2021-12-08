@@ -202,6 +202,32 @@ export default class ZiplineItcDataProvider implements DataProvider {
       }
       return output;
     },
+    CHOSEN_AVOIDANCE_ACTION: async (baseTopic: string): Promise<{| timestamp: number, buffer: ArrayBuffer |}[]> => {
+      const { buffer, timestamps } = await this._getFile(baseTopic);
+      const parsedDefinition = parseMessageDefinition(this._typeInfoByType.CHOSEN_AVOIDANCE_ACTION.messageDefinition);
+      const reader = new MessageReader(parsedDefinition, { freeze: true });
+      const markers = [];
+      for (const timestamp of timestamps) {
+        const { start_n, start_e, start_d } = reader.readMessage(
+          Buffer.from(buffer, timestamp.offsetBegin, timestamp.offsetEnd - timestamp.offsetBegin)
+        );
+        var points = [];
+        var i;
+        for (i = 0; i < start_n.length; i++) {
+          points.push({ x: start_e[i], y: start_n[i], z: -start_d[i] });
+        }
+        markers.push(makeMarker({
+          type: 4, // Marker.LINE_STRIP,
+          scale: { x: 10, y: 10, z: 10 },
+          color: { r: 0, g: 0, b: 1, a: 1 },
+          points,
+        }));
+      }
+      const outputMessage = await rosMarkerArrayWriter.writeMessage({
+        markers: markers,
+      });
+      return outputMessage.buffer;
+    },
   };
   _3dTopicMessageCache: { [baseTopic: string]: {| timestamp: number, buffer: ArrayBuffer |}[] } = {};
 

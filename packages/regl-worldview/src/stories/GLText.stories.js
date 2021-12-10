@@ -135,6 +135,22 @@ const stories = storiesOf("Worldview/GLText", module).addParameters({ screenshot
   });
 });
 
+stories.add(`borderRadius and padding with single char`, () => {
+  // Make sure everything is still properly aligned
+  const markers = textMarkers({ text: "W\ni\nn", billboard: true, background: true }).map((t) => ({
+    ...t,
+    text: "W\ni\nn",
+  }));
+  return (
+    <Container cameraState={{ perspective: true, distance: 25 }}>
+      <Axes />
+      <GLText borderRadius={1} paddingScale={[1.5, 1]}>
+        {markers}
+      </GLText>
+    </Container>
+  );
+});
+
 stories
   .add("glyph ascent and descent", () => {
     const markers = textMarkers({ text: "BDFGHJKLPQTY\nbdfghjklpqty", billboard: true });

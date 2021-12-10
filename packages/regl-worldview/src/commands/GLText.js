@@ -220,6 +220,7 @@ const vert = `
   uniform float viewportWidth;
   uniform bool isPerspective;
   uniform float cameraFovY;
+  uniform float cutoff;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -316,7 +317,7 @@ const vert = `
     vec2 lineCoord = (texCoord * backgroundDestSize + destOffset) / roundedBackgroundSize;
     vLineBackgroundCoord = vec2(lineCoord.x, texCoord.y) * 2. - 1.; // Transform from [0,1] to [-1,1]
 
-    vCharToBackgroundSizeRatio = srcSize / backgroundDestSize;
+    vCharToBackgroundSizeRatio = (srcSize + ${(BUFFER / 2).toFixed(1)}) / backgroundDestSize;
     vLineBackgroundRadiusRatio = roundedBackgroundSize.y / roundedBackgroundSize.x;
     
     vBackgroundColor = backgroundColor;
@@ -332,24 +333,25 @@ const frag = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
 
-  uniform sampler2D atlas;
-  uniform float cutoff;
   uniform bool isHitmap;
   uniform bool scaleInvariant;
-  uniform float scaleInvariantSize;
   uniform float borderRadiusSize;
+  uniform float cutoff;
+  uniform float scaleInvariantSize;
+  uniform sampler2D atlas;
+  uniform float viewportHeight;
+  uniform float viewportWidth;
   
-  varying vec2 vLineSize;
-
+  varying float vBillboard;
   varying float vLineBackgroundRadiusRatio;
   varying vec2 vCharBackgroundCoord;
-  varying vec2 vTextAtlasCoord;
-  varying vec4 vTextColor;
   varying vec2 vCharOffset;
   varying vec2 vCharToBackgroundSizeRatio;
-  varying float vBillboard;
   varying vec2 vLineBackgroundCoord;
+  varying vec2 vLineSize;
+  varying vec2 vTextAtlasCoord;
   varying vec4 vBackgroundColor;
+  varying vec4 vTextColor;
 
   // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
   // when the solid background is enabled, because the alpha blending and
@@ -370,15 +372,15 @@ const frag = `
   float roundedRectangleMask(vec2 position, vec2 size, float radius) {
     vec2 q = abs(position) - size + radius;
     float borderRadius = min(max(q.x,q.y), 0.) + length(max(q, 0.)) - radius;
-    float borderRadiusRaw = 2. - sign(radius) - borderRadius;
-    return getAntialisedStep(borderRadiusRaw, 0.);
+    return getAntialisedStep(1. - borderRadius, 0.);
   }
 
   void main() {
     float dist = texture2D(atlas, vTextAtlasCoord).a;
     float charEdgeStep = getAntialisedStep(dist, cutoff); 
 
-    if (scaleInvariant && vBillboard == 1. && scaleInvariantSize <= 20.) {
+    bool skipInterpolate = scaleInvariant && vBillboard == 1. && scaleInvariantSize <= 20.;
+    if (skipInterpolate) {
       // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
       // the raw distance value since at such small scale, the SDF approach causes some
       // visual artifacts.
@@ -390,11 +392,12 @@ const frag = `
     // Since the background can be bigger than the character from the atlas,
     // mask out parts of the atlas that fall outside of the character bounds
     float charMask = rectangleMask(vCharBackgroundCoord, vCharOffset, vCharToBackgroundSizeRatio);
-
     vec4 finalColor = mix(vBackgroundColor, vTextColor, charEdgeStep * charMask);
 
     // Apply rounded corners
-    vec2 backgroundSize = vec2(1., vLineBackgroundRadiusRatio);
+    // Shrink the size of the background by a pixel on each end to help avoid hard edges
+    vec2 pixelEdgeScale = 1. - 2. * vec2(1./viewportWidth, 1./viewportHeight);
+    vec2 backgroundSize = vec2(1., vLineBackgroundRadiusRatio) * pixelEdgeScale;
     vec2 backgroundPosition = vec2(vLineBackgroundCoord.x, vLineBackgroundCoord.y * vLineBackgroundRadiusRatio);
     float roundedCornerMask = roundedRectangleMask(backgroundPosition, backgroundSize, borderRadiusSize * vLineBackgroundRadiusRatio);
     
@@ -603,7 +606,8 @@ function makeTextCommand(alphabet?: string[]) {
             srcSizes[2 * index + 1] = info.height;
 
             // The size of the background rectangle in pixels
-            backgroundDestSizes[2 * index + 0] = info.width + (firstCharOnLine || lastCharOnLine ? paddingX : 0);
+            backgroundDestSizes[2 * index + 0] =
+              info.width + (firstCharOnLine ? paddingX : 0) + (lastCharOnLine ? paddingX : 0);
             backgroundDestSizes[2 * index + 1] = lineHeight;
 
             // The size of all characters in the line in pixels. Used for rounded corners
@@ -611,7 +615,7 @@ function makeTextCommand(alphabet?: string[]) {
             lineSizes[2 * index + 1] = lineHeight;
 
             // Additional offset for each character within the background rectangle in pixels
-            charOffsets[2 * index + 0] = firstCharOnLine && !lastCharOnLine ? -paddingX : 0;
+            charOffsets[2 * index + 0] = firstCharOnLine ? -paddingX : 0;
             charOffsets[2 * index + 1] = -(info.yOffset ?? 0) - charDescenderLineShift - paddingY;
 
             x += backgroundDestSizes[2 * index + 0];

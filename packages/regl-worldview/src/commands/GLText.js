@@ -182,6 +182,15 @@ export const generateAtlas = (atlasConfigs: AtlasConfig[], maxAtlasWidth: number
   };
 };
 
+const createMemoizedGenerateAtlasConfigs = () =>
+  memoizeOne((charSet, charSetSize, fontSize, fontFamily) => [
+    {
+      charSet,
+      fontSize,
+      fontFamily,
+    },
+  ]);
+
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
 const createMemoizedGenerateAtlas = () => memoizeOne(generateAtlas);
@@ -404,6 +413,7 @@ const frag = `
 function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set(alphabet || []);
+  const memoizedGetAtlasConfig = createMemoizedGenerateAtlasConfigs();
   const memoizedGenerateAtlas = createMemoizedGenerateAtlas();
   const memoizedDrawAtlasTexture = createMemoizedDrawAtlasTexture();
 
@@ -489,16 +499,8 @@ function makeTextCommand(alphabet?: string[]) {
         // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
         // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
         const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
-        maybeGeneratedAtlas = memoizedGenerateAtlas(
-          [
-            {
-              charSet,
-              fontSize: command.resolution,
-              fontFamily: "sans-serif",
-            },
-          ],
-          maxAtlasWidth
-        );
+        const atlasConfigs = memoizedGetAtlasConfig(charSet, charSet.size, command.resolution, "sans-serif");
+        maybeGeneratedAtlas = memoizedGenerateAtlas(atlasConfigs, maxAtlasWidth);
       }
       if (!maybeGeneratedAtlas) {
         return; // Make flow happy

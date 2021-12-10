@@ -13,7 +13,7 @@ const DEFAULT_ATLAS_CONFIG = {
   fontSize: 160,
   fontFamily: "sans-serif",
   charSet: new Set(
-    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~".split("")
+    " ★☺︎!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~".split("")
   ),
 };
 
@@ -31,7 +31,7 @@ const SDFGeneratorStory = () => {
       <label>
         Font size: {fontSize}
         <br />
-        <input type="range" min={10} max={150} value={fontSize} onChange={onFontSizeRangeChanged} />
+        <input type="range" min={12} max={255} value={fontSize} onChange={onFontSizeRangeChanged} />
       </label>
       <SDFGenerator atlasConfigs={atlasConfigs} />
     </div>

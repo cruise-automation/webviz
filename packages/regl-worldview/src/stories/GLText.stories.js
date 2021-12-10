@@ -91,16 +91,15 @@ const getCameraState = (target) => ({
 
 const stories = storiesOf("Worldview/GLText", module).addParameters({ screenshot: { delay: 200 } });
 
-// Border radius
-[1, 0.5, 0.15].forEach((borderRadius) => {
-  stories.add(`borderRadius - ${borderRadius}`, () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, background: true });
+// Resolution
+[160, 80, 40].forEach((paddingScale) => {
+  stories.add(`resolution - ${paddingScale}`, () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
     return (
-      <Container cameraState={{ perspective: true, distance: 25 }}>
+      <Container cameraState={getCameraState(target)}>
         <Axes />
-        <GLText borderRadius={borderRadius} paddingScale={[1.5, 1]}>
-          {markers}
-        </GLText>
+        <GLText>{markers}</GLText>
       </Container>
     );
   });
@@ -121,37 +120,22 @@ const stories = storiesOf("Worldview/GLText", module).addParameters({ screenshot
   });
 });
 
+// Border radius
+[1, 0.5, 0.15].forEach((borderRadius) => {
+  stories.add(`borderRadius - ${borderRadius}`, () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, background: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <Axes />
+        <GLText borderRadius={borderRadius} paddingScale={[1.5, 1]}>
+          {markers}
+        </GLText>
+      </Container>
+    );
+  });
+});
+
 stories
-  .add("resolution - default", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container cameraState={getCameraState(target)}>
-        <Axes />
-        <GLText>{markers}</GLText>
-      </Container>
-    );
-  })
-  .add("resolution - 80", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container cameraState={getCameraState(target)}>
-        <Axes />
-        <GLText resolution={80}>{markers}</GLText>
-      </Container>
-    );
-  })
-  .add("resolution - 40", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container cameraState={getCameraState(target)}>
-        <Axes />
-        <GLText resolution={40}>{markers}</GLText>
-      </Container>
-    );
-  })
   .add("glyph ascent and descent", () => {
     const markers = textMarkers({ text: "BDFGHJKLPQTY\nbdfghjklpqty", billboard: true });
     const target = markers[9].pose.position;

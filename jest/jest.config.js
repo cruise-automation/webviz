@@ -34,4 +34,5 @@ module.exports = {
     "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",
     "\\.css$": "<rootDir>/jest/styleMock.js",
   },
+  transformIgnorePatterns: ["node_modules/(?!(@mapbox\\/tiny-sdf)/)"],
 };

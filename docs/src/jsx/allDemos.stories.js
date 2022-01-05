@@ -4,7 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { storiesOf, addParameters } from "@storybook/react";
+import { storiesOf } from "@storybook/react";
 import React from "react";
 
 import CameraStateControlled from "./api/CameraStateControlled";
@@ -82,14 +82,9 @@ Object.keys(allDemos).map((demoName) => {
     );
   };
   const hasScreenshotTest = !demosWithoutScreenshotTests.includes(Component);
-  return stories.add(
-    demoName,
-    hasScreenshotTest
-      ? story
-      : addParameters({
-          screenshot: {
-            skip: true,
-          },
-        })(story)
-  );
+  const fullStory = stories.add(demoName, story);
+  if (!hasScreenshotTest) {
+    fullStory.addParameters({ screenshot: { skip: true } });
+  }
+  return fullStory;
 });

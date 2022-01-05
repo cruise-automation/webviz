@@ -83,57 +83,75 @@ function overlappingMarkers({
   });
 }
 
-storiesOf("Worldview/GLText", module)
-  .addParameters({
-    screenshot: {
-      delay: 200,
-    },
-  })
-  .add("resolution - default", () => {
+const getCameraState = (target) => ({
+  target: target ? [target.x, target.y, target.z] : undefined,
+  perspective: true,
+  distance: 3,
+});
+
+const stories = storiesOf("Worldview/GLText", module).addParameters({ screenshot: { delay: 200 } });
+
+// Resolution
+[160, 80, 40].forEach((paddingScale) => {
+  stories.add(`resolution - ${paddingScale}`, () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
-      <Container
-        cameraState={{
-          target: [target.x, target.y, target.z],
-          perspective: true,
-          distance: 3,
-        }}>
+      <Container cameraState={getCameraState(target)}>
+        <Axes />
         <GLText>{markers}</GLText>
-        <Axes />
       </Container>
     );
-  })
-  .add("resolution - 80", () => {
+  });
+});
+
+// Padding
+[1.25, 1.5, 2].forEach((paddingScale) => {
+  stories.add(`padding - ${paddingScale}`, () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
     return (
-      <Container
-        cameraState={{
-          target: [target.x, target.y, target.z],
-          perspective: true,
-          distance: 3,
-        }}>
-        <GLText resolution={80}>{markers}</GLText>
+      <Container cameraState={{ perspective: true, distance: 25 }}>
         <Axes />
+        <GLText paddingScale={[paddingScale]} autoBackgroundColor>
+          {markers}
+        </GLText>
       </Container>
     );
-  })
-  .add("resolution - 40", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
+  });
+});
+
+// Border radius
+[1, 0.5, 0.15].forEach((borderRadius) => {
+  stories.add(`borderRadius - ${borderRadius}`, () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, background: true });
     return (
-      <Container
-        cameraState={{
-          target: [target.x, target.y, target.z],
-          perspective: true,
-          distance: 3,
-        }}>
-        <GLText resolution={40}>{markers}</GLText>
+      <Container cameraState={{ perspective: true, distance: 25 }}>
         <Axes />
+        <GLText borderRadius={borderRadius} paddingScale={[1.5, 1]}>
+          {markers}
+        </GLText>
       </Container>
     );
-  })
+  });
+});
+
+stories.add(`borderRadius and padding with single char`, () => {
+  // Make sure everything is still properly aligned
+  const markers = textMarkers({ text: "W\ni\nn", billboard: true, background: true }).map((t) => ({
+    ...t,
+    text: "W\ni\nn",
+  }));
+  return (
+    <Container cameraState={{ perspective: true, distance: 25 }}>
+      <Axes />
+      <GLText borderRadius={1} paddingScale={[1.5, 1]}>
+        {markers}
+      </GLText>
+    </Container>
+  );
+});
+
+stories
   .add("glyph ascent and descent", () => {
     const markers = textMarkers({ text: "BDFGHJKLPQTY\nbdfghjklpqty", billboard: true });
     const target = markers[9].pose.position;
@@ -144,8 +162,8 @@ storiesOf("Worldview/GLText", module)
           perspective: true,
           distance: 8,
         }}>
-        <GLText>{markers}</GLText>
         <Axes />
+        <GLText>{markers}</GLText>
       </Container>
     );
   })
@@ -153,8 +171,8 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, randomScale: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText resolution={40}>{markers}</GLText>
         <Axes />
+        <GLText resolution={40}>{markers}</GLText>
       </Container>
     );
   })
@@ -171,8 +189,8 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariantFontSize={20}>{markers}</GLText>
         <Axes />
+        <GLText scaleInvariantFontSize={20}>{markers}</GLText>
       </Container>
     );
   })
@@ -180,8 +198,8 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
         <Axes />
+        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
       </Container>
     );
   })
@@ -189,8 +207,8 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: false, distance: 25 }} backgroundColor={[0.4, 0.2, 0.2, 1]}>
-        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
         <Axes />
+        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
       </Container>
     );
   })
@@ -236,7 +254,11 @@ storiesOf("Worldview/GLText", module)
     );
   })
   .add("with pregenerated text atlas", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const text = "\u{F167A}truck\u{F053D}";
+    const markers = textMarkers({ text, billboard: true }).map((marker) => ({
+      ...marker,
+      text,
+    }));
     function Example() {
       const [textAtlas, setTextAtlas] = useState();
       useEffect(() => {
@@ -247,8 +269,12 @@ storiesOf("Worldview/GLText", module)
 
       return (
         <Container cameraState={{ perspective: true, distance: 25 }}>
-          {textAtlas && <GLText textAtlas={textAtlas}>{markers}</GLText>}
           <Axes />
+          {textAtlas && (
+            <GLText textAtlas={textAtlas} resolution={40} borderRadius={1} paddingScale={[1.5]}>
+              {markers}
+            </GLText>
+          )}
         </Container>
       );
     }
@@ -259,8 +285,8 @@ storiesOf("Worldview/GLText", module)
     const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText>{markers}</GLText>
         <Axes />
+        <GLText>{markers}</GLText>
       </Container>
     );
   })
@@ -268,8 +294,8 @@ storiesOf("Worldview/GLText", module)
     const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariantFontSize={30}>{markers}</GLText>
         <Axes />
+        <GLText scaleInvariantFontSize={30}>{markers}</GLText>
       </Container>
     );
   })
@@ -277,8 +303,8 @@ storiesOf("Worldview/GLText", module)
     const markers = overlappingMarkers({ text: "Hello\nWorld\nview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText>{markers}</GLText>
         <Axes />
+        <GLText>{markers}</GLText>
       </Container>
     );
   })
@@ -288,8 +314,8 @@ storiesOf("Worldview/GLText", module)
     );
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText>{markers}</GLText>
         <Axes />
+        <GLText>{markers}</GLText>
       </Container>
     );
   })
@@ -301,28 +327,28 @@ storiesOf("Worldview/GLText", module)
   ))
   .add("non-billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
-      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false })}</GLText>
       <Axes />
+      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false })}</GLText>
     </Container>
   ))
   .add("no background", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
-      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false, background: false })}</GLText>
       <Axes />
+      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false, background: false })}</GLText>
     </Container>
   ))
   .add("autoBackgroundColor", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
       <Axes />
+      <GLText autoBackgroundColor>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
     </Container>
   ))
   .add("autoBackgroundColor scaleInvariant", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+      <Axes />
       <GLText autoBackgroundColor scaleInvariantFontSize={10}>
         {textMarkers({ text: "Hello\nWorldview", billboard: true })}
       </GLText>
-      <Axes />
     </Container>
   ))
   .add("changing text", () => {
@@ -336,8 +362,8 @@ storiesOf("Worldview/GLText", module)
           <div style={{ position: "absolute", top: 30, right: 30 }}>
             <button onClick={() => setText(`Value: ${Math.floor(100 * Math.random())}`)}>Change Text</button>
           </div>
-          <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
           <Axes />
+          <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
         </Container>
       );
     }
@@ -372,8 +398,8 @@ storiesOf("Worldview/GLText", module)
         <div style={{ width: "100%", height: "100%" }}>
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText autoBackgroundColor>{markers}</GLText>
               <Axes />
+              <GLText autoBackgroundColor>{markers}</GLText>
             </Container>
           </div>
           <div style={{ position: "absolute", top: "10px", right: "10px" }}>
@@ -448,9 +474,9 @@ storiesOf("Worldview/GLText", module)
     };
     return (
       <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Axes />
         <Cubes>{[cube]}</Cubes>
         <GLText>{[text]}</GLText>
-        <Axes />
       </Container>
     );
   })

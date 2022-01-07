@@ -147,5 +147,8 @@
     "ci-commands-for-cruise-proprietary-repo": "npm run ci-commands-base && NODE_ENV=production npm run screenshot-proprietary-ci",
     "ci": "npm run ci-commands-for-cruise-open-source-repo && reg-suit run --verbose",
     "webviz-dev": "NODE_OPTIONS='--max-old-space-size=4096' DEV_SERVER=true WEBVIZ_DEV=true webpack-dev-server"
+  },
+  "dependencies": {
+    "google-protobuf": "^3.19.2"
   }
 }

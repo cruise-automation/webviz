@@ -278,7 +278,8 @@ export default function Layout({
     measureInfo.measureState,
   ]);
 
-  const structuralDatatypes = useStructuralDatatypes();
+//  const structuralDatatypes = useStructuralDatatypes();
+  const structuralDatatypes = {};
   const supportedMarkerDatatypesSet = useMemo(
     () =>
       new Set(

@@ -176,15 +176,16 @@ export class BobjectRpcSender {
     const clearStorageData = this._gcDataSender.isEmpty();
     for (const msg of messages) {
       const { topic, receiveTime, message } = msg;
-      const messageSourceData = getSourceData(Object.getPrototypeOf(message).constructor);
+    /*  const messageSourceData = getSourceData(Object.getPrototypeOf(message).constructor);
       if (messageSourceData == null) {
         throw new Error("Missing datatypes for message. Likely not a bobject.");
       }
-      const binaryStructure = this._getBinaryStructure(topic, message).value;
+      const binaryStructure = this._getBinaryStructure(topic, message).value;*/
       messageData.push({
         topic,
         receiveTime,
-        descriptor: this._getTransferData(message, binaryStructure, messageSourceData, newStorageData),
+        //descriptor: this._getTransferData(message, binaryStructure, messageSourceData, newStorageData),
+        descriptor: message,
       });
     }
     const ret = await this._rpc.send<T>("$$transferBobjects", {
@@ -326,7 +327,8 @@ export class BobjectRpcReceiver {
       // them.
       return descriptor.message;
     }
-    const bobject = this._decodeBobject(descriptor);
-    return format === "parsed" ? deepParse(bobject) : bobject;
+//    const bobject = this._decodeBobject(descriptor);
+ //   return format === "parsed" ? deepParse(bobject) : bobject;
+    return format === "parsed" ? descriptor : descriptor;
   }
 }

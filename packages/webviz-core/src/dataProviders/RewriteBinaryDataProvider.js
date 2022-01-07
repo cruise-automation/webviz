@@ -53,7 +53,7 @@ export default class RewriteBinaryDataProvider implements DataProvider {
     try {
       const datatypesByTopic = {};
       topics.forEach((topic) => {
-        datatypesByTopic[topic.name] = topic.datatype;
+        datatypesByTopic[topic.name] = topic.datatype; // topic: /chassis_info_10ms, datatype:proto_msg/ChassisInfoRx10ms
       });
       const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
         messageDefinitions.messageDefinitionsByTopic,

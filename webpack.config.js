@@ -9,6 +9,7 @@ const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { spawnSync } = require("child_process");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+const jsonImporter = require("node-sass-json-importer");
 const path = require("path");
 const retext = require("retext");
 const retextSmartypants = require("retext-smartypants");
@@ -167,7 +168,11 @@ module.exports = {
           ],
         },
       },
-      { test: /\.scss$/, loader: "sass-loader", options: { sourceMap: true } },
+      {
+        test: /\.scss$/,
+        loader: "sass-loader",
+        options: { sourceMap: true, sassOptions: { importer: jsonImporter() } },
+      },
       { test: /\.woff2?$/, loader: "url-loader" },
       { test: /\.(glb|bag|ttf|bin)$/, loader: "file-loader" },
       {

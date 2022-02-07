@@ -18,6 +18,10 @@ Please see the individual package READMEs for details on how to install and use 
 
 We have a [Slack workspace](https://github.com/cruise-automation/webviz/issues/461) to make it easier to ask questions and chat with other people who use Webviz. Join using the latest link posted [here](https://github.com/cruise-automation/webviz/issues/461).
 
+## Foxglove
+
+[Foxglove Studio](https://foxglove.dev/) is a fork of Webviz that was started by former Cruise employees. The tools have the same purpose (visualizing ROS data), but Cruise does not currently offer commercial support for Webviz, and community support can be ad-hoc. Webviz also has a slightly different feature set than Foxglove. Check out Foxglove if Webviz does not currently meet your needs.
+
 ## How to use Webviz
 
 We have in-app help resources. Go to the [application](https://webviz.io/app/) and click the "?" icon in the top right. Each individual panel also has a "?" icon in its top right.

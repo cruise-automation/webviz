@@ -104,6 +104,7 @@
     "fake-indexeddb": "2.0.4",
     "fetch-mock": "7.2.5",
     "flow-bin": "0.110.0",
+    "node-sass-json-importer": "4.3.0",
     "puppeteer": "10.1.0",
     "react-test-renderer": "16.10.2",
     "redux-devtools-extension": "^2.13.7"

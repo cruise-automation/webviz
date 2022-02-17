@@ -58,7 +58,7 @@
     "jest-canvas-mock": "^2.0.0-beta.1",
     "jest-diff": "24.9.0",
     "jest-puppeteer": "4.3.0",
-    "lerna": "^3.4.3",
+    "lerna": "^4.0.0",
     "lodash": "^4.17.11",
     "lz-string": "^1.4.4",
     "monaco-editor": "0.20.0",
@@ -118,8 +118,9 @@
     "worker-loader": "^2.0.0"
   },
   "scripts": {
-    "bootstrap": "npm install && lerna bootstrap --hoist \"{react,react-dom}\"",
-    "install-ci": "npm ci && lerna bootstrap --hoist \"{react,react-dom}\"",
+    "bootstrap": "npm install --legacy-peer-deps && npm run bootstrap-lerna",
+    "install-ci": "npm ci --legacy-peer-deps && npm run bootstrap-lerna",
+    "bootstrap-lerna": "lerna bootstrap --hoist \"{react,react-dom}\" -- --legacy-peer-deps",
     "build": "lerna run build && webpack",
     "watch": "lerna run watch --parallel",
     "clean": "lerna run clean",

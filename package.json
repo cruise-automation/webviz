@@ -118,8 +118,8 @@
     "worker-loader": "^2.0.0"
   },
   "scripts": {
-    "bootstrap": "npm install --legacy-peer-deps && npm run bootstrap-lerna",
-    "install-ci": "npm ci --legacy-peer-deps && npm run bootstrap-lerna",
+    "bootstrap": "npm install && npm run bootstrap-lerna",
+    "install-ci": "npm ci && npm run bootstrap-lerna",
     "bootstrap-lerna": "lerna bootstrap --hoist \"{react,react-dom}\" -- --legacy-peer-deps",
     "build": "lerna run build && webpack",
     "watch": "lerna run watch --parallel",

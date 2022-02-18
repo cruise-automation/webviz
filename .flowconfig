@@ -1,6 +1,7 @@
 [ignore]
 .*\.ignore\.js
 dist
+.*/node_modules/.*
 
 [include]
 

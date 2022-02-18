@@ -120,6 +120,8 @@
   "scripts": {
     "bootstrap": "npm install && npm run bootstrap-lerna",
     "install-ci": "npm ci && npm run bootstrap-lerna",
+    "install-ffmpeg": "integration-tests/install-ffmpeg-in-docker.sh",
+    "whoami": "whoami",
     "bootstrap-lerna": "lerna bootstrap --hoist \"{react,react-dom}\" -- --legacy-peer-deps",
     "build": "lerna run build && webpack",
     "watch": "lerna run watch --parallel",

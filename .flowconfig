@@ -2,7 +2,14 @@
 .*\.ignore\.js
 dist
 
+
+[declarations]
+# See https://flow.org/en/docs/config/declarations/#toc-declarations for more details.
+# Preventing flow from type-checking node_modules folder (it could contain invalid files).
+<PROJECT_ROOT>/node_modules/.*
+
 [include]
+
 
 [libs]
 ./flow-typed

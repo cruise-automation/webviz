@@ -755,7 +755,7 @@ describe("UserNodePlayer", () => {
             }
             return { num: 42 };
           };`,
-        error: "TypeError: Cannot read property 'message' of undefined",
+        error: "TypeError: Cannot read properties of undefined (reading 'message')",
       },
       {
         code: `
@@ -766,7 +766,7 @@ describe("UserNodePlayer", () => {
           export default (messages: any): { num: number } => {
             return { num: 42 };
           };`,
-        error: "TypeError: Cannot read property 'bad' of undefined",
+        error: "TypeError: Cannot read properties of undefined (reading 'bad')",
       },
       {
         code: `

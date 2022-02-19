@@ -9,6 +9,11 @@
 import queuePromise from "./queuePromise";
 import { signal } from "./signal";
 
+process.on("unhandledRejection", () => {
+  // Have a dummy handler for all unhandled rejections
+  // This is to prevent UnhandledPromiseRejection on promises that we reject in tests here
+});
+
 /* eslint-disable jest/valid-expect-in-promise */
 
 describe("queuePromise", () => {

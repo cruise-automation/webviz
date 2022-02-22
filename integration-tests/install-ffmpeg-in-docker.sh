@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Install dirmng to be able to import keys
+# See https://unix.stackexchange.com/a/401548
+apt-get install dirmngr
+
 sed -i "s/jessie main/jessie main contrib non-free/" /etc/apt/sources.list
 echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
 # Adding the keys to fix the error:

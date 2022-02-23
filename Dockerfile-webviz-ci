@@ -21,6 +21,23 @@ RUN wget --no-check-certificate -q -O - https://dl-ssl.google.com/linux/linux_si
     && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf --no-install-recommends
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
+# Install rust-specific libraries
+RUN apt update
+RUN apt -y install sudo
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+RUN git clone https://github.com/plaurent/gnustep-build && gnustep-build/debian-10-clang-8.0/GNUstep-buildon-debian10.sh
+RUN apt install -y libatk1.0-0 libatk-bridge2.0-0 libxkbcommon0
+
+# Install rust build tools
+RUN set -eux; \
+    wget -O - https://sh.rustup.rs > rustup-init.sh; \
+    sh rustup-init.sh -y;
+ENV PATH /root/.cargo/bin:$PATH
+
+RUN rustup --version; \
+    cargo --version; \
+    rustc --version;
+
 ENV WEBVIZ_IN_DOCKER=true
 
 # Bumped up from the default old_space size (512mb) as it was being exceeded during builds.

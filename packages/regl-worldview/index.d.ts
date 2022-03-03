@@ -310,7 +310,10 @@ type ShapeComponent<T> = React.ComponentType<{
   children: T[];
 }>;
 export declare const Arrows: ShapeComponent<Arrow>;
-export declare const Cubes: ShapeComponent<Cube>;
+export declare const Cubes: React.ComponentType<{
+  children: Cube[];
+  onMouseMove?: MouseHandler;
+}>;
 export declare const Cylinders: ShapeComponent<Cylinder>;
 export declare const Axes: React.ComponentType<{}>;
 export declare const Lines: ShapeComponent<Line>;

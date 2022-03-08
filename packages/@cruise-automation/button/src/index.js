@@ -82,6 +82,7 @@ type Props = {
   progressStyle?: { [key: string]: any },
   style?: { [key: string]: any },
   tooltip?: string,
+  dataTest?: string, // shows up on the button as data-test
 };
 
 type State = {
@@ -232,6 +233,7 @@ export default class Button extends React.Component<Props, State> {
       style,
       tooltip,
       onFocus,
+      dataTest,
     } = this.props;
     const classes = cx("button", className || "", {
       // support some bulma classes to be supplied in consumer either through bulma or custom classes
@@ -255,7 +257,8 @@ export default class Button extends React.Component<Props, State> {
         onMouseUp={this.onMouseUp}
         style={{ position: "relative", zIndex: 0, overflow: "hidden", ...style }}
         title={tooltip}
-        disabled={disabled}>
+        disabled={disabled}
+        data-test={dataTest}>
         {children}
         {this.renderProgressBar()}
       </button>

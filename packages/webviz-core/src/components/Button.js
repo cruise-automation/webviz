@@ -19,6 +19,7 @@ export type Props = {
   tooltipProps?: $Shape<{ ...React.ElementConfig<typeof Tooltip> }>,
   style: { [string]: string | number },
   isPrimary?: boolean,
+  dataTest?: string,
 };
 
 export type { BaseButton };

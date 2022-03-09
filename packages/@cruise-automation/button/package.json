@@ -1,6 +1,6 @@
 {
   "name": "@cruise-automation/button",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "lib/index.js",
   "description": "Cruise button",
   "license": "Apache-2.0",

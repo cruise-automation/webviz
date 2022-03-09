@@ -47,6 +47,7 @@ describe("selectors", () => {
       expect(
         constantsByDatatype({
           "some/datatype": {
+            name: "some/datatype",
             fields: [
               { type: "uint32", name: "OFF", isConstant: true, value: 0 },
               { type: "uint32", name: "ON", isConstant: true, value: 1 },
@@ -60,6 +61,7 @@ describe("selectors", () => {
       expect(
         constantsByDatatype({
           "some/datatype": {
+            name: "some/datatype",
             fields: [
               { type: "uint32", name: "OFF", isConstant: true, value: 0 },
               { type: "uint32", name: "DISABLED", isConstant: true, value: 0 },
@@ -75,6 +77,7 @@ describe("selectors", () => {
       expect(
         enumValuesByDatatypeAndField({
           "some/datatype": {
+            name: "some/datatype",
             fields: [
               { type: "uint32", name: "OFF", isConstant: true, value: 0 },
               { type: "uint32", name: "ON", isConstant: true, value: 1 },
@@ -98,6 +101,7 @@ describe("selectors", () => {
       expect(
         enumValuesByDatatypeAndField({
           "some/datatype": {
+            name: "some/datatype",
             fields: [
               { type: "uint8", name: "OFF", isConstant: true, value: 0 },
               { type: "uint8", name: "ON", isConstant: true, value: 1 },
@@ -115,12 +119,14 @@ describe("selectors", () => {
       expect(
         enumValuesByDatatypeAndField({
           "some/datatype": {
+            name: "some/datatype",
             fields: [
               { type: "another/state/values", name: "state__webviz_enum", isArray: false, isComplex: false },
               { type: "uint32", name: "state", isArray: false, isComplex: false },
             ],
           },
           "another/state/values": {
+            name: "another/state/values",
             fields: [
               { type: "uint32", name: "OFF", isConstant: true, value: 0 },
               { type: "uint32", name: "ON", isConstant: true, value: 1 },

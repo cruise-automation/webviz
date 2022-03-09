@@ -69,7 +69,12 @@ export type Props = {|
 
 const devicePixelRatio = window.devicePixelRatio || 1;
 
-const webWorkerManager = new WebWorkerManager(ChartJSWorker, 4);
+// Only use one ChartJSWorker on windows because it causes the page
+// to crash with a STATUS_NOT_IMPLEMENTED or STATUS_ACCESS_VIOLATION error:
+// https://bugs.chromium.org/p/chromium/issues/detail?id=1207317
+// $FlowFixMe - Flow doesn't understand navigator.userAgentData
+const maxWorkers = navigator?.userAgentData?.platform === "Windows" ? 1 : 4;
+const webWorkerManager = new WebWorkerManager(ChartJSWorker, maxWorkers);
 
 export const DEFAULT_PROPS = {
   legend: {

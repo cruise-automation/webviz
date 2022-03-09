@@ -37,11 +37,11 @@ function getPrimitiveDefault(type: string) {
 }
 
 // Provides (nested, recursive) defaults for a message of a given datatype. Modifies messages in-place for performance.
-export default function addMessageDefaults(datatypes: RosDatatypes, datatypeName: string, object: any) {
-  if (!datatypes[datatypeName]) {
-    throw new Error(`addMessageDefaults: datatype "${datatypeName}" missing from datatypes`);
+export default function addMessageDefaults(datatypes: RosDatatypes, datatypeId: string, object: any) {
+  if (!datatypes[datatypeId]) {
+    throw new Error(`addMessageDefaults: datatype "${datatypeId}" missing from datatypes`);
   }
-  for (const { name, type, isConstant, isArray } of datatypes[datatypeName].fields) {
+  for (const { name, type, isConstant, isArray } of datatypes[datatypeId].fields) {
     // Don't set any constant fields - they are not written anyways.
     if (!isConstant && object[name] == null) {
       if (isArray) {
@@ -52,7 +52,7 @@ export default function addMessageDefaults(datatypes: RosDatatypes, datatypeName
         object[name] = {};
         addMessageDefaults(datatypes, type, object[name]);
       } else {
-        throw new Error(`addMessageDefaults: object of type "${datatypeName}" is missing field "${name}"`);
+        throw new Error(`addMessageDefaults: object of type "${datatypeId}" is missing field "${name}"`);
       }
     } else if (!isConstant && isComplex(type)) {
       if (isArray) {

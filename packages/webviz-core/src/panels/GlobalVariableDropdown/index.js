@@ -79,7 +79,7 @@ function GlobalVariableDropdownPanel(props: Props): ReactNode {
           <MessagePathInput index={0} path={topicPath} onChange={onTopicPathChange} inputStyle={{ height: "100%" }} />
         </div>
       </PanelToolbar>
-      <Flex center style={{ padding: "10px", justifyContent: "flex-start" }}>
+      <Flex grow center style={{ padding: "10px", justifyContent: "flex-start" }}>
         <div>$</div>
         <TextField value={globalVariableName} onChange={onVariableNameChange} validateOnBlur />
 

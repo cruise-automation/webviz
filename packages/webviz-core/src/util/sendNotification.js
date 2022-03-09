@@ -91,6 +91,13 @@ export default function sendNotification(
 ): void {
   addNotification(message, details, type, severity);
 
+  // In development, log errors to console to more easily see errors. Additionally,
+  // if we are logging a stacktrace, this will let us click on any `webpack-internal` links
+  // to see relevant code in dev tools.
+  if (process.env.NODE_ENV === "development" && severity === "error") {
+    console.error(`${message}\n${detailsToString(details)}`);
+  }
+
   // We only want to send non-user errors and warnings to Sentry
   if (type === "app") {
     const sentrySeverity = severity === "error" ? Severity.Error : severity === "warn" ? Severity.Warning : null;

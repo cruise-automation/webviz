@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures/storage";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
 import { DISABLE_WORKERS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
@@ -20,21 +20,25 @@ export const wrapInWorkerIfEnabled = (descriptor: DataProviderDescriptor): DataP
 };
 
 export function getLocalBagDescriptor(file: File): DataProviderDescriptor {
+  const useZaplibLZ4Decompress = getExperimentalFeature("zaplibLZ4Decompress");
+
   return wrapInWorkerIfEnabled({
     name: CoreDataProviders.BagDataProvider,
-    args: { bagPath: { type: "file", file } },
+    args: { bagPath: { type: "file", file }, useZaplibLZ4Decompress },
     children: [],
   });
 }
 
 export function getRemoteBagDescriptor(url: string, guid: ?string) {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
+  const useZaplibLZ4Decompress = getExperimentalFeature("zaplibLZ4Decompress");
 
   const bagDataProvider = {
     name: CoreDataProviders.BagDataProvider,
     args: {
       bagPath: { type: "remoteBagUrl", url },
       cacheSizeInBytes: unlimitedCache ? Infinity : undefined,
+      useZaplibLZ4Decompress,
     },
     children: [],
   };

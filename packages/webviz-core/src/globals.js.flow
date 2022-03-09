@@ -83,3 +83,8 @@ declare class IDBKeyRange {
 declare class SharedArrayBuffer {
   constructor(byteLength: number): ArrayBuffer;
 }
+
+declare class WeakRef<T> {
+  constructor(t: T): WeakRef<T>;
+  deref(): ?T;
+}

@@ -16,9 +16,8 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
 import Menu, { Item } from "webviz-core/src/components/Menu";
-import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
+import { useTopicTreeActions } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import clipboard from "webviz-core/src/util/clipboard";
-import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const DISABLED_STYLE = { cursor: "not-allowed", color: colors.TEXT_MUTED };
@@ -53,11 +52,7 @@ export default function TreeNodeMenu({
   topicName,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const { toggleCheckAllAncestors, toggleCheckAllDescendants } = useGuaranteedContext(
-    TopicTreeContext,
-    "TopicTreeContext"
-  );
+  const { toggleCheckAllAncestors, toggleCheckAllDescendants } = useTopicTreeActions();
   const onToggle = useCallback(() => setIsOpen((prevIsOpen) => !prevIsOpen), []);
 
   // Don't render the dot menu if the datasources are unavailable and the node is group node (topic node has option to copy topicName).
@@ -151,7 +146,7 @@ export default function TreeNodeMenu({
           <Item
             dataTest={`topic-row-menu-edit-settings-${topicName}`}
             onClick={() => {
-              setCurrentEditingTopic({ name: topicName, datatype });
+              setCurrentEditingTopic({ name: topicName, datatypeName: datatype });
               setIsOpen(false);
             }}>
             Edit topic settings

@@ -11,6 +11,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 const baseDatatypes: RosDatatypes = {
   "visualization_msgs/MarkerArray": {
+    name: "visualization_msgs/MarkerArray",
     fields: [
       {
         isArray: true,
@@ -22,6 +23,7 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "visualization_msgs/Marker": {
+    name: "visualization_msgs/Marker",
     fields: [
       { type: "uint8", name: "ARROW", isConstant: true, value: 0 },
       { type: "uint8", name: "CUBE", isConstant: true, value: 1 },
@@ -56,6 +58,7 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "std_msgs/ColorRGBA": {
+    name: "std_msgs/ColorRGBA",
     fields: [
       { type: "float32", name: "r", isArray: false, isComplex: false },
       { type: "float32", name: "g", isArray: false, isComplex: false },
@@ -64,6 +67,7 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "std_msgs/Header": {
+    name: "std_msgs/Header",
     fields: [
       { type: "uint32", name: "seq", isArray: false, isComplex: false },
       { type: "time", name: "stamp", isArray: false, isComplex: false },
@@ -71,12 +75,14 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Pose": {
+    name: "geometry_msgs/Pose",
     fields: [
       { type: "geometry_msgs/Point", name: "position", isArray: false, isComplex: true },
       { type: "geometry_msgs/Quaternion", name: "orientation", isArray: false, isComplex: true },
     ],
   },
   "geometry_msgs/Vector3": {
+    name: "geometry_msgs/Vector3",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -84,6 +90,7 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Point": {
+    name: "geometry_msgs/Point",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -91,6 +98,7 @@ const baseDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Quaternion": {
+    name: "geometry_msgs/Quaternion",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },

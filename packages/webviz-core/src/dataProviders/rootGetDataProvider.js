@@ -17,6 +17,7 @@ import MeasureDataProvider, {
   instrumentTreeWithMeasureDataProvider,
 } from "webviz-core/src/dataProviders/MeasureDataProvider";
 import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
+import NodePlaygroundDataProvider from "webviz-core/src/dataProviders/NodePlaygroundDataProvider";
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
 import RewriteBinaryDataProvider from "webviz-core/src/dataProviders/RewriteBinaryDataProvider";
@@ -25,23 +26,23 @@ import WorkerDataProvider from "webviz-core/src/dataProviders/WorkerDataProvider
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { MEASURE_DATA_PROVIDERS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
-const getDataProviderBase = createGetDataProvider({
-  ApiCheckerDataProvider,
-  BagDataProvider,
-  CombinedDataProvider,
-  IdbCacheReaderDataProvider,
-  MeasureDataProvider,
-  MemoryCacheDataProvider,
-  ParseMessagesDataProvider,
-  RenameDataProvider,
-  RewriteBinaryDataProvider,
-  WorkerDataProvider,
-  ...getGlobalHooks().getAdditionalDataProviders(),
-});
-
 export function rootGetDataProvider(tree: DataProviderDescriptor): DataProvider {
   if (new URLSearchParams(location.search).has(MEASURE_DATA_PROVIDERS_QUERY_KEY)) {
     tree = instrumentTreeWithMeasureDataProvider(tree);
   }
+  const getDataProviderBase = createGetDataProvider({
+    ApiCheckerDataProvider,
+    BagDataProvider,
+    CombinedDataProvider,
+    IdbCacheReaderDataProvider,
+    MeasureDataProvider,
+    MemoryCacheDataProvider,
+    NodePlaygroundDataProvider,
+    ParseMessagesDataProvider,
+    RenameDataProvider,
+    RewriteBinaryDataProvider,
+    WorkerDataProvider,
+    ...getGlobalHooks().getAdditionalDataProviders(),
+  });
   return getDataProviderBase(instrumentTreeWithApiCheckerDataProvider(tree));
 }

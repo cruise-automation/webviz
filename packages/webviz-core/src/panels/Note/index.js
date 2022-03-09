@@ -36,7 +36,7 @@ function Note({ config, saveConfig }: Props) {
   }, [saveConfig]);
 
   return (
-    <Flex col style={{ height: "100%" }}>
+    <Flex grow col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
       <STextArea placeholder="Enter note here" value={config.noteText} onChange={onChangeText} />
     </Flex>

@@ -14,7 +14,6 @@ import shallowequal from "shallowequal";
 import type { RenderResult } from "./types";
 import signal, { type Signal } from "webviz-core/shared/signal";
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
-import { getIconName } from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import DebugStatsCollector from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Collector";
 import type { DebugStats } from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
@@ -90,7 +89,6 @@ type WorldInterfaceProps = $ReadOnly<{|
   onMouseDown: any,
   onMouseMove: any,
   onMouseUp: any,
-  setOverlayIcons: any,
   setSearchTextMatches: any,
   setAvailableNsAndErrors: any,
   setDebugStats: (DebugStats) => void,
@@ -308,7 +306,6 @@ class LayoutWorker {
     this.hasChangedPlayerId = true;
     this.searchTextMatches = [];
     this.availableTfs = [];
-    let iconDrawables = [];
     this._hasOffscreenCanvas = canvas.clientWidth == null;
     render(
       <ReactWorldInterface
@@ -322,10 +319,6 @@ class LayoutWorker {
         onMouseDown={this._mouseEventHandler("onMouseDown")}
         onMouseMove={this._mouseEventHandler("onMouseMove")}
         onMouseUp={this._mouseEventHandler("onMouseUp")}
-        setOverlayIcons={({ renderItems, sceneBuilderDrawables }) => {
-          iconDrawables = sceneBuilderDrawables;
-          return rpc.send<void>("updateOverlayIcons", renderItems);
-        }}
         setDebugStats={(stats: DebugStats) => {
           rpc.send<void>("updateDebugStats", stats);
         }}
@@ -337,13 +330,6 @@ class LayoutWorker {
     );
     new LayoutWorkerDataReceiver(rpc, this.renderFrame);
     rpc.receive("onMouseEvent", this.onMouseEvent);
-    rpc.receive("getIconData", (name) => {
-      const icon = iconDrawables.find((i) => getIconName(i) === name);
-      if (!icon) {
-        return;
-      }
-      return normalizeMouseEventObject({ object: icon }).object;
-    });
   }
 
   resolveRenderSignal = (renderSignal: Signal<void>) => {

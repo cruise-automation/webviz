@@ -21,9 +21,8 @@ import {
   getHexFromColorSettingWithDefault,
   PICKER_SIZE,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
-import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
+import { useTopicTreeActions } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import clipboard from "webviz-core/src/util/clipboard";
-import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const DISABLED_STYLE = { cursor: "not-allowed", color: colors.TEXT_MUTED };
@@ -101,7 +100,7 @@ export default function NamespaceMenu({
     hasNamespaceOverrideColorChangedByColumn[0] || hasNamespaceOverrideColorChangedByColumn[1];
   const colorPickerWrapperStyle = showResetOverrideColor ? { width: COLOR_PICKER_AND_ICON_WIDTH } : {};
 
-  const { toggleCheckAllAncestors } = useGuaranteedContext(TopicTreeContext, "TopicTreeContext");
+  const { toggleCheckAllAncestors } = useTopicTreeActions();
   // Don't render the dot menu if the datasources are unavailable.
   if (!providerAvailable) {
     return <SDotMenuPlaceholder />;

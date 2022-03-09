@@ -30,6 +30,9 @@ type Props = {|
   wrap?: boolean,
   clip?: boolean,
 
+  grow?: boolean | number,
+  shrink?: boolean | number,
+
   // set to true to scroll content vertically
   scroll?: boolean,
   scrollX?: boolean,
@@ -60,6 +63,8 @@ const Flex = React.forwardRef<Props, ?HTMLDivElement>((props: Props, forwardedRe
     end,
     wrap,
     clip,
+    grow,
+    shrink,
     scroll,
     scrollX,
     children,
@@ -90,7 +95,9 @@ const Flex = React.forwardRef<Props, ?HTMLDivElement>((props: Props, forwardedRe
 
   // support both numeric and string (percentage) flex directives
   const amount = typeof fixed === "number" ? `${fixed}px` : fixed;
-  const flexStyle = amount ? { flex: `0 0 ${amount}` } : {};
+  const flexGrow = typeof grow !== "undefined" ? Number(grow) : undefined;
+  const flexShrink = typeof shrink !== "undefined" ? Number(shrink) : undefined;
+  const flexStyle = amount ? { flex: `0 0 ${amount}` } : { flexGrow, flexShrink };
   // only copy combine flex & custom style if we were passed custom style
   const fullStyle = style ? { ...flexStyle, ...style } : flexStyle;
   const allDataAttrs = { "data-test": dataTest, ...dataAttrs };

@@ -9,14 +9,16 @@
 import { fromPairs, difference } from "lodash";
 import { parseMessageDefinition, type RosMsgDefinition } from "rosbag";
 
-import MemoryStorage from "webviz-core/src/test/MemoryStorage";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import Storage, { type BackingStore } from "webviz-core/src/util/Storage";
 import { inWebWorker } from "webviz-core/src/util/workers";
 
 export const STORAGE_ITEM_KEY_PREFIX = "msgdefn/";
 
-let storage = new Storage();
+// MD5s and string message definitions do not unambiguously specify a parsed message defintion.
+// Each needs a top-level type name to disambiguate relative type names.
+export const getHashKey = (typeName: string, md5Sum: string) => `${typeName}\n${md5Sum}`;
+const getStringKey = (messageDefinition: string, typeName: string) => `${typeName}\n${messageDefinition}`;
 
 export function bustAllMessageDefinitionCache(backingStore: BackingStore, keys: string[]) {
   keys.forEach((key) => {
@@ -26,76 +28,73 @@ export function bustAllMessageDefinitionCache(backingStore: BackingStore, keys: 
   });
 }
 
-// Register the bust function once so that when localStorage is running out, the
-// message definition cache can be busted.
-storage.registerBustStorageFn(bustAllMessageDefinitionCache);
-
-export const setStorageForTest = (quota?: number) => {
-  storage = new Storage(new MemoryStorage(quota));
-  storage.registerBustStorageFn(bustAllMessageDefinitionCache);
-};
-export const restoreStorageForTest = () => {
-  storage = new Storage();
-};
-
-export const getStorageForTest = () => storage;
-
-function maybeWriteLocalStorageCache(
-  md5Sum: string,
-  newValue: RosMsgDefinition[],
-  allStoredMd5Sums: string[],
-  usedmd5Sums: string[]
-): void {
-  const newKey = `${STORAGE_ITEM_KEY_PREFIX}${md5Sum}`;
-  const bustUnusedMessageDefinition = (usedStorage) => {
-    // Keep all localStorage entries that aren't parsed message definitions.
-    const itemsToRemove = difference(allStoredMd5Sums, usedmd5Sums);
-    itemsToRemove.forEach((md5ToRemove) => {
-      usedStorage.removeItem(`${STORAGE_ITEM_KEY_PREFIX}${md5ToRemove}`);
-    });
-  };
-  storage.setItem(newKey, newValue, bustUnusedMessageDefinition);
-}
-
 class ParseMessageDefinitionCache {
+  _storage: Storage;
   // The md5 sums for message definitions that we've seen so far in this run.
   // Used because we may load extraneous definitions that we need to clear.
-  _usedMd5Sums = new Set<string>();
-  _stringDefinitionsToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
-  _md5SumsToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
-  _hashesToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
+  _usedHashKeys = new Set<string>();
+  _stringKeysToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
+  _storedHashKeysToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
+  _hashKeysToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
   _localStorageCacheDisabled = false;
 
-  constructor() {
-    const hashesToParsedDefinitionsEntries = storage
+  constructor(storage: Storage = new Storage()) {
+    this._storage = storage;
+    // Register the bust function once so that when localStorage is running out, the
+    // message definition cache can be busted.
+    this._storage.registerBustStorageFn(bustAllMessageDefinitionCache);
+
+    const hashesToParsedDefinitionsEntries = this._storage
       .keys()
       .filter((key) => key.startsWith(STORAGE_ITEM_KEY_PREFIX))
-      .map((key) => [key.substring(STORAGE_ITEM_KEY_PREFIX.length), storage.getItem(key)]);
+      .map((key) => [key.substring(STORAGE_ITEM_KEY_PREFIX.length), this._storage.getItem(key)]);
     // $FlowFixMe getItem returns RosMsgDefinition[] type.
-    this._md5SumsToParsedDefinitions = fromPairs(hashesToParsedDefinitionsEntries);
+    this._storedHashKeysToParsedDefinitions = fromPairs(hashesToParsedDefinitionsEntries);
   }
 
-  parseMessageDefinition(messageDefinition: string, md5Sum: ?string): RosMsgDefinition[] {
+  _maybeWriteLocalStorageCache(
+    hashKey: string,
+    newValue: RosMsgDefinition[],
+    allStoredHashKeys: string[],
+    usedHashKeys: string[]
+  ): void {
+    const bustUnusedMessageDefinition = (usedStorage) => {
+      // Keep all localStorage entries that aren't parsed message definitions.
+      const itemsToRemove = difference(allStoredHashKeys, usedHashKeys);
+      itemsToRemove.forEach((keyToRemove) => {
+        usedStorage.removeItem(`${STORAGE_ITEM_KEY_PREFIX}${keyToRemove}`);
+      });
+    };
+    const newKey = `${STORAGE_ITEM_KEY_PREFIX}${hashKey}`;
+    this._storage.setItem(newKey, newValue, bustUnusedMessageDefinition);
+  }
+
+  parseMessageDefinition(messageDefinition: string, typeName: string, md5Sum: ?string): RosMsgDefinition[] {
     // What if we already have this message definition stored?
     if (md5Sum) {
-      const storedDefinition = this.getStoredDefinition(md5Sum);
+      const storedDefinition = this.getStoredDefinition(md5Sum, typeName);
       if (storedDefinition != null) {
         return storedDefinition;
       }
     }
 
+    const hashKey = md5Sum && getHashKey(typeName, md5Sum);
     // If we don't have it stored, we have to parse it.
+    const stringKey = getStringKey(messageDefinition, typeName);
     const parsedDefinition =
-      this._stringDefinitionsToParsedDefinitions[messageDefinition] || parseMessageDefinition(messageDefinition);
-    this._stringDefinitionsToParsedDefinitions[messageDefinition] = parsedDefinition;
-    if (md5Sum) {
-      this._hashesToParsedDefinitions[md5Sum] = parsedDefinition;
+      this._stringKeysToParsedDefinitions[stringKey] || parseMessageDefinition(messageDefinition, typeName);
+    this._stringKeysToParsedDefinitions[stringKey] = parsedDefinition;
+    if (hashKey) {
+      this._hashKeysToParsedDefinitions[hashKey] = parsedDefinition;
       if (!this._localStorageCacheDisabled) {
-        this._md5SumsToParsedDefinitions[md5Sum] = parsedDefinition;
+        this._storedHashKeysToParsedDefinitions[hashKey] = parsedDefinition;
         try {
-          maybeWriteLocalStorageCache(md5Sum, parsedDefinition, Object.keys(this._md5SumsToParsedDefinitions), [
-            ...this._usedMd5Sums,
-          ]);
+          this._maybeWriteLocalStorageCache(
+            hashKey,
+            parsedDefinition,
+            Object.keys(this._storedHashKeysToParsedDefinitions),
+            [...this._usedHashKeys]
+          );
         } catch (e) {
           sendNotification("Unable to save message definition to localStorage", e, "user", "warn");
           this._localStorageCacheDisabled = true;
@@ -105,31 +104,35 @@ class ParseMessageDefinitionCache {
     return parsedDefinition;
   }
 
-  getStoredDefinition(md5Sum: string): ?(RosMsgDefinition[]) {
-    this._usedMd5Sums.add(md5Sum);
+  getStoredDefinition(md5Sum: string, typeName: string): ?(RosMsgDefinition[]) {
+    const hashKey = md5Sum && getHashKey(typeName, md5Sum);
+    this._usedHashKeys.add(hashKey);
 
-    if (this._hashesToParsedDefinitions[md5Sum]) {
-      return this._hashesToParsedDefinitions[md5Sum];
+    if (this._hashKeysToParsedDefinitions[hashKey]) {
+      return this._hashKeysToParsedDefinitions[hashKey];
     }
-    if (this._md5SumsToParsedDefinitions[md5Sum]) {
-      const parsedDefinition = this._md5SumsToParsedDefinitions[md5Sum];
-      this._hashesToParsedDefinitions[md5Sum] = parsedDefinition;
+    if (this._storedHashKeysToParsedDefinitions[hashKey]) {
+      const parsedDefinition = this._storedHashKeysToParsedDefinitions[hashKey];
+      this._hashKeysToParsedDefinitions[hashKey] = parsedDefinition;
       return parsedDefinition;
     }
   }
 
-  getMd5sForStoredDefinitions(): string[] {
+  getHashKeysForStoredDefinitions(): string[] {
     if (this._localStorageCacheDisabled) {
       return [];
     }
-    return Object.keys(this._md5SumsToParsedDefinitions);
+    return Object.keys(this._storedHashKeysToParsedDefinitions);
+  }
+
+  getStorageForTest() {
+    return this._storage;
   }
 }
 
 export const CacheForTesting = ParseMessageDefinitionCache;
 
 // We use this as a singleton - don't expose it in workers.
-if (inWebWorker()) {
-  throw new Error("Cannot require parseMessageDefinitionCache in a web worker context");
-}
-export default new ParseMessageDefinitionCache();
+const cacheSingleton = inWebWorker() ? (undefined: any) : new ParseMessageDefinitionCache();
+
+export default cacheSingleton;

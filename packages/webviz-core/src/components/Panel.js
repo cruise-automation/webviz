@@ -407,6 +407,7 @@ export default function Panel<Config: PanelConfig>(
         <DocumentEvents target={window} enabled onBlur={onBlurDocument} />
         <KeyListener global keyUpHandlers={keyUpHandlers} keyDownHandlers={keyDownHandlers} />
         <Flex
+          grow
           onClick={onOverlayClick}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
@@ -433,6 +434,15 @@ export default function Panel<Config: PanelConfig>(
                   <ExpandAllOutlineIcon />
                 </Icon>
                 Create {selectedPanelIds.length} tabs
+              </Button>
+              <Button
+                style={{ backgroundColor: colors.DARK5, justifyContent: "center" }}
+                onClick={() => {
+                  if (childId) {
+                    actions.removeSelectedPanelId(childId);
+                  }
+                }}>
+                Deselect panel
               </Button>
             </div>
           )}

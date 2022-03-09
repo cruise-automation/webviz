@@ -15,6 +15,7 @@ import Icon from "webviz-core/src/components/Icon";
 import type { Message } from "webviz-core/src/players/types";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import clipboard from "webviz-core/src/util/clipboard";
+import { getEventTags, getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 
 const SMetadata = styled.div`
@@ -23,14 +24,14 @@ const SMetadata = styled.div`
   line-height: 1.3;
   color: #aaa;
 `;
-type Props = {
+type Props = {|
   data: any,
   diffData: any,
   diff: any,
   datatype: ?string,
   message: Message,
   diffMessage: ?Message,
-};
+|};
 
 function CopyMessageButton({ text, onClick }) {
   return (
@@ -69,11 +70,19 @@ export default function Metadata({ data, diffData, diff, datatype, message, diff
     },
     []
   );
+  const onOpenMessageDefinition = useCallback(() => {
+    logEventAction(getEventInfos().OPEN_MESSAGE_DEFINITION, {
+      [getEventTags().FROM]: "RawMessages",
+      [getEventTags().DESTINATION]: "Github",
+    });
+  }, []);
+
   return (
     <SMetadata>
       {!diffMessage &&
         (datatype && (
           <a
+            onClick={onOpenMessageDefinition}
             style={{ color: "inherit" }}
             target="_blank"
             rel="noopener noreferrer"

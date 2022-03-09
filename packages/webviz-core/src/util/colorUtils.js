@@ -36,11 +36,18 @@ export const interpolateColor = (colorA: ReglColor, colorB: ReglColor, t: number
   return [interpolate(rA, rB, t), interpolate(gA, gB, t), interpolate(bA, bB, t), interpolate(aA, aB, t)];
 };
 
-// Converts a string like "rgb(r,g,b)" to a regl number array [r,g,b,a]
+// Converts a CSS-like string, "rgba(r,g,b,a)", with RGB values from 0-255
+// to a regl number array [r,g,b,a] with values from 0-1
 export const rgbStrToReglRGB = (numberStr: string, alpha?: number): ReglColor => {
   const [_, r, g, b, a = "1"] =
-    numberStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,?\s*(\d+\.?\d+)?\s*\)/) ?? [];
-  return [parseFloat(r) / 255, parseFloat(g) / 255, parseFloat(b) / 255, alpha ?? parseFloat(a) ?? 1];
+    numberStr.match(/rgba?\(\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*,?\s*(\d+\.?\d*)?\s*\)/) ?? [];
+  const [percentR, percentG, percentB] = [r, g, b].map((n) => +(parseFloat(n) / 255).toFixed(3) ?? 0);
+  return [percentR, percentG, percentB, alpha ?? parseFloat(a) ?? 1];
+};
+
+export const cssColorStrToColorObj = (numberStr: string, alpha?: number): Color => {
+  const [r, g, b, a] = rgbStrToReglRGB(numberStr, alpha);
+  return { r, g, b, a };
 };
 
 export function colorToRgbaString({ r, g, b, a }: Color): string {

@@ -15,7 +15,6 @@ import {
   WorldviewReactContext,
 } from "regl-worldview";
 
-import OverlayProjector from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import { LAYER_INDEX_DEFAULT_BASE } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
 import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
 import MeasureMarker, { type MeasurePoints } from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
@@ -25,7 +24,7 @@ import {
   TextHighlighter,
   type WorldSearchTextProps,
 } from "webviz-core/src/panels/ThreeDimensionalViz/utils/searchTextUtils";
-import withHighlights from "webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights.js";
+import withHighlights from "webviz-core/src/panels/ThreeDimensionalViz/withWorldMarkerHighlights";
 import WorldMarkers, { type InteractiveMarkersByType } from "webviz-core/src/panels/ThreeDimensionalViz/WorldMarkers";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
@@ -47,7 +46,6 @@ type Props = {|
   onMouseUp?: MouseHandler,
   diffModeEnabled: boolean,
   canvas: HTMLCanvasElement,
-  setOverlayIcons: (any) => void,
   showCrosshair: ?boolean,
   measurePoints: MeasurePoints,
   resolveRenderSignal: () => void,
@@ -148,7 +146,6 @@ function World(
     selectedMatchIndex,
     searchTextMatches,
     canvas,
-    setOverlayIcons,
     showCrosshair,
     measurePoints,
     resolveRenderSignal,
@@ -157,7 +154,7 @@ function World(
   ref: OffscreenWorldview
 ) {
   const markersByType = getMarkers(markerProviders, hooks);
-  const { text = [], overlayIcon } = markersByType;
+  const { text = [] } = markersByType;
   const textHighlighter = React.useMemo(() => new TextHighlighter(setSearchTextMatches), [setSearchTextMatches]);
   const processedMarkersByType = {
     ...markersByType,
@@ -209,7 +206,6 @@ function World(
           sphericalRangeScale,
         }}
       />
-      <OverlayProjector setOverlayIcons={setOverlayIcons}>{overlayIcon}</OverlayProjector>
       {!cameraState.perspective && showCrosshair && <Crosshair cameraState={cameraState} hooks={hooks} />}
       <MeasureMarker measurePoints={measurePoints} cameraDistance={cameraDistance} />
     </OffscreenWorldview>

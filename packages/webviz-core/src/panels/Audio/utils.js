@@ -8,7 +8,7 @@
 import audioBufferToWav from "audiobuffer-to-wav";
 
 import { DEFAULT_SAMPLE_VALUE } from "./index";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { RosDatatype } from "webviz-core/src/types/RosDatatypes";
 import { isNumberType } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 
 export type AudioSample = number[];
@@ -17,8 +17,7 @@ export type AudioFrame = {
   channels: $ReadOnlyArray<number>,
 };
 
-export const isAudioDatatype = (typeName: string, datatypes: RosDatatypes) => {
-  const datatype = datatypes[typeName];
+export const isAudioDatatype = (datatype: ?RosDatatype) => {
   if (datatype == null) {
     return false;
   }

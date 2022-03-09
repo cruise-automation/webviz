@@ -27,13 +27,13 @@ export const SYNC_OPTIONS = {
   swapBag1AndBag2: "swapBag1AndBag2",
 };
 
-type Props = {
+type Props = {|
   saveConfig: Save3DConfig,
   flattenMarkers: boolean,
   autoTextBackgroundColor: boolean,
   checkedKeys: string[],
   settingsByKey: TopicSettingsCollection,
-};
+|};
 
 type BagSyncData = {| checkedKeys: string[], settingsByKey: TopicSettingsCollection |};
 type SyncOption = $Keys<typeof SYNC_OPTIONS>;

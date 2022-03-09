@@ -8,6 +8,7 @@
 import { useEventListener } from "@cruise-automation/hooks";
 import { useCallback, useMemo } from "react";
 import { useDispatch } from "react-redux";
+import { useHistory } from "react-router-dom";
 import { bindActionCreators } from "redux";
 
 import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
@@ -32,10 +33,10 @@ type Props = {|
   openSaveLayoutModal?: () => void,
   openLayoutModal?: () => void,
   openShortcutsModal?: () => void,
-  history: any,
 |};
 
-export default function GlobalKeyListener({ openSaveLayoutModal, openLayoutModal, history }: Props) {
+export default function GlobalKeyListener({ openSaveLayoutModal, openLayoutModal }: Props) {
+  const history = useHistory();
   const dispatch = useDispatch();
   const actions = useMemo(
     () => bindActionCreators({ redoLayoutChange, undoLayoutChange, selectAllPanelIds }, dispatch),

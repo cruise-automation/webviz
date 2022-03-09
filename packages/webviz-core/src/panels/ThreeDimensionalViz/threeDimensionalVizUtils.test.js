@@ -57,37 +57,20 @@ describe("threeDimensionalVizUtils", () => {
       },
     ];
 
-    it("returns object values", () => {
+    it("returns values from the originalMessage", () => {
       const mouseEventObject = {
         object: {
-          name: 123456,
+          name: 123,
           interactionData: {
             topic: "/foo/bar",
-          },
-        },
-      };
-      expect(getUpdatedGlobalVariablesBySelectedObject(mouseEventObject, linkedGlobalVariables)).toEqual({
-        linkedName: 123456,
-      });
-    });
-
-    it("returns values from instanced objects", () => {
-      const mouseEventObject = {
-        object: {
-          interactionData: {
-            topic: "/foo/bar",
-          },
-          metadataByIndex: [
-            {
-              name: 654321,
+            originalMessage: {
+              name: 456,
             },
-          ],
+          },
         },
-        instanceIndex: 0,
       };
-
       expect(getUpdatedGlobalVariablesBySelectedObject(mouseEventObject, linkedGlobalVariables)).toEqual({
-        linkedName: 654321,
+        linkedName: 456,
       });
     });
   });

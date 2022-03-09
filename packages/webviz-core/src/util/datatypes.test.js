@@ -49,24 +49,29 @@ describe("getContentBasedDatatypes", () => {
   beforeEach(resetDatatypePrefixForTest);
   it("maps equivalent datatypes to the same type", () => {
     const messageDefinitionsByTopic = { topic1: "string value", topic2: "string value" };
+    // These messages should be the same even if they have differet names.
     const parsedMessageDefinitionsByTopic = {
-      topic1: parseMessageDefinition("string value"),
-      topic2: parseMessageDefinition("string value"),
+      topic1: parseMessageDefinition("string value", "nonstd_msgs/String"),
+      topic2: parseMessageDefinition("string value", "std_msgs/String"),
     };
     const datatypesByTopic = { topic1: "nonstd_msgs/String", topic2: "std_msgs/String" };
-    const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
+    const { rewrittenDatatypeIdsByTopic, rewrittenDatatypes } = getContentBasedDatatypes(
       messageDefinitionsByTopic,
       parsedMessageDefinitionsByTopic,
       datatypesByTopic
     );
-    expect(Object.keys(fakeDatatypes)).toHaveLength(1);
-    expect(fakeDatatypesByTopic.topic1).toBe(fakeDatatypesByTopic.topic2);
-    expect(fakeDatatypes[fakeDatatypesByTopic.topic1]).toEqual({
+    expect(Object.keys(rewrittenDatatypes)).toHaveLength(1);
+    expect(rewrittenDatatypeIdsByTopic.topic1).toBe(rewrittenDatatypeIdsByTopic.topic2);
+    expect(rewrittenDatatypes[rewrittenDatatypeIdsByTopic.topic1]).toEqual({
+      name: "nonstd_msgs/String", // Original/real name, not new/fake name.
       fields: [{ isArray: false, isComplex: false, name: "value", type: "string" }],
     });
   });
 
   it("maps different datatypes to the different types", () => {
+    // These types differ only in the _name_ of the field in DifferentNestedDatatype.
+    // This should be enough to make the top-level datatypes distinct, even if they
+    // have the same name and are "shallow-equal".
     const type1 = `test_msgs/DifferentNestedType foo
 test_msgs/SameNestedType bar
 ===================================
@@ -86,17 +91,17 @@ int32 value`;
 
     const messageDefinitionsByTopic = { topic1: type1, topic2: type2 };
     const parsedMessageDefinitionsByTopic = {
-      topic1: parseMessageDefinition(type1),
-      topic2: parseMessageDefinition(type2),
+      topic1: parseMessageDefinition(type1, "name"),
+      topic2: parseMessageDefinition(type2, "name"),
     };
     const datatypesByTopic = { topic1: "name", topic2: "name" };
-    const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
+    const { rewrittenDatatypeIdsByTopic, rewrittenDatatypes } = getContentBasedDatatypes(
       messageDefinitionsByTopic,
       parsedMessageDefinitionsByTopic,
       datatypesByTopic
     );
     // Two different top-level types, two different nested types, one same nested type.
-    expect(Object.keys(fakeDatatypes)).toHaveLength(5);
-    expect({ fakeDatatypesByTopic, fakeDatatypes }).toMatchSnapshot();
+    expect(Object.keys(rewrittenDatatypes)).toHaveLength(5);
+    expect({ rewrittenDatatypeIdsByTopic, rewrittenDatatypes }).toMatchSnapshot();
   });
 });

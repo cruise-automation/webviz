@@ -7,8 +7,8 @@
 @import "~webviz-core/src/styles/colors.module.scss";
 
 .tooltip {
-  background-color: $light1;
-  color: $dark2;
+  background-color: $LIGHT1;
+  color: $DARK2;
   border-radius: 4px;
   padding: 4px 8px;
   white-space: pre-line;
@@ -32,7 +32,7 @@
   }
   .arrow {
     bottom: -3px;
-    border-top-color: $light1;
+    border-top-color: $LIGHT1;
   }
 }
 
@@ -42,7 +42,7 @@
   }
   .arrow {
     left: -3px;
-    border-right-color: $light1;
+    border-right-color: $LIGHT1;
   }
 }
 
@@ -52,7 +52,7 @@
   }
   .arrow {
     top: -3px;
-    border-bottom-color: $light1;
+    border-bottom-color: $LIGHT1;
   }
 }
 
@@ -62,6 +62,6 @@
   }
   .arrow {
     right: -3px;
-    border-left-color: $light1;
+    border-left-color: $LIGHT1;
   }
 }

@@ -90,7 +90,7 @@ function DiagnosticStatusPanel({ config, saveConfig, topics, openSiblingPanel }:
     selectedItems = items;
   }
   return (
-    <Flex scroll scrollX col>
+    <Flex grow scroll scrollX col>
       <PanelToolbar floating helpContent={helpContent} additionalIcons={topicToRenderMenu}>
         <Autocomplete
           placeholder={selectedDisplayName ?? "Select a diagnostic"}
@@ -103,7 +103,7 @@ function DiagnosticStatusPanel({ config, saveConfig, topics, openSiblingPanel }:
         />
       </PanelToolbar>
       {selectedItems && selectedItems.length ? (
-        <Flex col scroll>
+        <Flex grow col scroll>
           {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((item) => (
             <DiagnosticStatus
               key={item.id}

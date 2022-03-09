@@ -84,7 +84,7 @@ function ValidateOnBlurExample() {
 
 storiesOf("<TextField>", module).add("default", () => {
   return (
-    <Flex wrap>
+    <Flex grow wrap>
       <Box title="default">
         <TextField />
       </Box>

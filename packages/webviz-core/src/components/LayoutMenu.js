@@ -21,7 +21,7 @@ export default function LayoutMenu() {
 
   return (
     <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
-      <Flex>
+      <Flex grow>
         <WrappedIcon medium fade active={isOpen} tooltip="Config">
           <LayoutIcon />
         </WrappedIcon>

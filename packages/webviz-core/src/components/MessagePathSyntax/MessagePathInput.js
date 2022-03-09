@@ -54,7 +54,7 @@ import type { TimestampMethod } from "webviz-core/src/util/time";
 // rendering unnecessarily).
 
 function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
-  const structureTraversalResult = traverseStructure(messagePathStructures(datatypes)[topic.datatype], [
+  const structureTraversalResult = traverseStructure(messagePathStructures(datatypes)[topic.datatypeId], [
     { type: "name", name: "header" },
     { type: "name", name: "stamp" },
   ]);
@@ -232,7 +232,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
 
       if (topic) {
         structureTraversalResult = traverseStructure(
-          messagePathStructures(datatypes)[topic.datatype],
+          messagePathStructures(datatypes)[topic.datatypeId],
           rosPath.messagePath
         );
       }
@@ -286,7 +286,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
         };
       } else {
         autocompleteItems = messagePathsForDatatype(
-          topic.datatype,
+          topic.datatypeId,
           datatypes,
           validTypes,
           noMultiSlices,
@@ -336,7 +336,10 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
     const noHeaderStamp = topic && topicHasNoHeaderStamp(topic, datatypes);
     const orderedAutocompleteItems = prioritizedDatatype
       ? flatten(
-          partition(autocompleteItems, (item) => getTopicsByTopicName(topics)[item]?.datatype === prioritizedDatatype)
+          partition(
+            autocompleteItems,
+            (item) => getTopicsByTopicName(topics)[item]?.datatypeName === prioritizedDatatype
+          )
         )
       : autocompleteItems;
 

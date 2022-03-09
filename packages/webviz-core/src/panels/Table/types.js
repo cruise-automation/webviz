@@ -65,10 +65,6 @@ export type ColumnInstance = {
   getHeaderProps(): {},
   toggleHidden(hidden: boolean): void,
   getToggleHiddenProps(userProps: {}): {},
-  // useSortBy properties.
-  isSorted?: boolean,
-  isSortedDesc?: boolean,
-  getSortByToggleProps(): {},
   getResizerProps(): {},
 };
 
@@ -86,8 +82,12 @@ export type ColumnOptions = {|
   width?: number,
   minWidth?: number,
   maxWidth?: number,
-  sortType?: (aRow: any, bRow: any, columnId: string, desc: boolean) => number,
+  sortType?: (aValue: any, bValue: any) => number,
   filter?: (rows: Row[], columnIds: string[], columnFilter: ColumnFilter) => Row[],
+  typeInfo: {
+    isPrimitiveArrayColumn: ?boolean,
+    isPrimitiveinComplexArrayColumn: ?boolean,
+  },
 |};
 
 type HeaderGroup = {
@@ -133,6 +133,7 @@ export type ColumnConfig = {|
   isExpanded?: boolean,
   filter?: ColumnFilter,
   sortDesc?: boolean,
+  sortDescTime?: number,
   width?: ?number,
 |};
 

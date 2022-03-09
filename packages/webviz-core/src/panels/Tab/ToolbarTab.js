@@ -32,10 +32,11 @@ function measureText(text: string): number {
 
 const STab = styled.div.attrs(({ isActive, value, tabCount, isDragging, hidden, highlight }) => ({
   style: {
+    cursor: isActive ? "text" : undefined,
     opacity: hidden ? 0 : 1,
-    borderColor: isDragging || highlight ? colors.DARK6 : "transparent",
+    borderColor: isDragging || highlight ? colors.DARK6 : undefined,
     boxShadow: isDragging ? `0px 2px 6px rgba(0, 0, 0, 0.2)` : "none",
-    backgroundColor: isActive ? colors.DARK4 : isDragging ? colors.DARK2 : "transparent",
+    backgroundColor: isActive ? colors.DARK4 : isDragging ? colors.DARK2 : undefined,
     minWidth: isActive
       ? `calc(max(${MIN_ACTIVE_TAB_WIDTH}px,  min(${Math.ceil(
           measureText(value) + 30
@@ -44,6 +45,11 @@ const STab = styled.div.attrs(({ isActive, value, tabCount, isDragging, hidden, 
   },
 }))`
   max-width: ${MAX_TAB_WIDTH}px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: ${colors.DARK3};
+  }
 `;
 
 const SInput = styled.input.attrs(({ editable }) => ({

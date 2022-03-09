@@ -27,7 +27,7 @@ describe("waitForXhrRequests", () => {
   }
 
   it("does not wait if there are no requests", async () => {
-    const pendingUrls = new Set();
+    const pendingUrls = new Map();
     let done = false;
     waitForXhrRequests(pendingUrls).then(() => (done = true));
     expect(done).toBeFalsy();
@@ -35,7 +35,7 @@ describe("waitForXhrRequests", () => {
   });
 
   it("waits for requests", async () => {
-    const pendingUrls = new Set(["1", "2"]);
+    const pendingUrls = new Map([["1", "http://foo.bar"], ["2", "http://foo.bar"]]);
     let done = false;
     waitForXhrRequests(pendingUrls).then(() => (done = true));
     expect(done).toBeFalsy();
@@ -52,7 +52,7 @@ describe("waitForXhrRequests", () => {
   });
 
   it("clears the pending urls if they timeout", async () => {
-    const pendingUrls = new Set(["1"]);
+    const pendingUrls = new Map([["1", "http://foo.bar"]]);
     let done = false;
     waitForXhrRequests(pendingUrls).then(() => (done = true));
     expect(done).toBeFalsy();

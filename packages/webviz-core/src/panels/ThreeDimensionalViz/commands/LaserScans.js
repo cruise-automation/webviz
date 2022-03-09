@@ -72,11 +72,11 @@ const getLaserScan = (vert) => (regl: Regl) =>
     count: regl.prop("ranges.length"),
   });
 
-type Props = {
+type Props = {|
   ...CommonCommandProps,
   laserScanVert: string,
   children: LaserScan[],
-};
+|};
 
 export default function LaserScans(props: Props) {
   const command = React.useMemo(() => getLaserScan(props.laserScanVert), [props.laserScanVert]);

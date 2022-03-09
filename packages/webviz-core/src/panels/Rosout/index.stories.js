@@ -14,7 +14,7 @@ import Rosout from "webviz-core/src/panels/Rosout";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const fixture = {
-  topics: [{ name: "/rosout", datatype: "dummy" }],
+  topics: [{ name: "/rosout", datatypeName: "dummy", datatypeId: "dummy" }],
   frame: {
     "/rosout": [
       {
@@ -95,9 +95,9 @@ storiesOf("<RosoutPanel>", module)
       <PanelSetup
         fixture={{
           topics: [
-            { name: "/rosout", datatype: "rosgraph_msgs/Log" },
-            { name: "/foo/rosout", datatype: "rosgraph_msgs/Log" },
-            { name: "/webviz_source_2/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/rosout", datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log" },
+            { name: "/foo/rosout", datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log" },
+            { name: "/webviz_source_2/rosout", datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log" },
           ],
           frame: {
             "/rosout": makeMessages("/rosout"),

@@ -14,10 +14,10 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import Rpc from "webviz-core/src/util/Rpc";
 
-type Props = {
+type Props = {|
   debug: boolean,
   rpc: Rpc,
-};
+|};
 
 const style = {
   position: "absolute",

@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 export const datatypes = {
-  "some/datatype": { fields: [{ name: "index", type: "int32" }] },
+  "some/datatype": { name: "some/datatype", fields: [{ name: "index", type: "int32" }] },
 };
 
 export const messages = [

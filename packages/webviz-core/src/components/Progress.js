@@ -10,13 +10,13 @@ import React from "react";
 
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-type Props = {
+type Props = {|
   percent: number,
   color?: string,
   width?: number | string,
   height?: number,
   vertical?: boolean,
-};
+|};
 
 const Progress = (props: Props) => {
   const { percent, vertical, color = "black" } = props;

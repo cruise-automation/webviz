@@ -21,10 +21,10 @@ function getProvider(isRoot: boolean = false) {
       rosBinaryMessages: undefined,
     },
     topics: [
-      { name: "/some_topic", datatype: "some_datatype" },
-      { name: "/some_other_topic", datatype: "some_datatype" },
+      { name: "/some_topic", datatypeName: "some_datatype", datatypeId: "some_datatype" },
+      { name: "/some_other_topic", datatypeName: "some_datatype", datatypeId: "some_datatype" },
     ],
-    datatypes: { some_datatype: { fields: [] } },
+    datatypes: { some_datatype: { name: "some_datatype", fields: [] } },
     messageDefinitionsByTopic: { "/some_other_topic": "dummy" },
     parsedMessageDefinitionsByTopic: { "/some_topic": [], "/some_other_topic": [] },
     providesParsedMessages: false, // to test missing messageDefinitionsByTopic
@@ -51,13 +51,13 @@ describe("ApiCheckerDataProvider", () => {
           // with parsed messageDefintions, the string messageDefintionsByTopic does not need to be complete.
           messageDefinitionsByTopic: { "/some_other_topic": "dummy" },
           parsedMessageDefinitionsByTopic: { "/some_topic": [], "/some_other_topic": [] },
-          datatypes: { some_datatype: { fields: [] } },
+          datatypes: { some_datatype: { name: "some_datatype", fields: [] } },
         },
         end: { nsec: 0, sec: 105 },
         start: { nsec: 0, sec: 100 },
         topics: [
-          { datatype: "some_datatype", name: "/some_topic" },
-          { datatype: "some_datatype", name: "/some_other_topic" },
+          { datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some_topic" },
+          { datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some_other_topic" },
         ],
         providesParsedMessages: false,
       });
@@ -77,8 +77,8 @@ describe("ApiCheckerDataProvider", () => {
         end: { nsec: 0, sec: 105 },
         start: { nsec: 0, sec: 100 },
         topics: [
-          { datatype: "some_datatype", name: "/some_topic" },
-          { datatype: "some_datatype", name: "/some_other_topic" },
+          { datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some_topic" },
+          { datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some_other_topic" },
         ],
         providesParsedMessages: false,
       });
@@ -103,7 +103,7 @@ describe("ApiCheckerDataProvider", () => {
 
       it("throws when topic datatype is missing", async () => {
         const { provider, memoryDataProvider } = getProvider();
-        memoryDataProvider.datatypes = { some_other_datatype: { fields: [] } };
+        memoryDataProvider.datatypes = { some_other_datatype: { name: "some_other_datatype", fields: [] } };
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
 
@@ -147,6 +147,22 @@ describe("ApiCheckerDataProvider", () => {
         { message: 0, receiveTime: { nsec: 0, sec: 100 }, topic: "/some_topic" },
         { message: 1, receiveTime: { nsec: 0, sec: 105 }, topic: "/some_topic" },
       ]);
+    });
+
+    it("allows messages to be returned on topics not requested", async () => {
+      const { provider, memoryDataProvider } = getProvider();
+      await provider.initialize(mockExtensionPoint().extensionPoint);
+
+      const returnMessages = [{ topic: "/some_other_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 }];
+      jest.spyOn(memoryDataProvider, "getMessages").mockImplementation(() => ({
+        parsedMessages: returnMessages,
+        bobjects: undefined,
+        rosBinaryMessages: undefined,
+      }));
+
+      expect(
+        await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
+      ).toEqual({ parsedMessages: returnMessages });
     });
 
     describe("failure", () => {
@@ -196,6 +212,30 @@ describe("ApiCheckerDataProvider", () => {
         ).rejects.toThrow();
       });
 
+      it("updates the valid topic set when nodes change", async () => {
+        const { provider, memoryDataProvider } = getProvider();
+        await provider.initialize(mockExtensionPoint().extensionPoint);
+        const getMessagesWithTopic = (topic) =>
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: [topic] });
+
+        // Initial topics:
+        await getMessagesWithTopic("/some_topic"); // passes
+        expect(getMessagesWithTopic("/initially_not_present")).rejects.toThrow();
+
+        jest.spyOn(memoryDataProvider, "setUserNodes").mockReturnValue(
+          Promise.resolve({
+            topics: [{ name: "/initially_not_present", datatypeName: "x/Y", datatypeId: "x/Y" }],
+            topicsToInvalidate: new Set(),
+            messageDefinitions: { "/initially_not_present": [] },
+          })
+        );
+        await provider.setUserNodes({});
+        await getMessagesWithTopic("/initially_not_present"); // passes
+        // Topic is removed, but requests are still ok -- handled gracefully in node playground
+        // provider.
+        await getMessagesWithTopic("/some_topic");
+      });
+
       it("throws when getMessages returns invalid messages", async () => {
         const { provider, memoryDataProvider } = getProvider();
         await provider.initialize(mockExtensionPoint().extensionPoint);
@@ -223,12 +263,6 @@ describe("ApiCheckerDataProvider", () => {
           { topic: "/some_topic", receiveTime: { sec: 105, nsec: 0 }, message: 1 },
           { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
         ];
-        await expect(
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
-        ).rejects.toThrow();
-
-        // Valid topic, but not requested
-        returnMessages = [{ topic: "/some_other_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 }];
         await expect(
           provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();

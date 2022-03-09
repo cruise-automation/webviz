@@ -138,13 +138,13 @@ export type Config = {|
   topicToRender: ?string,
 |};
 
-type Props = {
+type Props = {|
   ...ProcessedAudioData,
   width: number,
   height: number,
   config: Config,
   saveConfig: ($Shape<Config>) => void,
-};
+|};
 
 function AudioPlayerBase({
   channelCount,

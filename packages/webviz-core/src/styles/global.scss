@@ -4,15 +4,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+@import "./colors.js";
 @import "./reset.scss";
-@import "./colors.module.scss";
 @import "./mixins.module.scss";
 @import "./fonts.module.scss";
 @import "~rc-color-picker/assets/index.css";
 
 .rc-color-picker-panel {
   // TOOLBAR
-  background: $dark2;
+  background: $DARK2;
   .rc-color-picker-panel-inner {
     box-shadow: none;
     // DARK7
@@ -44,7 +44,7 @@ body,
   overflow: hidden;
 
   font-size: $text-size;
-  color: $text-normal;
+  color: $textNormal;
   @include sans-serif;
 }
 
@@ -73,7 +73,7 @@ html {
 }
 
 ::selection {
-  background-color: transparentize($text-normal, 0.4);
+  background-color: transparentize($textNormal, 0.4);
 }
 
 code,
@@ -95,10 +95,10 @@ select,
 textarea,
 .text-area-style {
   @include sans-serif;
-  color: $text-control;
+  color: $textControl;
   font-size: 1rem;
   text-align: left;
-  background-color: $background-control;
+  background-color: $backgroundControl;
   border-radius: 4px;
   border: none;
   padding: 8px 12px;
@@ -113,7 +113,7 @@ input,
 select,
 textarea,
 .text-area-style {
-  color: $text-control;
+  color: $textControl;
   background-color: rgba(255, 255, 255, 0.05);
 
   &:focus {
@@ -121,7 +121,7 @@ textarea,
   }
 
   &.disabled {
-    color: $text-input-disabled;
+    color: $textInputDisabled;
     background-color: rgba(255, 255, 255, 0.3);
   }
 }
@@ -129,8 +129,8 @@ textarea,
 textarea,
 .text-area-style {
   @include monospace;
-  border: 2px solid $text-normal;
-  color: $text-normal;
+  border: 2px solid $textNormal;
+  color: $textNormal;
 }
 
 div::-webkit-scrollbar {
@@ -148,9 +148,9 @@ div::-webkit-scrollbar-thumb {
 }
 
 a {
-  color: $text-control;
+  color: $textControl;
   &:hover {
-    color: $text-control-hover;
+    color: $textControlHover;
   }
 }
 
@@ -184,24 +184,24 @@ button {
   text-align: center;
 
   &.is-danger {
-    background-color: $red;
+    background-color: $RED2;
   }
   &.is-warning {
-    background-color: $background-control;
+    background-color: $backgroundControl;
   }
 
   &:not(.disabled):not(:disabled):hover {
     cursor: pointer;
-    color: $text-control-hover;
+    color: $textControlHover;
   }
 
   &.is-primary {
-    background-color: $green;
+    background-color: $GREENL1;
     color: $background;
   }
   &.selected {
-    background-color: $dark5;
-    color: $text-normal;
+    background-color: $DARK5;
+    color: $textNormal;
   }
   &.disabled,
   &:disabled {
@@ -214,7 +214,7 @@ button {
 }
 
 th {
-  color: $text-normal;
+  color: $textNormal;
 
   tr:first-child & {
     padding-top: 4px;
@@ -237,7 +237,7 @@ tr {
 
 tr:hover {
   td {
-    background-color: $dark4;
+    background-color: $DARK4;
     cursor: pointer;
   }
 

@@ -82,10 +82,10 @@ function getMockProps({
 
 describe("useSceneBuilderAndTransformsData", () => {
   // Create a helper component that exposes the results of the hook for mocking.
-  type Props = {
+  type Props = {|
     ...UseSceneBuilderAndTransformsDataInput,
     messagePipelineProps?: any,
-  };
+  |};
   function createTest() {
     function Test(props: Props) {
       return (

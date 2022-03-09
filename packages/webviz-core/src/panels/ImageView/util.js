@@ -45,11 +45,11 @@ export function getMarkerOptions(
 ): string[] {
   const results = [];
   const cameraNamespace = getCameraNamespace(imageTopic);
-  for (const { name, datatype } of topics) {
+  for (const { name, datatypeName } of topics) {
     if (
       cameraNamespace &&
       (name.startsWith(cameraNamespace) || name.startsWith(`/old${cameraNamespace}`)) &&
-      imageMarkerDatatypes.includes(datatype)
+      imageMarkerDatatypes.includes(datatypeName)
     ) {
       results.push(name);
     }

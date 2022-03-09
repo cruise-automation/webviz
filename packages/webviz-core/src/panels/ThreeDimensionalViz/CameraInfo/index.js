@@ -28,7 +28,7 @@ import {
   getNewCameraStateOnFollowChange,
   type TargetPose,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import clipboard from "webviz-core/src/util/clipboard";
 
 export const CAMERA_TAB_TYPE = "Camera";
@@ -145,8 +145,8 @@ export default function CameraInfo({
       selectedTab={selectedTab}
       onSelectTab={(newSelectedTab) => setSelectedTab(newSelectedTab)}>
       <ToolGroup name={CAMERA_TAB_TYPE}>
-        <Flex col style={{ minWidth: DEFAULT_CAMERA_INFO_WIDTH }}>
-          <Flex row reverse>
+        <Flex grow col style={{ minWidth: DEFAULT_CAMERA_INFO_WIDTH }}>
+          <Flex grow row reverse>
             <Button
               tooltip="Copy cameraState"
               small
@@ -173,9 +173,9 @@ export default function CameraInfo({
               dataValidator={cameraStateValidator}
             />
           ) : (
-            <Flex col>
+            <Flex grow col>
               <CameraStateInfo cameraState={cameraState} onAlignXYAxis={onAlignXYAxis} />
-              <Flex col>
+              <Flex grow col>
                 <SRow style={{ marginBottom: 8 }}>
                   <Tooltip placement="top" contents="Automatically sync camera across all 3D panels">
                     <SLabel>Auto sync:</SLabel>

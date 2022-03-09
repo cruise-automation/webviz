@@ -17,12 +17,14 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 const fixture = {
   datatypes: {
     "msgs/PoseDebug": {
+      name: "msgs/PoseDebug",
       fields: [
         { name: "header", type: "std_msgs/Header", isArray: false },
         { name: "pose", type: "msgs/Pose", isArray: false },
       ],
     },
     "msgs/Pose": {
+      name: "msgs/Pose",
       fields: [
         { name: "header", type: "std_msgs/Header", isArray: false },
         { name: "x", type: "float64", isArray: false },
@@ -34,6 +36,7 @@ const fixture = {
       ],
     },
     "msgs/State": {
+      name: "msgs/State",
       fields: [
         { name: "header", type: "std_msgs/Header", isArray: false },
         { name: "items", type: "msgs/OtherState", isArray: true },
@@ -41,6 +44,7 @@ const fixture = {
       ],
     },
     "msgs/OtherState": {
+      name: "msgs/OtherState",
       fields: [
         { name: "id", type: "int32", isArray: false },
         { name: "speed", type: "float32", isArray: false },
@@ -49,6 +53,7 @@ const fixture = {
       ],
     },
     "msgs/Log": {
+      name: "msgs/Log",
       fields: [
         { name: "id", type: "int32", isArray: false },
         { name: "myJson", type: "json", isArray: false },
@@ -56,6 +61,7 @@ const fixture = {
       ],
     },
     "std_msgs/Header": {
+      name: "std_msgs/Header",
       fields: [
         { name: "seq", type: "uint32", isArray: false },
         {
@@ -68,14 +74,15 @@ const fixture = {
     },
   },
   topics: [
-    { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
-    { name: "/some_topic/state", datatype: "msgs/State" },
+    { name: "/some_topic/location", datatypeName: "msgs/PoseDebug", datatypeId: "msgs/PoseDebug" },
+    { name: "/some_topic/state", datatypeName: "msgs/State", datatypeId: "msgs/State" },
     {
       name:
         "/very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_topic_name/state",
-      datatype: "msgs/State",
+      datatypeName: "msgs/State",
+      datatypeId: "msgs/State",
     },
-    { name: "/some_logs_topic", datatype: "msgs/Log" },
+    { name: "/some_logs_topic", datatypeName: "msgs/Log", datatypeId: "msgs/Log" },
   ],
   frame: {},
   globalVariables: { global_var_1: 42, global_var_2: 10 },
@@ -94,7 +101,7 @@ function MessagePathInputStory(props: {| path: string, prioritizedDatatype?: str
   return (
     <MockPanelContextProvider>
       <PanelSetup fixture={fixture} onMount={clickInput}>
-        <Flex style={{ margin: "10px" }}>
+        <Flex grow style={{ margin: "10px" }}>
           <MessagePathInput
             autoSize
             path={path}

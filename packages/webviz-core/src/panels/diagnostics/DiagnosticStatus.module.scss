@@ -22,31 +22,31 @@ tr.section th {
 tr.status-ok {
   &.section th,
   td {
-    color: $green;
+    color: $GREENL1;
   }
 }
 tr.status-warn {
   &.section th,
   td {
-    color: $orange;
+    color: $YELLOWL1;
   }
 }
 tr.status-error {
   &.section th,
   td {
-    color: $red;
+    color: $RED2;
   }
 }
 tr.status-stale {
   &.section th,
   td {
-    color: $text-muted;
+    color: $textMuted;
   }
 }
 tr.status-unknown {
   &.section th,
   td {
-    color: $red;
+    color: $RED2;
   }
 }
 
@@ -56,7 +56,7 @@ tr.status-unknown {
 
 td.collapsedSection {
   text-align: center;
-  color: $red;
+  color: $RED2;
 }
 
 .plotIcon,

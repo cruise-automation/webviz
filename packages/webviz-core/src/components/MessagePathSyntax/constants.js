@@ -67,7 +67,7 @@ type MessagePathStructureItemArray = {|
 type MessagePathStructureItemPrimitive = {|
   structureType: "primitive",
   primitiveType: RosPrimitive,
-  datatype: string,
+  parentDatatype: string,
 |};
 export type MessagePathStructureItem =
   | MessagePathStructureItemMessage

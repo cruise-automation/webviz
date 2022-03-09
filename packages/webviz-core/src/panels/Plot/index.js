@@ -28,6 +28,7 @@ import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo, useGetCurrentValue } from "webviz-core/src/util/hooks";
+import { lineColors } from "webviz-core/src/util/plotColors";
 import { fromSec, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export const plotableRosTypes = [
@@ -57,8 +58,16 @@ export type PlotXAxisVal =
   | "custom" // Message path data. Preloaded.
   | "currentCustom"; // Message path data. One "current" message at playback time.
 
+export type LineStyle = {
+  color?: string,
+  borderWidth?: number,
+  borderDash?: [number, number],
+  pointRadius?: number,
+};
+
 export type PlotConfig = {
   paths: PlotPath[],
+  lineStyles?: LineStyle[],
   minYValue: string,
   maxYValue: string,
   showLegend: boolean,
@@ -140,7 +149,16 @@ function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks) {
 
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { followingViewWidth, paths: yAxisPaths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
+  const {
+    followingViewWidth,
+    paths: yAxisPaths,
+    lineStyles: savedLineStyles,
+    minYValue,
+    maxYValue,
+    showLegend,
+    xAxisVal,
+    xAxisPath,
+  } = config;
   // Note that the below values are refs since they are only used in callbacks and are not rendered anywhere.
   const currentMinY = useRef(null);
   const currentMaxY = useRef(null);
@@ -214,14 +232,28 @@ function Plot(props: Props) {
     [streamedItemsByPath, blockItemsByPath]
   );
 
+  const lineStyles = useMemo(
+    (): LineStyle[] =>
+      new Array(yAxisPaths.length).fill().map((_, index) => {
+        const style = savedLineStyles?.[index];
+        return {
+          color: style?.color ?? lineColors[index % lineColors.length],
+          borderDash: style?.borderDash,
+          borderWidth: style?.borderWidth,
+          pointRadius: style?.pointRadius,
+        };
+      }),
+    [savedLineStyles, yAxisPaths]
+  );
+
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
   const { datasets, tooltips, pathsWithMismatchedDataLengths } = useMemo(
     // TODO(steel): This memoization isn't quite ideal: getDatasetsAndTooltips is a bit expensive
     // with lots of preloaded data, and when we preload a new block we re-generate the datasets for
     // the whole timeline. We should try to use block memoization here.
-    () => getDatasetsAndTooltips(yAxisPaths, mergedItems, startTime || ZERO_TIME, xAxisVal, xAxisPath),
-    [yAxisPaths, mergedItems, startTime, xAxisVal, xAxisPath]
+    () => getDatasetsAndTooltips(yAxisPaths, lineStyles, mergedItems, startTime || ZERO_TIME, xAxisVal, xAxisPath),
+    [yAxisPaths, lineStyles, mergedItems, startTime, xAxisVal, xAxisPath]
   );
 
   const { currentTime, endTime, seekPlayback: seek } = useMessagePipeline(
@@ -289,10 +321,11 @@ function Plot(props: Props) {
   );
 
   return (
-    <Flex col clip center style={{ position: "relative" }}>
+    <Flex grow col clip center style={{ position: "relative" }}>
       <PanelToolbar helpContent={helpContent} floating menuContent={plotMenu} />
       <PlotChart
         paths={yAxisPaths}
+        lineStyles={lineStyles}
         minYValue={parseFloat(minYValue)}
         maxYValue={parseFloat(maxYValue)}
         saveCurrentView={saveCurrentView}
@@ -305,6 +338,7 @@ function Plot(props: Props) {
       />
       <PlotLegend
         paths={yAxisPaths}
+        lineStyles={lineStyles}
         saveConfig={saveConfig}
         showLegend={showLegend}
         xAxisVal={xAxisVal}

@@ -207,9 +207,9 @@ type State = {
   showList: boolean,
 };
 
-type Props = {
+type Props = {|
   onNotification?: (message: string, details: DetailsType) => void,
-};
+|};
 
 export default class NotificationDisplay extends React.PureComponent<Props, State> {
   state = {

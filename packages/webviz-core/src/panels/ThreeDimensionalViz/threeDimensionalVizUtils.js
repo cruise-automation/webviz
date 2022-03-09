@@ -131,15 +131,15 @@ export function getUpdatedGlobalVariablesBySelectedObject(
   selectedObject: MouseEventObject,
   linkedGlobalVariables: LinkedGlobalVariables
 ): ?GlobalVariables {
-  const object = getObject(selectedObject);
   const interactionData = getInteractionData(selectedObject);
-  if (!linkedGlobalVariables.length || !interactionData?.topic) {
+  const originalMessage = interactionData?.originalMessage;
+  if (!linkedGlobalVariables.length || !interactionData?.topic || !originalMessage) {
     return;
   }
   const newGlobalVariables = {};
   linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
     if (interactionData?.topic === topic) {
-      const objectForPath = get(object, [...markerKeyPath].reverse());
+      const objectForPath = get(originalMessage, [...markerKeyPath].reverse());
       newGlobalVariables[name] = objectForPath;
     }
   });

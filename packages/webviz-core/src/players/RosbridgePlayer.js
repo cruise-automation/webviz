@@ -148,11 +148,12 @@ export default class RosbridgePlayer implements Player {
           topicsMissingDatatypes.push(topicName);
           continue;
         }
-        topics.push({ name: topicName, datatype: type });
+        topics.push({ name: topicName, datatypeName: type, datatypeId: type });
         datatypeDescriptions.push({ type, messageDefinition });
         const parsedDefinition =
-          typeof messageDefinition === "string" ? parseMessageDefinition(messageDefinition) : messageDefinition;
-        messageReaders[type] = messageReaders[type] || new MessageReader(parsedDefinition, { freeze: FREEZE_MESSAGES });
+          typeof messageDefinition === "string" ? parseMessageDefinition(messageDefinition, type) : messageDefinition;
+        messageReaders[type] =
+          messageReaders[type] || new MessageReader(parsedDefinition, type, { freeze: FREEZE_MESSAGES });
         this._parsedMessageDefinitionsByTopic[topicName] = parsedDefinition;
       }
 
@@ -280,8 +281,8 @@ export default class RosbridgePlayer implements Player {
           name: topicName,
           compression: "cbor-raw",
         });
-        const { datatype } = availableTopicsByTopicName[topicName];
-        const messageReader = this._messageReadersByDatatype[datatype];
+        const { datatypeName } = availableTopicsByTopicName[topicName];
+        const messageReader = this._messageReadersByDatatype[datatypeName];
         this._topicSubscriptions[topicName].subscribe((message) => {
           if (!this._providerTopics) {
             return;
@@ -294,7 +295,7 @@ export default class RosbridgePlayer implements Player {
             this._bobjects.push({
               topic,
               receiveTime,
-              message: wrapJsObject(this._providerDatatypes, datatype, innerMessage),
+              message: wrapJsObject(this._providerDatatypes, datatypeName, innerMessage),
             });
           }
 
@@ -358,4 +359,5 @@ export default class RosbridgePlayer implements Player {
   requestBackfill() {}
   setGlobalVariables() {}
   setMessageOrder() {}
+  async setUserNodes() {}
 }

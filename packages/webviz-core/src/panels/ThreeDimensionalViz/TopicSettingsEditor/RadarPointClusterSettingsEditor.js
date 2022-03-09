@@ -45,7 +45,7 @@ export default function RadarPointClusterSettingsEditor(
   const maxPointVal = typeof maxPoint === "number" ? maxPoint : 10;
 
   return (
-    <Flex col>
+    <Flex grow col>
       <CommonPointSettings settings={settings} defaultPointSize={4} onFieldChange={onFieldChange} />
 
       <SLabel>Color by</SLabel>
@@ -57,8 +57,8 @@ export default function RadarPointClusterSettingsEditor(
         ))}
       </Select>
 
-      <Flex>
-        <Flex col>
+      <Flex grow>
+        <Flex grow col>
           <SLabel>Min</SLabel>
           <input
             style={{ width: "95%" }}
@@ -69,7 +69,7 @@ export default function RadarPointClusterSettingsEditor(
           />
         </Flex>
 
-        <Flex col>
+        <Flex grow col>
           <SLabel>Max</SLabel>
           <input
             style={{ width: "95%" }}

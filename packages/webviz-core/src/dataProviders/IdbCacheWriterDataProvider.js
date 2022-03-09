@@ -321,4 +321,11 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
       nsTimeRangesSinceBagStart: this._rangesByTopic,
     });
   }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

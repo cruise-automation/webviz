@@ -17,7 +17,7 @@ import Button from "webviz-core/src/components/Button";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 
 type AddToLinkedGlobalVariable = {
   topic: string,
@@ -25,12 +25,12 @@ type AddToLinkedGlobalVariable = {
   variableValue: any,
 };
 
-type Props = {
+type Props = {|
   highlight?: boolean,
   addToLinkedGlobalVariable: AddToLinkedGlobalVariable,
   style?: any,
   tooltip?: React.Node,
-};
+|};
 
 function getInitialName(markerKeyPath: string[]) {
   return markerKeyPath

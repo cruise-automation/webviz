@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { flatten, pick, round, uniq } from "lodash";
+import { flatten, pick, round } from "lodash";
 import * as React from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
@@ -17,9 +17,7 @@ import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelTo
 import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
-import GLChart from "webviz-core/src/components/GLChart";
 import { SBar } from "webviz-core/src/components/HoverBar";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
@@ -37,6 +35,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { cast } from "webviz-core/src/players/types";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { useDeepChangeDetector, useShallowMemo } from "webviz-core/src/util/hooks";
+import LabelGenerator from "webviz-core/src/util/incrementingLabels";
 import { colors, ROBOTO_MONO } from "webviz-core/src/util/sharedStyleConstants";
 
 const SResetZoom = styled.div`
@@ -103,7 +102,7 @@ export type Line = {
   borderWidth?: number,
   pointBackgroundColor?: string,
   pointBorderColor?: string,
-  pointBorderWidth?: number,
+  pointBorderWidth?: string,
   pointRadius?: string,
   pointStyle?:
     | "circle"
@@ -239,8 +238,8 @@ function MenuContent({ config, saveConfig }: MenuContentProps) {
   return (
     <>
       <Item>
-        <Flex>
-          <Flex col style={{ maxWidth: 100, marginRight: 5 }}>
+        <Flex grow>
+          <Flex grow col style={{ maxWidth: 100, marginRight: 5 }}>
             <PanelToolbarLabel>Min X</PanelToolbarLabel>
             <PanelToolbarInput
               style={isValidMinMaxVal(minXVal) ? {} : { color: colors.REDL1 }}
@@ -250,7 +249,7 @@ function MenuContent({ config, saveConfig }: MenuContentProps) {
               placeholder="auto"
             />
           </Flex>
-          <Flex col style={{ maxWidth: 100 }}>
+          <Flex grow col style={{ maxWidth: 100 }}>
             <PanelToolbarLabel>Max X</PanelToolbarLabel>
             <PanelToolbarInput
               style={isValidMinMaxVal(maxXVal) ? {} : { color: colors.REDL1 }}
@@ -263,8 +262,8 @@ function MenuContent({ config, saveConfig }: MenuContentProps) {
         </Flex>
       </Item>
       <Item>
-        <Flex>
-          <Flex col style={{ maxWidth: 100, marginRight: 5 }}>
+        <Flex grow>
+          <Flex grow col style={{ maxWidth: 100, marginRight: 5 }}>
             <PanelToolbarLabel>Min Y</PanelToolbarLabel>
             <PanelToolbarInput
               style={isValidMinMaxVal(minYVal) ? {} : { color: colors.REDL1 }}
@@ -274,7 +273,7 @@ function MenuContent({ config, saveConfig }: MenuContentProps) {
               placeholder="auto"
             />
           </Flex>
-          <Flex col style={{ maxWidth: 100 }}>
+          <Flex grow col style={{ maxWidth: 100 }}>
             <PanelToolbarLabel>Max Y</PanelToolbarLabel>
             <PanelToolbarInput
               style={isValidMinMaxVal(maxYVal) ? {} : { color: colors.REDL1 }}
@@ -313,37 +312,47 @@ function TwoDimensionalPlot(props: Props) {
   const maybeBobject: mixed = useLatestMessageDataItem(path.value, "bobjects")?.queriedData[0]?.value;
   const message: ?PlotMessage = isBobject(maybeBobject) ? deepParse(maybeBobject) : cast<PlotMessage>(maybeBobject);
   const { title, yAxisLabel, xAxisLabel, gridColor, lines = [], points = [], polygons = [] } = message || {};
-  const datasets = React.useMemo(
-    () =>
-      message
-        ? [
-            ...lines.map((line) => {
-              const l = { ...pick(line, keysToPick), showLine: true, fill: false };
-              if (pointRadiusOverride) {
-                l.pointRadius = pointRadiusOverride;
-              }
+  const datasets = React.useMemo(() => {
+    if (message == null) {
+      return [];
+    }
+    // Datasets flicker when labels aren't unique. But non-unique labels are very common in
+    // practice, so we should handle them gracefully.
+    const labelGenerator = new LabelGenerator();
+    const addSuggestedLabel = (label) => {
+      const suggestedLabel = labelGenerator.suggestLabel(label);
+      labelGenerator.addLabel(suggestedLabel);
+      return suggestedLabel;
+    };
+    return [
+      ...lines.map((line) => {
+        const label = addSuggestedLabel(line.label);
+        const l = { ...pick(line, keysToPick), label, showLine: true, fill: false };
+        if (pointRadiusOverride) {
+          l.pointRadius = pointRadiusOverride;
+        }
 
-              return l;
-            }),
-            ...points.map((point) => {
-              const pt = pick(point, keysToPick);
-              if (pointRadiusOverride) {
-                pt.pointRadius = pointRadiusOverride;
-              }
-              return pt;
-            }),
-            ...polygons.map((polygon) => ({
-              ...pick(polygon, keysToPick),
-              data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
-              fill: true,
-              pointRadius: 0,
-              showLine: true,
-              lineTension: 0,
-            })),
-          ].sort((a, b) => (b.order || 0) - (a.order || 0))
-        : [],
-    [lines, message, pointRadiusOverride, points, polygons]
-  );
+        return l;
+      }),
+      ...points.map((point) => {
+        const pt = pick(point, keysToPick);
+        pt.label = addSuggestedLabel(point.label);
+        if (pointRadiusOverride) {
+          pt.pointRadius = pointRadiusOverride;
+        }
+        return pt;
+      }),
+      ...polygons.map((polygon) => ({
+        ...pick(polygon, keysToPick),
+        label: addSuggestedLabel(polygon.label),
+        data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
+        fill: true,
+        pointRadius: "0",
+        showLine: true,
+        lineTension: 0,
+      })),
+    ].sort((a, b) => (b.order || 0) - (a.order || 0));
+  }, [lines, message, pointRadiusOverride, points, polygons]);
 
   const { allXs, allYs } = React.useMemo(
     () => ({
@@ -560,15 +569,9 @@ function TwoDimensionalPlot(props: Props) {
   React.useEffect(() => removeTooltip, [removeTooltip]);
   const emptyMessage = !points.length && !lines.length && !polygons.length;
 
-  if (uniq(datasets.map(({ label }) => label)).length !== datasets.length) {
-    throw new Error("2D Plot datasets do not have unique labels");
-  }
-
   const zoomOptions = useShallowMemo({ ...DEFAULT_PROPS.zoomOptions, mode: zoomMode });
 
   const onChange = React.useCallback((newValue) => saveConfig({ path: { value: newValue } }), [saveConfig]);
-
-  const ChartComponent = useExperimentalFeature("useGLChartIn2dPlot") ? GLChart : ReactChartjs;
 
   return (
     <SContainer>
@@ -594,7 +597,7 @@ function TwoDimensionalPlot(props: Props) {
                 <HoverBar mousePosition={mousePosition}>
                   <SBar xAxisIsPlaybackTime ref={hoverBar} />
                 </HoverBar>
-                <ChartComponent
+                <ReactChartjs
                   type="scatter"
                   width={width}
                   height={height}

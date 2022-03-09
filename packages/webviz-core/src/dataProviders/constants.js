@@ -13,6 +13,7 @@ export const CoreDataProviders = {
   IdbCacheWriterDataProvider: "IdbCacheWriterDataProvider",
   MeasureDataProvider: "MeasureDataProvider",
   MemoryCacheDataProvider: "MemoryCacheDataProvider",
+  NodePlaygroundDataProvider: "NodePlaygroundDataProvider",
   ParseMessagesDataProvider: "ParseMessagesDataProvider",
   RenameDataProvider: "RenameDataProvider",
   RewriteBinaryDataProvider: "RewriteBinaryDataProvider",

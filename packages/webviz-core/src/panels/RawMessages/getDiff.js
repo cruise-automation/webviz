@@ -8,8 +8,7 @@
 import { every, uniq, keyBy, isEmpty } from "lodash";
 
 import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
-import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import { colors, jsonTreeTheme } from "webviz-core/src/util/sharedStyleConstants";
 
 export const diffArrow = "->";
 export const diffLabels = {

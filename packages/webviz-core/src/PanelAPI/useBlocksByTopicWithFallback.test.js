@@ -16,11 +16,12 @@ import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 const datatypes = {
   dummy: {
+    name: "dummy",
     fields: [{ type: "float32", name: "value", isComplex: false, isArray: false }],
   },
 };
 const parsedMessageDefinitionsByTopic = {
-  "/foo": parseMessageDefinition("float32 value"),
+  "/foo": parseMessageDefinition("float32 value", "dummy"),
 };
 
 describe("useBlocksByTopicWithFallback", () => {
@@ -86,25 +87,14 @@ describe("useBlocksByTopicWithFallback", () => {
       <MockMessagePipelineProvider
         bobjects={[]}
         activeData={{ parsedMessageDefinitionsByTopic }}
-        progress={{
-          messageCache: {
-            startTime: { sec: 0, nsec: 0 },
-            blocks: [block1],
-          },
-        }}>
+        progress={{ messageCache: { blocks: [block1] } }}>
         <Test topics={["/foo"]} />
       </MockMessagePipelineProvider>
     );
     // Add a second message to preloading annd a single one the normal pipleine.
     root.setProps({
       bobjects: [message2],
-
-      progress: {
-        messageCache: {
-          startTime: { sec: 0, nsec: 0 },
-          blocks: [block1, block2],
-        },
-      },
+      progress: { messageCache: { blocks: [block1, block2] } },
     });
 
     expect(Test.result.mock.calls).toEqual([

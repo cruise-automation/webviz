@@ -12,7 +12,7 @@ import * as React from "react";
 import styles from "./Option.module.scss";
 import Icon from "webviz-core/src/components/Icon";
 
-type Props = {
+type Props = {|
   // value is used by the Select component
   value?: any, // eslint-disable-line
   children: React.Node,
@@ -20,7 +20,7 @@ type Props = {
   disabled: boolean,
   active: boolean,
   rightIcon?: React.Node,
-};
+|};
 
 export default class Option extends React.Component<Props> {
   static defaultProps = {

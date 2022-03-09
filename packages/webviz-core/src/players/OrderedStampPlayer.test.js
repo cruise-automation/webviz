@@ -9,12 +9,12 @@
 import { TimeUtil } from "rosbag";
 
 import OrderedStampPlayer, { BUFFER_DURATION_SECS } from "./OrderedStampPlayer";
-import signal from "webviz-core/shared/signal";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
 import { PlayerCapabilities, type PlayerState, type PlayerStateActiveData } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
+import invariant from "webviz-core/src/util/invariant";
 import { fromSec, type TimestampMethod } from "webviz-core/src/util/time";
 
 function makeMessage(headerStamp: ?number, receiveTime: number, topic?: string = "/dummy_topic") {
@@ -44,6 +44,7 @@ function makeBobject(headerStamp: ?number, receiveTime: number, topic?: string =
 const markerArrayDatatype = basicDatatypes["visualization_msgs/MarkerArray"];
 const dummyDatatypeWithHeader = {
   dummyDatatypeWithHeader: {
+    name: "dummyDatatypeWithHeader",
     fields: [
       ...(markerArrayDatatype?.fields || []),
       { type: "std_msgs/Header", name: "header", isArray: false, isComplex: true },
@@ -81,7 +82,7 @@ function makePlayers(initialOrder: TimestampMethod): { player: OrderedStampPlaye
     fakePlayer,
     player: new OrderedStampPlayer(
       new UserNodePlayer(fakePlayer, {
-        setUserNodeDiagnostics: jest.fn(),
+        setCompiledNodeData: jest.fn(),
         addUserNodeLogs: jest.fn(),
         setUserNodeRosLib: jest.fn(),
       }),
@@ -133,9 +134,13 @@ describe("OrderedStampPlayer", () => {
       states.push(playerState);
     });
     const oldTopics = [
-      { name: "/dummy_topic", datatype: "dummyDatatypeWithHeader" },
-      { name: "/foo", datatype: "dummyDatatypeWithHeader" },
-      { name: "/dummy_no_header_topic", datatype: "visualization_msgs/MarkerArray" },
+      { name: "/dummy_topic", datatypeName: "dummyDatatypeWithHeader", datatypeId: "dummyDatatypeWithHeader" },
+      { name: "/foo", datatypeName: "dummyDatatypeWithHeader", datatypeId: "dummyDatatypeWithHeader" },
+      {
+        name: "/dummy_no_header_topic",
+        datatypeName: "visualization_msgs/MarkerArray",
+        datatypeId: "visualization_msgs/MarkerArray",
+      },
     ];
 
     const upstreamBobjects = [
@@ -157,9 +162,7 @@ describe("OrderedStampPlayer", () => {
     const bobjects = states[0].activeData?.bobjects;
     const topics = states[0].activeData?.topics;
 
-    if (bobjects == null) {
-      throw new Error("Satisfy flow.");
-    }
+    invariant(bobjects != null, "requested bobjects");
     expect(
       bobjects.map(({ receiveTime, message, topic }) => ({ topic, receiveTime, message: deepParse(message) }))
     ).toEqual([
@@ -194,9 +197,13 @@ describe("OrderedStampPlayer", () => {
     expect(BUFFER_DURATION_SECS).toEqual(1);
 
     const oldTopics = [
-      { name: "/dummy_topic", datatype: "dummyDatatypeWithHeader" },
-      { name: "/foo", datatype: "dummyDatatypeWithHeader" },
-      { name: "/dummy_no_header_topic", datatype: "visualization_msgs/MarkerArray" },
+      { name: "/dummy_topic", datatypeName: "dummyDatatypeWithHeader", datatypeId: "dummyDatatypeWithHeader" },
+      { name: "/foo", datatypeName: "dummyDatatypeWithHeader", datatypeId: "dummyDatatypeWithHeader" },
+      {
+        name: "/dummy_no_header_topic",
+        datatypeName: "visualization_msgs/MarkerArray",
+        datatypeId: "visualization_msgs/MarkerArray",
+      },
     ];
     const msg = makeMessage(0.5, 9.5);
     const upstreamMessages = [makeMessage(undefined, 9.5, "/dummy_no_header_topic"), msg];
@@ -342,56 +349,5 @@ describe("OrderedStampPlayer", () => {
       sec: BUFFER_DURATION_SECS,
       nsec: 0,
     });
-  });
-  it("backfills messages when global variables change", async () => {
-    const currentTime = fromSec(10);
-    const done = signal();
-    const done2 = signal();
-    const upstreamMessages = [makeMessage(8.9, 9.5)];
-    class ModifiedFakePlayer extends FakePlayer {
-      seekPlayback() {
-        this.emit({ ...getState(), currentTime, messages: upstreamMessages });
-      }
-    }
-    // Need to put a UserNodePlayer in between to satisfy flow.
-    const fakePlayer = new ModifiedFakePlayer();
-    fakePlayer.setCapabilities([PlayerCapabilities.setSpeed]);
-    const player = new OrderedStampPlayer(
-      new UserNodePlayer(fakePlayer, {
-        setUserNodeDiagnostics: jest.fn(),
-        addUserNodeLogs: jest.fn(),
-        setUserNodeRosLib: jest.fn(),
-      }),
-      "headerStamp"
-    );
-    jest.spyOn(fakePlayer, "seekPlayback");
-
-    let emitted;
-    let state: PlayerState;
-    player.setListener(async (playerState) => {
-      state = playerState;
-      if (!emitted) {
-        done.resolve();
-        emitted = true;
-      } else {
-        done2.resolve();
-      }
-    });
-
-    player.seekPlayback(currentTime);
-    await done;
-
-    expect(state?.activeData?.messages).toEqual(upstreamMessages);
-    const oldActiveData = state?.activeData;
-
-    // The backfill request should seek the currentTime using BUFFER_DURATION_SECS as a backfillDuration
-    player.setGlobalVariables({ futureTime: 1 });
-    expect(fakePlayer.seekPlayback).toHaveBeenCalledWith(currentTime, {
-      sec: BUFFER_DURATION_SECS,
-      nsec: 0,
-    });
-    await done2;
-    expect(state?.activeData === oldActiveData).toBeFalsy();
-    expect(state?.activeData?.messages).toEqual(oldActiveData?.messages);
   });
 });

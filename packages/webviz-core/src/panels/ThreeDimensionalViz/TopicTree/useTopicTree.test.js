@@ -45,7 +45,11 @@ const sharedProps = {
 };
 
 function makeTopics(topicNames: string[]): Topic[] {
-  return topicNames.map((name) => ({ name, datatype: "visualization_msgs/MarkerArray" }));
+  return topicNames.map((name) => ({
+    name,
+    datatypeName: "visualization_msgs/MarkerArray",
+    datatypeId: "visualization_msgs/MarkerArray",
+  }));
 }
 
 describe("useTopicTree", () => {

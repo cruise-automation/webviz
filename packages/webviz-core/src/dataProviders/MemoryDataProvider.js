@@ -128,4 +128,11 @@ export default class MemoryDataProvider implements DataProvider {
       bobjects: filterMessages(start, end, topics.bobjects || [], this.messages.bobjects),
     };
   }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

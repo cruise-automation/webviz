@@ -15,7 +15,7 @@ import uuid from "uuid";
 // $FlowFixMe - flow does not like workers.
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
-import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
+import type { SetCompiledNodeData, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
@@ -32,40 +32,32 @@ import type {
   BobjectMessage,
 } from "webviz-core/src/players/types";
 import {
-  type Diagnostic,
   DiagnosticSeverity,
   ErrorCodes,
   type NodeRegistration,
-  type ProcessMessagesOutput,
-  type RegistrationOutput,
   Sources,
   type UserNodeLog,
   type NodeData,
 } from "webviz-core/src/players/UserNodePlayer/types";
-import { hasTransformerErrors } from "webviz-core/src/players/UserNodePlayer/utils";
-import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
+import {
+  createNodeRegistrationFromNodeData,
+  getSecondSourceProcessMessages,
+  hasTransformerErrors,
+} from "webviz-core/src/players/UserNodePlayer/utils";
+import type { UserNode, UserNodes, CompiledUserNodeData } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { deepParse, getObjects, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
+import { deepParse, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
+import { rpcFromNewSharedWorker } from "webviz-core/src/util/RpcMainThreadUtils";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 import { addTopicPrefix, joinTopics } from "webviz-core/src/util/topicUtils";
 
-type UserNodeActions = {|
-  setUserNodeDiagnostics: SetUserNodeDiagnostics,
+type NodePlaygroundActions = {|
+  setCompiledNodeData: SetCompiledNodeData,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeRosLib: SetUserNodeRosLib,
 |};
-
-const rpcFromNewSharedWorker = (worker) => {
-  const port: MessagePort = worker.port;
-  port.start();
-  const rpc = new Rpc(port);
-  setupMainThreadRpc(rpc);
-  return rpc;
-};
 
 // TODO: FUTURE - Performance tests
 // TODO: FUTURE - Consider how to incorporate with existing hardcoded nodes (esp re: stories/testing)
@@ -81,7 +73,7 @@ export default class UserNodePlayer implements Player {
   // Not sure if there is perf issue with unused workers (may just go idle) - requires more research
   _unusedNodeRuntimeWorkers: Rpc[] = [];
   _lastPlayerStateActiveData: ?PlayerStateActiveData;
-  _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
+  _setCompiledUserNodeData: (nodeId: string, compiledNodeData: CompiledUserNodeData) => void;
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
   _setRosLib: (rosLib: string) => void;
   _nodeTransformRpc: ?Rpc = null;
@@ -89,15 +81,15 @@ export default class UserNodePlayer implements Player {
   _globalVariables: GlobalVariables = {};
   _pendingResetWorkers: ?Promise<void>;
 
-  constructor(player: Player, userNodeActions: UserNodeActions) {
+  constructor(player: Player, nodePlaygroundActions: NodePlaygroundActions) {
     this._player = player;
-    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } = userNodeActions;
+    const { setCompiledNodeData, addUserNodeLogs, setUserNodeRosLib } = nodePlaygroundActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
     // just add an id, and the thing you want to update? Instead of passing in
     // objects?
-    this._setUserNodeDiagnostics = (nodeId: string, diagnostics: Diagnostic[]) => {
-      setUserNodeDiagnostics({ [nodeId]: { diagnostics } });
+    this._setCompiledUserNodeData = (nodeId: string, compiledNodeData: CompiledUserNodeData) => {
+      setCompiledNodeData({ [nodeId]: compiledNodeData });
     };
     this._addUserNodeLogs = (nodeId: string, logs: UserNodeLog[]) => {
       if (logs.length) {
@@ -172,7 +164,7 @@ export default class UserNodePlayer implements Player {
                   : {
                       topic,
                       receiveTime,
-                      message: wrapJsObject(datatypes, node.output.datatype, message),
+                      message: wrapJsObject(datatypes, node.output.datatypeName, message),
                     };
                 nodeBobjects.push(bobject);
               });
@@ -191,6 +183,8 @@ export default class UserNodePlayer implements Player {
 
   setGlobalVariables(globalVariables: GlobalVariables) {
     this._globalVariables = globalVariables;
+    // Rerun nodes and send data to the panels.
+    this.requestBackfill();
   }
 
   // Called when userNode state is updated.
@@ -229,91 +223,16 @@ export default class UserNodePlayer implements Player {
 
   // Defines the inputs/outputs and worker interface of a user node.
   _createNodeRegistrationFromNodeData(nodeId: string, nodeData: NodeData): NodeRegistration {
-    const { inputTopics, outputTopic, transpiledCode, projectCode, outputDatatype } = nodeData;
-
-    let bobjectSender;
-    let rpc;
-    let terminateSignal = signal<void>();
-    return {
+    return createNodeRegistrationFromNodeData(
       nodeId,
       nodeData,
-      inputs: inputTopics,
-      output: { name: outputTopic, datatype: outputDatatype },
-      processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
-        // We allow _resetWorkers to "cancel" the processing by creating a new signal every time we process a message
-        terminateSignal = signal<void>();
-
-        // Register the node within a web worker to be executed.
-        if (!bobjectSender || !rpc) {
-          rpc = this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4()));
-          bobjectSender = new BobjectRpcSender(rpc, true);
-          const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
-            projectCode,
-            nodeCode: transpiledCode,
-            datatypes,
-            datatype: nodeData.outputDatatype,
-          });
-          if (error) {
-            this._setUserNodeDiagnostics(nodeId, [
-              ...userNodeDiagnostics,
-              {
-                source: Sources.Runtime,
-                severity: DiagnosticSeverity.Error,
-                message: error,
-                code: ErrorCodes.RUNTIME,
-              },
-            ]);
-            return [];
-          }
-          this._addUserNodeLogs(nodeId, userNodeLogs);
-        }
-
-        const addMessagesResult = await Promise.race([bobjectSender.send("addMessages", messages), terminateSignal]);
-        if (!addMessagesResult) {
-          return []; // reset
-        }
-        // TODO: FUTURE - surface runtime errors / infinite loop errors
-        const processMessagesResult = await Promise.race([
-          rpc.send<ProcessMessagesOutput>("processMessages", {
-            globalVariables,
-            outputTopic,
-          }),
-          terminateSignal,
-        ]);
-        if (!processMessagesResult) {
-          return []; // reset
-        }
-        if (processMessagesResult.error) {
-          this._setUserNodeDiagnostics(nodeId, [
-            {
-              source: Sources.Runtime,
-              severity: DiagnosticSeverity.Error,
-              message: processMessagesResult.error,
-              code: ErrorCodes.RUNTIME,
-            },
-          ]);
-        }
-        this._addUserNodeLogs(nodeId, processMessagesResult.userNodeLogs);
-        if (processMessagesResult.type === "parsed") {
-          return processMessagesResult.messages;
-        }
-        const { serializedMessages, buffer, bigString } = processMessagesResult.binaryData;
-        const offsets = serializedMessages.map(({ offset }) => offset);
-        const bobjects = getObjects(datatypes, nodeData.outputDatatype, buffer, bigString, offsets);
-        return bobjects.map((message, i) => ({
-          receiveTime: serializedMessages[i].receiveTime,
-          topic: serializedMessages[i].topic,
-          message,
-        }));
-      },
-      terminate: () => {
-        terminateSignal.resolve();
-        if (rpc) {
-          this._unusedNodeRuntimeWorkers.push(rpc);
-          rpc = null;
-        }
-      },
-    };
+      this._setCompiledUserNodeData,
+      this._addUserNodeLogs,
+      () => this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4())),
+      (rpc) => {
+        this._unusedNodeRuntimeWorkers.push(rpc);
+      }
+    );
   }
 
   async _createMultiSourceNodeRegistration(nodeId: string, userNode: UserNode): Promise<NodeRegistration[]> {
@@ -331,18 +250,7 @@ export default class UserNodePlayer implements Player {
       // Pre and post-process the node's messages so the topics are correct
       const nodeRegistrationTwo = {
         ...nodeRegistrationTwoRaw,
-        processMessages: async (messages: Message[], datatypes: RosDatatypes, globalVariables: GlobalVariables) => {
-          const inputMessages = messages.map((m) => ({
-            ...m,
-            topic: m.topic.replace($WEBVIZ_SOURCE_2, ""),
-          }));
-          const originalMessages = await nodeRegistrationTwoRaw.processMessages(
-            inputMessages,
-            datatypes,
-            globalVariables
-          );
-          return originalMessages.map((m) => ({ ...m, topic: outputTopic }));
-        },
+        processMessages: getSecondSourceProcessMessages(nodeRegistrationTwoRaw.processMessages, outputTopic),
       };
       allNodeRegistrations.push(nodeRegistrationTwo);
     }
@@ -395,13 +303,17 @@ export default class UserNodePlayer implements Player {
     );
 
     // Filter out nodes with compilation errors
-    const nodeRegistrations: Array<NodeRegistration> = flatten(allNodeRegistrations).filter(({ nodeData, nodeId }) => {
-      const hasError = hasTransformerErrors(nodeData);
-      if (nodeData.diagnostics.length > 0) {
-        this._setUserNodeDiagnostics(nodeId, nodeData.diagnostics);
+    const nodeRegistrations: Array<NodeRegistration> = flatten(allNodeRegistrations).filter(
+      ({ nodeData, nodeId }: { nodeData: NodeData, nodeId: string }) => {
+        const hasError = hasTransformerErrors(nodeData);
+        const { diagnostics, outputTopic, inputTopics } = nodeData;
+
+        if (diagnostics.length > 0) {
+          this._setCompiledUserNodeData(nodeId, { diagnostics, metadata: { outputTopic, inputTopics } });
+        }
+        return !hasError;
       }
-      return !hasError;
-    });
+    );
 
     // Create diagnostic errors if more than one node outputs to the same topic
     const nodesByOutputTopic = groupBy(nodeRegistrations, ({ output }) => output.name);
@@ -410,19 +322,26 @@ export default class UserNodePlayer implements Player {
       (nodeReg) => nodeReg === nodesByOutputTopic[nodeReg.output.name][0]
     );
     duplicateNodeRegistrations.forEach(({ nodeId, nodeData }) => {
-      this._setUserNodeDiagnostics(nodeId, [
-        ...nodeData.diagnostics,
-        {
-          severity: DiagnosticSeverity.Error,
-          message: `Output "${nodeData.outputTopic}" must be unique`,
-          source: Sources.OutputTopicChecker,
-          code: ErrorCodes.OutputTopicChecker.NOT_UNIQUE,
-        },
-      ]);
+      const { diagnostics, outputTopic, inputTopics } = nodeData;
+      this._setCompiledUserNodeData(nodeId, {
+        metadata: { outputTopic, inputTopics },
+        diagnostics: [
+          ...diagnostics,
+          {
+            severity: DiagnosticSeverity.Error,
+            message: `Output "${nodeData.outputTopic}" must be unique`,
+            source: Sources.OutputTopicChecker,
+            code: ErrorCodes.OutputTopicChecker.NOT_UNIQUE,
+          },
+        ],
+      });
     });
 
     this._nodeRegistrations = validNodeRegistrations;
-    this._nodeRegistrations.forEach(({ nodeId }) => this._setUserNodeDiagnostics(nodeId, []));
+    this._nodeRegistrations.forEach(({ nodeId, nodeData }) => {
+      const { outputTopic, inputTopics } = nodeData;
+      this._setCompiledUserNodeData(nodeId, { diagnostics: [], metadata: { outputTopic, inputTopics } });
+    });
 
     this._pendingResetWorkers = null;
     pending.resolve();

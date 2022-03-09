@@ -269,14 +269,14 @@ export function MessagePipelineProvider({ children, player, globalVariables = {}
 
       // If the globalVariables have already changed again while
       // we waited for the frame to render, skip the update.
-      if (!skipUpdate && currentPlayer.current) {
-        currentPlayer.current.setGlobalVariables(globalVariables);
+      if (!skipUpdate && player) {
+        player.setGlobalVariables(globalVariables);
       }
     })();
     return () => {
       skipUpdate = true;
     };
-  }, [globalVariables]);
+  }, [player, globalVariables]);
 
   return (
     <Context.Provider

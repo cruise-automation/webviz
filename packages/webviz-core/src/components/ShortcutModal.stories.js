@@ -11,4 +11,4 @@ import React from "react";
 
 import ShortcutsModal from "./ShortcutsModal";
 
-storiesOf("<ShortcutsModal>", module).add("standard", () => <ShortcutsModal history={{}} />);
+storiesOf("<ShortcutsModal>", module).add("standard", () => <ShortcutsModal />);

@@ -10,16 +10,16 @@ import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 export const fixture = {
   topics: [
-    { name: "/msgs/big_topic", datatype: "msgs/big_topic" },
-    { name: "/foo", datatype: "std_msgs/String" },
-    { name: `${$WEBVIZ_SOURCE_2}/foo`, datatype: "std_msgs/String" },
-    { name: "/baz/num", datatype: "baz/num" },
-    { name: "/baz/text", datatype: "baz/text" },
-    { name: "/baz/array", datatype: "baz/array" },
-    { name: "/baz/array/obj", datatype: "baz/array/obj" },
-    { name: "/geometry/types", datatype: "geometry/types" },
-    { name: "/NaN", datatype: "baz/num" },
-    { name: "/webviz_source_2/changed_datatype", datatype: "std_msgs/String" },
+    { name: "/msgs/big_topic", datatypeName: "msgs/big_topic", datatypeId: "msgs/big_topic" },
+    { name: "/foo", datatypeName: "std_msgs/String", datatypeId: "std_msgs/String" },
+    { name: `${$WEBVIZ_SOURCE_2}/foo`, datatypeName: "std_msgs/String", datatypeId: "std_msgs/String" },
+    { name: "/baz/num", datatypeName: "baz/num", datatypeId: "baz/num" },
+    { name: "/baz/text", datatypeName: "baz/text", datatypeId: "baz/text" },
+    { name: "/baz/array", datatypeName: "baz/array", datatypeId: "baz/array" },
+    { name: "/baz/array/obj", datatypeName: "baz/array/obj", datatypeId: "baz/array/obj" },
+    { name: "/geometry/types", datatypeName: "geometry/types", datatypeId: "geometry/types" },
+    { name: "/NaN", datatypeName: "baz/num", datatypeId: "baz/num" },
+    { name: "/webviz_source_2/changed_datatype", datatypeName: "std_msgs/String", datatypeId: "std_msgs/String" },
   ],
   frame: {
     "/msgs/big_topic": [
@@ -144,35 +144,42 @@ export const fixture = {
     ],
   },
   datatypes: {
-    "baz/num": { fields: [{ name: "value", type: "float64" }] },
+    "baz/num": { name: "baz/num", fields: [{ name: "value", type: "float64" }] },
     "baz/text": {
+      name: "baz/text",
       fields: [
         { name: "value", type: "string" },
         { name: "value_long", type: "string" },
         { name: "value_with_newlines", type: "string" },
       ],
     },
-    "baz/array": { fields: [{ name: "value", type: "bool", isArray: true }] },
+    "baz/array": { name: "baz/array", fields: [{ name: "value", type: "bool", isArray: true }] },
     "baz/array/obj": {
+      name: "baz/array/obj",
       fields: [{ name: "value", type: "baz/array/ace", isArray: true, isComplex: true }],
     },
     "baz/array/ace": {
+      name: "baz/array/ace",
       fields: [{ name: "a", type: "string" }, { name: "c", type: "string" }, { name: "e", type: "string" }],
     },
     "geometry/types": {
+      name: "geometry/types",
       fields: [
         { name: "point2d", type: "geometry/types/Point2", isComplex: true },
         { name: "point3d", type: "geometry/types/Point3", isComplex: true },
       ],
     },
     "geometry/types/Point2": {
+      name: "geometry/types/Point2",
       fields: [{ name: "x", type: "float64" }, { name: "y", type: "float64" }],
     },
     "geometry/types/Point3": {
+      name: "geometry/types/Point3",
       fields: [{ name: "x", type: "float64" }, { name: "y", type: "float64" }, { name: "z", type: "float64" }],
     },
-    "std_msgs/String": { fields: [{ name: "value", type: "string" }] },
+    "std_msgs/String": { name: "std_msgs/String", fields: [{ name: "value", type: "string" }] },
     "msgs/big_topic": {
+      name: "msgs/big_topic",
       fields: [
         { name: "LotsOfStuff", type: "msgs/LotsOfStuff", isComplex: true },
         { name: "timestamp_example_1", type: "time" },
@@ -186,6 +193,7 @@ export const fixture = {
       ],
     },
     "msgs/LotsOfStuff": {
+      name: "msgs/LotsOfStuff",
       fields: [
         { name: "SomeBoolean", type: "bool" },
         { name: "SomeInteger", type: "float64" },
@@ -195,27 +203,41 @@ export const fixture = {
       ],
     },
     "msgs/has_id_1": {
+      name: "msgs/has_id_1",
       fields: [{ name: "someId", type: "int32" }, { name: "additional_data", type: "int32" }],
     },
-    "msgs/has_id_2": { fields: [{ name: "some_id", type: "int32" }] },
+    "msgs/has_id_2": {
+      name: "msgs/has_id_2",
+      fields: [{ name: "some_id", type: "int32" }],
+    },
   },
 };
+
+const ENUM_FIELDS = [
+  { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
+  { type: "uint8", name: "OFF", isConstant: true, value: 1 },
+  { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
+  { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
+];
 
 // separate fixture so that we only need to define datatypes for small subset of types
 export const enumFixture = {
   datatypes: {
     "baz/enum": {
-      fields: [
-        { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
-        { type: "uint8", name: "OFF", isConstant: true, value: 1 },
-        { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
-        { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
-        { type: "uint8", name: "value", isArray: false },
-      ],
+      name: "baz/enum",
+      fields: [...ENUM_FIELDS, { type: "uint8", name: "value", isArray: false }],
     },
-    "baz/EnumArray": { fields: [{ type: "baz/enum", name: "arr", isArray: true }] },
+    "baz/EnumObjectArray": { name: "baz/EnumObjectArray", fields: [{ type: "baz/enum", name: "arr", isArray: true }] },
+    "baz/EnumArray": {
+      name: "baz/EnumArray",
+      fields: [...ENUM_FIELDS, { type: "uint8", name: "value", isArray: true }],
+    },
   },
-  topics: [{ name: "/baz/enum", datatype: "baz/enum" }, { name: "/baz/enum_array", datatype: "baz/EnumArray" }],
+  topics: [
+    { name: "/baz/enum", datatypeName: "baz/enum", datatypeId: "baz/enum" },
+    { name: "/baz/enum_object_array", datatypeName: "baz/EnumObjectArray", datatypeId: "baz/EnumObjectArray" },
+    { name: "/baz/enum_array", datatypeName: "baz/EnumArray", datatypeId: "baz/EnumArray" },
+  ],
   frame: {
     "/baz/enum": [
       {
@@ -226,12 +248,21 @@ export const enumFixture = {
         },
       },
     ],
+    "/baz/enum_object_array": [
+      {
+        topic: "/baz/enum_object_array",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          arr: [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }],
+        },
+      },
+    ],
     "/baz/enum_array": [
       {
         topic: "/baz/enum_array",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
-          arr: [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }],
+          value: [2, 2, 3],
         },
       },
     ],
@@ -250,6 +281,7 @@ const exampleMessage = {
 export const enumAdvancedFixture = {
   datatypes: {
     "baz/enum_advanced": {
+      name: "baz/enum_advanced",
       fields: [
         { type: "uint32", name: "OFF", isConstant: true, value: 0 },
         { type: "uint32", name: "ON", isConstant: true, value: 1 },
@@ -264,16 +296,18 @@ export const enumAdvancedFixture = {
       ],
     },
     "baz/enum_advanced_array": {
+      name: "baz/enum_advanced_array",
       fields: [{ type: "baz/enum_advanced", name: "value", isArray: true, isComplex: true }],
     },
     "baz/animals": {
+      name: "baz/animals",
       fields: [
         { type: "uint32", name: "CAT", isConstant: true, value: 10000 },
         { type: "uint32", name: "DOG", isConstant: true, value: 10001 },
       ],
     },
   },
-  topics: [{ name: "/baz/enum_advanced", datatype: "baz/enum_advanced" }],
+  topics: [{ name: "/baz/enum_advanced", datatypeName: "baz/enum_advanced", datatypeId: "baz/enum_advanced" }],
   frame: {
     "/baz/enum_advanced": [
       {
@@ -288,10 +322,11 @@ export const enumAdvancedFixture = {
 export const withMissingData = {
   datatypes: {
     "baz/missing_data": {
+      name: "baz/missing_data",
       fields: [{ type: "uint8", name: "value", isArray: false }],
     },
   },
-  topics: [{ name: "/baz/missing_data", datatype: "baz/missing_data" }],
+  topics: [{ name: "/baz/missing_data", datatypeName: "baz/missing_data", datatypeId: "baz/missing_data" }],
   frame: {
     "/baz/missing_data": [
       {
@@ -308,8 +343,8 @@ export const withMissingData = {
 export const topicsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [
-    { name: "/baz/enum_advanced", datatype: "baz/enum_advanced" },
-    { name: "/another/baz/enum_advanced", datatype: "baz/enum_advanced" },
+    { name: "/baz/enum_advanced", datatypeName: "baz/enum_advanced", datatypeId: "baz/enum_advanced" },
+    { name: "/another/baz/enum_advanced", datatypeName: "baz/enum_advanced", datatypeId: "baz/enum_advanced" },
   ],
   frame: {
     "/baz/enum_advanced": [
@@ -338,8 +373,16 @@ export const topicsToDiffFixture = {
 export const topicsWithIdsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [
-    { name: "/baz/enum_advanced_array", datatype: "baz/enum_advanced_array" },
-    { name: "/another/baz/enum_advanced_array", datatype: "baz/enum_advanced_array" },
+    {
+      name: "/baz/enum_advanced_array",
+      datatypeName: "baz/enum_advanced_array",
+      datatypeId: "baz/enum_advanced_array",
+    },
+    {
+      name: "/another/baz/enum_advanced_array",
+      datatypeName: "baz/enum_advanced_array",
+      datatypeId: "baz/enum_advanced_array",
+    },
   ],
   frame: {
     "/baz/enum_advanced_array": [
@@ -370,8 +413,19 @@ export const topicsWithIdsToDiffFixture = {
 };
 
 export const multipleNumberMessagesFixture = {
-  datatypes: { multiple_number_messages: { fields: [{ type: "uint32", name: "value", isArray: false }] } },
-  topics: [{ name: "/multiple_number_messages", datatype: "multiple_number_messages" }],
+  datatypes: {
+    multiple_number_messages: {
+      name: "multiple_number_messages",
+      fields: [{ type: "uint32", name: "value", isArray: false }],
+    },
+  },
+  topics: [
+    {
+      name: "/multiple_number_messages",
+      datatypeName: "multiple_number_messages",
+      datatypeId: "multiple_number_messages",
+    },
+  ],
   frame: {
     "/baz/enum": [
       {

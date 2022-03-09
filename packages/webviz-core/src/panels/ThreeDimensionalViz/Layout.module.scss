@@ -21,7 +21,7 @@ $spacing: 15px;
 
 .topicSettingsEditor {
   @extend %floating-box;
-  background-color: $dark;
+  background-color: $DARK;
   width: 360px;
   padding: 20px;
 
@@ -83,7 +83,7 @@ $spacing: 15px;
   margin-top: 0.5em;
   font-size: 0.9em;
   font-style: italic;
-  color: $text-muted;
+  color: $textMuted;
 
   // don't affect flex parent width
   // https://stackoverflow.com/a/25045641/23649

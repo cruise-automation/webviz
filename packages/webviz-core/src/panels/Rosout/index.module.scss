@@ -22,7 +22,7 @@ $option-font-size: $text-size;
 }
 
 .filtersBar {
-  background-color: $dark3;
+  background-color: $DARK3;
   display: flex;
   flex-wrap: wrap;
   flex: 1 1 auto;
@@ -49,81 +49,4 @@ $option-font-size: $text-size;
   border-radius: 4px;
   color: rgba(255, 255, 255, 0.5);
   padding: 0px 8px;
-}
-
-:global {
-  div.Select-menu-outer {
-    @extend %floating-box;
-  }
-  div.Select-menu {
-    padding-bottom: 5em !important; // TODO(jacob): not working when there are enough items to scroll?
-  }
-  .Select-control {
-    font-size: $option-font-size;
-    .Select-clear {
-      line-height: $option-font-size * 2;
-      font-size: $option-font-size * 1.5;
-    }
-  }
-  $select-item-font-size: $option-font-size;
-  $select-input-bg: $dark3;
-  $select-input-border-color: transparent;
-  $select-input-border-focus: transparent;
-  $select-input-height: $option-height * 1px;
-  $select-input-internal-height: 26px;
-  $select-text-color: $text-control;
-  $select-input-placeholder: transparentize($text-control, 0.5);
-  $select-option-bg: red;
-  $select-clear-color: $text-control;
-  $select-loading-color: $text-control;
-  $select-arrow-color: $text-control;
-
-  @import "~react-select/scss/default";
-  @import "~react-virtualized/styles.css";
-
-  .VirtualizedSelectOption {
-    @extend %menu-item;
-  }
-  .VirtualizedSelectSelectedOption {
-    @extend %menu-item-active;
-  }
-  .VirtualizedSelectFocusedOption {
-    @extend %menu-item-hover;
-    // TODO(jacob): doesn't override react-virtualized-select styles for some reason
-    background-color: $dark4 !important;
-  }
-  .Select {
-    width: 100%;
-  }
-  .Select-input > input {
-    color: $select-text-color;
-  }
-  .Select-multi-value-wrapper {
-    display: table-cell;
-    position: relative;
-  }
-  .Select--multi .Select-multi-value-wrapper {
-    width: 100%;
-  }
-  .Select--multi .Select-arrow {
-    opacity: 0.5;
-  }
-  .Select--multi .Select-value {
-    color: $text-bright;
-    background-color: $dark5;
-    border: 1px solid $background-control;
-    margin: 2px;
-  }
-  .Select--multi .Select-value-icon {
-    display: inline-flex;
-    align-items: center;
-    padding: 0 0 0 4px;
-    opacity: 0.5;
-    border: 0;
-    &:hover {
-      color: inherit;
-      background-color: transparent;
-      opacity: 1;
-    }
-  }
 }

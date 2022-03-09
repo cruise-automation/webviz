@@ -104,6 +104,23 @@ function useSubscriptions({
 
 const NO_MESSAGES = Object.freeze([]);
 
+export function useSetSubscriptions(id: string, subscriptions: SubscribePayload[]) {
+  const { setSubscriptions, requestBackfill } = useMessagePipeline(
+    useCallback(
+      (messagePipeline) => ({
+        setSubscriptions: messagePipeline.setSubscriptions,
+        requestBackfill: messagePipeline.requestBackfill,
+      }),
+      []
+    )
+  );
+  useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
+  useCleanup(() => setSubscriptions(id, []));
+
+  // Whenever `subscriptions` change, request a backfill, since we'd like to show fresh data.
+  useEffect(() => requestBackfill(), [requestBackfill, subscriptions]);
+}
+
 type Props<T> = {|
   topics: $ReadOnlyArray<RequestedTopic>,
 
@@ -167,21 +184,14 @@ export function useMessageReducer<T>(props: Props<T>): T {
     preloadingFallback: !!props.preloadingFallback,
     format,
   });
-  const { setSubscriptions, requestBackfill, lastSeekTime } = useMessagePipeline(
+  const lastSeekTime = useMessagePipeline(
     useCallback(
-      (messagePipeline) => ({
-        setSubscriptions: messagePipeline.setSubscriptions,
-        requestBackfill: messagePipeline.requestBackfill,
-        lastSeekTime: messagePipeline.playerState.activeData ? messagePipeline.playerState.activeData.lastSeekTime : 0,
-      }),
+      (messagePipeline) =>
+        messagePipeline.playerState.activeData ? messagePipeline.playerState.activeData.lastSeekTime : 0,
       []
     )
   );
-  useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
-  useCleanup(() => setSubscriptions(id, []));
-
-  // Whenever `subscriptions` change, request a backfill, since we'd like to show fresh data.
-  useEffect(() => requestBackfill(), [requestBackfill, subscriptions]);
+  useSetSubscriptions(id, subscriptions);
 
   // Keep a reference to the last messages we processed to ensure we never process them more than once.
   // If the topics we care about change, the player should send us new messages soon anyway (via backfill if paused).

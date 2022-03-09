@@ -18,6 +18,7 @@ import type {
 } from "webviz-core/src/dataProviders/types";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
+import { getZaplibContext } from "webviz-core/src/util/ZaplibContext";
 
 // Looks a bit like a regular `DataProvider`, but is not intended to be used directly in a
 // DataProviderDescriptor tree, but rather in another DataProvider where we instantiate an Rpc, e.g.
@@ -39,7 +40,12 @@ export default class RpcDataProvider implements DataProvider {
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     if (extensionPoint) {
-      const { progressCallback, reportMetadataCallback, notifyPlayerManager } = extensionPoint;
+      const {
+        progressCallback,
+        reportMetadataCallback,
+        notifyPlayerManager,
+        nodePlaygroundActions: { addUserNodeLogs, setCompiledNodeData, setUserNodeRosLib },
+      } = extensionPoint;
 
       this._rpc.receive("extensionPointCallback", ({ type, data }) => {
         switch (type) {
@@ -49,15 +55,29 @@ export default class RpcDataProvider implements DataProvider {
           case "reportMetadataCallback":
             reportMetadataCallback(data);
             break;
-          case "notifyPlayerManager": {
+          case "notifyPlayerManager":
             return notifyPlayerManager(data);
-          }
+          case "addUserNodeLogs":
+            addUserNodeLogs(data);
+            break;
+          case "setCompiledNodeData":
+            setCompiledNodeData(data);
+            break;
+          case "setUserNodeRosLib":
+            setUserNodeRosLib(data);
+            break;
           default:
             throw new Error(`Unsupported extension point type in RpcDataProvider: ${type}`);
         }
       });
     }
-    return this._rpc.send("initialize", { childDescriptor: this._childDescriptor });
+    const zaplibContext = getZaplibContext();
+    const zapWorkerPort = zaplibContext ? zaplibContext.newWorkerPort() : undefined;
+    return this._rpc.send(
+      "initialize",
+      { childDescriptor: this._childDescriptor, zapWorkerPort },
+      zapWorkerPort ? [zapWorkerPort] : undefined
+    );
   }
 
   async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
@@ -74,5 +94,12 @@ export default class RpcDataProvider implements DataProvider {
 
   close(): Promise<void> {
     return this._rpc.send("close");
+  }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
   }
 }

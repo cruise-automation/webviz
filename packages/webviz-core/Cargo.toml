@@ -1,0 +1,14 @@
+[package]
+name = "webviz-core"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+# Build zaplib from latest commit, but keep it in sync with package.json
+# https://github.com/Zaplib/zaplib/commit/5eaf034
+zaplib = { git = "https://github.com/Zaplib/zaplib", rev = "5eaf034" }
+# Use the below if you want to use a local version
+# zaplib = { path="../../zaplib/zaplib/main" }
+# Disable safe decoding (which is enabled by default as a feature), which is twice as fast.
+lz4_flex = { version = "0.8.2", default-features = false, features=["frame"] }

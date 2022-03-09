@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
+import { uniq } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
@@ -21,8 +22,9 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import Publisher from "webviz-core/src/components/Publisher";
 import { PlayerCapabilities, type Topic } from "webviz-core/src/players/types";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 
 type Config = {|
   topicName: string,
@@ -67,7 +69,7 @@ const SErrorText = styled.div`
   display: flex;
   align-items: center;
   padding: 4px;
-  color: ${colors.red};
+  color: ${colors.RED2};
 `;
 
 const SSpan = styled.span`
@@ -134,20 +136,27 @@ class Publish extends React.PureComponent<Props, PanelState> {
     }
 
     if (props.datatypes !== state.cachedProps.datatypes) {
-      newState.datatypeNames = Object.keys(props.datatypes).sort();
+      newState.datatypeNames = uniq(
+        objectValues(props.datatypes)
+          .map(({ name }) => name)
+          .sort()
+      );
       changed = true;
     }
 
     // when the selected datatype changes, replace the textarea contents with a sample message of the correct shape
     // Make sure not to build a sample message on first load, though -- we don't want to overwrite
     // the user's message just because state.cachedProps.config hasn't been initialized.
+    const selectedDatatypeId = Object.keys(props.datatypes).find(
+      (datatypeId) => props.datatypes[datatypeId].name === props.config.datatype
+    );
     if (
       props.config.datatype &&
       state.cachedProps?.config?.datatype != null &&
       props.config.datatype !== state.cachedProps?.config?.datatype &&
-      props.datatypes[props.config.datatype] != null
+      selectedDatatypeId != null
     ) {
-      const sampleMessage = buildSampleMessage(props.datatypes, props.config.datatype);
+      const sampleMessage = buildSampleMessage(props.datatypes, selectedDatatypeId);
       if (sampleMessage) {
         const stringifiedSampleMessage = JSON.stringify(sampleMessage, null, 2);
         props.saveConfig({ value: stringifiedSampleMessage });
@@ -164,7 +173,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
 
   // when a known topic is selected, also fill in its datatype
   _onSelectTopic = (topicName: string, topic: Topic, autocomplete: Autocomplete) => {
-    this.props.saveConfig({ topicName, datatype: topic.datatype });
+    this.props.saveConfig({ topicName, datatype: topic.datatypeName });
     autocomplete.blur();
   };
 
@@ -247,7 +256,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
     const buttonRowStyle = advancedView ? { flex: "0 0 auto" } : { flex: "0 0 auto", justifyContent: "center" };
 
     return (
-      <Flex col style={{ height: "100%", padding: "12px" }}>
+      <Flex grow col style={{ height: "100%", padding: "12px" }}>
         {topicName && datatype && (
           <Publisher ref={this._publisher} name="Publish" topic={topicName} datatype={datatype} />
         )}
@@ -284,7 +293,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
             <STextArea placeholder="Enter message content as JSON" value={value || ""} onChange={this._onChange} />
           </STextAreaContainer>
         )}
-        <Flex row style={buttonRowStyle}>
+        <Flex grow row style={buttonRowStyle}>
           {error && <SErrorText>{error}</SErrorText>}
           <Button
             style={canPublish ? { backgroundColor: buttonColor } : {}}

@@ -13,7 +13,7 @@ import * as PanelAPI from ".";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 
 describe("useDataSourceInfo", () => {
-  const topics = [{ name: "/foo", datatype: "Foo" }];
+  const topics = [{ name: "/foo", datatypeName: "Foo", datatypeId: "Foo" }];
   const messages = [
     {
       topic: "/foo",
@@ -27,7 +27,7 @@ describe("useDataSourceInfo", () => {
     },
   ];
   const datatypes = {
-    Foo: { fields: [] },
+    Foo: { name: "Foo", fields: [] },
   };
 
   // Create a helper component that exposes the results of the hook in a Jest mock function
@@ -54,8 +54,8 @@ describe("useDataSourceInfo", () => {
     expect(Test.renderFn.mock.calls).toEqual([
       [
         {
-          topics: [{ name: "/foo", datatype: "Foo" }],
-          datatypes: { Foo: { fields: [] } },
+          topics: [{ name: "/foo", datatypeName: "Foo", datatypeId: "Foo" }],
+          datatypes: { Foo: { name: "Foo", fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           playerId: "1",
@@ -80,8 +80,8 @@ describe("useDataSourceInfo", () => {
     expect(Test.renderFn.mock.calls).toEqual([
       [
         {
-          topics: [{ name: "/foo", datatype: "Foo" }],
-          datatypes: { Foo: { fields: [] } },
+          topics: [{ name: "/foo", datatypeName: "Foo", datatypeId: "Foo" }],
+          datatypes: { Foo: { name: "Foo", fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           playerId: "1",
@@ -93,12 +93,15 @@ describe("useDataSourceInfo", () => {
     root.setProps({ messages: [messages[1]] });
     expect(Test.renderFn).toHaveBeenCalledTimes(0);
 
-    root.setProps({ topics: [...topics, { name: "/bar", datatype: "Bar" }] });
+    root.setProps({ topics: [...topics, { name: "/bar", datatypeName: "Bar", datatypeId: "Bar" }] });
     expect(Test.renderFn.mock.calls).toEqual([
       [
         {
-          topics: [{ name: "/bar", datatype: "Bar" }, { name: "/foo", datatype: "Foo" }],
-          datatypes: { Foo: { fields: [] } },
+          topics: [
+            { name: "/bar", datatypeName: "Bar", datatypeId: "Bar" },
+            { name: "/foo", datatypeName: "Foo", datatypeId: "Foo" },
+          ],
+          datatypes: { Foo: { name: "Foo", fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           playerId: "1",

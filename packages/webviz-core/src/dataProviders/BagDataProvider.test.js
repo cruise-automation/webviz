@@ -10,12 +10,18 @@ import { TimeUtil } from "rosbag";
 
 import delay from "webviz-core/shared/delay";
 import BagDataProvider, { statsAreAdjacent } from "webviz-core/src/dataProviders/BagDataProvider";
+import invariant from "webviz-core/src/util/invariant";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
   notifyPlayerManager: async () => {},
+  nodePlaygroundActions: {
+    setCompiledNodeData: jest.fn(),
+    addUserNodeLogs: jest.fn(),
+    setUserNodeRosLib: jest.fn(),
+  },
 };
 
 describe("BagDataProvider", () => {
@@ -28,15 +34,35 @@ describe("BagDataProvider", () => {
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
     expect(result.topics).toContainOnly([
-      { datatype: "rosgraph_msgs/Log", name: "/rosout", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle1/color_sensor", numMessages: 1351 },
-      { datatype: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle2/color_sensor", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
-      { datatype: "tf/tfMessage", name: "/tf", numMessages: 1344 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
+      { datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log", name: "/rosout", numMessages: 1 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle1/color_sensor",
+        numMessages: 1351,
+      },
+      { datatypeName: "tf2_msgs/TFMessage", datatypeId: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle2/color_sensor",
+        numMessages: 1344,
+      },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
+      { datatypeName: "tf/tfMessage", datatypeId: "tf/tfMessage", name: "/tf", numMessages: 1344 },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle2/cmd_vel",
+        numMessages: 208,
+      },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle1/cmd_vel",
+        numMessages: 357,
+      },
     ]);
     const { messageDefinitions } = result;
     if (messageDefinitions.type !== "raw") {
@@ -64,15 +90,35 @@ describe("BagDataProvider", () => {
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
     expect(result.topics).toContainOnly([
-      { datatype: "rosgraph_msgs/Log", name: "/rosout", numMessages: 10 },
-      { datatype: "turtlesim/Color", name: "/turtle1/color_sensor", numMessages: 1351 },
-      { datatype: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle2/color_sensor", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
-      { datatype: "tf/tfMessage", name: "/tf", numMessages: 2688 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
+      { datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log", name: "/rosout", numMessages: 10 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle1/color_sensor",
+        numMessages: 1351,
+      },
+      { datatypeName: "tf2_msgs/TFMessage", datatypeId: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle2/color_sensor",
+        numMessages: 1344,
+      },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
+      { datatypeName: "tf/tfMessage", datatypeId: "tf/tfMessage", name: "/tf", numMessages: 2688 },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle2/cmd_vel",
+        numMessages: 208,
+      },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle1/cmd_vel",
+        numMessages: 357,
+      },
     ]);
     const { messageDefinitions } = result;
     if (messageDefinitions.type !== "raw") {
@@ -91,21 +137,40 @@ describe("BagDataProvider", () => {
     ]);
   });
 
-  it("gets messages", async () => {
-    const provider = new BagDataProvider(
-      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
-      []
-    );
-    await provider.initialize(dummyExtensionPoint);
-    const start = { sec: 1396293887, nsec: 844783943 };
-    const end = { sec: 1396293888, nsec: 60000000 };
-    const messages = await provider.getMessages(start, end, { rosBinaryMessages: ["/tf"] });
-    expect(messages.bobjects).toBe(undefined);
-    expect(messages.parsedMessages).toBe(undefined);
-    expect(messages.rosBinaryMessages).toEqual([
-      { topic: "/tf", receiveTime: { sec: 1396293888, nsec: 56251251 }, message: expect.any(ArrayBuffer) },
-      { topic: "/tf", receiveTime: { nsec: 56262848, sec: 1396293888 }, message: expect.any(ArrayBuffer) },
-    ]);
+  describe(".getMessages", () => {
+    it("gets messages", async () => {
+      const provider = new BagDataProvider(
+        { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
+        []
+      );
+      await provider.initialize(dummyExtensionPoint);
+      const start = { sec: 1396293887, nsec: 844783943 };
+      const end = { sec: 1396293888, nsec: 60000000 };
+      const messages = await provider.getMessages(start, end, { rosBinaryMessages: ["/tf"] });
+      expect(messages.bobjects).toBe(undefined);
+      expect(messages.parsedMessages).toBe(undefined);
+      expect(messages.rosBinaryMessages).toEqual([
+        { topic: "/tf", receiveTime: { sec: 1396293888, nsec: 56251251 }, message: expect.any(ArrayBuffer) },
+        { topic: "/tf", receiveTime: { nsec: 56262848, sec: 1396293888 }, message: expect.any(ArrayBuffer) },
+      ]);
+    });
+
+    it("decompresses LZ4 compressed bags", async () => {
+      const provider = new BagDataProvider(
+        { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.lz4.bag` } },
+        []
+      );
+      await provider.initialize(dummyExtensionPoint);
+      const start = { sec: 1396293887, nsec: 844783943 };
+      const end = { sec: 1396293888, nsec: 60000000 };
+      const messages = await provider.getMessages(start, end, { rosBinaryMessages: ["/tf"] });
+      expect(messages.bobjects).toBe(undefined);
+      expect(messages.parsedMessages).toBe(undefined);
+      expect(messages.rosBinaryMessages).toEqual([
+        { topic: "/tf", receiveTime: { sec: 1396293888, nsec: 56251251 }, message: expect.any(ArrayBuffer) },
+        { topic: "/tf", receiveTime: { nsec: 56262848, sec: 1396293888 }, message: expect.any(ArrayBuffer) },
+      ]);
+    });
   });
 
   it("sorts shuffled messages (and reports an error)", async () => {
@@ -121,9 +186,7 @@ describe("BagDataProvider", () => {
     });
     expect(bobjects).toBe(undefined);
     expect(parsedMessages).toBe(undefined);
-    if (rosBinaryMessages == null) {
-      throw new Error("Satisfy flow");
-    }
+    invariant(rosBinaryMessages != null, "requested binary messages");
     const timestamps = rosBinaryMessages.map(({ receiveTime }) => receiveTime);
     const sortedTimestamps = [...timestamps];
     sortedTimestamps.sort(TimeUtil.compare);
@@ -168,6 +231,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 10,
       },
     };
     const b = {
@@ -181,6 +245,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 15,
       },
     };
     expect(statsAreAdjacent(a, b)).toBe(false);
@@ -198,6 +263,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 10,
       },
     };
     const b = {
@@ -211,6 +277,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 15,
       },
     };
     expect(statsAreAdjacent(a, b)).toBe(false);
@@ -228,6 +295,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 10,
       },
     };
     const b = {
@@ -241,6 +309,7 @@ describe("statsAreAdjacent", () => {
         receivedRangeDuration: { sec: 0, nsec: 100 },
         requestedRangeDuration: { sec: 0, nsec: 100 },
         totalTransferTime: { sec: 0, nsec: 500 },
+        totalDecompressTimeMs: 15,
       },
     };
     expect(statsAreAdjacent(a, b)).toBe(true);

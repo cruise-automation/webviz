@@ -12,8 +12,11 @@ import { GLTFScene, parseGLB, type Pose, type Scale, type CommonCommandProps } f
 import carModelURL from "webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb";
 import { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 
+// exported for stories
+export const fetchCarModel = async () => fetch(carModelURL);
+
 async function loadCarModel() {
-  const response = await fetch(carModelURL);
+  const response = await fetchCarModel();
   if (!response.ok) {
     throw new Error(`unable to load car model: ${response.status}`);
   }

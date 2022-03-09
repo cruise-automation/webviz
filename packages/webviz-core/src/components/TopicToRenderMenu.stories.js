@@ -14,15 +14,18 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 const topics = [
   {
     name: "/foo",
-    datatype: "abc_msgs/foo",
+    datatypeName: "abc_msgs/foo",
+    datatypeId: "abc_msgs/foo",
   },
   {
     name: "/webviz_source_2/foo",
-    datatype: "abc_msgs/foo",
+    datatypeName: "abc_msgs/foo",
+    datatypeId: "abc_msgs/foo",
   },
   {
     name: "/webviz_source_2/foo",
-    datatype: "bad_datatype/abc_msgs/foo",
+    datatypeName: "bad_datatype/abc_msgs/foo",
+    datatypeId: "bad_datatype/abc_msgs/foo",
   },
 ];
 

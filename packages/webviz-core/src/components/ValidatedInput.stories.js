@@ -71,7 +71,7 @@ function Example({
 storiesOf("<ValidatedInput>", module)
   .add("default", () => {
     return (
-      <Flex>
+      <Flex grow>
         <Box>
           <ValidatedInput format={json} value={INPUT_OBJ} />
         </Box>
@@ -84,7 +84,7 @@ storiesOf("<ValidatedInput>", module)
   .add("with dataValidator (show validation error after mount)", () => {
     const invalidValue = { id: "not number", name: "foo" };
     return (
-      <Flex>
+      <Flex grow>
         <Box>
           <ValidatedInput format={json} value={invalidValue} dataValidator={myValidator} />
         </Box>
@@ -96,7 +96,7 @@ storiesOf("<ValidatedInput>", module)
   })
   .add("value change affects the input value", () => {
     return (
-      <Flex>
+      <Flex grow>
         <Example format={json} />
         <Example format={yaml} />
       </Flex>
@@ -105,21 +105,21 @@ storiesOf("<ValidatedInput>", module)
   .add("prop change does not override the input string if object values are deeply equal ", () => {
     // the input string does not change as `obj` and `changedObj` are deeply equal
     return (
-      <Flex>
+      <Flex grow>
         <Example obj={INPUT_OBJ} changedObj={{ name: "foo", id: 1 }} />
       </Flex>
     );
   })
   .add("scroll to bottom when input size grows", () => {
     return (
-      <Flex>
+      <Flex grow>
         <Example obj={INPUT_OBJ} changedObj={{ ...DEFAULT_CAMERA_STATE, distance: 100000000 }} />
       </Flex>
     );
   })
   .add("in editing mode, prop value change does not affect the input string", () => {
     return (
-      <Flex>
+      <Flex grow>
         <Example
           onMount={(input) => {
             // even though the prop object has changed, the input value is in sync with current editing value
@@ -136,7 +136,7 @@ storiesOf("<ValidatedInput>", module)
   .add("in editing mode, prop change does not cause the textarea to scroll to bottom", () => {
     const changedObj = { ...DEFAULT_CAMERA_STATE, distance: 100000000 };
     return (
-      <Flex>
+      <Flex grow>
         <Example
           obj={DEFAULT_CAMERA_STATE}
           onMount={(input) => {
@@ -152,7 +152,7 @@ storiesOf("<ValidatedInput>", module)
   })
   .add("upon blur, the validation error stays", () => {
     return (
-      <Flex>
+      <Flex grow>
         <Example
           obj={DEFAULT_CAMERA_STATE}
           onMount={(input) => {

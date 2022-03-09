@@ -9,6 +9,7 @@
 import { mockExtensionPoint } from "./mockExtensionPoint";
 import { getReportMetadataForChunk } from "./util";
 import delay from "webviz-core/shared/delay";
+import invariant from "webviz-core/src/util/invariant";
 import { toSec } from "webviz-core/src/util/time";
 
 describe("getReportMetadataForChunk", () => {
@@ -38,9 +39,7 @@ describe("getReportMetadataForChunk", () => {
     expect(stalls).toHaveLength(1);
     const stall = stalls[0];
     // Stall happened from 300ms until 500ms. First byte received at 200ms.
-    if (stall.type !== "data_provider_stall") {
-      throw new Error("Satisfy flow that stall is a DataProviderStall");
-    }
+    invariant(stall.type === "data_provider_stall", "stall is a stall");
     expect(stall.bytesReceivedBeforeStall).toEqual(300);
     expect(toSec(stall.requestTimeUntilStall)).toBeCloseTo(0.3, 1);
     expect(toSec(stall.stallDuration)).toBeCloseTo(0.2, 1);

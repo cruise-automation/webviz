@@ -57,18 +57,6 @@ export type Transform = {
   };
 };
 
-export type PointStyle =
-  | "circle"
-  | "cross"
-  | "crossRot"
-  | "dash"
-  | "line"
-  | "rect"
-  | "rectRounded"
-  | "rectRot"
-  | "star"
-  | "triangle";
-
 export type TwoDimensionalPlotLine = {
   order?: number;
   label: string;
@@ -78,9 +66,9 @@ export type TwoDimensionalPlotLine = {
   borderWidth?: number;
   pointBackgroundColor?: string;
   pointBorderColor?: string;
-  pointBorderWidth?: number;
+  pointBorderWidth?: string;
   pointRadius?: number;
-  pointStyle?: PointStyle;
+  pointStyle?: string;
   lineTension?: number;
   data: { x: number; y: number }[];
 };

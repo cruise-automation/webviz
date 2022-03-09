@@ -52,7 +52,7 @@ type Option = {
   value: number,
 };
 
-type Props = {
+type Props = {|
   chanelOptions: Option[],
   downloadTooltip: string,
   isPlaying: boolean,
@@ -67,7 +67,7 @@ type Props = {
   showAllChannels: boolean,
   speedSelectOptions: Option[],
   volume: number,
-};
+|};
 
 export default function AudioToolbar({
   chanelOptions,

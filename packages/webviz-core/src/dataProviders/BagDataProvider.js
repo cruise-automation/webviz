@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
+import { Buffer } from "buffer";
 import Bzip2 from "compressjs/lib/Bzip2";
 import { debounce, isEqual } from "lodash";
 import Bag, { open, Time, BagReader, TimeUtil } from "rosbag";
@@ -34,7 +34,7 @@ import { fromMillis, subtractTimes } from "webviz-core/src/util/time";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
 
-type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number |};
+type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number, useZaplibLZ4Decompress?: boolean |};
 
 const log = new Logger(__filename);
 
@@ -69,8 +69,12 @@ export const mergeStats = (a: TimedDataThroughput, b: TimedDataThroughput): Time
     receivedRangeDuration: TimeUtil.add(a.data.receivedRangeDuration, b.data.receivedRangeDuration),
     requestedRangeDuration: TimeUtil.add(a.data.requestedRangeDuration, b.data.requestedRangeDuration),
     totalTransferTime: TimeUtil.add(a.data.totalTransferTime, b.data.totalTransferTime),
+    totalDecompressTimeMs: a.data.totalDecompressTimeMs + b.data.totalDecompressTimeMs,
   },
 });
+
+let totalDecompressTimeMs = 0;
+let msg = 0;
 
 // A FileReader that "spies" on data callbacks. Used to log data consumed.
 class LogMetricsReader {
@@ -97,7 +101,7 @@ export default class BagDataProvider implements DataProvider {
   _options: Options;
   _bag: Bag;
   _lastPerformanceStatsToLog: ?TimedDataThroughput;
-  _extensionPoint: ?ExtensionPoint;
+  _extensionPoint: ExtensionPoint;
 
   constructor(options: Options, children: DataProviderDescriptor[]) {
     if (children.length > 0) {
@@ -205,7 +209,7 @@ export default class BagDataProvider implements DataProvider {
   }
 
   _logStats() {
-    if (this._extensionPoint == null || this._lastPerformanceStatsToLog == null) {
+    if (this._lastPerformanceStatsToLog == null) {
       return;
     }
     this._extensionPoint.reportMetadataCallback(this._lastPerformanceStatsToLog.data);
@@ -221,7 +225,7 @@ export default class BagDataProvider implements DataProvider {
       // reuse the connection.
       this._lastPerformanceStatsToLog = mergeStats(this._lastPerformanceStatsToLog, stats);
     } else {
-      // For the initial load, or after a seek, a fresh connectionwill be made for remote bags.
+      // For the initial load, or after a seek, a fresh connection will be made for remote bags.
       // Eagerly log any stats we know are "done".
       this._logStats();
       this._lastPerformanceStatsToLog = stats;
@@ -241,6 +245,11 @@ export default class BagDataProvider implements DataProvider {
       messages.push({
         topic,
         receiveTime: timestamp,
+        // TODO: This copies a portion of the buffer. We can probably gain some extra performance here by
+        // transferring the original buffer to the main thread or sharing the data using a SharedArrayBuffer.
+        // We especially copy in Zaplib contexts to avoid running over the 4GB WASM limit. We might want
+        // to do this later (e.g. after writing bobjects), or even not leave Wasm memory at all in some cases
+        // (e.g. only when close to crossing the 4GB limit).
         message: data.buffer.slice(data.byteOffset, data.byteOffset + data.length),
       });
       totalSizeOfMessages += data.length;
@@ -262,7 +271,30 @@ export default class BagDataProvider implements DataProvider {
         },
         lz4: (...args) => {
           try {
-            return decompress(...args);
+            const startTime = performance.now();
+
+            let result: any;
+            const { zaplib } = this._extensionPoint;
+            if (zaplib && this._options.useZaplibLZ4Decompress) {
+              const outputBuffers = zaplib.callRustSync("lz4_decompress", [
+                String(args[1]),
+                // TODO(Paras): Create read only buffers once https://github.com/Zaplib/zaplib/pull/127 lands.
+                zaplib.createReadOnlyBuffer(new Uint8Array(args[0].buffer, args[0].byteOffset, args[0].byteLength)),
+              ]);
+              // TODO(Paras): This is currently sliced to avoid issues between ZapBuffers and the Buffer library.
+              // It'll help performance in the future to remove this copy.
+              const uncompressedData = ((outputBuffers[0]: any): Uint8Array);
+              result = Buffer.from(uncompressedData);
+            } else {
+              result = decompress(...args);
+            }
+
+            const decompressTimeMs = performance.now() - startTime;
+            totalDecompressTimeMs += decompressTimeMs;
+            msg += 1;
+
+            console.log({ totalDecompressTimeMs, msg });
+            return result;
           } catch (error) {
             reportMalformedError("lz4 decompression", error);
             throw error;
@@ -291,10 +323,18 @@ export default class BagDataProvider implements DataProvider {
         receivedRangeDuration: duration,
         topics,
         totalTransferTime: subtractTimes(fromMillis(new Date().getTime()), connectionStart),
+        totalDecompressTimeMs,
       },
     });
     return { rosBinaryMessages: messages, parsedMessages: undefined, bobjects: undefined };
   }
 
   async close(): Promise<void> {}
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

@@ -40,7 +40,7 @@ import * as PanelAPI from "webviz-core/src/PanelAPI";
 import IconTextMenu from "webviz-core/src/panels/ImageView/IconTextMenu";
 import type { Message, TypedMessage } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { deepParse, maybeGetBobjectHeaderStamp } from "webviz-core/src/util/binaryObjects";
@@ -221,8 +221,8 @@ function ImageView(props: Props) {
 
   // Namespaces represent marker topics based on the camera topic prefix (e.g. "/camera_front_medium")
   const { allCameraNamespaces, imageTopicsByNamespace } = useMemo(() => {
-    const imageTopics = (topics ?? []).filter(({ datatype }) =>
-      ["sensor_msgs/Image", "sensor_msgs/CompressedImage"].includes(datatype)
+    const imageTopics = (topics ?? []).filter(({ datatypeName }) =>
+      ["sensor_msgs/Image", "sensor_msgs/CompressedImage"].includes(datatypeName)
     );
     const topicsByNamespace = groupTopics(imageTopics);
     return { imageTopicsByNamespace: topicsByNamespace, allCameraNamespaces: [...topicsByNamespace.keys()] };
@@ -366,7 +366,7 @@ function ImageView(props: Props) {
   const { iconMarkersToRender, nonIconMarkersToRender } = useMemo(() => {
     const combinedMarkers: Message[] = filterMap(enabledMarkerTopics, (topic) => parsedFrame?.[topic]);
     const [iconMarkers, nonIconMarkers] = partition(combinedMarkers, ({ topic }) => {
-      return topicsKeyByTopicName[topic].datatype === WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY;
+      return topicsKeyByTopicName[topic].datatypeName === WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY;
     });
     return { iconMarkersToRender: iconMarkers, nonIconMarkersToRender: nonIconMarkers };
   }, [enabledMarkerTopics, parsedFrame, topicsKeyByTopicName]);
@@ -544,7 +544,7 @@ function ImageView(props: Props) {
                 }
                 fade
                 medium>
-                <WavesIcon style={{ color: transformMarkers ? colors.orange : colors.textBright }} />
+                <WavesIcon style={{ color: transformMarkers ? colors.YELLOWL1 : colors.textBright }} />
               </Icon>
             </BottomBar>
           );
@@ -556,7 +556,7 @@ function ImageView(props: Props) {
   const showEmptyState = !imageMessage || (shouldSynchronize && !parsedFrame);
 
   return (
-    <Flex col clip>
+    <Flex grow col clip>
       {toolbar}
       {/* If rendered, EmptyState will hide the always-present ImageCanvas */}
       {showEmptyState &&

@@ -6,7 +6,6 @@
 
 // this is based on https://github.com/palantir/react-mosaic/blob/master/styles/blueprint-theme.less
 @import "~webviz-core/src/styles/colors.module.scss";
-$grey: #777;
 
 .mosaic {
   .mosaic-root {
@@ -45,17 +44,17 @@ $grey: #777;
     font-size: 12px;
     line-height: 30px;
     padding-left: 5px;
-    color: $grey;
+    color: $LIGHT1;
   }
 
   .mosaic-split {
     background: none;
     z-index: 99;
     .mosaic-split-line {
-      box-shadow: 0 0 0 1px $dark3;
+      box-shadow: 0 0 0 1px $DARK3;
     }
     &:hover .mosaic-split-line {
-      box-shadow: 0 0 0 1px $grey;
+      box-shadow: 0 0 0 1px $LIGHT1;
     }
 
     &.-row {
@@ -92,17 +91,17 @@ $grey: #777;
         cursor: pointer;
         background-color: transparent;
         border-color: transparent;
-        color: $text-control;
+        color: $textControl;
       }
 
       &:hover:before {
-        color: $text-control-hover;
+        color: $textControlHover;
       }
     }
   }
 
   .drop-target-container .drop-target {
-    background-color: $text-disabled;
-    border: 2px solid $text-muted;
+    background-color: $textDisabled;
+    border: 2px solid $textMuted;
   }
 }

@@ -26,7 +26,7 @@ export default function LaserScanSettingsEditor(props: TopicSettingsEditorProps<
   const { settings, onFieldChange } = props;
 
   return (
-    <Flex col>
+    <Flex grow col>
       <CommonPointSettings
         settings={settings}
         defaultPointSize={4}

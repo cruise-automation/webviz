@@ -10,10 +10,10 @@ import React from "react";
 import OrderedStampPlayer from "webviz-core/src/players/OrderedStampPlayer";
 import type { UserNodes } from "webviz-core/src/types/panels";
 
-type Props = {
+type Props = {|
   nodePlayer: ?OrderedStampPlayer,
   userNodes: UserNodes,
-};
+|};
 
 const useUserNodes = ({ nodePlayer, userNodes }: Props) => {
   React.useEffect(() => {

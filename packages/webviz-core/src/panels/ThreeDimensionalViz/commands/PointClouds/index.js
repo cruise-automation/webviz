@@ -345,12 +345,12 @@ function instancedGetChildrenForHitmap<
   });
 }
 
-type Props = {
+type Props = {|
   ...CommonCommandProps,
   children: PointCloud[],
   sphericalRangeScale?: number,
   clearCachedMarkers?: boolean,
-};
+|};
 
 export default function PointClouds({ children, clearCachedMarkers, sphericalRangeScale, ...rest }: Props) {
   const [command] = useState(() => makePointCloudCommand());

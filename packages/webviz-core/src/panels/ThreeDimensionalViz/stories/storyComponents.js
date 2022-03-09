@@ -10,8 +10,12 @@ import * as React from "react";
 import { Worldview } from "regl-worldview";
 
 import Flex from "webviz-core/src/components/Flex";
+import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
 import ThreeDimensionalViz, { type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
+import WorldContext from "webviz-core/src/panels/ThreeDimensionalViz/WorldContext";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import Store from "webviz-core/src/store";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
@@ -34,12 +38,12 @@ function bobjectify(fixture: FixtureExampleData): {| frame: Frame, datatypes: Ro
   const topicsArray = topics instanceof Array ? topics : objectValues(topics);
 
   const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
-  topicsArray.forEach(({ name: topicName, datatype }) => {
+  topicsArray.forEach(({ name: topicName, datatypeName }) => {
     if (frame[topicName]) {
       newFrame[topicName] = frame[topicName].map(({ topic, receiveTime, message }) => ({
         topic,
         receiveTime,
-        message: !isBobject(message) ? wrapJsObject(datatypes, datatype, message) : message,
+        message: !isBobject(message) ? wrapJsObject(datatypes, datatypeName, message) : message,
       }));
     }
   });
@@ -63,6 +67,23 @@ export const WorldviewContainer = (props: { children: React.Node }) => {
     </Worldview>
   );
 };
+
+const AddWorldContext = ({ children }: { children: React.Node }) => (
+  <WorldContext.Provider
+    value={getGlobalHooks()
+      .perPanelHooks()
+      .ThreeDimensionalViz.useWorldContextValue()}>
+    {children}
+  </WorldContext.Provider>
+);
+
+export const MockStoryContext = ({ children }: { children: React.Node }) => (
+  <MockMessagePipelineProvider>
+    <MockPanelContextProvider>
+      <AddWorldContext>{children}</AddWorldContext>
+    </MockPanelContextProvider>
+  </MockMessagePipelineProvider>
+);
 
 export class FixtureExample extends React.Component<FixtureExampleProps, FixtureExampleState> {
   state = { fixture: null, config: this.props.initialConfig };
@@ -121,7 +142,7 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
     }
     return (
       <PanelSetup fixture={fixture} onMount={this.props.onMount}>
-        <Flex col>
+        <Flex grow col>
           <ThreeDimensionalViz
             config={this.state.config}
             saveConfig={(config) => this.setState({ config: { ...this.state.config, ...config } })}

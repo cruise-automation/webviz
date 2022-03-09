@@ -33,7 +33,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
       case "car-model": {
         const alpha = settings.alpha != null ? settings.alpha : 1;
         return (
-          <Flex col>
+          <Flex grow col>
             <SLabel>Alpha</SLabel>
             <SInput
               type="number"
@@ -52,7 +52,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
         const currentHeadWidth = settings.size?.headWidth ?? 2;
         const currentHeadLength = settings.size?.headLength ?? 0.1;
         return (
-          <Flex col>
+          <Flex grow col>
             <SLabel>Color</SLabel>
             <ColorPickerForTopicSettings
               color={settings.overrideColor}
@@ -94,7 +94,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
   const badModelTypeSetting = React.useMemo(() => !["car-model", "arrow"].includes(settings.modelType), [settings]);
 
   return (
-    <Flex col>
+    <Flex grow col>
       <SLabel>Rendered Car</SLabel>
       <div
         style={{ display: "flex", margin: "4px", flexDirection: "column" }}

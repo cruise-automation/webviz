@@ -18,7 +18,7 @@ describe("Publish panel", () => {
       <PanelSetup
         fixture={{
           topics: [],
-          datatypes: { "std_msgs/String": { fields: [{ name: "data", type: "string" }] } },
+          datatypes: { "std_msgs/String": { name: "std_msgs/String", fields: [{ name: "data", type: "string" }] } },
           frame: {},
           capabilities: [],
         }}>

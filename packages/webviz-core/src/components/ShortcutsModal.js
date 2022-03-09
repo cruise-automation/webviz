@@ -8,16 +8,12 @@
 
 import { flatten } from "lodash";
 import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 
 import HelpModal from "webviz-core/src/components/HelpModal";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
-import {
-  ARROW_SEEK_BIG_MS,
-  ARROW_SEEK_DEFAULT_MS,
-  ARROW_SEEK_SMALL_MS,
-  ARROW_SEEK_TINY_MS,
-} from "webviz-core/src/components/PlaybackControls/sharedHelpers";
+import { ARROW_SEEK_MS } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
 import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type PanelListItem } from "webviz-core/src/panels/PanelList/index";
@@ -25,10 +21,6 @@ import { type PanelListItem } from "webviz-core/src/panels/PanelList/index";
 const STitle = styled.h3`
   margin: 16px 0 8px 0;
 `;
-
-type Props = {|
-  history: any,
-|};
 
 const EXISTING_CONFIG = [
   {
@@ -45,14 +37,14 @@ const EXISTING_CONFIG = [
       { description: "Show help and resources", keys: ["⇧", "/"] },
       { description: "Show shortcuts", keys: ["⌘", "/"] },
       { description: "Pause or play", keys: ["Space"] },
-      { description: `Seek forward ${ARROW_SEEK_DEFAULT_MS}ms`, keys: ["⇢"] },
-      { description: `Seek forward ${ARROW_SEEK_SMALL_MS}ms`, keys: ["⇧", "⇢"] },
-      { description: `Seek forward ${ARROW_SEEK_TINY_MS}ms`, keys: ["⌘", "⇢"] },
-      { description: `Seek forward ${ARROW_SEEK_BIG_MS}ms`, keys: ["⌥", "⇢"] },
-      { description: `Seek backward ${ARROW_SEEK_DEFAULT_MS}ms`, keys: ["⇠"] },
-      { description: `Seek backward ${ARROW_SEEK_SMALL_MS}ms`, keys: ["⇧", "⇠"] },
-      { description: `Seek backward ${ARROW_SEEK_TINY_MS}ms`, keys: ["⌘", "⇠"] },
-      { description: `Seek backward ${ARROW_SEEK_BIG_MS}ms`, keys: ["⌥", "⇠"] },
+      { description: `Seek forward ${ARROW_SEEK_MS.DEFAULT}ms`, keys: ["⇢"] },
+      { description: `Seek forward ${ARROW_SEEK_MS.SMALL}ms`, keys: ["⇧", "⇢"] },
+      { description: `Seek forward ${ARROW_SEEK_MS.TINY}ms`, keys: ["⌘", "⇢"] },
+      { description: `Seek forward ${ARROW_SEEK_MS.BIG}ms`, keys: ["⌥", "⇢"] },
+      { description: `Seek backward ${ARROW_SEEK_MS.DEFAULT}ms`, keys: ["⇠"] },
+      { description: `Seek backward ${ARROW_SEEK_MS.SMALL}ms`, keys: ["⇧", "⇠"] },
+      { description: `Seek backward ${ARROW_SEEK_MS.TINY}ms`, keys: ["⌘", "⇠"] },
+      { description: `Seek backward ${ARROW_SEEK_MS.BIG}ms`, keys: ["⌥", "⇠"] },
     ],
   },
   {
@@ -66,7 +58,9 @@ const EXISTING_CONFIG = [
 export type ShortcutConfig = {| description: string, keys: string[] |};
 type PerPanelShortcuts = {| title: string, shortcuts: ShortcutConfig[] |};
 
-export default function ShortcutsModal({ history }: Props) {
+export default function ShortcutsModal(_: {||}) {
+  const history = useHistory();
+
   const [perPanelShortcuts, setPerPanelShortcuts] = useState<PerPanelShortcuts[]>(EXISTING_CONFIG);
   useEffect(() => {
     getGlobalHooks()

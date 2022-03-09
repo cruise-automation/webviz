@@ -21,7 +21,7 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import Publisher from "webviz-core/src/components/Publisher";
 import { PlayerCapabilities, type Topic } from "webviz-core/src/players/types";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 type Config = {|
@@ -67,7 +67,7 @@ const SErrorText = styled.div`
   display: flex;
   align-items: center;
   padding: 4px;
-  color: ${colors.red};
+  color: ${colors.RED2};
 `;
 
 const SSpan = styled.span`
@@ -164,7 +164,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
 
   // when a known topic is selected, also fill in its datatype
   _onSelectTopic = (topicName: string, topic: Topic, autocomplete: Autocomplete) => {
-    this.props.saveConfig({ topicName, datatype: topic.datatype });
+    this.props.saveConfig({ topicName, datatype: topic.datatypeName });
     autocomplete.blur();
   };
 
@@ -247,7 +247,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
     const buttonRowStyle = advancedView ? { flex: "0 0 auto" } : { flex: "0 0 auto", justifyContent: "center" };
 
     return (
-      <Flex col style={{ height: "100%", padding: "12px" }}>
+      <Flex grow col style={{ height: "100%", padding: "12px" }}>
         {topicName && datatype && (
           <Publisher ref={this._publisher} name="Publish" topic={topicName} datatype={datatype} />
         )}
@@ -284,7 +284,7 @@ class Publish extends React.PureComponent<Props, PanelState> {
             <STextArea placeholder="Enter message content as JSON" value={value || ""} onChange={this._onChange} />
           </STextAreaContainer>
         )}
-        <Flex row style={buttonRowStyle}>
+        <Flex grow row style={buttonRowStyle}>
           {error && <SErrorText>{error}</SErrorText>}
           <Button
             style={canPublish ? { backgroundColor: buttonColor } : {}}

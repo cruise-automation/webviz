@@ -15,7 +15,10 @@ describe("addMessageDefaults", () => {
   it("sets primitve types", () => {
     const rosPrimitiveTypesArray = Array.from(rosPrimitiveTypes);
     const datatypes = fromPairs(
-      rosPrimitiveTypesArray.map((typeName) => [typeName, { fields: [{ type: typeName, name: typeName }] }])
+      rosPrimitiveTypesArray.map((typeName) => [
+        typeName,
+        { name: typeName, fields: [{ type: typeName, name: typeName }] },
+      ])
     );
 
     for (const typeName of Object.keys(datatypes)) {
@@ -42,6 +45,7 @@ describe("addMessageDefaults", () => {
   it("does not set constant types", () => {
     const datatypes = {
       root: {
+        name: "root",
         fields: [
           { type: "child", name: "child", isComplex: true, isConstant: true },
           { type: "child", name: "child_array", isComplex: true, isArray: true, isConstant: true },
@@ -49,7 +53,7 @@ describe("addMessageDefaults", () => {
           { type: "string", name: "string", isConstant: true },
         ],
       },
-      child: { fields: [{ type: "string", name: "string" }] },
+      child: { name: "child", fields: [{ type: "string", name: "string" }] },
     };
     const message = {};
     addMessageDefaults(datatypes, "root", message);
@@ -58,8 +62,8 @@ describe("addMessageDefaults", () => {
 
   it("recursively sets fields in complex types", () => {
     const datatypes = {
-      root: { fields: [{ type: "child", name: "child", isComplex: true }] },
-      child: { fields: [{ type: "string", name: "string" }] },
+      root: { name: "root", fields: [{ type: "child", name: "child", isComplex: true }] },
+      child: { name: "child", fields: [{ type: "string", name: "string" }] },
     };
     const message = { child: {} };
     addMessageDefaults(datatypes, "root", message);
@@ -68,8 +72,8 @@ describe("addMessageDefaults", () => {
 
   it("recursively sets fields in complex array types", () => {
     const datatypes = {
-      root: { fields: [{ type: "child", name: "child", isComplex: true, isArray: true }] },
-      child: { fields: [{ type: "string", name: "string" }] },
+      root: { name: "root", fields: [{ type: "child", name: "child", isComplex: true, isArray: true }] },
+      child: { name: "child", fields: [{ type: "string", name: "string" }] },
     };
     const message = { child: [{}] };
     addMessageDefaults(datatypes, "root", message);
@@ -78,7 +82,7 @@ describe("addMessageDefaults", () => {
 
   it("sets missing empty arrays", () => {
     const datatypes = {
-      root: { fields: [{ type: "string", name: "child", isArray: true }] },
+      root: { name: "root", fields: [{ type: "string", name: "child", isArray: true }] },
     };
     const message = {};
     addMessageDefaults(datatypes, "root", message);
@@ -87,7 +91,7 @@ describe("addMessageDefaults", () => {
 
   it("sets null fields in array types", () => {
     const datatypes = {
-      root: { fields: [{ type: "string", name: "child", isArray: true }] },
+      root: { name: "root", fields: [{ type: "string", name: "child", isArray: true }] },
     };
     const message = { child: [null] };
     addMessageDefaults(datatypes, "root", message);
@@ -96,8 +100,8 @@ describe("addMessageDefaults", () => {
 
   it("sets a complex object when it is not present", () => {
     const datatypes = {
-      root: { fields: [{ type: "child", name: "child", isComplex: true }] },
-      child: { fields: [{ type: "string", name: "string" }] },
+      root: { name: "root", fields: [{ type: "child", name: "child", isComplex: true }] },
+      child: { name: "child", fields: [{ type: "string", name: "string" }] },
     };
     const message = {};
     addMessageDefaults(datatypes, "root", message);

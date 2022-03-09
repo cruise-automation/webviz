@@ -7,7 +7,7 @@
 .flex {
   display: flex;
   flex-direction: row;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
 }
 .flex.reverse {
   flex-direction: row-reverse;

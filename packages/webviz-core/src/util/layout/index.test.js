@@ -225,6 +225,61 @@ describe("layout", () => {
         })
       ).toEqual(["Image!a", "Image!b", "RosOut!a", "Image!c", "Image!d"]);
     });
+    it("gets tab panels nested within tab panels", () => {
+      expect(
+        getPanelIdsInsideTabPanels(["Tab!a"], {
+          "Tab!a": {
+            tabs: [{ layout: "Image!a" }, { layout: { direction: "row", first: "Tab!b", second: "RosOut!a" } }],
+          },
+          "Tab!b": {
+            tabs: [{ layout: "Tab!c" }],
+          },
+          "Tab!c": {
+            tabs: [{ layout: "Image!b" }],
+          },
+        })
+      ).toEqual(["Image!a", "Tab!b", "RosOut!a", "Tab!c", "Image!b"]);
+    });
+
+    describe("getting active tabs only", () => {
+      it("gets tab panels nested within tab panels", () => {
+        expect(
+          getPanelIdsInsideTabPanels(
+            ["Tab!a"],
+            {
+              "Tab!a": {
+                activeTabIdx: 1,
+                tabs: [{ layout: "Image!a" }, { layout: { direction: "row", first: "Tab!b", second: "RosOut!a" } }],
+              },
+              "Tab!b": {
+                activeTabIdx: 0,
+                tabs: [{ layout: "Tab!c" }],
+              },
+              "Tab!c": {
+                activeTabIdx: 1,
+                tabs: [{ layout: "Image!b" }, { layout: "Image!c" }],
+              },
+            },
+            true
+          )
+        ).toEqual(["Tab!b", "RosOut!a", "Tab!c", "Image!c"]);
+      });
+
+      it("skips when active tab does not exist", () => {
+        expect(
+          getPanelIdsInsideTabPanels(
+            ["Tab!a"],
+            {
+              "Tab!a": {
+                activeTabIdx: 0,
+                tabs: [],
+              },
+            },
+            true
+          )
+        ).toEqual([]);
+      });
+    });
   });
 
   describe("createAddUpdates", () => {

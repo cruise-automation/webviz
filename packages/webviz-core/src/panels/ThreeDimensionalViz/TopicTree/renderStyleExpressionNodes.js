@@ -12,7 +12,6 @@ import { groupBy, defaults } from "lodash";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { TREE_SPACING } from "./TopicTree";
 import { ROW_HEIGHT, SLeft, SRightActions, SToggles, STreeNodeRow } from "./TreeNodeRow";
 import VisibilityToggle from "./VisibilityToggle";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
@@ -40,9 +39,6 @@ import type { Color } from "webviz-core/src/types/Messages";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
-// TODO: Dedupe from renderNamespaceNodes
-const OUTER_LEFT_MARGIN = 12;
-
 export const SDisplayName = styled.div`
   font-size: 13px;
   line-height: 1.4;
@@ -54,21 +50,16 @@ export const SDisplayName = styled.div`
 `;
 
 export function renderStyleExpressionNodes({
-  width,
-  isXSWidth,
   topicName,
   hasFeatureColumn,
   linkedGlobalVariablesByTopic,
   visible,
 }: {
   hasFeatureColumn: boolean,
-  isXSWidth: boolean,
   linkedGlobalVariablesByTopic: { [string]: LinkedGlobalVariable[] },
   topicName: string,
-  width: number,
   visible: boolean,
 }): TreeUINode[] {
-  const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2) - OUTER_LEFT_MARGIN;
   const linkedGlobalVariablesByVariableName = groupBy(
     linkedGlobalVariablesByTopic[topicName] || [],
     ({ name }) => name
@@ -79,7 +70,6 @@ export function renderStyleExpressionNodes({
         linkedGlobalVariables={linkedGlobalVariablesByVariableName[variableName]}
         topic={topicName}
         hasFeatureColumn={hasFeatureColumn}
-        rowWidth={rowWidth}
         rowIndex={rowIndex}
         variableName={variableName}
         visible={visible}
@@ -109,7 +99,7 @@ const SColorTrigger = styled.span`
 `;
 
 function StyleExpressionNode(props) {
-  const { topic, rowWidth, rowIndex, hasFeatureColumn, linkedGlobalVariables, visible } = props;
+  const { topic, rowIndex, hasFeatureColumn, linkedGlobalVariables, visible } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [editingColorForSourceIdx, setEditingColorForSourceIdx] = useState(false);
 
@@ -181,12 +171,7 @@ function StyleExpressionNode(props) {
   );
 
   return (
-    <STreeNodeRow
-      visibleInScene={activeRowActive && visible}
-      style={{
-        width: rowWidth,
-        marginLeft: `-${OUTER_LEFT_MARGIN}px`,
-      }}>
+    <STreeNodeRow visibleInScene={activeRowActive && visible}>
       <SLeft data-test={`ns~${name}`}>
         <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
           <EarthIcon style={{ width: 16, height: 16 }} />

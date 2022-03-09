@@ -29,12 +29,7 @@ export default function rosDatatypesToMessageDefinition(
         `While searching datatypes for "${rootDatatypeName}", could not find datatype "${currentDatatypeName}"`
       );
     }
-    // The root datatype has no name field.
-    const msgDefinition: RosMsgDefinition =
-      currentDatatypeName === rootDatatypeName
-        ? { definitions: currentDatatype.fields }
-        : { name: currentDatatypeName, definitions: currentDatatype.fields };
-    result.push(msgDefinition);
+    result.push({ name: currentDatatypeName, definitions: currentDatatype.fields });
     for (const field of currentDatatype.fields) {
       // Only search subfields if we haven't already seen it and it is "complex", IE it has its own fields and should
       // be contained in `datatypes`.

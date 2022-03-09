@@ -28,7 +28,7 @@ function SubscribeToList({ config, saveConfig }: Props): React.Node {
     addMessage: React.useCallback((seenBefore) => seenBefore + 1, []),
   });
   return (
-    <Flex col>
+    <Flex grow col>
       <PanelToolbar floating />
       <textarea
         style={{ flexGrow: 1, border: "none" }}

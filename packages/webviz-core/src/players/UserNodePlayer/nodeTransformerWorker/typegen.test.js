@@ -62,6 +62,7 @@ describe("typegen", () => {
       it("multiple properties", () => {
         const declarations = generateTypeDefs({
           "std_msgs/ColorRGBA": {
+            name: "std_msgs/ColorRGBA",
             fields: [
               { type: "float32", name: "r", isArray: false, isComplex: false },
               { type: "float32", name: "g", isArray: false, isComplex: false },
@@ -79,6 +80,7 @@ describe("typegen", () => {
       it("time", () => {
         const declarations = generateTypeDefs({
           "std_msgs/Time": {
+            name: "std_msgs/Time",
             fields: [{ type: "time", name: "t", isArray: false, isComplex: false }],
           },
         });
@@ -89,6 +91,7 @@ describe("typegen", () => {
       it("duration", () => {
         const declarations = generateTypeDefs({
           "std_msgs/Duration": {
+            name: "std_msgs/Duration",
             fields: [{ type: "duration", name: "t", isArray: false, isComplex: false }],
           },
         });
@@ -101,9 +104,11 @@ describe("typegen", () => {
       it("allows ros datatypes that refer to each other", () => {
         const declarations = generateTypeDefs({
           "geometry_msgs/Pose": {
+            name: "geometry_msgs/Pose",
             fields: [{ type: "geometry_msgs/Point", name: "position", isArray: false, isComplex: true }],
           },
           "geometry_msgs/Point": {
+            name: "geometry_msgs/Point",
             fields: [
               { type: "float64", name: "x", isArray: false, isComplex: false },
               { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -119,12 +124,14 @@ describe("typegen", () => {
       it("does not add duplicate declarations for interfaces already created", () => {
         const declarations = generateTypeDefs({
           "geometry_msgs/Pose": {
+            name: "geometry_msgs/Pose",
             fields: [
               { type: "geometry_msgs/Point", name: "position", isArray: false, isComplex: true },
               { type: "geometry_msgs/Point", name: "last_position", isArray: false, isComplex: true },
             ],
           },
           "geometry_msgs/Point": {
+            name: "geometry_msgs/Point",
             fields: [
               { type: "float64", name: "x", isArray: false, isComplex: false },
               { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -140,13 +147,16 @@ describe("typegen", () => {
       it("allows deep internal references", () => {
         const declarations = generateTypeDefs({
           "geometry_msgs/Pose": {
+            name: "geometry_msgs/Pose",
             fields: [{ type: "geometry_msgs/Directions", name: "directions", isArray: true, isComplex: true }],
           },
           "geometry_msgs/Directions": {
+            name: "geometry_msgs/Direction",
             fields: [{ type: "geometry_msgs/Point", name: "positions", isArray: true, isComplex: true }],
           },
 
           "geometry_msgs/Point": {
+            name: "geometry_msgs/Point",
             fields: [
               { type: "float64", name: "x", isArray: false, isComplex: false },
               { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -166,6 +176,7 @@ describe("typegen", () => {
       it("defines primitive arrays", () => {
         const declarations = generateTypeDefs({
           "std_msgs/Points": {
+            name: "std_msgs/Points",
             fields: [{ type: "string", name: "x", isArray: true, isComplex: false }],
           },
         });
@@ -177,6 +188,7 @@ describe("typegen", () => {
         Object.entries(typedArrayMap).forEach(([rosType, jsType]) => {
           const declarations = generateTypeDefs({
             "std_msgs/Data": {
+              name: "std_msgs/Data",
               fields: [{ type: rosType, name: "x", isArray: true, isComplex: false }],
             },
           });
@@ -193,9 +205,11 @@ describe("typegen", () => {
       it("references", () => {
         const declarations = generateTypeDefs({
           "geometry_msgs/Pose": {
+            name: "geometry_msgs/Pose",
             fields: [{ type: "geometry_msgs/Point", name: "position", isArray: true, isComplex: true }],
           },
           "geometry_msgs/Point": {
+            name: "geometry_msgs/Point",
             fields: [
               { type: "float64", name: "x", isArray: false, isComplex: false },
               { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -213,6 +227,7 @@ describe("typegen", () => {
       it("does not return anything for ros constants", () => {
         const declarations = generateTypeDefs({
           "std_msgs/Constants": {
+            name: "std_msgs/Constants",
             fields: [{ type: "uint8", name: "ARROW", isConstant: true, value: 0 }],
           },
         });
@@ -225,6 +240,7 @@ describe("typegen", () => {
       it("contains an empty interface definition if the datatype does not have any properties", () => {
         const declarations = generateTypeDefs({
           "std_msgs/NoDef": {
+            name: "std_msgs/NoDef",
             fields: [],
           },
         });
@@ -241,12 +257,14 @@ describe("typegen", () => {
         topics: [
           {
             name: "/my_topic",
-            datatype: "std_msgs/ColorRGBA",
+            datatypeName: "std_msgs/ColorRGBA",
+            datatypeId: "std_msgs/ColorRGBA",
           },
-          { name: "/empty_topic", datatype: "std_msgs/NoDef" },
+          { name: "/empty_topic", datatypeName: "std_msgs/NoDef", datatypeId: "std_msgs/NoDef" },
         ],
         datatypes: {
           "std_msgs/ColorRGBA": {
+            name: "std_msgs/ColorRGBA",
             fields: [
               { type: "float32", name: "r", isArray: false, isComplex: false },
               { type: "float32", name: "g", isArray: false, isComplex: false },
@@ -262,9 +280,10 @@ describe("typegen", () => {
       expect(rosLib).toMatchSnapshot();
     });
     it("more complex snapshot", () => {
-      const randomTopics = Object.keys(stressTestDatatypes).map((datatype, i) => ({
+      const randomTopics = Object.keys(stressTestDatatypes).map((datatypeName, i) => ({
         name: `/topic_${i}`,
-        datatype,
+        datatypeName,
+        datatypeId: datatypeName,
       }));
       const rosLib = generateRosLib({ topics: randomTopics, datatypes: stressTestDatatypes });
       const { diagnostics } = compile({ ...baseNodeData, sourceCode: rosLib });

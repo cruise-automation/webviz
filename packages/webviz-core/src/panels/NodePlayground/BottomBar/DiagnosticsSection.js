@@ -31,9 +31,9 @@ const severityIcons = {
   Error: <AlertCircleIcon />,
 };
 
-type Props = {
+type Props = {|
   diagnostics: Diagnostic[],
-};
+|};
 
 const DiagnosticsSection = ({ diagnostics }: Props) => {
   return diagnostics.length ? (

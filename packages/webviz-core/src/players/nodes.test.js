@@ -20,8 +20,8 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
   inputs: [],
-  output: { name: "", datatype: "foo/Bar" },
-  datatypes: { "foo/Bar": { fields: [] } },
+  output: { name: "", datatypeName: "foo/Bar", datatypeId: "foo/Bar" },
+  datatypes: { "foo/Bar": { name: "foo/Bar", fields: [] } },
   format: "parsedMessages",
   defaultState: undefined,
   callback() {
@@ -37,7 +37,7 @@ describe("nodes", () => {
     it("does not throw for a valid definition", () => {
       const GoodNode: NodeDefinition<void> = {
         ...EmptyNode,
-        output: { name: "/webviz/foo", datatype: "foo/Bar" },
+        output: { name: "/webviz/foo", datatypeName: "foo/Bar", datatypeId: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([GoodNode])).not.toThrow();
     });
@@ -45,7 +45,7 @@ describe("nodes", () => {
     it("does not allow nodes to output non webviz topics", () => {
       const BadNode: NodeDefinition<void> = {
         ...EmptyNode,
-        output: { name: "/foo", datatype: "foo/Bar" },
+        output: { name: "/foo", datatypeName: "foo/Bar", datatypeId: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([BadNode])).toThrow();
     });
@@ -54,7 +54,7 @@ describe("nodes", () => {
       const SelfReferringNode: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/foo"],
-        output: { name: "/webviz/foo", datatype: "foo/Bar" },
+        output: { name: "/webviz/foo", datatypeName: "foo/Bar", datatypeId: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([SelfReferringNode])).toThrow();
     });
@@ -63,14 +63,14 @@ describe("nodes", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/b"],
-        output: { name: "/webviz/a", datatype: "a" },
-        datatypes: { a: { fields: [] } },
+        output: { name: "/webviz/a", datatypeName: "a", datatypeId: "a" },
+        datatypes: { a: { name: "a", fields: [] } },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/a"],
-        output: { name: "/webviz/b", datatype: "b" },
-        datatypes: { b: { fields: [] } },
+        output: { name: "/webviz/b", datatypeName: "b", datatypeId: "b" },
+        datatypes: { b: { name: "b", fields: [] } },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -82,14 +82,14 @@ describe("nodes", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/external/1"],
-        output: { name: "/webviz/internal", datatype: "internal" },
-        datatypes: { internal: { fields: [] } },
+        output: { name: "/webviz/internal", datatypeName: "internal", datatypeId: "internal" },
+        datatypes: { internal: { name: "internal", fields: [] } },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/external/2"],
-        output: { name: "/webviz/internal", datatype: "internal" },
-        datatypes: { internal: { fields: [] } },
+        output: { name: "/webviz/internal", datatypeName: "internal", datatypeId: "internal" },
+        datatypes: { internal: { name: "internal", fields: [] } },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -101,9 +101,10 @@ describe("nodes", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/b"],
-        output: { name: "/webviz/a", datatype: "a" },
+        output: { name: "/webviz/a", datatypeName: "a", datatypeId: "a" },
         datatypes: {
           "std_msgs/A": {
+            name: "std_msgs/A",
             fields: [
               {
                 isArray: true,
@@ -123,9 +124,10 @@ describe("nodes", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/b"],
-        output: { name: "/webviz/a", datatype: "std_msgs/A" },
+        output: { name: "/webviz/a", datatypeName: "std_msgs/A", datatypeId: "std_msgs/A" },
         datatypes: {
           "std_msgs/B": {
+            name: "std_msgs/B",
             fields: [
               {
                 isArray: false,
@@ -138,6 +140,7 @@ describe("nodes", () => {
           },
 
           "std_msgs/A": {
+            name: "std_msgs/A",
             fields: [
               {
                 isArray: true,
@@ -171,7 +174,7 @@ describe("nodes", () => {
     it("runs all nodes on a set of messages, even recursively", () => {
       const NodeA: NodeDefinition<number> = {
         inputs: ["/external"],
-        output: { name: "/webviz/a/counter", datatype: "a/counter" },
+        output: { name: "/webviz/a/counter", datatypeName: "a/counter", datatypeId: "a/counter" },
         datatypes: {},
         format: "parsedMessages",
         defaultState: 0,
@@ -190,7 +193,7 @@ describe("nodes", () => {
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/a/counter"],
-        output: { name: "/webviz/b", datatype: "b" },
+        output: { name: "/webviz/b", datatypeName: "b", datatypeId: "b" },
         callback({ message }) {
           return {
             messages: [makeNodeMessage("/webviz/b", { count: message.message.count })],
@@ -243,7 +246,7 @@ describe("nodes", () => {
     it("continues processing if a node throws an error", () => {
       const NodeA: NodeDefinition<number> = {
         inputs: ["/external"],
-        output: { name: "/webviz/a/counter", datatype: "a/counter" },
+        output: { name: "/webviz/a/counter", datatypeName: "a/counter", datatypeId: "a/counter" },
         datatypes: {},
         format: "parsedMessages",
         defaultState: 0,
@@ -277,7 +280,7 @@ describe("nodes", () => {
       const node: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/external"],
-        output: { name: "/webviz/foo", datatype: "std_msgs/Header" },
+        output: { name: "/webviz/foo", datatypeName: "std_msgs/Header", datatypeId: "std_msgs/Header" },
         datatypes: basicDatatypes,
         format: "bobjects",
         callback() {
@@ -313,7 +316,7 @@ describe("nodes", () => {
           ...EmptyNode,
           inputs: ["/in_topic"],
           format: "parsedMessages",
-          output: { name: "/out_topic", datatype: "" },
+          output: { name: "/out_topic", datatypeName: "", datatypeId: "" },
         },
       ]);
       expect(subscriptions).toEqual([
@@ -331,7 +334,7 @@ describe("nodes", () => {
           ...EmptyNode,
           inputs: ["/in_topic"],
           format: "bobjects",
-          output: { name: "/out_topic", datatype: "" },
+          output: { name: "/out_topic", datatypeName: "", datatypeId: "" },
         },
       ]);
       expect(subscriptions).toEqual([

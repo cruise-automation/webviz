@@ -6,7 +6,7 @@
 
 @import "~webviz-core/src/styles/mixins.module.scss";
 
-$legend-highlight-color: rgba($dark3, 0.7);
+$legend-highlight-color: rgba($DARK3, 0.7);
 $legend-highlight-color-bright: lighten(rgba($legend-highlight-color, 1), 8%);
 $legend-highlight-color-brighter: lighten(rgba($legend-highlight-color, 1), 17%);
 $legend-item-height: 20px;
@@ -49,7 +49,7 @@ $legend-item-height: 20px;
 
 .item {
   display: flex;
-  padding: 0 5px;
+  padding-right: 4px;
   height: $legend-item-height;
   line-height: $legend-item-height;
   position: relative;
@@ -59,27 +59,53 @@ $legend-item-height: 20px;
   }
 }
 
+.itemAxisLabel {
+  display: flex;
+  padding: 0 4px;
+  user-select: none;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: $legend-highlight-color-brighter;
+    }
+  }
+}
+
 .itemIconContainer {
   display: inline-block;
-  width: 22px;
+  width: 16px;
   height: $legend-item-height;
   line-height: 0;
   cursor: pointer;
   flex-shrink: 0;
+  z-index: 1;
+  position: relative;
 
   &:hover {
     background: $legend-highlight-color-brighter;
   }
+
+  .rc-color-picker-wrap {
+    height: 100%;
+    width: 100%;
+  }
 }
 
-.itemIcon {
+.styleMenu {
+  background: $DARK3;
+  pointer-events: auto;
+  display: flex;
+  padding: 4px;
+}
+
+.itemLineStyle {
   display: inline-block;
-  width: 15px;
-  border-bottom: 2px solid currentColor;
-  height: 0px;
+  width: 12px;
+  height: 11px;
   vertical-align: middle;
-  position: relative;
-  top: calc(50% - 1px);
+  position: absolute;
 }
 
 .legendToggle {

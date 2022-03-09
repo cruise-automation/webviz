@@ -112,10 +112,38 @@ storiesOf("<RawMessages>", module)
       </PanelSetup>
     );
   })
-  .add("display a flattened array of enum values", () => {
+  .add("display a flattened array of enum values from objects containing singular enums", () => {
     return (
       <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
-        <RawMessages config={{ topicPath: "/baz/enum_array.arr[:].value", ...noDiffConfig }} />
+        <RawMessages config={{ topicPath: "/baz/enum_object_array.arr[:].value", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display an array of enums inside a message", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }} onMount={expandAll}>
+        <RawMessages config={{ topicPath: "/baz/enum_array", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display a flattened array of enums", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/enum_array.value[:]", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display an array of enums", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/enum_array.value", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("display a single enum inside an array", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/enum_array.value[1]", ...noDiffConfig }} />
       </PanelSetup>
     );
   })

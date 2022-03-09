@@ -11,9 +11,9 @@ import { WorldviewReactContext, type WorldviewContextType } from "regl-worldview
 
 import { type DebugStats } from "./types";
 
-type Props = {
+type Props = {|
   setDebugStats: (DebugStats) => void,
-};
+|};
 
 function useDebugStats(): ?DebugStats {
   const context = React.useContext<WorldviewContextType>(WorldviewReactContext);

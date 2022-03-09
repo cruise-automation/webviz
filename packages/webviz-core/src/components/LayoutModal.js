@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type BrowserHistory } from "history";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 
@@ -18,7 +17,6 @@ import type { PanelsState } from "webviz-core/src/reducers/panels";
 
 type OwnProps = {|
   onRequestClose: () => void,
-  history?: BrowserHistory,
 |};
 
 type Props = {|
@@ -27,19 +25,11 @@ type Props = {|
   loadLayout: typeof loadLayout,
 |};
 
-function UnconnectedLayoutModal({ onRequestClose, loadLayout: loadFetchedLayout, panels, history }: Props) {
+function UnconnectedLayoutModal({ onRequestClose, loadLayout: loadFetchedLayout, panels }: Props) {
   const onChange = useCallback((layoutPayload: PanelsState) => {
     loadFetchedLayout(layoutPayload);
   }, [loadFetchedLayout]);
-  return (
-    <ShareJsonModal
-      history={history}
-      onRequestClose={onRequestClose}
-      value={panels}
-      onChange={onChange}
-      noun="layout"
-    />
-  );
+  return <ShareJsonModal onRequestClose={onRequestClose} value={panels} onChange={onChange} noun="layout" />;
 }
 
 // TODO(JP): Use useSelector and useDispatch here, but unfortunately `loadLayout` needs
@@ -49,6 +39,6 @@ const LayoutModal = connect<Props, OwnProps, _, _, _, _>(
   { loadLayout }
 )(UnconnectedLayoutModal);
 
-export function openLayoutModal(history?: BrowserHistory) {
-  const modal = renderToBody(<LayoutModal history={history} onRequestClose={() => modal.remove()} />);
+export function openLayoutModal() {
+  const modal = renderToBody(<LayoutModal onRequestClose={() => modal.remove()} />);
 }

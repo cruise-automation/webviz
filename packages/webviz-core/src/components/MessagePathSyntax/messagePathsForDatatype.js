@@ -63,7 +63,7 @@ export function messagePathStructures(datatypes: RosDatatypes): { [string]: Mess
             ? {
                 structureType: "primitive",
                 primitiveType: ((msgField.type: any): RosPrimitive), // Flow doesn't understand includes()
-                datatype,
+                parentDatatype: datatype,
               }
             : structureFor(msgField.type);
 
@@ -195,14 +195,15 @@ export const traverseStructure = memoizeWeak(
           return { valid: false, msgPathPart, structureItem };
         }
         const next: ?MessagePathStructureItem = structureItem.nextByName[msgPathPart.name];
-        const nextStructureIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
-        structureItem = !nextStructureIsJson
-          ? next
-          : {
-              structureType: "primitive",
-              primitiveType: "json",
-              datatype: next ? next.datatype : "",
-            };
+        if (next && next.structureType === "primitive" && next?.primitiveType === "json") {
+          structureItem = {
+            structureType: "primitive",
+            primitiveType: "json",
+            parentDatatype: next.parentDatatype,
+          };
+        } else {
+          structureItem = next;
+        }
       } else if (msgPathPart.type === "slice") {
         if (structureItem.structureType !== "array") {
           return { valid: false, msgPathPart, structureItem };

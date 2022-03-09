@@ -120,7 +120,7 @@ export const ColumnDropdown = React.memo<ColumnDropdownProps>(
             <PencilIcon />
           </Icon>
         }>
-        <Flex row>
+        <Flex grow row>
           <button onClick={() => toggleAllColumns(true)} data-test="hide-all-columns">
             Hide all
           </button>

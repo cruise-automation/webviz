@@ -16,6 +16,11 @@ export function mockExtensionPoint() {
       reportMetadataCallback: (m) => {
         metadata.push(m);
       },
+      nodePlaygroundActions: {
+        setCompiledNodeData: async () => {},
+        addUserNodeLogs: async () => {},
+        setUserNodeRosLib: async () => {},
+      },
     }: ExtensionPoint),
     metadata,
   };

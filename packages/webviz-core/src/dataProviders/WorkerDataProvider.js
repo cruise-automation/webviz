@@ -71,4 +71,11 @@ export default class WorkerDataProvider implements DataProvider {
     await this._provider.close();
     this._worker.terminate();
   }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

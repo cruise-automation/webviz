@@ -8,19 +8,19 @@
 @import "~webviz-core/src/styles/mixins.module.scss";
 
 .panel {
-  background-color: $dark;
+  background-color: $DARK;
 }
 .ok .message {
-  color: $green;
+  color: $GREENL1;
 }
 .warn .message {
-  color: $orange;
+  color: $YELLOWL1;
 }
 .error .message {
-  color: $red;
+  color: $RED2;
 }
 .stale .message {
-  color: $text-muted;
+  color: $textMuted;
 }
 
 .pinIcon {

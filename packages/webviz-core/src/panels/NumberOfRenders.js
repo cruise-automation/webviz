@@ -64,9 +64,9 @@ function MessagePipelineRendersComponent() {
 function NumberOfRenders(): React.Node {
   panelRenderCount++;
   return (
-    <Flex col>
+    <Flex grow col>
       <PanelToolbar />
-      <Flex col center style={{ fontSize: 20, lineHeight: 1.5, textAlign: "center" }}>
+      <Flex grow col center style={{ fontSize: 20, lineHeight: 1.5, textAlign: "center" }}>
         <div>
           <MessageHistoryDEPRECATED paths={[]}>
             {() => (

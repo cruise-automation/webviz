@@ -43,7 +43,10 @@ describe("FrameCompatibilityDEPRECATED", () => {
       }
     }
     const MyComponentWithFrame = FrameCompatibilityDEPRECATED(MyComponent, ["/some/topic"]);
-    const topics = [{ name: "/some/topic", datatype: "some/topic" }, { name: "/foo", datatype: "foo_msgs/Foo" }];
+    const topics = [
+      { name: "/some/topic", datatypeName: "some/topic", datatypeId: "some/topic" },
+      { name: "/foo", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" },
+    ];
     const ref = React.createRef();
     const provider = mount(
       <MockMessagePipelineProvider messages={[messages[0]]} datatypes={datatypes} topics={topics}>

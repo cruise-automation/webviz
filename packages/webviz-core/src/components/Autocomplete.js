@@ -59,6 +59,7 @@ type AutocompleteProps = {|
   menuStyle?: any,
   inputStyle?: any,
   disableAutoSelect?: boolean,
+  extraInputProps?: any, // User might want to set data attributes, id etc.
 |};
 
 type AutocompleteState = {|
@@ -254,6 +255,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
       minWidth,
       menuStyle = {},
       inputStyle = {},
+      extraInputProps,
     } = this.props;
     const autocompleteItems = fuzzyFilter(items, filterText, getItemText, sortWhenFiltering);
 
@@ -307,6 +309,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
           onBlur: this._onBlur,
           onMouseDown: this._onMouseDown,
           onKeyDown: this._onKeyDown,
+          ...extraInputProps,
         }}
         renderMenu={(menuItems, val, style) => {
           // Hacky virtualization. Either don't show all menuItems (typical when the user is still

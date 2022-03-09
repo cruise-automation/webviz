@@ -19,7 +19,8 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { showHelpModalOpenSource } from "webviz-core/src/util/showHelpModalOpenSource";
 
 export const SItem = styled(Item)`
-  color: ${colors.LIGHT} !important;
+  color: ${colors.LIGHT};
+  width: 100%;
 
   svg {
     opacity: 0.6;
@@ -34,8 +35,8 @@ const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
-      <Flex center>
-        <WrappedIcon tooltip="Settings" medium fade active={isOpen} wrapper>
+      <Flex grow center>
+        <WrappedIcon tooltip="Settings" medium fade active={isOpen}>
           <CogIcon />
         </WrappedIcon>
       </Flex>

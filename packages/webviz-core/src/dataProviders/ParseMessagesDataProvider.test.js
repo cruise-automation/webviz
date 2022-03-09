@@ -43,6 +43,11 @@ const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
   notifyPlayerManager: async () => {},
+  nodePlaygroundActions: {
+    setCompiledNodeData: jest.fn(),
+    addUserNodeLogs: jest.fn(),
+    setUserNodeRosLib: jest.fn(),
+  },
 };
 
 describe("ParseMessagesDataProvider", () => {
@@ -52,15 +57,35 @@ describe("ParseMessagesDataProvider", () => {
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
     expect(result.topics).toContainOnly([
-      { datatype: "rosgraph_msgs/Log", name: "/rosout", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle1/color_sensor", numMessages: 1351 },
-      { datatype: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle2/color_sensor", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
-      { datatype: "tf/tfMessage", name: "/tf", numMessages: 1344 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
+      { datatypeName: "rosgraph_msgs/Log", datatypeId: "rosgraph_msgs/Log", name: "/rosout", numMessages: 1 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle1/color_sensor",
+        numMessages: 1351,
+      },
+      { datatypeName: "tf2_msgs/TFMessage", datatypeId: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
+      {
+        datatypeName: "turtlesim/Color",
+        datatypeId: "turtlesim/Color",
+        name: "/turtle2/color_sensor",
+        numMessages: 1344,
+      },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
+      { datatypeName: "turtlesim/Pose", datatypeId: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
+      { datatypeName: "tf/tfMessage", datatypeId: "tf/tfMessage", name: "/tf", numMessages: 1344 },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle2/cmd_vel",
+        numMessages: 208,
+      },
+      {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: "geometry_msgs/Twist",
+        name: "/turtle1/cmd_vel",
+        numMessages: 357,
+      },
     ]);
     const { messageDefinitions } = result;
     if (messageDefinitions.type !== "parsed") {

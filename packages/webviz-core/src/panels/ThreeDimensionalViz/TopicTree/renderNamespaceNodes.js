@@ -11,23 +11,18 @@ import React, { useCallback, useContext, useMemo } from "react";
 import NamespaceMenu from "./NamespaceMenu";
 import NodeName from "./NodeName";
 import { TooltipRow, TooltipTable, type TreeUINode } from "./renderTreeNodes";
-import { TREE_SPACING } from "./TopicTree";
-import { SToggles, STreeNodeRow, SLeft, SRightActions, ICON_SIZE } from "./TreeNodeRow";
+import { SToggles, STreeNodeRow, SLeft, SRightActions } from "./TreeNodeRow";
 import type {
   GetIsTreeNodeVisibleInTree,
   OnNamespaceOverrideColorChange,
   SetEditingNamespace,
   TreeTopicNode,
 } from "./types";
-import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
+import VisibilityToggle from "./VisibilityToggle";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
-import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
+import { useTopicTreeActions } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import { $WEBVIZ_SOURCE_2, $TF } from "webviz-core/src/util/globalConstants";
-import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
-
-const OUTER_LEFT_MARGIN = 12;
-const INNER_LEFT_MARGIN = 8;
 
 export type NamespaceNode = {|
   availableByColumn: boolean[],
@@ -45,11 +40,9 @@ type Props = {|
   filterText: string,
   getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
   hasFeatureColumn: boolean,
-  isXSWidth: boolean,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   setEditingNamespace: SetEditingNamespace,
   topicNode: TreeTopicNode,
-  width: number,
   diffModeEnabled: boolean,
 |};
 
@@ -62,9 +55,6 @@ function NamespaceNodeRow({
   availableByColumn,
   overrideColorByColumn,
   visibleInSceneByColumn,
-  rowWidth,
-  isXSWidth,
-  maxNodeNameLen,
   filterText,
   topicNodeAvailable,
   unavailableTooltip,
@@ -82,9 +72,6 @@ function NamespaceNodeRow({
   checkedByColumn: boolean[],
   overrideColorByColumn: ?((?string)[]),
   visibleInSceneByColumn: boolean[],
-  rowWidth: number,
-  isXSWidth: boolean,
-  maxNodeNameLen: number,
   filterText: string,
   topicNodeAvailable: boolean,
   setEditingNamespace: SetEditingNamespace,
@@ -97,10 +84,7 @@ function NamespaceNodeRow({
   const nodeVisibleInScene = !!(visibleInSceneByColumn[0] || visibleInSceneByColumn[1]);
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const { toggleCheckAllAncestors, toggleNamespaceChecked } = useGuaranteedContext(
-    TopicTreeContext,
-    "TopicTreeContext"
-  );
+  const { toggleCheckAllAncestors, toggleNamespaceChecked } = useTopicTreeActions();
 
   const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
     if (visible) {
@@ -127,16 +111,9 @@ function NamespaceNodeRow({
   }, [toggleCheckAllAncestors, nodeKey, topicName, updateHoveredMarkerMatchers, visibleInSceneByColumn]);
 
   return (
-    <STreeNodeRow
-      visibleInScene={nodeVisibleInScene}
-      style={{
-        width: rowWidth,
-        marginLeft: `-${OUTER_LEFT_MARGIN}px`,
-      }}>
+    <STreeNodeRow visibleInScene={nodeVisibleInScene}>
       <SLeft data-test={`ns~${namespace}`}>
         <NodeName
-          isXSWidth={isXSWidth}
-          maxWidth={maxNodeNameLen}
           displayName={namespace}
           topicName={""}
           tooltips={[
@@ -203,27 +180,18 @@ export default function renderNamespaceNodes({
   filterText,
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
-  isXSWidth,
   onNamespaceOverrideColorChange,
   setEditingNamespace,
   topicNode,
-  width,
   diffModeEnabled,
 }: Props): TreeUINode[] {
-  const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2) - OUTER_LEFT_MARGIN;
   const topicNodeAvailable = topicNode.availableByColumn[0] || topicNode.availableByColumn[1];
-  const togglesWidth = hasFeatureColumn ? TOGGLE_WRAPPER_SIZE * 2 : TOGGLE_WRAPPER_SIZE;
-  const rightActionWidth = topicNodeAvailable ? togglesWidth + ICON_SIZE : ICON_SIZE;
-  const maxNodeNameLen = rowWidth - rightActionWidth - INNER_LEFT_MARGIN * 2;
 
   // TODO(Audrey): remove the special tooltip once we add 2nd bag support for map and tf namespaces.
   const unavailableTooltip =
     topicNode.topicName === $TF || topicNode.topicName === "/metadata" ? "Unsupported" : "Unavailable";
 
   const commonRowProps = {
-    rowWidth,
-    isXSWidth,
-    maxNodeNameLen,
     filterText,
     topicNodeAvailable,
     onNamespaceOverrideColorChange,

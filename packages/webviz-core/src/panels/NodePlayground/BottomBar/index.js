@@ -11,6 +11,7 @@ import styled from "styled-components";
 
 import { clearUserNodeLogs } from "webviz-core/src/actions/userNodes";
 import Button from "webviz-core/src/components/Button";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import DiagnosticsSection from "webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection";
 import LogsSection from "webviz-core/src/panels/NodePlayground/BottomBar/LogsSection";
@@ -27,9 +28,13 @@ const SHeaderItem = styled.div`
 type Props = {|
   nodeId: ?string,
   open: boolean,
+  canFork?: boolean,
+  canPublish?: boolean,
   isSaved: boolean,
   toggleBottomBarOpen: () => void,
   save: () => void,
+  fork: () => void,
+  publish: () => void,
   diagnostics: Diagnostic[],
   logs: UserNodeLog[],
 |};
@@ -53,7 +58,21 @@ const HeaderItem = ({ isOpen, numItems, text }: HeaderItemProps) => (
 
 type BottomBarDisplayState = "diagnostics" | "logs";
 
-const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOpen, open }: Props) => {
+const BottomBar = (props: Props) => {
+  const {
+    nodeId,
+    isSaved,
+    save,
+    fork,
+    publish,
+    diagnostics,
+    logs,
+    toggleBottomBarOpen,
+    open,
+    canFork,
+    canPublish,
+  } = props;
+  const nodePlaygroundSourceControl = useExperimentalFeature("nodePlaygroundSourceControl");
   const [bottomBarDisplay: BottomBarDisplayState, setBottomBarDisplay] = useState("diagnostics");
   const [autoScroll, setAutoScroll] = useState(true);
 
@@ -71,6 +90,7 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOp
 
   return (
     <Flex
+      grow
       col
       style={{
         backgroundColor: colors.DARK1,
@@ -82,6 +102,7 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOp
         width: "100%",
       }}>
       <Flex
+        grow
         row
         start
         style={{
@@ -89,6 +110,7 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOp
           bottom: 0,
         }}>
         <Flex
+          grow
           center
           style={{ flexGrow: 0, color: colors.DARK9 }}
           dataTest="np-errors"
@@ -101,6 +123,7 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOp
           <HeaderItem text="Problems" numItems={diagnostics.length} isOpen={bottomBarDisplay === "diagnostics"} />
         </Flex>
         <Flex
+          grow
           center
           style={{ flexGrow: 0, color: colors.DARK9 }}
           dataTest="np-logs"
@@ -125,6 +148,17 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, toggleBottomBarOp
           }}>
           {isSaved ? "saved" : "save"}
         </Button>
+
+        {nodePlaygroundSourceControl && (
+          <>
+            <Button style={{ padding: "2px 4px" }} disabled={!canFork} onClick={fork}>
+              fork
+            </Button>
+            <Button style={{ padding: "2px 4px" }} disabled={!canPublish} onClick={publish}>
+              publish
+            </Button>
+          </>
+        )}
       </Flex>
       <div
         ref={scrollContainer}

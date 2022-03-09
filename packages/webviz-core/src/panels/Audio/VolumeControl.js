@@ -51,7 +51,7 @@ const SliderInput = styled.input.attrs({ type: "range" })`
   }
 `;
 
-type Props = {
+type Props = {|
   onChange: (number) => void,
   value: number,
   min?: number,
@@ -59,7 +59,7 @@ type Props = {
   step?: number,
   rootStyle?: { [string]: number | string },
   iconStyle?: { [string]: number | string },
-};
+|};
 
 export default function VolumeControl({
   onChange,

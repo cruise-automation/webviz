@@ -23,10 +23,10 @@ import {
   vec4ToRGBA,
 } from "regl-worldview";
 
-type Props = {
+type Props = {|
   children: Line[],
   ...CommonCommandProps,
-};
+|};
 
 function getTriangleChildrenForHitmap(props: Line[], assignNextColors, excludedObjects): TriangleList[] {
   // This getChildrenForHitmap function takes lines and returns triangles.

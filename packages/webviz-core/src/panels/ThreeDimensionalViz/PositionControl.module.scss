@@ -9,13 +9,13 @@
   min-width: 180px;
 
   &:not(:focus) b {
-    color: $text-normal;
+    color: $textNormal;
   }
   &:not(:focus) .value {
     color: $highlight;
   }
   &:focus {
     color: black;
-    background-color: transparentize($text-normal, 0.2);
+    background-color: transparentize($textNormal, 0.2);
   }
 }

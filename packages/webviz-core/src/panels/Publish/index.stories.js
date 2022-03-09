@@ -16,7 +16,7 @@ const getFixture = (allowPublish) => {
   return {
     topics: [],
     datatypes: {
-      "std_msgs/String": { fields: [{ name: "data", type: "string" }] },
+      "std_msgs/String": { name: "std_msgs/String", fields: [{ name: "data", type: "string" }] },
     },
     frame: {},
     capabilities: allowPublish ? [PlayerCapabilities.advertise] : [],
@@ -70,7 +70,7 @@ storiesOf("<Publish>", module)
     const fixture = {
       topics: [],
       datatypes: {
-        "std_msgs/String": { fields: [{ name: "data", type: "string" }] },
+        "std_msgs/String": { name: "std_msgs/String", fields: [{ name: "data", type: "string" }] },
       },
       frame: {},
       capabilities: [PlayerCapabilities.advertise],
@@ -88,7 +88,7 @@ storiesOf("<Publish>", module)
     const fixture = {
       topics: [],
       datatypes: {
-        "std_msgs/String": { fields: [{ name: "data", type: "string" }] },
+        "std_msgs/String": { name: "std_msgs/String", fields: [{ name: "data", type: "string" }] },
       },
       frame: {},
       capabilities: [PlayerCapabilities.advertise],

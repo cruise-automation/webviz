@@ -22,6 +22,7 @@ import type {
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { getObjects } from "webviz-core/src/util/binaryObjects";
 import { getContentBasedDatatypes } from "webviz-core/src/util/datatypes";
+import { logBatchedEventTotals } from "webviz-core/src/util/logBatchedEvents";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
@@ -29,7 +30,7 @@ export default class RewriteBinaryDataProvider implements DataProvider {
   _provider: DataProvider;
   _extensionPoint: ExtensionPoint;
   _writer: BinaryMessageWriter;
-  _datatypeByTopic: { [topic: string]: string };
+  _datatypeNamesByTopic: { [topic: string]: string };
   _datatypes: RosDatatypes;
 
   constructor(_: {||}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
@@ -51,18 +52,18 @@ export default class RewriteBinaryDataProvider implements DataProvider {
     await this._writer.initialize();
 
     try {
-      const datatypesByTopic = {};
+      const datatypeNamesByTopic = {};
       topics.forEach((topic) => {
-        datatypesByTopic[topic.name] = topic.datatype;
+        datatypeNamesByTopic[topic.name] = topic.datatypeName;
       });
       const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
         messageDefinitions.messageDefinitionsByTopic,
         messageDefinitions.parsedMessageDefinitionsByTopic,
-        datatypesByTopic
+        datatypeNamesByTopic
       );
       this._writer.registerDefinitions(fakeDatatypes);
       this._datatypes = fakeDatatypes;
-      this._datatypeByTopic = fakeDatatypesByTopic;
+      this._datatypeNamesByTopic = fakeDatatypesByTopic;
     } catch (err) {
       sendNotification(
         "Failed to register type definitions",
@@ -81,17 +82,18 @@ export default class RewriteBinaryDataProvider implements DataProvider {
     });
 
     const bobjects = [];
+    const startTime = performance.now();
 
     try {
       if (rosBinaryMessages) {
         const messagesByTopic = groupBy(rosBinaryMessages, "topic");
         Object.keys(messagesByTopic).forEach((topic) => {
-          const definitionName = this._datatypeByTopic[topic];
+          const definitionName = this._datatypeNamesByTopic[topic];
           const messages = messagesByTopic[topic];
           const binary = this._writer.rewriteMessages(definitionName, messages);
           const binaryObjects = getObjects(
             this._datatypes,
-            this._datatypeByTopic[topic],
+            this._datatypeNamesByTopic[topic],
             binary.buffer,
             binary.bigString,
             binary.offsets
@@ -113,6 +115,8 @@ export default class RewriteBinaryDataProvider implements DataProvider {
         "error"
       );
     }
+    const rewriteBinaryDataTimeMs = performance.now() - startTime;
+    logBatchedEventTotals("performance", "PLAYBACK_PERFORMANCE", {}, { rewriteBinaryDataTimeMs });
 
     return {
       bobjects: bobjects.sort(
@@ -125,5 +129,12 @@ export default class RewriteBinaryDataProvider implements DataProvider {
 
   close(): Promise<void> {
     return this._provider.close();
+  }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
   }
 }

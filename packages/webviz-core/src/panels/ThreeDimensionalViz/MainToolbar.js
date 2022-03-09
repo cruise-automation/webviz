@@ -15,16 +15,16 @@ import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 
-type Props = {
+type Props = {|
   measuringTool: ?MeasuringTool,
   measureInfo: MeasureInfo,
   perspective: boolean,
   debug: boolean,
   onToggleCameraMode: () => void,
   onToggleDebug: () => void,
-};
+|};
 
 function MainToolbar({
   measuringTool,

@@ -7,7 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import { difference, keyBy, uniq, mapValues, xor, isEqual, flatten, omit } from "lodash";
-import { useMemo, useCallback, useRef, createContext } from "react";
+import { useMemo, useCallback, useRef } from "react";
+import shallowequal from "shallowequal";
 import { useDebounce } from "use-debounce";
 
 import generateNodeKey from "./generateNodeKey";
@@ -22,7 +23,7 @@ import type {
 import filterMap from "webviz-core/src/filterMap";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
-import { useShallowMemo } from "webviz-core/src/util/hooks";
+import { useShallowMemo, useContextSelector, createSelectableContext } from "webviz-core/src/util/hooks";
 
 const DEFAULT_TOPICS_COUNT_BY_KEY = {};
 
@@ -159,7 +160,7 @@ export default function useTopicTree({
 
     // Precompute uncategorized topics to add to the transformedTreeConfig before generating the TreeNodes.
     const uncategorizedTopicNames = difference(nonPrefixedTopicNames, topicTreeTopics);
-    const datatypesByTopic = mapValues(keyBy(providerTopics, "name"), (item) => item.datatype);
+    const datatypesByTopic = mapValues(keyBy(providerTopics, "name"), (item) => item.datatypeName);
 
     const newChildren = [...(topicTreeConfig.children || [])];
     if (uncategorizedTopicNames.length) {
@@ -707,4 +708,21 @@ export default function useTopicTree({
   };
 }
 
-export const TopicTreeContext = createContext<UseTreeOutput | null>(null);
+export const TopicTreeContext = createSelectableContext<UseTreeOutput>();
+
+export function useTopicTreeActions() {
+  return useContextSelector(
+    TopicTreeContext,
+    useCallback(
+      (ctx) => ({
+        toggleCheckAllAncestors: ctx.toggleCheckAllAncestors,
+        toggleCheckAllDescendants: ctx.toggleCheckAllDescendants,
+        toggleNamespaceChecked: ctx.toggleNamespaceChecked,
+        toggleNodeChecked: ctx.toggleNodeChecked,
+        toggleNodeExpanded: ctx.toggleNodeExpanded,
+      }),
+      []
+    ),
+    { memoResolver: shallowequal }
+  );
+}

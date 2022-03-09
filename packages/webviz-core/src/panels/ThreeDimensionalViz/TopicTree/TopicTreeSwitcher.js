@@ -18,11 +18,13 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const SWITCHER_HEIGHT = 30;
+
 const STopicTreeSwitcher = styled.div`
   width: 28px;
   display: flex;
   height: ${SWITCHER_HEIGHT}px;
   position: relative;
+  flex: 0 0 auto;
 
   // We have to re-enable pointer-events here because they are disabled in STopicTreeWrapper
   pointer-events: auto;

@@ -14,7 +14,7 @@ import "react-resizable/css/styles.css";
 import styles from "./index.module.scss";
 import Resizable, { type ResizeHandleAxis, type ContainerSize } from "webviz-core/src/components/Resizable";
 
-type Props = {
+type Props = {|
   children: any,
   className?: string,
   style?: { [string]: any },
@@ -25,7 +25,7 @@ type Props = {
   minConstraints?: [number, number],
   initialSize?: ?[number, number],
   onResize?: (size: ContainerSize) => void,
-};
+|};
 
 // a small component which wraps its children in menu styles
 // and provides a helper { Item } component which can be used

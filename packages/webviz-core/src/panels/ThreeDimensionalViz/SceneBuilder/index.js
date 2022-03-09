@@ -50,6 +50,7 @@ import {
   GEOMETRY_MSGS$POSE_STAMPED,
   NAV_MSGS$PATH,
   NAV_MSGS$OCCUPANCY_GRID,
+  WEBVIZ_MSGS$OCCUPANCY_GRID,
   SENSOR_MSGS$POINT_CLOUD_2,
   SENSOR_MSGS$LASER_SCAN,
   GEOMETRY_MSGS$POLYGON_STAMPED,
@@ -783,6 +784,9 @@ export default class SceneBuilder implements MarkerProvider {
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
+      case WEBVIZ_MSGS$OCCUPANCY_GRID:
+        this._consumeNonMarkerMessage(topic, deepParse(message), 101);
+        break;
       case NAV_MSGS$PATH: {
         const pathStamped = cast<BinaryPath>(message);
         if (pathStamped.poses().length() === 0) {
@@ -865,7 +869,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].setClock(this._clock);
     this.collectors[topic].flush();
 
-    const datatype = this.topicsByName[topic].datatype;
+    const datatype = this.topicsByName[topic].datatypeName;
     // If topic has a decayTime set, markers with no lifetime will get one
     // later on, so we don't need to filter them. Note: A decayTime of zero is
     // defined as an infinite lifetime
@@ -899,18 +903,18 @@ export default class SceneBuilder implements MarkerProvider {
         }
 
         // Highlight if marker matches any of this topic's highlightMarkerMatchers; dim other markers
-        if (Object.keys(this._highlightMarkerMatchersByTopic).length > 0) {
-          const markerMatches = (this._highlightMarkerMatchersByTopic[topic.name] || []).some(({ checks = [] }) =>
-            checks.every(({ markerKeyPath, value }) => {
-              const markerValue = _.get(message, markerKeyPath);
-              return value === markerValue;
-            })
-          );
-          marker.interactionData.highlighted = markerMatches;
-        }
+        const markerMatches = (this._highlightMarkerMatchersByTopic[topic.name] || []).some(({ checks = [] }) =>
+          checks.every(({ markerKeyPath, value }) => {
+            const markerValue = _.get(message, markerKeyPath);
+            return value === markerValue;
+          })
+        );
+
+        marker.interactionData.highlighted = markerMatches;
 
         // TODO(bmc): once we support more topic settings
         // flesh this out to be more marker type agnostic
+
         const settings = this._settingsByKey[`t:${topic.name}`];
         if (settings) {
           marker.settings = settings;

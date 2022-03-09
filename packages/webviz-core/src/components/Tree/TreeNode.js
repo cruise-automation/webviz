@@ -24,9 +24,9 @@ import styles from "./index.module.scss";
 import type { Node } from "./Node";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 
-type Props = {
+type Props = {|
   node: Node,
   depth: number,
   disableCheckbox: ?boolean,
@@ -36,7 +36,7 @@ type Props = {
   onToggleVisibility?: (node: Node) => void,
   onToggleCheck: (node: Node) => void,
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, node: Node) => void,
-};
+|};
 
 export default class TreeNode extends Component<Props> {
   onCheckboxClick = () => {

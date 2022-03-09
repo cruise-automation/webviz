@@ -1,8 +1,10 @@
 {
   "tf2_msgs/TFMessage": {
+    "name": "tf2_msgs/TFMessage",
     "fields": [{ "type": "geometry_msgs/TransformStamped", "name": "transforms", "isArray": true, "isComplex": true }]
   },
   "geometry_msgs/TransformStamped": {
+    "name": "geometry_msgs/TransformStamped",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "string", "name": "child_frame_id", "isArray": false, "isComplex": false },
@@ -10,6 +12,7 @@
     ]
   },
   "std_msgs/Header": {
+    "name": "std_msgs/Header",
     "fields": [
       { "type": "uint32", "name": "seq", "isArray": false, "isComplex": false },
       { "type": "time", "name": "stamp", "isArray": false, "isComplex": false },
@@ -17,12 +20,14 @@
     ]
   },
   "geometry_msgs/Transform": {
+    "name": "geometry_msgs/Transform",
     "fields": [
       { "type": "geometry_msgs/Vector3", "name": "translation", "isArray": false, "isComplex": true },
       { "type": "geometry_msgs/Quaternion", "name": "rotation", "isArray": false, "isComplex": true }
     ]
   },
   "geometry_msgs/Vector3": {
+    "name": "geometry_msgs/Vector3",
     "fields": [
       { "type": "float64", "name": "x", "isArray": false, "isComplex": false },
       { "type": "float64", "name": "y", "isArray": false, "isComplex": false },
@@ -30,6 +35,7 @@
     ]
   },
   "geometry_msgs/Quaternion": {
+    "name": "geometry_msgs/Quaternion",
     "fields": [
       { "type": "float64", "name": "x", "isArray": false, "isComplex": false },
       { "type": "float64", "name": "y", "isArray": false, "isComplex": false },
@@ -38,6 +44,7 @@
     ]
   },
   "sensor_msgs/Image": {
+    "name": "sensor_msgs/Image",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "uint32", "name": "height", "isArray": false, "isComplex": false },
@@ -49,18 +56,21 @@
     ]
   },
   "velodyne_msgs/VelodyneScan": {
+    "name": "velodyne_msgs/VelodyneScan",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "velodyne_msgs/VelodynePacket", "name": "packets", "isArray": true, "isComplex": true }
     ]
   },
   "velodyne_msgs/VelodynePacket": {
+    "name": "velodyne_msgs/VelodynePacket",
     "fields": [
       { "type": "time", "name": "stamp", "isArray": false, "isComplex": false },
       { "type": "uint8", "name": "data", "isArray": true, "arrayLength": 1206, "isComplex": false }
     ]
   },
   "sensor_msgs/PointCloud2": {
+    "name": "sensor_msgs/PointCloud2",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "uint32", "name": "height", "isArray": false, "isComplex": false },
@@ -74,6 +84,7 @@
     ]
   },
   "sensor_msgs/PointField": {
+    "name": "sensor_msgs/PointField",
     "fields": [
       { "type": "uint8", "name": "INT8", "isConstant": true, "value": 1 },
       { "type": "uint8", "name": "UINT8", "isConstant": true, "value": 2 },
@@ -90,6 +101,7 @@
     ]
   },
   "sensor_msgs/Range": {
+    "name": "sensor_msgs/Range",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "uint8", "name": "ULTRASOUND", "isConstant": true, "value": 0 },
@@ -102,12 +114,14 @@
     ]
   },
   "radar_driver/RadarTracks": {
+    "name": "radar_driver/RadarTracks",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "radar_driver/Track", "name": "tracks", "isArray": true, "isComplex": true }
     ]
   },
   "radar_driver/Track": {
+    "name": "radar_driver/Track",
     "fields": [
       { "type": "uint32", "name": "status", "isArray": false, "isComplex": false },
       { "type": "uint32", "name": "number", "isArray": false, "isComplex": false },
@@ -123,6 +137,7 @@
     ]
   },
   "diagnostic_msgs/DiagnosticStatus": {
+    "name": "diagnostic_msgs/DiagnosticStatus",
     "fields": [
       { "type": "int8", "name": "OK", "isConstant": true, "value": 0 },
       { "type": "int8", "name": "WARN", "isConstant": true, "value": 1 },
@@ -136,18 +151,21 @@
     ]
   },
   "diagnostic_msgs/KeyValue": {
+    "name": "diagnostic_msgs/KeyValue",
     "fields": [
       { "type": "string", "name": "key", "isArray": false, "isComplex": false },
       { "type": "string", "name": "value", "isArray": false, "isComplex": false }
     ]
   },
   "diagnostic_msgs/DiagnosticArray": {
+    "name": "diagnostic_msgs/DiagnosticArray",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "diagnostic_msgs/DiagnosticStatus", "name": "status", "isArray": true, "isComplex": true }
     ]
   },
   "sensor_msgs/TimeReference": {
+    "name": "sensor_msgs/TimeReference",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "time", "name": "time_ref", "isArray": false, "isComplex": false },
@@ -155,6 +173,7 @@
     ]
   },
   "sensor_msgs/NavSatFix": {
+    "name": "sensor_msgs/NavSatFix",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "sensor_msgs/NavSatStatus", "name": "status", "isArray": false, "isComplex": true },
@@ -170,6 +189,7 @@
     ]
   },
   "sensor_msgs/NavSatStatus": {
+    "name": "sensor_msgs/NavSatStatus",
     "fields": [
       { "type": "int8", "name": "STATUS_NO_FIX", "isConstant": true, "value": -1 },
       { "type": "int8", "name": "STATUS_FIX", "isConstant": true, "value": 0 },
@@ -184,6 +204,7 @@
     ]
   },
   "nav_msgs/Odometry": {
+    "name": "nav_msgs/Odometry",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "string", "name": "child_frame_id", "isArray": false, "isComplex": false },
@@ -192,18 +213,21 @@
     ]
   },
   "geometry_msgs/PoseWithCovariance": {
+    "name": "geometry_msgs/PoseWithCovariance",
     "fields": [
       { "type": "geometry_msgs/Pose", "name": "pose", "isArray": false, "isComplex": true },
       { "type": "float64", "name": "covariance", "isArray": true, "arrayLength": 36, "isComplex": false }
     ]
   },
   "geometry_msgs/Pose": {
+    "name": "geometry_msgs/Pose",
     "fields": [
       { "type": "geometry_msgs/Point", "name": "position", "isArray": false, "isComplex": true },
       { "type": "geometry_msgs/Quaternion", "name": "orientation", "isArray": false, "isComplex": true }
     ]
   },
   "geometry_msgs/Point": {
+    "name": "geometry_msgs/Point",
     "fields": [
       { "type": "float64", "name": "x", "isArray": false, "isComplex": false },
       { "type": "float64", "name": "y", "isArray": false, "isComplex": false },
@@ -211,18 +235,21 @@
     ]
   },
   "geometry_msgs/TwistWithCovariance": {
+    "name": "geometry_msgs/TwistWithCovariance",
     "fields": [
       { "type": "geometry_msgs/Twist", "name": "twist", "isArray": false, "isComplex": true },
       { "type": "float64", "name": "covariance", "isArray": true, "arrayLength": 36, "isComplex": false }
     ]
   },
   "geometry_msgs/Twist": {
+    "name": "geometry_msgs/Twist",
     "fields": [
       { "type": "geometry_msgs/Vector3", "name": "linear", "isArray": false, "isComplex": true },
       { "type": "geometry_msgs/Vector3", "name": "angular", "isArray": false, "isComplex": true }
     ]
   },
   "bond/Status": {
+    "name": "bond/Status",
     "fields": [
       { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
       { "type": "string", "name": "id", "isArray": false, "isComplex": false },
@@ -234,9 +261,11 @@
   },
 
   "visualization_msgs/MarkerArray": {
+    "name": "visualization_msgs/MarkerArray",
     "fields": [{ "isArray": true, "isComplex": true, "name": "markers", "type": "visualization_msgs/Marker" }]
   },
   "visualization_msgs/Marker": {
+    "name": "visualization_msgs/Marker",
     "fields": [
       { "type": "uint8", "name": "ARROW", "isConstant": true, "value": 0 },
       { "type": "uint8", "name": "CUBE", "isConstant": true, "value": 1 },
@@ -271,6 +300,7 @@
     ]
   },
   "std_msgs/ColorRGBA": {
+    "name": "std_msgs/ColorRGBA",
     "fields": [
       { "type": "float32", "name": "r", "isArray": false, "isComplex": false },
       { "type": "float32", "name": "g", "isArray": false, "isComplex": false },

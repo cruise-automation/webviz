@@ -41,8 +41,8 @@ function Context(props: { children: React.Node, store?: any }) {
   return (
     <PanelSetup
       fixture={{
-        topics: [{ name: "/some/topic", datatype: "some_datatype" }],
-        datatypes: { some_datatype: { fields: [] } },
+        topics: [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }],
+        datatypes: { some_datatype: { name: "some_datatype", fields: [] } },
         frame: {},
       }}
       {...extraProps}>
@@ -67,10 +67,10 @@ describe("Panel", () => {
       {
         capabilities: [],
         config: { someString: "hello world" },
-        datatypes: { some_datatype: { fields: [] } },
+        datatypes: { some_datatype: { name: "some_datatype", fields: [] } },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
-        topics: [{ datatype: "some_datatype", name: "/some/topic" }],
+        topics: [{ datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some/topic" }],
         isHovered: false,
       },
     ]);
@@ -96,10 +96,10 @@ describe("Panel", () => {
       {
         capabilities: [],
         config: { someString },
-        datatypes: { some_datatype: { fields: [] } },
+        datatypes: { some_datatype: { name: "some_datatype", fields: [] } },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
-        topics: [{ datatype: "some_datatype", name: "/some/topic" }],
+        topics: [{ datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some/topic" }],
         isHovered: false,
       },
     ]);

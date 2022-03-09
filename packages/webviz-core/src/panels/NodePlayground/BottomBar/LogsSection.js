@@ -10,8 +10,7 @@ import Tree from "react-json-tree";
 import styled from "styled-components";
 
 import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
-import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import { colors, jsonTreeTheme } from "webviz-core/src/util/sharedStyleConstants";
 
 const SListItem = styled.li`
   display: flex;
@@ -24,11 +23,11 @@ const SListItem = styled.li`
   }
 `;
 
-type Props = {
+type Props = {|
   nodeId: ?string,
   logs: UserNodeLog[],
   clearLogs: (nodeId: string) => void,
-};
+|};
 
 const valueColorMap = {
   string: jsonTreeTheme.base0B,

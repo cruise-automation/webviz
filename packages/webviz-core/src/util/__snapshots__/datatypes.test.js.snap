@@ -18,6 +18,7 @@ Object {
           "type": "f_0_2",
         },
       ],
+      "name": "name",
     },
     "f_0_1": Object {
       "fields": Array [
@@ -28,6 +29,7 @@ Object {
           "type": "int32",
         },
       ],
+      "name": "test_msgs/DifferentNestedType",
     },
     "f_0_2": Object {
       "fields": Array [
@@ -38,6 +40,7 @@ Object {
           "type": "int32",
         },
       ],
+      "name": "test_msgs/SameNestedType",
     },
     "f_0_3": Object {
       "fields": Array [
@@ -54,6 +57,7 @@ Object {
           "type": "f_0_2",
         },
       ],
+      "name": "name",
     },
     "f_0_4": Object {
       "fields": Array [
@@ -64,6 +68,7 @@ Object {
           "type": "int32",
         },
       ],
+      "name": "test_msgs/DifferentNestedType",
     },
   },
   "fakeDatatypesByTopic": Object {

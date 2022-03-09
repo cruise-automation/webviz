@@ -126,4 +126,11 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
     this._db.close();
     return this._provider.close();
   }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

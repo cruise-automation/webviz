@@ -34,7 +34,7 @@ describe("BinaryMessageWriter", () => {
   it("fails to register definition if not initialized", () => {
     disableConsoleWarnings();
     const writer = new BinaryMessageWriter();
-    expect(() => writer.registerDefinition("someType", { fields: [] })).toThrow();
+    expect(() => writer.registerDefinition("someType", { name: "someType", fields: [] })).toThrow();
   });
 
   it("fails to register definitions if not initialized", () => {
@@ -57,10 +57,12 @@ describe("BinaryMessageWriter", () => {
     await writer2.initialize();
 
     writer1.registerDefinition("msgs/type1", {
+      name: "msgs/type1",
       fields: [{ type: "bool", name: "value" }],
     });
 
     writer2.registerDefinition("msgs/type2", {
+      name: "msgs/type2",
       fields: [{ type: "bool", name: "value" }],
     });
 
@@ -85,6 +87,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "bool", name: "value" }],
           })
           .getSize()
@@ -92,6 +95,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "time", name: "value" }],
           })
           .getSize()
@@ -99,6 +103,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "duration", name: "value" }],
           })
           .getSize()
@@ -106,6 +111,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "string", name: "value" }],
           })
           .getSize()
@@ -113,6 +119,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "json", name: "value" }],
           })
           .getSize()
@@ -120,6 +127,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "int8", name: "value" }],
           })
           .getSize()
@@ -127,6 +135,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "uint8", name: "value" }],
           })
           .getSize()
@@ -134,6 +143,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "int16", name: "value" }],
           })
           .getSize()
@@ -141,6 +151,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "uint16", name: "value" }],
           })
           .getSize()
@@ -148,6 +159,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "int32", name: "value" }],
           })
           .getSize()
@@ -155,6 +167,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "uint32", name: "value" }],
           })
           .getSize()
@@ -162,6 +175,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "int64", name: "value" }],
           })
           .getSize()
@@ -169,6 +183,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "uint64", name: "value" }],
           })
           .getSize()
@@ -176,6 +191,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "float32", name: "value" }],
           })
           .getSize()
@@ -183,6 +199,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "float64", name: "value" }],
           })
           .getSize()
@@ -201,6 +218,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "int32", name: "values", isArray: true, arrayLength: 10 }],
           })
           .getSize()
@@ -246,6 +264,7 @@ describe("definitions", () => {
       disableConsoleWarnings();
       expect(() =>
         writer.registerDefinition("msgs/test", {
+          name: "msgs/test",
           fields: [{ type: "std_msgs/Header", name: "header", isComplex: true }, { type: "int32", name: "value" }],
         })
       ).toThrow(`Invalid definition "msgs/test"`);
@@ -286,6 +305,7 @@ describe("definitions", () => {
       expect(
         writer
           .registerDefinition("msgs/test", {
+            name: "msgs/test",
             fields: [{ type: "bool", name: "value", isConstant: true }],
           })
           .getSize()
@@ -297,6 +317,7 @@ describe("definitions", () => {
     disableConsoleWarnings();
     expect(() =>
       writer.registerDefinition("msgs/test2", {
+        name: "msgs/test2",
         fields: [{ type: "unknownType", name: "value" }],
       })
     ).toThrow(`Invalid definition "msgs/test2"`);
@@ -321,6 +342,7 @@ describe("rewriteMessages", () => {
   describe("basic types", () => {
     const withBasicType = (type: string, data: ArrayBuffer) => {
       writer.registerDefinition(`msgs/test_${type}`, {
+        name: `msgs/test_${type}`,
         fields: [{ type, name: "value" }],
       });
       const messages = [
@@ -463,6 +485,7 @@ describe("rewriteMessages", () => {
 
     it("handles a message with time", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "time", name: "value" }],
       });
       const messages = [
@@ -492,6 +515,7 @@ describe("rewriteMessages", () => {
 
     it("handles a message with duration", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "duration", name: "value" }],
       });
       const messages = [
@@ -523,6 +547,7 @@ describe("rewriteMessages", () => {
   describe("strings", () => {
     it("rewrites a message with string", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "string", name: "text" }],
       });
       const messages = [
@@ -552,6 +577,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an empty string", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "string", name: "text" }],
       });
       const messages = [
@@ -582,6 +608,7 @@ describe("rewriteMessages", () => {
   describe("json", () => {
     it("rewrites a message with json", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "json", name: "text" }],
       });
       const messages = [
@@ -611,6 +638,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an empty json", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "json", name: "text" }],
       });
       const messages = [
@@ -641,6 +669,7 @@ describe("rewriteMessages", () => {
   describe("arrays", () => {
     it("rewrites a message with an array of values", () => {
       writer.registerDefinition("msgs/values", {
+        name: "msgs/values",
         fields: [{ type: "float32", name: "values", isArray: true }],
       });
       const messages = [
@@ -678,6 +707,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an empty array", () => {
       writer.registerDefinition("msgs/emptyArray", {
+        name: "msgs/emptyArray",
         fields: [{ type: "float32", name: "values", isArray: true }],
       });
       const messages = [
@@ -708,6 +738,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with a constant-sized array of values", () => {
       writer.registerDefinition("msgs/test_constant", {
+        name: "msgs/test_constant",
         fields: [{ type: "float32", name: "values", isArray: true, arrayLength: 4 }],
       });
       const messages = [
@@ -744,6 +775,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with a zero-sized array of values", () => {
       writer.registerDefinition("msgs/test_constant_zero", {
+        name: "msgs/test_constant_zero",
         fields: [{ type: "float32", name: "values", isArray: true, arrayLength: 0 }],
       });
       const messages = [
@@ -773,6 +805,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an array of strings", () => {
       writer.registerDefinition("msgs/stringArray", {
+        name: "msgs/stringArray",
         fields: [{ type: "string", name: "lines", isArray: true }],
       });
       const messages = [
@@ -827,6 +860,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an array of empty strings", () => {
       writer.registerDefinition("msgs/emptyStringArray", {
+        name: "msgs/emptyStringArray",
         fields: [{ type: "string", name: "lines", isArray: true }],
       });
       const messages = [
@@ -873,6 +907,7 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an array of json", () => {
       writer.registerDefinition("msgs/jsonArray", {
+        name: "msgs/jsonArray",
         fields: [{ type: "json", name: "objects", isArray: true }],
       });
       const messages = [
@@ -917,9 +952,11 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an array of point arrays", () => {
       writer.registerDefinition("msgs/points", {
+        name: "msgs/points",
         fields: [{ type: "float32", name: "points", isArray: true }],
       });
       writer.registerDefinition("msgs/pointsArray", {
+        name: "msgs/pointsArray",
         fields: [{ type: "msgs/points", name: "points", isArray: true }],
       });
       const messages = [
@@ -982,9 +1019,11 @@ describe("rewriteMessages", () => {
 
     it("rewrites a message with an array of empty point arrays", () => {
       writer.registerDefinition("msgs/points", {
+        name: "msgs/points",
         fields: [{ type: "float32", name: "points", isArray: true }],
       });
       writer.registerDefinition("msgs/emptyPointsArray", {
+        name: "msgs/emptyPointsArray",
         fields: [{ type: "msgs/points", name: "points", isArray: true }],
       });
       const messages = [
@@ -1093,6 +1132,7 @@ describe("rewriteMessages", () => {
   describe("complex types", () => {
     it("handles multiple fields", () => {
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [
           { type: "time", name: "stamp" },
           { type: "time", name: "duration" },
@@ -1156,6 +1196,7 @@ describe("rewriteMessages", () => {
 
     it("handles a complex type with no fields", () => {
       writer.registerDefinition("msgs/emptyComplex", {
+        name: "msgs/emptyComplex",
         fields: [],
       });
       const messages = [
@@ -1179,6 +1220,7 @@ describe("rewriteMessages", () => {
     it("rewrites a message with header", () => {
       writer.registerDefinition("std_msgs/Header", definitions["std_msgs/Header"]);
       writer.registerDefinition("msgs/test", {
+        name: "msgs/test",
         fields: [{ type: "std_msgs/Header", name: "header", isComplex: true }, { type: "int32", name: "value" }],
       });
       const messages = [
@@ -1220,6 +1262,7 @@ describe("rewriteMessages", () => {
       expect(() =>
         writer.registerDefinitions({
           "msgs/test": {
+            name: "msgs/test",
             fields: [{ type: "std_msgs/Header", name: "header", isComplex: true }, { type: "int32", name: "value" }],
           },
           "std_msgs/Header": definitions["std_msgs/Header"],
@@ -1266,6 +1309,7 @@ describe("rewriteMessages", () => {
       writer.registerDefinitions({
         "std_msgs/Header": definitions["std_msgs/Header"],
         "msgs/test": {
+          name: "msgs/test",
           fields: [
             { type: "std_msgs/Header", name: "header", isComplex: true },
             { type: "int32", name: "value" },
@@ -1354,6 +1398,7 @@ describe("rewriteMessages", () => {
     it("handles marker arrays with points (simplified)", () => {
       writer.registerDefinition("std_msgs/Header", definitions["std_msgs/Header"]);
       writer.registerDefinition("visualization_msgs/Marker", {
+        name: "visualization_msgs/Marker",
         fields: [
           { type: "std_msgs/Header", name: "header", isComplex: true },
           { type: "uint32", name: "type" },
@@ -1361,6 +1406,7 @@ describe("rewriteMessages", () => {
         ],
       });
       writer.registerDefinition("visualization_msgs/MarkerArray", {
+        name: "visualization_msgs/MarkerArray",
         fields: [{ type: "visualization_msgs/Marker", name: "markers", isArray: true }],
       });
       const messages = [
@@ -1468,6 +1514,7 @@ describe("rewriteMessages", () => {
       disableConsoleWarnings();
       expect(() =>
         writer.registerDefinition("visualization_msgs/Marker", {
+          name: "visualization_msgs/Marker",
           fields: [
             { type: "std_msgs/Header", name: "header", isComplex: true }, // not defined
             { type: "uint32", name: "type" },
@@ -1477,6 +1524,7 @@ describe("rewriteMessages", () => {
       ).toThrow();
       expect(() =>
         writer.registerDefinition("visualization_msgs/MarkerArray", {
+          name: "visualization_msgs/MarkerArray",
           fields: [{ type: "visualization_msgs/Marker", name: "markers", isArray: true }],
         })
       ).toThrow();
@@ -1514,6 +1562,7 @@ describe("rewriteMessages", () => {
       writer.registerDefinitions({
         "std_msgs/Header": definitions["std_msgs/Header"],
         "msgs/test": {
+          name: "msgs/test",
           fields: [
             { type: "std_msgs/Header", name: "header", isComplex: true },
             { type: "int32", name: "value" },

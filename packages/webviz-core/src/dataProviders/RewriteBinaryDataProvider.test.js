@@ -37,9 +37,15 @@ function getProvider(rosBinaryMessages: TypedMessage<ArrayBuffer>[], unlimitedCa
     messages,
     unlimitedCache,
     providesParsedMessages: false,
-    datatypes: { empty: { fields: [] } },
-    topics: [{ name: "/foo", datatype: "empty" }, { name: "/bar", datatype: "empty" }],
-    parsedMessageDefinitionsByTopic: { "/foo": [{ definitions: [] }], "/bar": [{ definitions: [] }] },
+    datatypes: { empty: { name: "empty", fields: [] } },
+    topics: [
+      { name: "/foo", datatypeName: "empty", datatypeId: "empty" },
+      { name: "/bar", datatypeName: "empty", datatypeId: "empty" },
+    ],
+    parsedMessageDefinitionsByTopic: {
+      "/foo": [{ name: "empty", definitions: [] }],
+      "/bar": [{ name: "empty", definitions: [] }],
+    },
   });
   return {
     provider: new RewriteBinaryDataProvider(
@@ -57,12 +63,18 @@ describe("RewriteBinaryDataProvider", () => {
     expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
-      topics: [{ name: "/foo", datatype: "empty" }, { name: "/bar", datatype: "empty" }],
+      topics: [
+        { name: "/foo", datatypeName: "empty", datatypeId: "empty" },
+        { name: "/bar", datatypeName: "empty", datatypeId: "empty" },
+      ],
       messageDefinitions: {
         type: "parsed",
-        datatypes: { empty: { fields: [] } },
+        datatypes: { empty: { name: "empty", fields: [] } },
         messageDefinitionsByTopic: {},
-        parsedMessageDefinitionsByTopic: { "/foo": [{ definitions: [] }], "/bar": [{ definitions: [] }] },
+        parsedMessageDefinitionsByTopic: {
+          "/foo": [{ name: "empty", definitions: [] }],
+          "/bar": [{ name: "empty", definitions: [] }],
+        },
       },
       providesParsedMessages: false,
     });

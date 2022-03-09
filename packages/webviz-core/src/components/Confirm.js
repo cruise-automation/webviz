@@ -16,7 +16,7 @@ import renderToBody from "webviz-core/src/components/renderToBody";
 
 type ConfirmStyle = "danger" | "primary";
 
-type Props = {
+type Props = {|
   // the title of the confirm modal - defaults to 'Are you sure?'
   title?: string,
   // the prompt text in the body of the confirm modal
@@ -29,7 +29,7 @@ type Props = {
 
   // whether to use red/green/no color on the confirm button
   confirmStyle?: ConfirmStyle,
-};
+|};
 
 // shows a confirmation modal to the user with an ok and a cancel button
 // returns a promise which resolves with true if the user confirmed the modal
@@ -42,7 +42,7 @@ export default (props: Props): Promise<boolean> => {
         <div className={styles.container}>
           <Title>{props.title || "Are you sure?"}</Title>
           <hr />
-          <Flex col style={{ padding: "32px" }}>
+          <Flex grow col style={{ padding: "32px" }}>
             <div className={styles.prompt}>{props.prompt}</div>
             <div className={styles.controls}>
               {props.cancel !== false && <Button onClick={() => close(false)}>{props.cancel || "Cancel"}</Button>}

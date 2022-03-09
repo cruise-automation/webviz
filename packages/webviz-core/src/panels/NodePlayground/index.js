@@ -17,8 +17,10 @@ import uuid from "uuid";
 
 import { type Script } from "./script";
 import { setUserNodes as setUserNodesAction } from "webviz-core/src/actions/panels";
+import { fetchPublishedNodes, fetchPublishedNodesList, publishNode } from "webviz-core/src/actions/userNodes";
 import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import Item from "webviz-core/src/components/Menu/Item";
@@ -27,12 +29,16 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import ResizableSplitFlex from "webviz-core/src/components/ResizableSplitFlex";
 import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
 import TextContent from "webviz-core/src/components/TextContent";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import BottomBar from "webviz-core/src/panels/NodePlayground/BottomBar";
 import Playground from "webviz-core/src/panels/NodePlayground/playground-icon.svg";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
 import type { UserNodes } from "webviz-core/src/types/panels";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
+import { useGetCurrentValue } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
+
+const WEBVIZ_SOURCE_TWO_REGEX = new RegExp(`^${$WEBVIZ_SOURCE_2}`);
 
 const Editor = React.lazy(() =>
   import(/* webpackChunkName: "node-playground-editor" */ "webviz-core/src/panels/NodePlayground/Editor")
@@ -44,7 +50,7 @@ type Output = {};
 type GlobalVariables = { id: number };
 
 export const inputs = [];
-export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+export const output = "{{OUTPUT_TOPIC_PLACEHOLDER}}";
 
 // Populate 'Input' with a parameter to properly type your inputs, e.g. 'Input<"/your_input_topic">'
 const publisher = (message: Input<>, globalVars: GlobalVariables): Output => {
@@ -54,7 +60,11 @@ const publisher = (message: Input<>, globalVars: GlobalVariables): Output => {
 export default publisher;`;
 
 type Config = {|
+  // Either selectedNodeId or selectedPublishedNodeTopic should be set at any given time.
+  // Set when a user selects any node installed in the layout, published or layout-local
   selectedNodeId: ?string,
+  // Set when a user previews a published node from the published nodes list.
+  selectedPublishedNodeTopic?: ?string,
   // Used only for storybook screenshot testing.
   editorForStorybook?: React.Node,
   // Used only for storybook screenshot testing.
@@ -109,7 +119,7 @@ const SWelcomeScreen = styled.div`
   }
 `;
 
-export type Explorer = null | "docs" | "nodes" | "utils" | "templates";
+export type Explorer = null | "docs" | "nodes" | "utils" | "templates" | "publishedNodes";
 
 const WelcomeScreen = ({
   addNewNode,
@@ -145,33 +155,44 @@ const WelcomeScreen = ({
 
 function NodePlayground(props: Props) {
   const { config, saveConfig } = props;
-  const { autoFormatOnSave, selectedNodeId, editorForStorybook, vimMode } = config;
+  const { autoFormatOnSave, selectedNodeId, selectedPublishedNodeTopic, editorForStorybook, vimMode } = config;
+  const getSelectedPublishedTopic = useGetCurrentValue(selectedPublishedNodeTopic);
 
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
   const [bottomBarSplitPercent, setBottomBarSplitPercent] = React.useState<number>(1);
+  const [scriptBackStack, setScriptBackStack] = React.useState<Script[]>([]);
 
   const bottomBarOpen = bottomBarSplitPercent < 0.95;
   const toggleBottomBarOpen = React.useCallback(() => setBottomBarSplitPercent(bottomBarOpen ? 1 : 0.8), [
     bottomBarOpen,
   ]);
-
-  const userNodes = useSelector((state) => state.persistedState.panels.userNodes);
-  const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
-  const rosLib = useSelector((state) => state.userNodes.rosLib);
+  const nodePlaygroundSourceControl = useExperimentalFeature("nodePlaygroundSourceControl");
+  const getPublishedNodesApi = useGetCurrentValue(getGlobalHooks().getPublishedNodesApi());
 
   const dispatch = useDispatch();
-  const setUserNodes = React.useCallback((payload: UserNodes) => dispatch(setUserNodesAction(payload)), [dispatch]);
+  const userNodes = useSelector((state) => state.persistedState.panels.userNodes);
+  const { rosLib, publishedNodesList, publishedNodesByTopic, userNodeDiagnostics } = useSelector(
+    (state) => state.userNodes
+  );
 
   const selectedNodeDiagnostics =
     selectedNodeId && userNodeDiagnostics[selectedNodeId] ? userNodeDiagnostics[selectedNodeId].diagnostics : [];
+  const selectedCompiledNodeData = selectedNodeId ? userNodeDiagnostics[selectedNodeId] : null;
   const selectedNode = selectedNodeId ? userNodes[selectedNodeId] : undefined;
-  const [scriptBackStack, setScriptBackStack] = React.useState<Script[]>([]);
+  const selectedPublishedNode =
+    !selectedNodeId && selectedPublishedNodeTopic ? publishedNodesByTopic[selectedPublishedNodeTopic] : null;
+
   // Holds the currently active script
   const currentScript = scriptBackStack.length > 0 ? scriptBackStack[scriptBackStack.length - 1] : null;
   const isCurrentScriptSelectedNode = !!selectedNode && !!currentScript && currentScript.filePath === selectedNode.name;
-  const isNodeSaved = !isCurrentScriptSelectedNode || currentScript?.code === selectedNode?.sourceCode;
+  const isNodeSaved =
+    !isCurrentScriptSelectedNode || selectedNode?.published || currentScript?.code === selectedNode?.sourceCode;
   const selectedNodeLogs =
     selectedNodeId && userNodeDiagnostics[selectedNodeId] ? userNodeDiagnostics[selectedNodeId].logs : [];
+
+  const canFork = !!selectedNode?.published;
+  const canPublish =
+    isNodeSaved && !canFork && selectedCompiledNodeData?.metadata && selectedCompiledNodeData?.diagnostics.length === 0;
 
   const inputTitle = currentScript
     ? currentScript.filePath + (currentScript.readOnly ? " (READONLY)" : "")
@@ -184,27 +205,77 @@ function NodePlayground(props: Props) {
     width: `${inputTitle.length + 4}ch`, // Width based on character count of title + padding
   };
 
-  React.useLayoutEffect(() => {
+  const setUserNodes = React.useCallback((payload: UserNodes) => dispatch(setUserNodesAction(payload)), [dispatch]);
+
+  const selectedNodeScript = React.useMemo(() => {
     if (selectedNode) {
-      const testItems = props.config.additionalBackStackItems || [];
-      setScriptBackStack([
-        { filePath: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
-        ...testItems,
-      ]);
+      let sourceCode = selectedNode.sourceCode;
+      if (selectedNode.published) {
+        const publishedNode = publishedNodesByTopic[selectedNode.name];
+        if (publishedNode) {
+          sourceCode = publishedNode.sourceCode;
+        } else {
+          sourceCode = "// Loading source code... Please wait.";
+        }
+      }
+
+      return { filePath: selectedNode.name, code: sourceCode, readOnly: selectedNode.published };
+    } else if (selectedPublishedNode) {
+      return { filePath: selectedPublishedNode.outputTopic, code: selectedPublishedNode.sourceCode, readOnly: true };
     }
-  }, [props.config.additionalBackStackItems, selectedNode]);
+  }, [publishedNodesByTopic, selectedNode, selectedPublishedNode]);
+
+  // Update the node topics when we get new compiledNodeData
+  React.useEffect(() => {
+    if (userNodeDiagnostics) {
+      const updatedUserNodes = {};
+      Object.keys(userNodeDiagnostics).forEach((nodeId) => {
+        const userNode = userNodes[nodeId];
+        const node = userNodeDiagnostics[nodeId];
+        // TODO: Remove this topic correction when we update the NodePlaygroundDataProvider
+        // to only register one node per source
+        if (userNode && node.metadata) {
+          const correctedOutputTopic = node.metadata && node.metadata.outputTopic.replace(WEBVIZ_SOURCE_TWO_REGEX, "");
+          if (correctedOutputTopic !== userNode.name) {
+            updatedUserNodes[nodeId] = { ...userNode, name: correctedOutputTopic };
+          }
+        }
+      });
+      if (Object.keys(updatedUserNodes).length > 0) {
+        setUserNodes(updatedUserNodes);
+      }
+    }
+  }, [setUserNodes, userNodeDiagnostics, userNodes]);
+
+  // Lazily fetch the publishedNodesList if we haven't yet
+  React.useEffect(() => {
+    if (nodePlaygroundSourceControl && !publishedNodesList) {
+      dispatch(fetchPublishedNodesList());
+    }
+  }, [dispatch, nodePlaygroundSourceControl, publishedNodesList]);
+
+  // Fetch the selectedPublishedNodeTopic when the panel loads
+  React.useEffect(() => {
+    const initialSelectedPublishedTopic = getSelectedPublishedTopic();
+    if (nodePlaygroundSourceControl && initialSelectedPublishedTopic) {
+      dispatch(fetchPublishedNodes([initialSelectedPublishedTopic]));
+    }
+  }, [dispatch, getSelectedPublishedTopic, nodePlaygroundSourceControl]);
+
+  // Update the scriptBackStack when the selectedNodeScript changes
+  React.useLayoutEffect(() => {
+    if (selectedNodeScript) {
+      const testItems = props.config.additionalBackStackItems || [];
+      setScriptBackStack([selectedNodeScript, ...testItems]);
+    }
+  }, [props.config.additionalBackStackItems, selectedNodeScript]);
 
   const addNewNode = React.useCallback((_, code?: string) => {
     const newNodeId = uuid.v4();
-    const sourceCode = code || skeletonBody;
-    // TODO: Add integration test for this flow.
-    setUserNodes({
-      [newNodeId]: {
-        sourceCode,
-        name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
-      },
-    });
-    saveConfig({ selectedNodeId: newNodeId });
+    const outputTopic = `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`;
+    const sourceCode = code || skeletonBody.replace("{{OUTPUT_TOPIC_PLACEHOLDER}}", outputTopic);
+    setUserNodes({ [newNodeId]: { sourceCode, name: outputTopic } });
+    saveConfig({ selectedNodeId: newNodeId, selectedPublishedNodeTopic: null });
   }, [saveConfig, setUserNodes]);
 
   const saveNode = React.useCallback((script) => {
@@ -237,37 +308,105 @@ function NodePlayground(props: Props) {
     }
   }, [scriptBackStack]);
 
+  const selectNode = React.useCallback((nodeId: string) => {
+    const oldSelectedNode = userNodes[selectedNodeId];
+    if (
+      selectedNodeId &&
+      currentScript &&
+      isCurrentScriptSelectedNode &&
+      oldSelectedNode.sourceCode !== currentScript.code
+    ) {
+      // Save current state so that user can seamlessly go back to previous work.
+      setUserNodes({
+        [selectedNodeId]: { ...selectedNode, sourceCode: currentScript.code },
+      });
+    }
+    saveConfig({ selectedNodeId: nodeId, selectedPublishedNodeTopic: null });
+  }, [currentScript, isCurrentScriptSelectedNode, saveConfig, selectedNode, selectedNodeId, setUserNodes, userNodes]);
+
+  const selectPublishedNode = React.useCallback((publishedTopic: string) => {
+    (async () => {
+      saveConfig({ selectedNodeId: null, selectedPublishedNodeTopic: publishedTopic });
+      // Make sure we've cached the source for the topic
+      await dispatch(fetchPublishedNodes([publishedTopic]));
+    })();
+  }, [dispatch, saveConfig]);
+
+  const deleteNode = React.useCallback((nodeId) => {
+    setUserNodes({ [nodeId]: undefined });
+    saveConfig({ selectedNodeId: null, selectedPublishedNodeTopic: null });
+  }, [saveConfig, setUserNodes]);
+
+  const addPublishedNode = React.useCallback((publishedTopic: string) => {
+    (async () => {
+      const [publishedNode] = await dispatch(fetchPublishedNodes([publishedTopic]));
+      if (publishedNode) {
+        const newNodeId = uuid.v4();
+        setUserNodes({ [newNodeId]: { published: true, name: publishedTopic } });
+      }
+    })();
+  }, [dispatch, setUserNodes]);
+
+  const forkSelectedNode = React.useCallback(() => {
+    if (!selectedNodeScript || !selectedNode) {
+      return;
+    }
+
+    const newNodeId = uuid.v4();
+    setUserNodes({
+      [newNodeId]: {
+        published: false,
+        name: selectedNode.name,
+        sourceCode: selectedNodeScript.code,
+        forkedFromVersion: selectedNode.versionNumber,
+      },
+      ...(selectedNodeId ? { [selectedNodeId]: undefined } : {}),
+    });
+    saveConfig({ selectedNodeId: newNodeId });
+  }, [saveConfig, selectedNode, selectedNodeId, selectedNodeScript, setUserNodes]);
+
+  const publishSelectedNode = React.useCallback(() => {
+    const publishedNodesApi = getPublishedNodesApi();
+    const compiledNodeMetadata = selectedCompiledNodeData?.metadata;
+    if (!publishedNodesApi || !selectedNode || !selectedNodeId || !compiledNodeMetadata) {
+      return;
+    }
+    const { inputTopics, outputTopic } = compiledNodeMetadata;
+    const nodeToPublish = {
+      outputTopic,
+      inputTopics,
+      description: "description!", // TODO: Fill in using the publish modal
+      sourceCode: selectedNode.sourceCode,
+    };
+    dispatch(publishNode(nodeToPublish, selectedNodeId)).then((publishedNode) => {
+      console.log(`Version ${publishedNode.versionNumber} published!`);
+    });
+  }, [dispatch, getPublishedNodesApi, selectedCompiledNodeData, selectedNode, selectedNodeId]);
+
   return (
     <Dimensions>
       {({ height, width }) => (
-        <Flex col style={{ height, position: "relative" }}>
+        <Flex grow col style={{ height, position: "relative" }}>
           <PanelToolbar floating menuContent={<NodePlaygroundSettings {...props} />} />
-          <Flex style={{ height, width }}>
+          <Flex grow style={{ height, width }}>
             <Sidebar
               explorer={explorer}
               updateExplorer={updateExplorer}
-              selectNode={(nodeId) => {
-                if (selectedNodeId && currentScript && isCurrentScriptSelectedNode) {
-                  // Save current state so that user can seamlessly go back to previous work.
-                  setUserNodes({
-                    [selectedNodeId]: { ...selectedNode, sourceCode: currentScript.code },
-                  });
-                }
-                saveConfig({ selectedNodeId: nodeId });
-              }}
-              deleteNode={(nodeId) => {
-                setUserNodes({ ...userNodes, [nodeId]: undefined });
-                saveConfig({ selectedNodeId: undefined });
-              }}
+              selectNode={selectNode}
+              deleteNode={deleteNode}
+              addPublishedNode={addPublishedNode}
+              selectPublishedNode={selectPublishedNode}
               selectedNodeId={selectedNodeId}
               userNodes={userNodes}
               userNodeDiagnostics={userNodeDiagnostics}
+              publishedNodes={publishedNodesList || []}
               script={currentScript}
               setScriptOverride={setScriptOverride}
               addNewNode={addNewNode}
             />
-            <Flex col>
+            <Flex grow col>
               <Flex
+                grow
                 start
                 style={{
                   flexGrow: 0,
@@ -279,7 +418,7 @@ function NodePlayground(props: Props) {
                     <ArrowLeftIcon />
                   </Icon>
                 )}
-                {selectedNodeId && (
+                {currentScript && (
                   <div style={{ position: "relative" }}>
                     <input
                       type="text"
@@ -309,8 +448,8 @@ function NodePlayground(props: Props) {
                 </Icon>
               </Flex>
 
-              <Flex col style={{ flexGrow: 1, position: "relative" }}>
-                {!selectedNodeId && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
+              <Flex grow col style={{ flexGrow: 1, position: "relative" }}>
+                {!scriptBackStack.length && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
 
                 <ResizableSplitFlex column splitPercent={bottomBarSplitPercent} onChange={setBottomBarSplitPercent}>
                   <div
@@ -319,13 +458,13 @@ function NodePlayground(props: Props) {
                     style={{
                       height: "100%",
                       width: "100%",
-                      display: selectedNodeId
+                      display: currentScript
                         ? "initial"
                         : "none" /* Ensures the monaco-editor starts loading before the user opens it */,
                     }}>
                     <React.Suspense
                       fallback={
-                        <Flex center style={{ width: "100%", height: "100%" }}>
+                        <Flex grow center style={{ width: "100%", height: "100%" }}>
                           <Icon large>
                             <SpinningLoadingIcon />
                           </Icon>
@@ -345,17 +484,23 @@ function NodePlayground(props: Props) {
                       )}
                     </React.Suspense>
                   </div>
-                  <div style={{ width: "100%", height: "100%", minHeight: "28px" }}>
-                    <BottomBar
-                      nodeId={selectedNodeId}
-                      isSaved={isNodeSaved}
-                      save={() => saveNode(currentScript?.code)}
-                      diagnostics={selectedNodeDiagnostics}
-                      logs={selectedNodeLogs}
-                      open={bottomBarOpen}
-                      toggleBottomBarOpen={toggleBottomBarOpen}
-                    />
-                  </div>
+                  {!selectedPublishedNode /* Don't show the BottomBar when previewing a publishedNode */ && (
+                    <div style={{ width: "100%", height: "100%", minHeight: "28px" }}>
+                      <BottomBar
+                        nodeId={selectedNodeId}
+                        isSaved={isNodeSaved}
+                        canFork={canFork}
+                        canPublish={canPublish}
+                        save={() => saveNode(currentScript?.code)}
+                        fork={forkSelectedNode}
+                        publish={publishSelectedNode}
+                        diagnostics={selectedNodeDiagnostics}
+                        logs={selectedNodeLogs}
+                        open={bottomBarOpen}
+                        toggleBottomBarOpen={toggleBottomBarOpen}
+                      />
+                    </div>
+                  )}
                 </ResizableSplitFlex>
               </Flex>
             </Flex>

@@ -30,7 +30,6 @@ export const TOPIC_DISPLAY_MODES = {
 
 const DEFAULT_DISPLAY_MODE = TOPIC_DISPLAY_MODES.SHOW_ALL.value;
 const DEFAULT_BTN_WIDTH = 88; // Width for the longest selected option in dropdown.
-const XS_WIDTH_BTN_WIDTH = 48;
 
 const dropdownOptions = Object.keys(TOPIC_DISPLAY_MODES)
   .filter((item) => item !== "SHOW_TREE")
@@ -50,21 +49,16 @@ const STopicViewModeSelector = styled.div`
   }
 `;
 type Props = {|
-  isXSWidth: boolean,
   topicDisplayMode: TopicDisplayMode,
   saveConfig: Save3DConfig,
 |};
 
-export default function TopicViewModeSelector({
-  isXSWidth,
-  topicDisplayMode: topicDisplayModeProp,
-  saveConfig,
-}: Props) {
+export default function TopicViewModeSelector({ topicDisplayMode: topicDisplayModeProp, saveConfig }: Props) {
   const topicDisplayMode = TOPIC_DISPLAY_MODES[topicDisplayModeProp] ? topicDisplayModeProp : DEFAULT_DISPLAY_MODE;
   return (
     <STopicViewModeSelector>
       <Dropdown
-        btnStyle={{ width: isXSWidth ? XS_WIDTH_BTN_WIDTH : DEFAULT_BTN_WIDTH }}
+        btnStyle={{ width: DEFAULT_BTN_WIDTH }}
         position="below"
         value={topicDisplayMode}
         text={TOPIC_DISPLAY_MODES[topicDisplayMode].label}

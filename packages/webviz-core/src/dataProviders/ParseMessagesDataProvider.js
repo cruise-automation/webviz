@@ -16,7 +16,11 @@ import type {
   GetDataProvider,
   GetMessagesResult,
   GetMessagesTopics,
+  SetGlobalVariablesResult,
+  SetUserNodesResult,
 } from "webviz-core/src/dataProviders/types";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { UserNodes } from "webviz-core/src/types/panels";
 
 type Args = $ReadOnly<{||}>;
 
@@ -51,7 +55,10 @@ export default class ParseMessagesDataProvider implements DataProvider {
   async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     const requestedParsedTopics = new Set(topics.parsedMessages);
     const requestedBinaryTopics = new Set(topics.bobjects);
-    const childTopics = { bobjects: uniq([...requestedParsedTopics, ...requestedBinaryTopics]) };
+    const childTopics = {
+      bobjects: uniq([...requestedParsedTopics, ...requestedBinaryTopics]),
+      preloadedTopics: topics.preloadedTopics,
+    };
     // Kick off the request to the data provder to get the messages.
     const getMessagesPromise = this._provider.getMessages(start, end, childTopics);
     const { bobjects } = await getMessagesPromise;
@@ -70,5 +77,12 @@ export default class ParseMessagesDataProvider implements DataProvider {
 
   close(): Promise<void> {
     return this._provider.close();
+  }
+
+  setUserNodes(userNodes: UserNodes): Promise<SetUserNodesResult> {
+    return this._provider.setUserNodes(userNodes);
+  }
+  setGlobalVariables(globalVariables: GlobalVariables): Promise<SetGlobalVariablesResult> {
+    return this._provider.setGlobalVariables(globalVariables);
   }
 }

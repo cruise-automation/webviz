@@ -22,8 +22,10 @@ export function parseUrdf(urdf: string): TransformElement[] {
     const childFrame = joint.getElementsByTagName("child")[0].getAttribute("link");
     const parentFrame = joint.getElementsByTagName("parent")[0].getAttribute("link");
     const originNode = joint.getElementsByTagName("origin")[0];
-    const xyz = originNode.getAttribute("xyz");
-    const rpy = originNode.getAttribute("rpy");
+    // If the `origin` node isn't present it implies no offset/rotation. (Possibly invalid URDF for
+    // fixed joints, but something we've seen before.)
+    const xyz = originNode ? originNode.getAttribute("xyz") : "0 0 0";
+    const rpy = originNode ? originNode.getAttribute("rpy") : "0 0 0";
     if (!childFrame || !parentFrame || !xyz || !rpy) {
       continue;
     }

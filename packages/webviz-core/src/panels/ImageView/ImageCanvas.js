@@ -28,7 +28,7 @@ import ContextMenu from "webviz-core/src/components/ContextMenu";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import type { Message, Topic, TypedMessage } from "webviz-core/src/players/types";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import type { CameraInfo, Icon2dMarkersMessage } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
@@ -68,7 +68,7 @@ const SErrorMessage = styled.div`
   position: absolute;
   align-items: center;
   justify-content: center;
-  color: ${colors.red};
+  color: ${colors.RED2};
 `;
 
 const MAX_ZOOM_PERCENTAGE = 1000;
@@ -297,7 +297,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
   onCanvasRightClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
     e.stopPropagation();
     e.preventDefault();
-    return ContextMenu.show(
+    ContextMenu.show(
       e.clientX,
       e.clientY,
       <Menu>
@@ -309,6 +309,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
   clickMagnify = () => {
     this.setState((state) => ({ openZoomChart: !state.openZoomChart }));
   };
+
   onZoomFit = () => {
     const fitPercent = this.fitPercent();
     this.panZoomCanvas.zoomAbs(0, 0, fitPercent / 100);
@@ -352,7 +353,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       const dimensions = await worker.send<?Dimensions>("renderImage", {
         id: this._id,
         imageMessage: image,
-        imageMessageDatatype: topic.datatype,
+        imageMessageDatatype: topic.datatypeName,
         rawMarkerData,
       });
 

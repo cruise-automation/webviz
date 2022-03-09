@@ -62,7 +62,7 @@ $view.setInt32(($offset + 4), $field1$str.length, true);
 $view.setInt32(($offset + 8), $writer.string($field1$str), true);`
     );
     expect(printStoreSingularVariable(definitions, "string", variableName, pointer)).toBe(
-      `const $field1$str = $field1 || "";
+      `const $field1$str = ($field1 == null ? "" : $field1 + "");
 $view.setInt32(($offset + 4), $field1$str.length, true);
 $view.setInt32(($offset + 8), $writer.string($field1$str), true);`
     );
@@ -115,7 +115,7 @@ describe("maybePrintStoreArray", () => {
   $view.setInt32(($offset + 8), stringField$o, true);
   for (let stringField$i = 0; stringField$i < stringField$l; ++stringField$i) {
     const stringField$e = stringField[stringField$i];
-    const stringField$e$str = stringField$e || "";
+    const stringField$e$str = (stringField$e == null ? "" : stringField$e + "");
     $view.setInt32(stringField$o, stringField$e$str.length, true);
     $view.setInt32((stringField$o + 4), $writer.string(stringField$e$str), true);
     stringField$o += 8;
@@ -155,7 +155,7 @@ if (v$stringArray == null) {
   $view.setInt32((offset + 24), v$stringArray$o, true);
   for (let v$stringArray$i = 0; v$stringArray$i < v$stringArray$l; ++v$stringArray$i) {
     const v$stringArray$e = v$stringArray[v$stringArray$i];
-    const v$stringArray$e$str = v$stringArray$e || "";
+    const v$stringArray$e$str = (v$stringArray$e == null ? "" : v$stringArray$e + "");
     $view.setInt32(v$stringArray$o, v$stringArray$e$str.length, true);
     $view.setInt32((v$stringArray$o + 4), $writer.string(v$stringArray$e$str), true);
     v$stringArray$o += 8;
@@ -229,6 +229,12 @@ describe("getSerializeFunction", () => {
     const stringArray = ["foo", "bar"];
     const hasArray = roundTrip(writer, { stringArray }, "fake_msgs/HasComplexAndArray");
     expect(hasArray.stringArray).toEqual(stringArray);
+  });
+
+  it("handles weird values being provided instead of strings", () => {
+    const stringArray = [1, NaN, Infinity, null, undefined, 0, () => {}];
+    const hasArray = roundTrip(writer, { stringArray }, "fake_msgs/HasComplexAndArray");
+    expect(hasArray.stringArray).toEqual(["1", "NaN", "Infinity", "", "", "0", "() => {}"]);
   });
 
   it("handles message arrays", () => {

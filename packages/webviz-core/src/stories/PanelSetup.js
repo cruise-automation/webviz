@@ -20,16 +20,16 @@ import {
   setLinkedGlobalVariables,
   setUserNodes,
 } from "webviz-core/src/actions/panels";
-import { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } from "webviz-core/src/actions/userNodes";
+import { addUserNodeLogs, setUserNodeRosLib, setCompiledNodeData } from "webviz-core/src/actions/userNodes";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type { Frame, Topic, PlayerStateActiveData, Progress } from "webviz-core/src/players/types";
-import type { UserNodeDiagnostics, UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
+import type { UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
 import createRootReducer from "webviz-core/src/reducers";
 import Store from "webviz-core/src/store";
 import configureStore from "webviz-core/src/store/configureStore.testing";
-import type { MosaicNode, SavedProps, UserNodes } from "webviz-core/src/types/panels";
+import type { MosaicNode, SavedProps, UserNodes, CompiledUserNodeDataById } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
 import { isBobject } from "webviz-core/src/util/binaryObjects";
@@ -45,7 +45,7 @@ export type Fixture = {|
   layout?: ?MosaicNode,
   linkedGlobalVariables?: LinkedGlobalVariables,
   userNodes?: UserNodes,
-  userNodeDiagnostics?: UserNodeDiagnostics,
+  userNodeDiagnostics?: CompiledUserNodeDataById,
   userNodeFlags?: {| id: string |},
   userNodeLogs?: UserNodeLogs,
   userNodeRosLib?: string,
@@ -148,7 +148,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       store.dispatch(setLinkedGlobalVariables(linkedGlobalVariables));
     }
     if (userNodeDiagnostics) {
-      store.dispatch(setUserNodeDiagnostics(userNodeDiagnostics));
+      store.dispatch(setCompiledNodeData(userNodeDiagnostics));
     }
     if (userNodeLogs) {
       store.dispatch(addUserNodeLogs(userNodeLogs));
@@ -180,8 +180,8 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     let dTypes = datatypes;
     if (!dTypes) {
       const dummyDatatypes: RosDatatypes = {};
-      for (const { datatype } of topics) {
-        dummyDatatypes[datatype] = { fields: [] };
+      for (const { datatypeName } of topics) {
+        dummyDatatypes[datatypeName] = { name: datatypeName, fields: [] };
       }
       dTypes = dummyDatatypes;
     }

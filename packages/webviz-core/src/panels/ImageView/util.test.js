@@ -30,11 +30,31 @@ describe("ImageView", () => {
 
   describe("getMarkerOptions", () => {
     const allMarkerTopics: Topic[] = [
-      { name: "/some_camera_topic/marker1", datatype: "visualization_msgs/ImageMarker" },
-      { name: "/some_camera_topic/marker2", datatype: "vision_msgs/ImageMarker" },
-      { name: "/old/some_camera_topic/marker3", datatype: "vision_msgs/ImageMarker" },
-      { name: "/camera_rear_medium/marker4", datatype: "vision_msgs/ImageMarker" }, // not included because it's for a different camera
-      { name: "/unknown_camera/marker5", datatype: "vision_msgs/ImageMarker" },
+      {
+        name: "/some_camera_topic/marker1",
+        datatypeName: "visualization_msgs/ImageMarker",
+        datatypeId: "visualization_msgs/ImageMarker",
+      },
+      {
+        name: "/some_camera_topic/marker2",
+        datatypeName: "vision_msgs/ImageMarker",
+        datatypeId: "vision_msgs/ImageMarker",
+      },
+      {
+        name: "/old/some_camera_topic/marker3",
+        datatypeName: "vision_msgs/ImageMarker",
+        datatypeId: "vision_msgs/ImageMarker",
+      },
+      {
+        name: "/camera_rear_medium/marker4",
+        datatypeName: "vision_msgs/ImageMarker",
+        datatypeId: "vision_msgs/ImageMarker",
+      }, // not included because it's for a different camera
+      {
+        name: "/unknown_camera/marker5",
+        datatypeName: "vision_msgs/ImageMarker",
+        datatypeId: "vision_msgs/ImageMarker",
+      },
     ];
     const allCameraNamespaces = ["/some_camera_topic", "/camera_rear_medium"];
     it("filters and sorts topics relevant to this camera", () => {
@@ -89,7 +109,7 @@ describe("ImageView", () => {
   });
 
   describe("groupTopics", () => {
-    const topic = (name) => ({ name, datatype: "dummy" });
+    const topic = (name) => ({ name, datatypeName: "dummy", datatypeId: "dummy" });
 
     it("groups by camera name", () => {
       expect(

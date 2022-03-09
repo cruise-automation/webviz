@@ -154,7 +154,7 @@ export default class Slider extends React.Component<Props> {
     if (max < min) {
       const msg = `Slider component given invalid range: ${min}, ${max}`;
       const err = new Error(msg);
-      sendNotification(err.message, err, "app", "error");
+      sendNotification(err.message, err, "user", "error");
     }
 
     return (

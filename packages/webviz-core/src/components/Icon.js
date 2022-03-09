@@ -12,7 +12,7 @@ import * as React from "react";
 import styles from "./icon.module.scss";
 import Tooltip from "webviz-core/src/components/Tooltip";
 
-type Props = {
+type Props = {|
   children: React.Node,
   xlarge?: boolean,
   large?: boolean,
@@ -29,7 +29,7 @@ type Props = {
   tooltip?: React.Node,
   tooltipProps?: $Shape<{ ...React.ElementConfig<typeof Tooltip> }>,
   dataTest?: string,
-};
+|};
 
 const Icon = (props: Props) => {
   const {

@@ -17,8 +17,12 @@ import type {
   GetMessagesResult,
   GetMessagesTopics,
   InitializationResult,
+  SetGlobalVariablesResult,
+  SetUserNodesResult,
 } from "webviz-core/src/dataProviders/types";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Message } from "webviz-core/src/players/types";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 
@@ -55,7 +59,7 @@ export default class ApiCheckerDataProvider implements DataProvider {
   _name: string;
   _provider: DataProvider;
   _initializationResult: ?InitializationResult;
-  _topicNames: string[] = [];
+  _topicNames: Set<string> = new Set();
   _closed: boolean = false;
   _isRoot: boolean;
 
@@ -86,8 +90,8 @@ export default class ApiCheckerDataProvider implements DataProvider {
     if (this._isRoot && initializationResult.messageDefinitions.type !== "parsed") {
       this._warn(`Root data provider should return parsed message definitions but instead returned raw`);
     }
+    this._topicNames = new Set(initializationResult.topics.map(({ name }) => name));
     for (const topic of initializationResult.topics) {
-      this._topicNames.push(topic.name);
       if (initializationResult.messageDefinitions.type === "raw") {
         if (
           !initializationResult.providesParsedMessages &&
@@ -102,8 +106,8 @@ export default class ApiCheckerDataProvider implements DataProvider {
         ) {
           this._warn(`Topic "${topic.name}"" not present in parsedMessageDefinitionsByTopic`);
         }
-        if (!initializationResult.messageDefinitions.datatypes[topic.datatype]) {
-          this._warn(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
+        if (!initializationResult.messageDefinitions.datatypes[topic.datatypeName]) {
+          this._warn(`Topic "${topic.name}" datatype "${topic.datatypeName}" not present in datatypes`);
         }
       }
     }
@@ -143,11 +147,11 @@ export default class ApiCheckerDataProvider implements DataProvider {
     }
     for (const messageType of MESSAGE_FORMATS) {
       for (const topic of subscriptions[messageType] || []) {
-        if (!this._topicNames.includes(topic)) {
+        if (!this._topicNames.has(topic)) {
           this._warn(
-            `Requested topic (${topic}) is not in the list of topics published by "initialize" (${JSON.stringify(
-              this._topicNames
-            )})`
+            `Requested topic (${topic}) is not in the list of topics published by "initialize" (${JSON.stringify([
+              ...this._topicNames,
+            ])})`
           );
         }
       }
@@ -160,12 +164,10 @@ export default class ApiCheckerDataProvider implements DataProvider {
       if (messages == null) {
         continue;
       }
-      const topics = subscriptions[messageType] || [];
       let lastTime: ?Time;
       for (const message: Message of messages) {
-        if (!topics.includes(message.topic)) {
-          this._warn(`message.topic (${message.topic}) was never requested (${JSON.stringify(topics)})`);
-        }
+        // Note: shouldn't check that the message's topic was requested. A node data provider may
+        // return messages from its nodes' input topics so they get stored in the blocks.
         if (TimeUtil.isLessThan(message.receiveTime, start)) {
           this._warn(
             `message.receiveTime (${formatTimeRaw(message.receiveTime)}) is before start (${formatTimeRaw(start)})`
@@ -209,5 +211,22 @@ export default class ApiCheckerDataProvider implements DataProvider {
       // likely to notice it / fail CI.
       throw Error(`ApiCheckerDataProvider assertion failed: ${prefixedMessage}`);
     }
+  }
+
+  async setUserNodes(userNodes: UserNodes): Promise<SetUserNodesResult> {
+    const result = await this._provider.setUserNodes(userNodes);
+    if (result != null) {
+      // There are some difficult race conditions when nodes get removed -- immediately after node
+      // playground nodes change, getMessages requests can still arrive with the old set of topics.
+      // These calls are handled gracefully and are difficult to eliminate, so we can be forgiving
+      // about requests for previously-existing topics.
+      result.topics.forEach(({ name }) => {
+        this._topicNames.add(name);
+      });
+    }
+    return result;
+  }
+  setGlobalVariables(globalVariables: GlobalVariables): Promise<SetGlobalVariablesResult> {
+    return this._provider.setGlobalVariables(globalVariables);
   }
 }

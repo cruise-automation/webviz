@@ -73,8 +73,8 @@ function validateDatatypes({ output, datatypes }: NodeDefinition<*>) {
       }
     }
   }
-  if (datatypes[output.datatype] == null) {
-    throw new Error(`The datatype "${output.datatype}" is not defined for node "${output.name}"`);
+  if (datatypes[output.datatypeName] == null) {
+    throw new Error(`The datatype "${output.datatypeName}" is not defined for node "${output.name}"`);
   }
 }
 
@@ -102,7 +102,7 @@ export function validateNodeDefinitions(nodeDefinitions: NodeDefinition<*>[]): v
   }
 }
 
-function applyNodeToMessage<State>(
+export function applyNodeToMessage<State>(
   nodeDefinition: NodeDefinition<State>,
   inputMessage: Message,
   inputState: State
@@ -199,7 +199,7 @@ export function applyNodesToMessages({
                 return {
                   receiveTime: nodeMessage.receiveTime,
                   topic: nodeMessage.topic,
-                  message: wrapJsObject(datatypes, nodeDefinition.output.datatype, nodeMessage.message),
+                  message: wrapJsObject(datatypes, nodeDefinition.output.datatypeName, nodeMessage.message),
                 };
               });
         messages.splice(i + 1, 0, ...messagesToAdd);
@@ -242,7 +242,7 @@ export function partitionMessagesBySubscription(
           if (!nodeDef) {
             throw new Error("Message produced from unsubscribed node. This should never happen.");
           }
-          const msg = wrapJsObject(datatypes, nodeDef.output.datatype, message.message);
+          const msg = wrapJsObject(datatypes, nodeDef.output.datatypeName, message.message);
           bobjects.push({ ...message, message: msg });
         }
       } else {

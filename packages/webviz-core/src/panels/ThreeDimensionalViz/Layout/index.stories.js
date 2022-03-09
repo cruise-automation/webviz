@@ -37,7 +37,7 @@ const LayoutStory = ({ onFirstMount, perspective }) => {
   const saveConfig = (newConfig) => setConfig((oldConfig) => ({ ...oldConfig, ...newConfig }));
   return (
     <PanelSetup fixture={emptyFixture} onFirstMount={onFirstMount}>
-      <Flex col>
+      <Flex grow col>
         <ThreeDimensionalViz config={config} saveConfig={saveConfig} />
       </Flex>
     </PanelSetup>
@@ -49,7 +49,7 @@ storiesWithEventsOf("<3DViz> / Layout", module)
   .add("enables height when enabling 3D camera perspective", () => {
     const onSaveConfig = () => {};
     return (
-      <Flex>
+      <Flex grow>
         <LayoutStory
           perspective={false}
           onSaveConfig={onSaveConfig}

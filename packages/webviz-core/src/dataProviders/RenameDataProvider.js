@@ -6,12 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { flatten, groupBy } from "lodash";
-import memoizeWeak from "memoize-weak";
+import { flatten } from "lodash";
 import { type Time } from "rosbag";
 
 import { MESSAGE_FORMATS } from "webviz-core/src/dataProviders/constants";
-import type { BlockCache, MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
   ExtensionPoint,
@@ -22,7 +20,7 @@ import type {
   DataProvider,
   TopicMapping,
 } from "webviz-core/src/dataProviders/types";
-import type { Message, Progress } from "webviz-core/src/players/types";
+import type { Message } from "webviz-core/src/players/types";
 
 export default class RenameDataProvider implements DataProvider {
   _provider: DataProvider;
@@ -48,26 +46,16 @@ export default class RenameDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const result = await this._provider.initialize({
-      ...extensionPoint,
-      progressCallback: (progress: Progress) => {
-        extensionPoint.progressCallback({
-          // Only map fields that we know are correctly mapped. Don't just splat in `...progress` here
-          // because we might miss an important mapping!
-          fullyLoadedFractionRanges: progress.fullyLoadedFractionRanges,
-          messageCache: progress.messageCache ? this._mapMessageCache(progress.messageCache) : undefined,
-        });
-      },
-    });
+    const result = await this._provider.initialize(extensionPoint);
     const { messageDefinitions } = result;
 
     // Initialize topic mappings.
     Object.keys(this._topicMapping).forEach((prefix) => {
       const excludedTopics = new Set(this._topicMapping[prefix].excludeTopics);
       result.topics.forEach((topic) => {
+        this._childToParentTopicMapping[topic.name] = this._childToParentTopicMapping[topic.name] ?? [];
         if (!excludedTopics.has(topic.name)) {
           const parentTopicName = `${prefix}${topic.name}`;
-          this._childToParentTopicMapping[topic.name] = this._childToParentTopicMapping[topic.name] ?? [];
           this._childToParentTopicMapping[topic.name].push(parentTopicName);
           this._parentToChildTopicMapping[parentTopicName] = topic.name;
         }
@@ -110,7 +98,8 @@ export default class RenameDataProvider implements DataProvider {
             // because we might miss an important mapping!
             name: parentTopicName,
             originalTopic: topic.name,
-            datatype: topic.datatype, // TODO(JP): We might want to map datatypes with a prefix in the future, to avoid collisions.
+            datatypeName: topic.datatypeName,
+            datatypeId: topic.datatypeId,
             numMessages: topic.numMessages,
           }))
         )
@@ -176,33 +165,10 @@ export default class RenameDataProvider implements DataProvider {
     };
   }
 
-  _mapMessageCache = memoizeWeak(
-    (messageCache: BlockCache): BlockCache => ({
-      // Note: don't just map(this._mapBlock) because map also passes the array and defeats the
-      // memoization.
-      blocks: messageCache.blocks.map((block) => this._mapBlock(block)),
-      startTime: messageCache.startTime,
-    })
-  );
-
-  _mapBlock = memoizeWeak(
-    (block: ?MemoryCacheBlock): ?MemoryCacheBlock => {
-      if (!block) {
-        return;
-      }
-
-      const messagesByTopic = {};
-      for (const childTopicName of Object.keys(block.messagesByTopic)) {
-        const childMessages = block.messagesByTopic[childTopicName];
-        // Even if no messages on this topic are present in this block, we need to signal that it
-        // has loaded with an empty array.
-        this._childToParentTopicMapping[childTopicName].forEach((parentTopic) => {
-          messagesByTopic[parentTopic] = [];
-        });
-        const parentMessages = this._mapMessages(childMessages, this._childToParentTopicMapping);
-        Object.assign(messagesByTopic, groupBy(parentMessages, "topic"));
-      }
-      return { messagesByTopic, sizeInBytes: block.sizeInBytes };
-    }
-  );
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

@@ -16,8 +16,16 @@ import { FixtureExample } from "webviz-core/src/panels/ThreeDimensionalViz/stori
 
 const fixtureData = {
   topics: {
-    "/smoothed_localized_pose": { name: "/smoothed_localized_pose", datatype: "geometry_msgs/PoseStamped" },
-    "/viz_markers": { name: "/viz_markers", datatype: "visualization_msgs/MarkerArray" },
+    "/smoothed_localized_pose": {
+      name: "/smoothed_localized_pose",
+      datatypeName: "geometry_msgs/PoseStamped",
+      datatypeId: "geometry_msgs/PoseStamped",
+    },
+    "/viz_markers": {
+      name: "/viz_markers",
+      datatypeName: "visualization_msgs/MarkerArray",
+      datatypeId: "visualization_msgs/MarkerArray",
+    },
   },
   frame: {
     "/viz_markers": [

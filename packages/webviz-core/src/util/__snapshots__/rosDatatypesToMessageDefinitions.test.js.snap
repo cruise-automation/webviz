@@ -18,6 +18,7 @@ Array [
         "type": "std_msgs/Header",
       },
     ],
+    "name": "visualization_msgs/WebvizMarkerArray",
   },
   Object {
     "definitions": Array [

@@ -22,6 +22,7 @@ import {
   getPolygonLineDistances,
 } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";
 import clipboard from "webviz-core/src/util/clipboard";
+import { getEventTags, getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 
 export type Point2D = {| x: number, y: number |};
 
@@ -31,11 +32,11 @@ export const SRow = styled.div`
   padding: 8px 0;
 `;
 
-type Props = {
+type Props = {|
   onSetPolygons: (polygons: Polygon[]) => void,
   polygonBuilder: PolygonBuilder,
   selectedPolygonEditFormat: EditFormat,
-};
+|};
 
 export default function Polygons({ onSetPolygons, polygonBuilder, selectedPolygonEditFormat }: Props) {
   const { saveConfig } = React.useContext(PanelContext) || {};
@@ -56,6 +57,7 @@ export default function Polygons({ onSetPolygons, polygonBuilder, selectedPolygo
 
   const copyPolygons = React.useCallback(() => {
     clipboard.copy(getFormattedString(polygonPoints, selectedPolygonEditFormat));
+    logEventAction(getEventInfos().POLYGON_COPY, { [getEventTags().SIZE]: polygonPoints.length });
   }, [polygonPoints, selectedPolygonEditFormat]);
 
   return (

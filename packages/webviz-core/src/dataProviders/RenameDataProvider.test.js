@@ -15,7 +15,6 @@
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // reusable providers
@@ -30,7 +29,7 @@ function getProvider() {
   };
   return new MemoryDataProvider({
     messages,
-    topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
+    topics: [{ name: "/some_topic1", datatypeName: "some_datatype", datatypeId: "some_datatype" }],
     providesParsedMessages: true,
     messageDefinitionsByTopic: { "/some_topic1": "int32 value" },
   });
@@ -56,7 +55,14 @@ describe("RenameDataProvider", () => {
       expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
         start: { nsec: 0, sec: 101 },
         end: { nsec: 0, sec: 103 },
-        topics: [{ datatype: "some_datatype", name: `${$WEBVIZ_SOURCE_2}/some_topic1`, originalTopic: "/some_topic1" }],
+        topics: [
+          {
+            datatypeName: "some_datatype",
+            datatypeId: "some_datatype",
+            name: `${$WEBVIZ_SOURCE_2}/some_topic1`,
+            originalTopic: "/some_topic1",
+          },
+        ],
         messageDefinitions: {
           type: "raw",
           messageDefinitionsByTopic: { [`${$WEBVIZ_SOURCE_2}/some_topic1`]: "int32 value" },
@@ -73,7 +79,14 @@ describe("RenameDataProvider", () => {
       expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
         start: { nsec: 0, sec: 101 },
         end: { nsec: 0, sec: 103 },
-        topics: [{ datatype: "some_datatype", name: `${$WEBVIZ_SOURCE_2}/some_topic1`, originalTopic: "/some_topic1" }],
+        topics: [
+          {
+            datatypeName: "some_datatype",
+            datatypeId: "some_datatype",
+            name: `${$WEBVIZ_SOURCE_2}/some_topic1`,
+            originalTopic: "/some_topic1",
+          },
+        ],
         messageDefinitions: {
           type: "parsed",
           messageDefinitionsByTopic: { [`${$WEBVIZ_SOURCE_2}/some_topic1`]: "int32 value" },
@@ -125,111 +138,12 @@ describe("RenameDataProvider", () => {
       // Map child topic to two parent topics: One for each prefix.
       expect(await topicsForTopicMapping(ambiguousPrefixMapping)).toEqual(["/some_topic1", "/prefix/some_topic1"]);
     });
-  });
 
-  describe("extensionPoint", () => {
-    describe("progressCallback", () => {
-      it("calls progressCallback with the progress data passed from child provider", async () => {
-        const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
-        const extensionPoint = mockExtensionPoint().extensionPoint;
-        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
-        await combinedProvider.initialize(extensionPoint);
-        provider.extensionPoint.progressCallback({
-          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
-          messageCache: {
-            startTime: { sec: 100, nsec: 0 },
-            blocks: [
-              undefined,
-              {
-                sizeInBytes: 99,
-                messagesByTopic: {
-                  "/some_topic1": [
-                    {
-                      topic: "/some_topic1",
-                      receiveTime: { sec: 101, nsec: 0 },
-                      message: wrapJsObject({}, "time", { sec: 0, nsec: 0 }),
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        });
-        const calls = mockProgressCallback.mock.calls;
-        expect(calls[calls.length - 1]).toEqual([
-          {
-            fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
-            messageCache: {
-              startTime: { sec: 100, nsec: 0 },
-              blocks: [
-                undefined,
-                {
-                  sizeInBytes: 99,
-                  messagesByTopic: {
-                    "/generic_topic/some_topic1": [
-                      expect.objectContaining({
-                        receiveTime: { sec: 101, nsec: 0 },
-                        topic: "/generic_topic/some_topic1",
-                      }),
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ]);
-      });
-
-      it("preserves block identity across successive calls", async () => {
-        const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
-        const extensionPoint = mockExtensionPoint().extensionPoint;
-        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
-        await combinedProvider.initialize(extensionPoint);
-
-        const blocks = [{ sizeInBytes: 99, messagesByTopic: { "/some_topic1": [] } }];
-        provider.extensionPoint.progressCallback({
-          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
-          messageCache: { startTime: { sec: 100, nsec: 0 }, blocks },
-        });
-        provider.extensionPoint.progressCallback({
-          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
-          messageCache: { startTime: { sec: 100, nsec: 0 }, blocks },
-        });
-
-        const calls = mockProgressCallback.mock.calls;
-        expect(calls.length).toBe(3); // once on init, once per call.
-        const cache1 = calls[1][0].messageCache;
-        const blocks1 = cache1.blocks;
-        const cache2 = calls[2][0].messageCache;
-        const blocks2 = cache2.blocks;
-        expect(cache1).not.toBe(cache2);
-        expect(cache1).toEqual(cache2);
-        expect(blocks1).not.toBe(blocks2);
-        expect(blocks1[0]).toBe(blocks2[0]);
-      });
-
-      it("can preserve cache identity across successive calls", async () => {
-        const provider = getProvider();
-        const combinedProvider = getRenameDataProvider(provider, topicMappingForPrefix("/generic_topic"));
-        const extensionPoint = mockExtensionPoint().extensionPoint;
-        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
-        await combinedProvider.initialize(extensionPoint);
-
-        const messageCache = {
-          startTime: { sec: 100, nsec: 0 },
-          blocks: [{ sizeInBytes: 99, messagesByTopic: { "/some_topic1": [] } }],
-        };
-        provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }], messageCache });
-        provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }], messageCache });
-
-        const calls = mockProgressCallback.mock.calls;
-        expect(calls.length).toBe(3); // once on init, once per call.
-        const cache1 = calls[1][0].messageCache;
-        const cache2 = calls[2][0].messageCache;
-        expect(cache1).toBe(cache2);
-      });
+    it("handles topping mappings where a child topic is fully suppressed", async () => {
+      const topicMapping = { "": { excludeTopics: ["/some_topic1"] } };
+      const provider = getRenameDataProvider(getProvider(), topicMapping);
+      const result = await provider.initialize(mockExtensionPoint().extensionPoint);
+      expect(result.topics).toEqual([]);
     });
   });
 });

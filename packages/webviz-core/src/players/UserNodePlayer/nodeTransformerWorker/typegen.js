@@ -154,9 +154,12 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
 
   let datatypeInterfaces = generateTypeDefs(datatypes);
 
-  topics.forEach(({ name, datatype }) => {
-    if (!datatypeInterfaces[datatype]) {
-      datatypeInterfaces = { ...datatypeInterfaces, ...generateTypeDefs({ [datatype]: { fields: [] } }) };
+  topics.forEach(({ name, datatypeName }) => {
+    if (!datatypeInterfaces[datatypeName]) {
+      datatypeInterfaces = {
+        ...datatypeInterfaces,
+        ...generateTypeDefs({ [datatypeName]: { name: datatypeName, fields: [] } }),
+      };
     }
 
     TopicsToMessageDefinition = ts.updateInterfaceDeclaration(
@@ -170,7 +173,7 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
         ...TopicsToMessageDefinition.members,
         createProperty(
           ts.createStringLiteral(name),
-          ts.createTypeReferenceNode(`${DATATYPES_IDENTIFIER}.${formatInterfaceName(datatype)}`)
+          ts.createTypeReferenceNode(`${DATATYPES_IDENTIFIER}.${formatInterfaceName(datatypeName)}`)
         ),
       ] /* members */
     );

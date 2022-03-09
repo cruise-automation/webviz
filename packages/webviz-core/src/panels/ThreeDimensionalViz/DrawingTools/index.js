@@ -14,7 +14,7 @@ import ExpandingToolbar, { ToolGroup } from "webviz-core/src/components/Expandin
 import Icon from "webviz-core/src/components/Icon";
 import { EDIT_FORMAT, type EditFormat } from "webviz-core/src/components/ValidatedInput";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 
 export const POLYGON_TAB_TYPE = "Polygons";
 export type DrawingTabType = typeof POLYGON_TAB_TYPE;

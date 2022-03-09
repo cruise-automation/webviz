@@ -32,7 +32,7 @@
 }
 
 .tipTitle {
-  color: $dark2;
+  color: $DARK2;
   width: 70px;
   text-align: right;
   margin-right: 4px;
@@ -64,7 +64,7 @@
 }
 
 .disconnected {
-  color: $text-muted;
+  color: $textMuted;
 }
 
 .stateBar {
@@ -83,25 +83,36 @@
   }
 }
 
-.seekBtn {
-  padding: 4px;
-  margin: 0;
+.seekControls {
   display: flex;
-  height: auto;
-  background-color: $dark4;
 
-  &:hover {
-    opacity: 1;
-    background-color: $dark5;
+  .seekBtn {
+    padding: 4px;
+    margin: 0;
+    display: flex;
+    height: auto;
+    background-color: $DARK4;
+
+    &:hover {
+      opacity: 1;
+      background-color: $DARK5;
+    }
   }
-}
 
-.inactive,
-.inactive:hover {
-  opacity: 0.4;
-  color: white;
-  background-color: $dark4;
-  cursor: none;
+  .leftSeekBtn {
+    border-radius: 4px 0 0 4px;
+    margin-left: 16px;
+    margin-right: 1px;
+  }
+
+  .rightSeekBtn {
+    border-radius: 0 4px 4px 0;
+  }
+
+  .seekSelect {
+    width: 85px;
+    margin-right: 1px;
+  }
 }
 
 .timeDisplayMethodButton {
@@ -110,7 +121,7 @@
   margin: 0px 4px;
   padding: 8px 4px;
   font-family: $monospace-font;
-  color: $light;
+  color: $LIGHT;
   opacity: 1;
 
   svg {

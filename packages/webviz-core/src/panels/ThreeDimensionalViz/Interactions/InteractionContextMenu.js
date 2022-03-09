@@ -62,11 +62,11 @@ const SId = styled.span`
   color: ${colors.YELLOW1};
 `;
 
-type Props = {
+type Props = {|
   clickedPosition: ClickedPosition,
   clickedObjects: MouseEventObject[],
   selectObject: (MouseEventObject) => void,
-};
+|};
 
 export default function InteractionContextMenu({ clickedObjects = [], clickedPosition = {}, selectObject }: Props) {
   return (

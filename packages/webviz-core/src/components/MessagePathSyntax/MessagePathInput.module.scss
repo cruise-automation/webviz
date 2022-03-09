@@ -15,17 +15,17 @@
 .timestampMethodDropdown {
   cursor: pointer;
   padding-left: 2px;
-  color: $text-muted;
+  color: $textMuted;
 
   &.timestampMethodDropdownError {
-    color: $red;
+    color: $RED2;
   }
 
   &:hover {
-    color: $text-normal;
+    color: $textNormal;
   }
 }
 
 .timestampItemError {
-  color: $red;
+  color: $RED2;
 }

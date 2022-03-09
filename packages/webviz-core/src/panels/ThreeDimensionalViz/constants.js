@@ -37,6 +37,8 @@ import Train from "@mdi/svg/svg/train.svg";
 import Truck from "@mdi/svg/svg/truck.svg";
 import Walk from "@mdi/svg/svg/walk.svg";
 
+import type { ArrowMarker, ClearingMarker } from "webviz-core/src/types/Messages";
+
 export const LAYER_INDEX_TEXT = 10;
 export const LAYER_INDEX_OCCUPANCY_GRIDS = -1;
 
@@ -47,7 +49,7 @@ export const LAYER_INDEX_HIGHLIGHT_OVERLAY = 500;
 export const LAYER_INDEX_HIGHLIGHT_BASE = 1000;
 export const LAYER_INDEX_DIFF_MODE_BASE_PER_PASS = 100;
 
-// Use for both 3D panel and ImageView panel. Use icon names from https://materialdesignicons.com for future icons.
+// Used by the ImageView panel. Use icon names from https://materialdesignicons.com for future icons.
 export const ICON_BY_TYPE = {
   // Supported icons, add more if needed.
   "alpha-r": AlphaR,
@@ -80,4 +82,91 @@ export const ICON_BY_TYPE = {
   train: Train,
   truck: Truck,
   walk: Walk,
+};
+
+// Used by the 3D panel's GLIcon command.
+// Use icon unicode values from https://pictogrammers.github.io/@mdi/font/6.5.95/ for future icons.
+export const ICON_CHAR_BY_TYPE = {
+  "alpha-r": "\u{F0AFF}",
+  "alpha-t": "\u{F0B01}",
+  "arrow-collapse-down": "\u{F0792}",
+  "arrow-collapse-left": "\u{F0793}",
+  "arrow-collapse-right": "\u{F0794}",
+  "arrow-collapse-up": "\u{F0795}",
+  "arrow-decision": "\u{F09BB}",
+  "arrow-left": "\u{F004D}",
+  "arrow-right": "\u{F0054}",
+  "arrow-top-left": "\u{F005B}",
+  "arrow-top-right": "\u{F005C}",
+  "bus-school": "\u{F079F}",
+  "car-brake-alert": "\u{F0C48}",
+  "car-parking-lights": "\u{F0D63}",
+  "hazard-lights": "\u{F0C89}",
+  "help-circle-outline": "\u{F0625}",
+  "road-variant": "\u{F0462}",
+  "signal-off": "\u{F0783}",
+  "robot-outline": "\u{F167A}",
+  "robot-off-outline": "\u{F167B}",
+  bike: "\u{F00A3}",
+  bus: "\u{F00E7}",
+  car: "\u{F010B}",
+  DEFAULT: "\u{F01A7}",
+  help: "\u{F02D6}",
+  motorbike: "\u{F037C}",
+  octagon: "\u{F03C3}",
+  train: "\u{F052C}",
+  truck: "\u{F053D}",
+  walk: "\u{F0583}",
+};
+
+export const EMPTY_MARKER: ArrowMarker = {
+  header: {
+    frame_id: "",
+    stamp: { sec: 0, nsec: 0 },
+    seq: 0,
+  },
+  pose: {
+    orientation: { w: 0, x: 0, y: 0, z: 0 },
+    position: { x: 0, y: 0, z: 0 },
+  },
+  type: 0,
+  scale: { x: 0.0, y: 0, z: 0 },
+  lifetime: { sec: 0, nsec: 0 },
+  frame_locked: false,
+  text: "",
+  mesh_resource: "",
+  mesh_use_embedded_materials: false,
+  ns: "",
+  color: { r: 0, g: 0, b: 0, a: 0 },
+  id: "",
+  action: 0,
+  colors: [],
+  metadata: {},
+  points: [],
+};
+
+export const CLEARING_MARKER: ClearingMarker = {
+  header: {
+    frame_id: "",
+    stamp: { sec: 0, nsec: 0 },
+    seq: 0,
+  },
+  pose: {
+    orientation: { w: 0, x: 0, y: 0, z: 0 },
+    position: { x: 0, y: 0, z: 0 },
+  },
+  type: 0,
+  scale: { x: 0.0, y: 0, z: 0 },
+  lifetime: { sec: 0, nsec: 0 },
+  frame_locked: false,
+  text: "",
+  mesh_resource: "",
+  mesh_use_embedded_materials: false,
+  ns: "",
+  color: { r: 0, g: 0, b: 0, a: 0 },
+  id: "",
+  action: 3,
+  colors: [],
+  metadata: {},
+  points: [],
 };

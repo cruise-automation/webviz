@@ -8,6 +8,7 @@
 import { routerMiddleware, replace } from "connected-react-router";
 import { createMemoryHistory } from "history";
 
+import fetchLayoutPublishedNodesMiddleware from "webviz-core/src/middleware/fetchLayoutPublishedNodesMiddleware";
 import updateUrlAndLocalStorageMiddleware from "webviz-core/src/middleware/updateUrlAndLocalStorage";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store";
@@ -18,7 +19,7 @@ let store;
 // after Cruise/open-source specific "hooks" have been initialized.
 function getGlobalStore() {
   if (!store) {
-    store = configureStore(createRootReducer(history), [routerMiddleware(history), updateUrlAndLocalStorageMiddleware]);
+    store = configureStore(createRootReducer(history), getMiddleware(history));
   }
   return store;
 }
@@ -27,7 +28,7 @@ export function getGlobalStoreForTest(args: ?{ search?: string, testAuth?: any }
   const memoryHistory = createMemoryHistory();
   const testStore = configureStore(
     createRootReducer(memoryHistory, { testAuth: args?.testAuth }),
-    [routerMiddleware(memoryHistory), updateUrlAndLocalStorageMiddleware],
+    getMiddleware(memoryHistory),
     memoryHistory
   );
   // Attach a helper method to the test store.
@@ -38,4 +39,9 @@ export function getGlobalStoreForTest(args: ?{ search?: string, testAuth?: any }
   }
   return testStore;
 }
+
+function getMiddleware(middlewareHistory) {
+  return [routerMiddleware(middlewareHistory), updateUrlAndLocalStorageMiddleware, fetchLayoutPublishedNodesMiddleware];
+}
+
 export default getGlobalStore;

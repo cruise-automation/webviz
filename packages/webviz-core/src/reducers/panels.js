@@ -18,6 +18,8 @@ import {
   type MosaicPath,
 } from "react-mosaic-component";
 
+// eslint-disable-next-line no-restricted-imports
+import { CURRENT_LAYOUT_VERSION } from "webviz-core/migrations/constants";
 import type { ActionTypes } from "webviz-core/src/actions";
 import type { StartDragPayload, EndDragPayload } from "webviz-core/src/actions/panels";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
@@ -85,7 +87,7 @@ export type PanelsState = {|
   globalData?: GlobalVariables,
   userNodes: UserNodes,
   linkedGlobalVariables: LinkedGlobalVariables,
-  playbackConfig: PlaybackConfig,
+  playbackConfig?: PlaybackConfig,
   restrictedTopics?: string[],
   version?: number,
   fullScreenPanel?: ?$ReadOnly<{| panelId: string, locked: boolean |}>,
@@ -406,12 +408,16 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
 
   const newPanelsState = {
     ...migratedPayload,
-    layout: migratedPayload.layout || {},
+    layout: migratedPayload.layout || null,
     savedProps: migratedPayload.savedProps || {},
     globalVariables: migratedPayload.globalVariables || {},
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
+    // If the migration above didn't provide a version, it probably failed -- likely because the
+    // layout is blank. Creating a layout without a version will result in migrations being
+    // erroneously applied on page-reload.
+    version: CURRENT_LAYOUT_VERSION,
   };
 
   return newPanelsState;

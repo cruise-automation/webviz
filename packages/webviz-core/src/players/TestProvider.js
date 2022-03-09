@@ -22,6 +22,7 @@ export const defaultStart = { sec: 10, nsec: 0 };
 export const defaultEnd = { sec: 100, nsec: 0 };
 const datatypes: RosDatatypes = {
   fooBar: {
+    name: "fooBar",
     fields: [
       {
         name: "val",
@@ -30,6 +31,7 @@ const datatypes: RosDatatypes = {
     ],
   },
   baz: {
+    name: "baz",
     fields: [
       {
         name: "val",
@@ -38,7 +40,10 @@ const datatypes: RosDatatypes = {
     ],
   },
 };
-const defaultTopics: Topic[] = [{ name: "/foo/bar", datatype: "fooBar" }, { name: "/baz", datatype: "baz" }];
+const defaultTopics: Topic[] = [
+  { name: "/foo/bar", datatypeName: "fooBar", datatypeId: "fooBar" },
+  { name: "/baz", datatypeName: "baz", datatypeId: "baz" },
+];
 type GetMessages = (start: Time, end: Time, topics: GetMessagesTopics) => Promise<GetMessagesResult>;
 
 export default class TestProvider implements DataProvider {
@@ -82,5 +87,12 @@ export default class TestProvider implements DataProvider {
   close(): Promise<void> {
     this.closed = true;
     return Promise.resolve();
+  }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
   }
 }

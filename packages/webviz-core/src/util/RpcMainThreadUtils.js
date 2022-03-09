@@ -28,3 +28,11 @@ export function setupMainThreadRpc(rpc: Rpc) {
   setupReceiveReportErrorHandler(rpc);
   setupReceiveLogEventHandler(rpc);
 }
+
+export function rpcFromNewSharedWorker(worker: SharedWorker): Rpc {
+  const port: MessagePort = worker.port;
+  port.start();
+  const rpc = new Rpc(port);
+  setupMainThreadRpc(rpc);
+  return rpc;
+}

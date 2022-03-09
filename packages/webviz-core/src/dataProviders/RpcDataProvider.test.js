@@ -22,7 +22,7 @@ const data = {
     parsedMessages: undefined,
     bobjects: undefined,
   },
-  topics: [{ name: "/some_topic", datatype: "some_datatype" }],
+  topics: [{ name: "/some_topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }],
   messageDefinitionsByTopic: { some_datatype: "dummy" },
   providesParsedMessages: false,
 };
@@ -38,7 +38,7 @@ describe("RpcDataProvider", () => {
     expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
-      topics: [{ datatype: "some_datatype", name: "/some_topic" }],
+      topics: [{ datatypeName: "some_datatype", datatypeId: "some_datatype", name: "/some_topic" }],
       messageDefinitions: {
         type: "raw",
         messageDefinitionsByTopic: { some_datatype: "dummy" },
@@ -72,6 +72,11 @@ describe("RpcDataProvider", () => {
       progressCallback() {},
       reportMetadataCallback: jest.fn(),
       notifyPlayerManager: jest.fn(),
+      nodePlaygroundActions: {
+        setCompiledNodeData: jest.fn(),
+        addUserNodeLogs: jest.fn(),
+        setUserNodeRosLib: jest.fn(),
+      },
     };
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);

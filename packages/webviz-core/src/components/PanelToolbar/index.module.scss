@@ -35,7 +35,7 @@ $panelToolbarSpacing: 4px;
   flex: 0 0 auto;
   flex-direction: row;
   justify-content: flex-end;
-  background-color: $toolbar-fixed;
+  background-color: $DARK2;
   padding: $panelToolbarSpacing;
 
   &.floating {
@@ -57,11 +57,11 @@ $panelToolbarSpacing: 4px;
 
     &.hasChildren {
       left: 0;
-      background-color: $toolbar-fixed;
+      background-color: $DARK2;
     }
 
     &:not(.hasChildren) .iconContainer {
-      background-color: $dark3;
+      background-color: $DARK3;
       border-radius: 4px;
       box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
     }

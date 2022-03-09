@@ -24,6 +24,7 @@ const getDatasetAndTooltipsParameters = [
       timestampMethod: "headerStamp",
     },
   ],
+  [],
   {
     "/some_topic.ok": [
       [

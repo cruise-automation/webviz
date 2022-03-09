@@ -14,10 +14,10 @@ import useLinkedGlobalVariables, { type LinkedGlobalVariable } from "../useLinke
 import { SPath, SGlobalVariableForm, GlobalVariableName } from "./index";
 import Button from "webviz-core/src/components/Button";
 
-type Props = {
+type Props = {|
   linkedGlobalVariable: LinkedGlobalVariable,
   setIsOpen: (boolean) => void,
-};
+|};
 export default function UnlinkGlobalVariable({
   linkedGlobalVariable: { topic, markerKeyPath, name },
   setIsOpen,

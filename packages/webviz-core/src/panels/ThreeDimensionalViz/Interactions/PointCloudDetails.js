@@ -16,15 +16,15 @@ import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
-import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import { jsonTreeTheme } from "webviz-core/src/util/sharedStyleConstants";
 
-type Props = {
+type Props = {|
   pointDetails: {
     index: number,
     color: [number, number, number, number],
     decodedData: { [field: string]: number }[],
   },
-};
+|};
 
 function pointsToCsv(data) {
   // There's always at least one point -- you can't click on "no points".

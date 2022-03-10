@@ -39,7 +39,7 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
     #WITH_POSE
 
     void main () {
-      vec3 p = applyPose(scale * point) + offset;
+      vec3 p = applyPose(scale * point + offset);
       vColor = color;
       gl_Position = projection * view * vec4(p, 1);
     }

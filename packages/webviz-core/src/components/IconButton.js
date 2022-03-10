@@ -11,7 +11,7 @@ import React, { type Node } from "react";
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 
-type Props = {
+type Props = {|
   tooltip: string,
   onClick: () => void,
   icon: Node,
@@ -19,7 +19,7 @@ type Props = {
   className?: string,
   style?: StyleObj,
   disabled?: boolean,
-};
+|};
 
 export default React.memo<Props>(function IconButton(props: Props) {
   const { tooltip, onClick, id, icon, className, style, disabled } = props;

@@ -9,7 +9,7 @@
   display: flex;
   max-width: 100%;
   padding: 4px 10px;
-  background-color: $dark4;
+  background-color: $DARK4;
 
   .title {
     overflow: hidden;
@@ -22,7 +22,7 @@
   }
 
   &:hover {
-    background-color: $dark5;
+    background-color: $DARK5;
   }
 }
 

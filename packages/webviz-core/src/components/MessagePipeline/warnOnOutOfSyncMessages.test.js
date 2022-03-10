@@ -25,8 +25,8 @@ const playerStateWithMessages = (messages, messageOrder): PlayerState => ({
   playerId: "test",
   activeData: {
     topics: [
-      { name: "/foo", datatype: "visualization_msgs/Marker" },
-      { name: "/bar", datatype: "visualization_msgs/Marker" },
+      { name: "/foo", datatypeName: "visualization_msgs/Marker", datatypeId: "visualization_msgs/Marker" },
+      { name: "/bar", datatypeName: "visualization_msgs/Marker", datatypeId: "visualization_msgs/Marker" },
     ],
     datatypes: {},
     parsedMessageDefinitionsByTopic: {},

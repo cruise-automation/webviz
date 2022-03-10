@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { simplify } from "intervals-fn";
-import { isEqual, sum, uniq } from "lodash";
+import { flatten, groupBy, isEqual, keyBy, sum, uniq } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
@@ -19,12 +19,18 @@ import type {
   GetMessagesResult,
   GetMessagesTopics,
   InitializationResult,
+  SetGlobalVariablesResult,
+  SetUserNodesResult,
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
-import type { BobjectMessage } from "webviz-core/src/players/types";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { BobjectMessage, Topic } from "webviz-core/src/players/types";
+import type { UserNodes } from "webviz-core/src/types/panels";
+import { objectValues } from "webviz-core/src/util";
 import { inaccurateByteSize } from "webviz-core/src/util/binaryObjects";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/util/globalConstants";
+import invariant from "webviz-core/src/util/invariant";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
@@ -47,10 +53,9 @@ export type MemoryCacheBlock = $ReadOnly<{|
   sizeInBytes: number,
 |}>;
 
-export type BlockCache = {|
+export type BlockCache = $ReadOnly<{|
   blocks: $ReadOnlyArray<?MemoryCacheBlock>,
-  startTime: Time,
-|};
+|}>;
 
 const EMPTY_BLOCK: MemoryCacheBlock = { messagesByTopic: {}, sizeInBytes: 0 };
 
@@ -171,6 +176,16 @@ export function getPrefetchStartPoint(uncachedRanges: Range[], cursorPosition: n
   return uncachedRanges[0].start;
 }
 
+function getBlockSize(messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<BobjectMessage> }>): number {
+  let total = 0;
+  objectValues(messagesByTopic).forEach((messages) => {
+    total += sum(
+      messages.map(({ message }) => (message instanceof ArrayBuffer ? message.byteLength : inaccurateByteSize(message)))
+    );
+  });
+  return total;
+}
+
 // This fills up the memory with messages from an underlying DataProvider. The messages have to be
 // unparsed ROS messages. The messages are evicted from this in-memory cache based on some constants
 // defined at the top of this file.
@@ -190,6 +205,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
   // The topics that we were most recently asked to load.
   // This is always set by the last `getMessages` call.
   _preloadTopics: string[] = [];
+  _allTopics: Set<string> = new Set();
 
   // Total length of the data in nanoseconds. Used to compute progress with.
   _totalNs: number;
@@ -225,6 +241,8 @@ export default class MemoryCacheDataProvider implements DataProvider {
   _readAheadBlocks: number;
   _memCacheBlockSizeNs: number;
 
+  _nodeTopics: { [name: string]: Topic };
+
   constructor(
     { id, unlimitedCache }: {| id: string, unlimitedCache?: boolean |},
     children: DataProviderDescriptor[],
@@ -242,6 +260,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     this._extensionPoint = extensionPoint;
 
     const result = await this._provider.initialize({ ...extensionPoint, progressCallback: () => {} });
+    invariant(result.messageDefinitions.type === "parsed", "MemoryCacheDataProvider needs parsed message definitions");
     this._startTime = result.start;
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
     this._memCacheBlockSizeNs = Math.ceil(Math.max(MIN_MEM_CACHE_BLOCK_SIZE_NS, this._totalNs / MAX_BLOCKS));
@@ -250,6 +269,8 @@ export default class MemoryCacheDataProvider implements DataProvider {
       throw new Error("Time range is too long to be supported");
     }
     this._blocks = new Array(Math.ceil(this._totalNs / this._memCacheBlockSizeNs));
+    this._nodeTopics = keyBy(result.topics.filter((t) => !!t.inputTopics), "name");
+    this._allTopics = new Set(result.topics.map(({ name }) => name));
     this._updateProgress();
 
     return result;
@@ -258,7 +279,25 @@ export default class MemoryCacheDataProvider implements DataProvider {
   async getMessages(startTime: Time, endTime: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
     // We might have a new set of topics.
     const topics = getNormalizedTopics(subscriptions.bobjects || []);
-    this._preloadTopics = topics;
+    // If we finish the getMessages request we might continue preloading data. Only preload node
+    // topics' inputs, don't run the nodes themselves.
+    const preloadSubscriptions = subscriptions.preloadedTopics ?? new Set();
+    this._preloadTopics = getNormalizedTopics(
+      flatten(
+        topics.map((topic) => {
+          // Eagerly preload
+          // - any requested non-"node" topic,
+          // - any requested "node" topic with a preloading subscription,
+          // - input topics for nodes that don't have preloading subscriptions.
+          const childTopics = this._nodeTopics[topic]?.inputTopics;
+          if (childTopics && !preloadSubscriptions.has(topic)) {
+            // Don't preload node topics themselves, just their inputs.
+            return childTopics.filter((childTopic) => this._allTopics.has(childTopic));
+          }
+          return [topic];
+        })
+      )
+    );
 
     // Push a new entry to `this._readRequests`, and call `this._updateState()`.
     const timeRange = {
@@ -403,7 +442,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
       const connectionSuccess = await this._setConnection(newConnection).catch((err) => {
         sendNotification(
           `MemoryCacheDataProvider connection ${this._currentConnection ? this._currentConnection.id : ""}`,
-          err ? err.message : "<unknown error>",
+          err ? err.stack : "<unknown error>",
           "app",
           "error"
         );
@@ -475,18 +514,27 @@ export default class MemoryCacheDataProvider implements DataProvider {
       }
 
       const existingBlock = this._blocks[currentBlockIndex] || EMPTY_BLOCK;
-      const messagesByTopic = { ...existingBlock.messagesByTopic };
       let sizeInBytes = existingBlock.sizeInBytes;
-      // Fill up the block with messages.
+      // Fill up the block with messages. A couple of subtleties:
+      //  - We should include an empty array for requested topics with no returned messages. "No
+      //    messages during this time-span" is useful information in the player, and also helps us
+      //    avoid redundant getMessages calls when we play through this region again.
+      //  - Node child providers may give us messages for topics we didn't request. We should cache
+      //    these, but it's not important to preserve "no messages for this range" information.
+      const messagesByTopic = { ...existingBlock.messagesByTopic };
       for (const topic of topics) {
         messagesByTopic[topic] = [];
+        for (const childTopic of this._nodeTopics[topic]?.inputTopics ?? []) {
+          messagesByTopic[childTopic] = [];
+        }
       }
-      for (const bobjectMessage of bobjects || []) {
-        messagesByTopic[bobjectMessage.topic].push(bobjectMessage);
-        const { message } = bobjectMessage;
-        sizeInBytes += message instanceof ArrayBuffer ? message.byteLength : inaccurateByteSize(message);
-      }
+      Object.assign(messagesByTopic, groupBy(bobjects || [], "topic"));
+      sizeInBytes = getBlockSize(messagesByTopic);
 
+      const blockAfter = this._removeTopicsFromBlock(
+        currentBlockIndex + 1,
+        new Set(topics.filter((topic) => this._nodeTopics[topic]))
+      );
       if (sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
         this._loggedTooLargeError = true;
         const sizes = [];
@@ -512,9 +560,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
           "warn"
         );
       }
-      this._blocks = this._blocks
-        .slice(0, currentBlockIndex)
-        .concat([{ messagesByTopic, sizeInBytes }], this._blocks.slice(currentBlockIndex + 1));
+      const nextBlocks = this._blocks.slice();
+      nextBlocks[currentBlockIndex] = { messagesByTopic, sizeInBytes };
+      if (currentBlockIndex + 1 < this._blocks.length) {
+        nextBlocks[currentBlockIndex + 1] = blockAfter;
+      }
+      this._blocks = nextBlocks;
 
       // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can resolve
       // requests, purge the cache and report progress.
@@ -604,14 +655,64 @@ export default class MemoryCacheDataProvider implements DataProvider {
         start: range.start / this._blocks.length,
         end: range.end / this._blocks.length,
       })),
-      messageCache: {
-        blocks: this._blocks,
-        startTime: this._startTime,
-      },
+      messageCache: { blocks: this._blocks },
     });
   }
 
   setCacheSizeBytesInTests(cacheSizeBytes: number) {
     this._cacheSizeBytes = cacheSizeBytes;
+  }
+
+  _removeTopicsFromBlock(blockIndex: number, topics: Set<string>) {
+    // Some node topics may be cached. Nodes may be stateful, so stitching together a node's
+    // outputs from [0, 10) + [10, 20) may not produce the same set of messages as a "clean" run
+    // over [0, 20). So when we run a node over block [A, B), we should invalidate the data at B
+    // and re-run the node over it.
+    // This might cause the node to run over a given segment more than once.
+    let blockAfter = this._blocks[blockIndex];
+    if (blockAfter) {
+      const nextBlockMessagesByTopic = { ...blockAfter.messagesByTopic };
+      topics.forEach((t) => {
+        delete nextBlockMessagesByTopic[t];
+      });
+      blockAfter = {
+        sizeInBytes: getBlockSize(nextBlockMessagesByTopic),
+        messagesByTopic: nextBlockMessagesByTopic,
+      };
+    }
+    return blockAfter;
+  }
+
+  _removeTopicsFromAllBlocks(topics: Set<string>) {
+    const nextBlocks = [];
+    for (let i = 0; i < this._blocks.length; ++i) {
+      nextBlocks.push(this._removeTopicsFromBlock(i, topics));
+    }
+    this._blocks = nextBlocks;
+  }
+
+  async setUserNodes(userNodes: UserNodes): Promise<SetUserNodesResult> {
+    const ret = await this._provider.setUserNodes(userNodes);
+    if (ret == null) {
+      return;
+    }
+    this._nodeTopics = keyBy(ret.topics.filter((t) => !!t.inputTopics), "name");
+    this._allTopics = new Set(ret.topics.map(({ name }) => name));
+    if (ret.topicsToInvalidate.size) {
+      this._removeTopicsFromAllBlocks(ret.topicsToInvalidate);
+      this._updateProgress();
+    }
+    return ret;
+  }
+  async setGlobalVariables(globalVariables: GlobalVariables): Promise<SetGlobalVariablesResult> {
+    const ret = await this._provider.setGlobalVariables(globalVariables);
+    if (ret == null) {
+      return;
+    }
+    if (ret.topicsToInvalidate.size) {
+      this._removeTopicsFromAllBlocks(ret.topicsToInvalidate);
+      this._updateProgress();
+    }
+    return ret;
   }
 }

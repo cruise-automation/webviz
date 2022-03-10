@@ -11,16 +11,16 @@ import { connect } from "react-redux";
 
 import { loadLayout as loadLayoutAction, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
-  setUserNodeDiagnostics,
   addUserNodeLogs,
   setUserNodeRosLib,
-  type SetUserNodeDiagnostics,
+  setCompiledNodeData,
+  type SetCompiledNodeData,
   type AddUserNodeLogs,
   type SetUserNodeRosLib,
 } from "webviz-core/src/actions/userNodes";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures/storage";
 import { HoverValueProvider } from "webviz-core/src/components/HoverBar/context";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
@@ -30,9 +30,10 @@ import {
   getLocalBagDescriptor,
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
-import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
+import type { DataProviderDescriptor, NodePlaygroundActions } from "webviz-core/src/dataProviders/types";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import AutomatedRunPlayer from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
 import PerformanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
 import videoRecordingClient from "webviz-core/src/players/automatedRun/videoRecordingClient";
@@ -41,6 +42,7 @@ import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
 import RosbridgePlayer from "webviz-core/src/players/RosbridgePlayer";
 import type { Player } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import { selectUserNodesWithRemoteSources } from "webviz-core/src/selectors/selectUserNodesWithRemoteSources";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import { corsError } from "webviz-core/src/util/corsError";
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
@@ -58,8 +60,19 @@ import { inVideoRecordingMode, inPlaybackPerformanceMeasuringMode } from "webviz
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
-function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor, initialMessageOrder): Player {
+function buildPlayerFromDescriptor(
+  childDescriptor: DataProviderDescriptor,
+  initialMessageOrder,
+  userNodes: UserNodes,
+  globalVariables: GlobalVariables,
+  nodePlaygroundActions: NodePlaygroundActions
+): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
+  const rewriteProvider = {
+    name: CoreDataProviders.RewriteBinaryDataProvider,
+    args: {},
+    children: [childDescriptor],
+  };
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
     args: {},
@@ -69,9 +82,9 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor, init
         args: { unlimitedCache },
         children: [
           {
-            name: CoreDataProviders.RewriteBinaryDataProvider,
-            args: {},
-            children: [childDescriptor],
+            name: CoreDataProviders.NodePlaygroundDataProvider,
+            args: { basicDatatypes: getGlobalHooks().getBasicDatatypes(), globalVariables, userNodes },
+            children: [rewriteProvider],
           },
         ],
       },
@@ -79,27 +92,46 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor, init
   };
 
   if (inVideoRecordingMode()) {
-    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), videoRecordingClient);
+    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), {
+      client: videoRecordingClient,
+      nodePlaygroundActions,
+    });
   }
   if (inPlaybackPerformanceMeasuringMode()) {
-    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), new PerformanceMeasuringClient());
+    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), {
+      client: new PerformanceMeasuringClient(),
+      nodePlaygroundActions,
+    });
   }
   return new RandomAccessPlayer(rootDescriptor, {
     metricsCollector: undefined,
     seekToTime: getSeekToTime(),
     notifyPlayerManager: async () => {},
     initialMessageOrder,
+    nodePlaygroundActions,
   });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
 
-function buildPlayerFromFiles(files: File[], initialMessageOrder: TimestampMethod): ?PlayerDefinition {
+function buildPlayerFromFiles(
+  files: File[],
+  initialMessageOrder: TimestampMethod,
+  userNodes: UserNodes,
+  globalVariables: GlobalVariables,
+  nodePlaygroundActions: NodePlaygroundActions
+): ?PlayerDefinition {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
     return {
-      player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0]), initialMessageOrder),
+      player: buildPlayerFromDescriptor(
+        getLocalBagDescriptor(files[0]),
+        initialMessageOrder,
+        userNodes,
+        globalVariables,
+        nodePlaygroundActions
+      ),
       inputDescription: (
         <>
           Using local bag file <code>{files[0].name}</code>.
@@ -121,7 +153,10 @@ function buildPlayerFromFiles(files: File[], initialMessageOrder: TimestampMetho
             },
           ],
         },
-        initialMessageOrder
+        initialMessageOrder,
+        userNodes,
+        globalVariables,
+        nodePlaygroundActions
       ),
       inputDescription: (
         <>
@@ -135,7 +170,10 @@ function buildPlayerFromFiles(files: File[], initialMessageOrder: TimestampMetho
 
 async function buildPlayerFromBagURLs(
   urls: string[],
-  initialMessageOrder: TimestampMethod
+  initialMessageOrder: TimestampMethod,
+  userNodes: UserNodes,
+  globalVariables: GlobalVariables,
+  nodePlaygroundActions: NodePlaygroundActions
 ): Promise<?PlayerDefinition> {
   const guids: (?string)[] = await Promise.all(urls.map(getRemoteBagGuid));
 
@@ -143,7 +181,13 @@ async function buildPlayerFromBagURLs(
     return undefined;
   } else if (urls.length === 1) {
     return {
-      player: buildPlayerFromDescriptor(getRemoteBagDescriptor(urls[0], guids[0]), initialMessageOrder),
+      player: buildPlayerFromDescriptor(
+        getRemoteBagDescriptor(urls[0], guids[0]),
+        initialMessageOrder,
+        userNodes,
+        globalVariables,
+        nodePlaygroundActions
+      ),
       inputDescription: (
         <>
           Streaming bag from <code>{urls[0]}</code>.
@@ -165,7 +209,10 @@ async function buildPlayerFromBagURLs(
             },
           ],
         },
-        initialMessageOrder
+        initialMessageOrder,
+        userNodes,
+        globalVariables,
+        nodePlaygroundActions
       ),
       inputDescription: (
         <>
@@ -184,7 +231,7 @@ type Props = OwnProps & {
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
   globalVariables: GlobalVariables,
-  setUserNodeDiagnostics: SetUserNodeDiagnostics,
+  setCompiledNodeData: SetCompiledNodeData,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeRosLib: SetUserNodeRosLib,
   setGlobalVariables: typeof setGlobalVariables,
@@ -196,13 +243,12 @@ function PlayerManager({
   messageOrder,
   userNodes,
   globalVariables,
-  setUserNodeDiagnostics: setDiagnostics,
+  setCompiledNodeData: setNodeData,
   addUserNodeLogs: setLogs,
   setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
-  const globalVariablesRef = React.useRef<GlobalVariables>(globalVariables);
   const [player, setPlayerInternal] = React.useState<?OrderedStampPlayer>();
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
@@ -210,6 +256,19 @@ function PlayerManager({
   // initialize it with the right order, so make a variable for its initial value we can use in the
   // dependency array below to defeat the linter.
   const getMessageOrder = useGetCurrentValue(messageOrder);
+  const getUserNodes = useGetCurrentValue(userNodes);
+  const getGlobalVariables = useGetCurrentValue(globalVariables);
+  const nodePlaygroundActions = React.useRef<NodePlaygroundActions>({
+    setCompiledNodeData: async (diagnostics) => {
+      setNodeData(diagnostics);
+    },
+    addUserNodeLogs: async (logs) => {
+      setLogs(logs);
+    },
+    setUserNodeRosLib: async (roslib) => {
+      setRosLib(roslib);
+    },
+  });
   const setPlayer = React.useCallback((playerDefinition: ?PlayerDefinition) => {
     if (!playerDefinition) {
       setPlayerInternal(undefined);
@@ -217,15 +276,17 @@ function PlayerManager({
       return;
     }
     setInputDescription(playerDefinition.inputDescription);
-    const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
-      setUserNodeDiagnostics: setDiagnostics,
-      addUserNodeLogs: setLogs,
-      setUserNodeRosLib: setRosLib,
-    });
-    const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, getMessageOrder());
-    headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
+    const innerPlayer =
+      playerDefinition.player instanceof RosbridgePlayer
+        ? new UserNodePlayer(playerDefinition.player, {
+            setCompiledNodeData: setNodeData,
+            addUserNodeLogs: setLogs,
+            setUserNodeRosLib: setRosLib,
+          })
+        : playerDefinition.player;
+    const headerStampPlayer = new OrderedStampPlayer(innerPlayer, getMessageOrder());
     setPlayerInternal(headerStampPlayer);
-  }, [setDiagnostics, setLogs, setRosLib, getMessageOrder]);
+  }, [setNodeData, setLogs, setRosLib, getMessageOrder]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -259,7 +320,13 @@ function PlayerManager({
 
     const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
     if (params.has(DEMO_QUERY_KEY)) {
-      buildPlayerFromBagURLs([remoteDemoBagUrl], getMessageOrder()).then((playerDefinition: ?PlayerDefinition) => {
+      buildPlayerFromBagURLs(
+        [remoteDemoBagUrl],
+        getMessageOrder(),
+        getUserNodes(),
+        globalVariablesFromUrl || getGlobalVariables(),
+        nodePlaygroundActions.current
+      ).then((playerDefinition: ?PlayerDefinition) => {
         setPlayer(playerDefinition);
         // When we're showing a demo, then automatically start playback (we don't normally
         // do that).
@@ -272,7 +339,13 @@ function PlayerManager({
     }
     if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
       const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
-      buildPlayerFromBagURLs(urls, getMessageOrder()).then((playerDefinition: ?PlayerDefinition) => {
+      buildPlayerFromBagURLs(
+        urls,
+        getMessageOrder(),
+        getUserNodes(),
+        globalVariablesFromUrl || getGlobalVariables(),
+        nodePlaygroundActions.current
+      ).then((playerDefinition: ?PlayerDefinition) => {
         setPlayer(playerDefinition);
       });
     } else {
@@ -286,7 +359,7 @@ function PlayerManager({
         ),
       });
     }
-  }, [getMessageOrder, loadLayout, setPlayer, setVariables]);
+  }, [getGlobalVariables, getMessageOrder, getUserNodes, loadLayout, setPlayer, setVariables]);
 
   if (useChangeDetector([messageOrder], false) && player) {
     player.setMessageOrder(messageOrder);
@@ -304,7 +377,15 @@ function PlayerManager({
           } else {
             usedFiles.current = [files[0]];
           }
-          setPlayer(buildPlayerFromFiles(usedFiles.current, getMessageOrder()));
+          setPlayer(
+            buildPlayerFromFiles(
+              usedFiles.current,
+              getMessageOrder(),
+              userNodes,
+              globalVariables,
+              nodePlaygroundActions.current
+            )
+          );
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>
@@ -326,13 +407,13 @@ function PlayerManager({
 
 export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
+    userNodes: selectUserNodesWithRemoteSources(state),
     messageOrder: state.persistedState.panels.playbackConfig.messageOrder,
-    userNodes: state.persistedState.panels.userNodes,
     globalVariables: state.persistedState.panels.globalVariables,
   }),
   {
     loadLayout: loadLayoutAction,
-    setUserNodeDiagnostics,
+    setCompiledNodeData,
     addUserNodeLogs,
     setUserNodeRosLib,
     setGlobalVariables,

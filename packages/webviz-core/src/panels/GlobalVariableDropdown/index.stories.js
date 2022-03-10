@@ -16,7 +16,7 @@ import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { useDelayedEffect } from "webviz-core/src/util/hooks";
 
 const fixture = {
-  topics: [{ name: "/def", datatype: "some_datatype" }],
+  topics: [{ name: "/def", datatypeName: "some_datatype", datatypeId: "some_datatype" }],
   frame: {
     "/def": [
       {
@@ -29,9 +29,11 @@ const fixture = {
   datatypes: {
     ...basicDatatypes,
     animal_datatype: {
+      name: "animal_datatype",
       fields: [{ name: "name", type: "string", isArray: false, isComplex: false }],
     },
     some_datatype: {
+      name: "some_datatype",
       fields: [{ name: "animals", type: "animal_datatype", isArray: true, isComplex: false }],
     },
   },

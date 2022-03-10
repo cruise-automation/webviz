@@ -12,6 +12,7 @@ import { hot } from "react-hot-loader/root";
 import { connect, Provider } from "react-redux";
 import { Route } from "react-router";
 
+import { ZaplibContextProvider } from "../util/ZaplibContext";
 import styles from "./Root.module.scss";
 import SettingsMenu from "./SettingsMenu";
 import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
@@ -34,13 +35,13 @@ import getGlobalStore from "webviz-core/src/store/getGlobalStore";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
 import history from "webviz-core/src/util/history";
 import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
+
 // Only used in dev.
 setReactHotLoaderConfig();
 
 const LOGO_SIZE = 24;
 
 type Props = {|
-  history: any,
   importPanelLayout: typeof importPanelLayout,
   redoStateCount: number,
   undoStateCount: number,
@@ -93,7 +94,9 @@ function App({ importPanelLayout: importPanelLayoutProp }) {
                 </div>
               </Toolbar>
               <div className={cx(styles.layout, "PanelLayout-root")}>
-                <PanelLayout />
+                <ZaplibContextProvider>
+                  <PanelLayout />
+                </ZaplibContextProvider>
               </div>
               <div className={styles["playback-controls"]}>
                 <PlaybackControls />
@@ -106,7 +109,7 @@ function App({ importPanelLayout: importPanelLayoutProp }) {
   );
 }
 
-const ConnectedApp = connect<Props, { history: any }, _, _, _, _>(
+const ConnectedApp = connect<Props, {}, _, _, _, _>(
   ({ layoutHistory: { redoStates, undoStates } }: State) => ({
     redoStateCount: redoStates.length,
     undoStateCount: undoStates.length,

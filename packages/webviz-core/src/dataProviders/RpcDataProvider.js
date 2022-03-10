@@ -39,7 +39,12 @@ export default class RpcDataProvider implements DataProvider {
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     if (extensionPoint) {
-      const { progressCallback, reportMetadataCallback, notifyPlayerManager } = extensionPoint;
+      const {
+        progressCallback,
+        reportMetadataCallback,
+        notifyPlayerManager,
+        nodePlaygroundActions: { addUserNodeLogs, setCompiledNodeData, setUserNodeRosLib },
+      } = extensionPoint;
 
       this._rpc.receive("extensionPointCallback", ({ type, data }) => {
         switch (type) {
@@ -49,9 +54,17 @@ export default class RpcDataProvider implements DataProvider {
           case "reportMetadataCallback":
             reportMetadataCallback(data);
             break;
-          case "notifyPlayerManager": {
+          case "notifyPlayerManager":
             return notifyPlayerManager(data);
-          }
+          case "addUserNodeLogs":
+            addUserNodeLogs(data);
+            break;
+          case "setCompiledNodeData":
+            setCompiledNodeData(data);
+            break;
+          case "setUserNodeRosLib":
+            setUserNodeRosLib(data);
+            break;
           default:
             throw new Error(`Unsupported extension point type in RpcDataProvider: ${type}`);
         }
@@ -74,5 +87,12 @@ export default class RpcDataProvider implements DataProvider {
 
   close(): Promise<void> {
     return this._rpc.send("close");
+  }
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
   }
 }

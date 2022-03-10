@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import type { Time } from "rosbag";
 
-import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Topic, Message } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
@@ -104,6 +104,7 @@ export type NodeRegistration = {|
   output: Topic,
   processMessages: (Message[], RosDatatypes, GlobalVariables) => Promise<Message[]>,
   terminate: () => void,
+  reset: () => void,
 |};
 
 export type NodeDataTransformer = (nodeData: NodeData, topics: Topic[]) => NodeData;
@@ -113,6 +114,7 @@ export type UserNodeLog = {
   value: any, // TODO: This should ideally share the type def of `log()` in `lib.js`
 };
 
+export type CompiledUserNodeData = { [nodeId: string]: { diagnostics: Diagnostic[] } };
 export type UserNodeDiagnostics = { [nodeId: string]: { diagnostics: Diagnostic[] } };
 export type UserNodeLogs = { [nodeId: string]: { logs: UserNodeLog[] } };
 

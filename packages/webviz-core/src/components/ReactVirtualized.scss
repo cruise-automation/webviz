@@ -1,0 +1,83 @@
+@import "~webviz-core/src/styles/mixins.module.scss";
+@import "~webviz-core/src/styles/colors.module.scss";
+
+$option-height: 24;
+$option-font-size: $text-size;
+
+div.Select-menu-outer {
+  @extend %floating-box;
+}
+div.Select-menu {
+  padding-bottom: 5em !important; // TODO(jacob): not working when there are enough items to scroll?
+}
+.Select-control {
+  font-size: $option-font-size;
+  .Select-clear {
+    line-height: $option-font-size * 2;
+    font-size: $option-font-size * 1.5;
+  }
+}
+$select-item-font-size: $option-font-size;
+$select-input-bg: $DARK3;
+$select-input-border-color: transparent;
+$select-input-border-focus: transparent;
+$select-input-height: $option-height * 1px;
+$select-input-internal-height: 26px;
+$select-text-color: $textControl;
+$select-input-placeholder: transparentize($textControl, 0.5);
+$select-option-bg: red;
+$select-clear-color: $textControl;
+$select-loading-color: $textControl;
+$select-arrow-color: $textControl;
+
+@import "~react-select/scss/default";
+@import "~react-virtualized/styles.css";
+
+.VirtualizedSelectOption {
+  @extend %menu-item;
+}
+.VirtualizedSelectSelectedOption {
+  @extend %menu-item-active;
+}
+.VirtualizedSelectFocusedOption {
+  @extend %menu-item-hover;
+  // TODO(jacob): doesn't override react-virtualized-select styles for some reason
+  background-color: $DARK4 !important;
+}
+.Select {
+  width: 100%;
+}
+.Select-input > input {
+  color: $select-text-color;
+}
+.Select-multi-value-wrapper {
+  display: table-cell;
+  position: relative;
+}
+.Select--multi .Select-multi-value-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.Select--multi .Select-arrow {
+  opacity: 0.5;
+}
+.Select--multi .Select-value {
+  color: $textBright;
+  background-color: $DARK5;
+  border: 1px solid $backgroundControl;
+  margin: 2px;
+}
+.Select--multi .Select-value-icon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0 0 4px;
+  opacity: 0.5;
+  border: 0;
+  &:hover {
+    color: inherit;
+    background-color: transparent;
+    opacity: 1;
+  }
+}

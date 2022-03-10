@@ -10,11 +10,11 @@ import React from "react";
 
 import styles from "./Toolbar.module.scss";
 
-type Props = {
+type Props = {|
   children: React$Node,
   style?: any,
   className?: string,
-};
+|};
 
 const Toolbar = (props: Props) => {
   const { style, className = "" } = props;

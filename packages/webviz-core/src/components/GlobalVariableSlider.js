@@ -11,10 +11,10 @@ import { SliderWithTicks } from "webviz-core/src/components/SliderWithTicks";
 import type { SliderProps } from "webviz-core/src/components/SliderWithTicks";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 
-type Props = {
+type Props = {|
   sliderProps: SliderProps,
   globalVariableName: string,
-};
+|};
 
 // A slider that controls the value of a global variable
 export default function GlobalVariableSlider(props: Props): ReactNode {

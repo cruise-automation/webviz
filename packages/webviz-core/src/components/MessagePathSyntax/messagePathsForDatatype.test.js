@@ -18,12 +18,14 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 const datatypes: RosDatatypes = {
   "pose_msgs/PoseDebug": {
+    name: "pose_msgs/PoseDebug",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false },
       { name: "some_pose", type: "pose_msgs/SomePose", isArray: false },
     ],
   },
   "pose_msgs/SomePose": {
+    name: "pose_msgs/SomePose",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false },
       { name: "x", type: "float64", isArray: false },
@@ -32,6 +34,7 @@ const datatypes: RosDatatypes = {
     ],
   },
   "std_msgs/Header": {
+    name: "std_msgs/Header",
     fields: [
       { name: "seq", type: "uint32", isArray: false },
       { name: "stamp", type: "time", isArray: false },
@@ -39,6 +42,7 @@ const datatypes: RosDatatypes = {
     ],
   },
   "msgs/Log": {
+    name: "msgs/Log",
     fields: [{ name: "id", type: "int32", isArray: false }, { name: "myJson", type: "json", isArray: false }],
   },
 };
@@ -49,20 +53,20 @@ describe("messagePathStructures", () => {
       "pose_msgs/SomePose": {
         nextByName: {
           dummy_array: {
-            next: { primitiveType: "float64", structureType: "primitive", datatype: "pose_msgs/SomePose" },
+            next: { primitiveType: "float64", structureType: "primitive", parentDatatype: "pose_msgs/SomePose" },
             structureType: "array",
             datatype: "pose_msgs/SomePose",
           },
           header: {
             nextByName: {
-              frame_id: { primitiveType: "string", structureType: "primitive", datatype: "std_msgs/Header" },
-              seq: { primitiveType: "uint32", structureType: "primitive", datatype: "std_msgs/Header" },
-              stamp: { primitiveType: "time", structureType: "primitive", datatype: "std_msgs/Header" },
+              frame_id: { primitiveType: "string", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+              seq: { primitiveType: "uint32", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+              stamp: { primitiveType: "time", structureType: "primitive", parentDatatype: "std_msgs/Header" },
             },
             structureType: "message",
             datatype: "std_msgs/Header",
           },
-          x: { primitiveType: "float64", structureType: "primitive", datatype: "pose_msgs/SomePose" },
+          x: { primitiveType: "float64", structureType: "primitive", parentDatatype: "pose_msgs/SomePose" },
         },
         structureType: "message",
         datatype: "pose_msgs/SomePose",
@@ -71,9 +75,9 @@ describe("messagePathStructures", () => {
         nextByName: {
           header: {
             nextByName: {
-              frame_id: { primitiveType: "string", structureType: "primitive", datatype: "std_msgs/Header" },
-              seq: { primitiveType: "uint32", structureType: "primitive", datatype: "std_msgs/Header" },
-              stamp: { primitiveType: "time", structureType: "primitive", datatype: "std_msgs/Header" },
+              frame_id: { primitiveType: "string", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+              seq: { primitiveType: "uint32", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+              stamp: { primitiveType: "time", structureType: "primitive", parentDatatype: "std_msgs/Header" },
             },
             structureType: "message",
             datatype: "std_msgs/Header",
@@ -81,20 +85,20 @@ describe("messagePathStructures", () => {
           some_pose: {
             nextByName: {
               dummy_array: {
-                next: { primitiveType: "float64", structureType: "primitive", datatype: "pose_msgs/SomePose" },
+                next: { primitiveType: "float64", structureType: "primitive", parentDatatype: "pose_msgs/SomePose" },
                 structureType: "array",
                 datatype: "pose_msgs/SomePose",
               },
               header: {
                 nextByName: {
-                  frame_id: { primitiveType: "string", structureType: "primitive", datatype: "std_msgs/Header" },
-                  seq: { primitiveType: "uint32", structureType: "primitive", datatype: "std_msgs/Header" },
-                  stamp: { primitiveType: "time", structureType: "primitive", datatype: "std_msgs/Header" },
+                  frame_id: { primitiveType: "string", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+                  seq: { primitiveType: "uint32", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+                  stamp: { primitiveType: "time", structureType: "primitive", parentDatatype: "std_msgs/Header" },
                 },
                 structureType: "message",
                 datatype: "std_msgs/Header",
               },
-              x: { primitiveType: "float64", structureType: "primitive", datatype: "pose_msgs/SomePose" },
+              x: { primitiveType: "float64", structureType: "primitive", parentDatatype: "pose_msgs/SomePose" },
             },
             structureType: "message",
             datatype: "pose_msgs/SomePose",
@@ -105,17 +109,17 @@ describe("messagePathStructures", () => {
       },
       "std_msgs/Header": {
         nextByName: {
-          frame_id: { primitiveType: "string", structureType: "primitive", datatype: "std_msgs/Header" },
-          seq: { primitiveType: "uint32", structureType: "primitive", datatype: "std_msgs/Header" },
-          stamp: { primitiveType: "time", structureType: "primitive", datatype: "std_msgs/Header" },
+          frame_id: { primitiveType: "string", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+          seq: { primitiveType: "uint32", structureType: "primitive", parentDatatype: "std_msgs/Header" },
+          stamp: { primitiveType: "time", structureType: "primitive", parentDatatype: "std_msgs/Header" },
         },
         structureType: "message",
         datatype: "std_msgs/Header",
       },
       "msgs/Log": {
         nextByName: {
-          id: { primitiveType: "int32", structureType: "primitive", datatype: "msgs/Log" },
-          myJson: { structureType: "primitive", primitiveType: "json", datatype: "msgs/Log" },
+          id: { primitiveType: "int32", structureType: "primitive", parentDatatype: "msgs/Log" },
+          myJson: { structureType: "primitive", primitiveType: "json", parentDatatype: "msgs/Log" },
         },
         structureType: "message",
         datatype: "msgs/Log",
@@ -181,10 +185,12 @@ describe("validTerminatingStructureItem", () => {
 
   it("works for primitiveType", () => {
     expect(
-      validTerminatingStructureItem({ structureType: "primitive", primitiveType: "time", datatype: "" }, ["time"])
+      validTerminatingStructureItem({ structureType: "primitive", primitiveType: "time", parentDatatype: "" }, ["time"])
     ).toEqual(true);
     expect(
-      validTerminatingStructureItem({ structureType: "primitive", primitiveType: "time", datatype: "" }, ["uint32"])
+      validTerminatingStructureItem({ structureType: "primitive", primitiveType: "time", parentDatatype: "" }, [
+        "uint32",
+      ])
     ).toEqual(false);
   });
 });
@@ -241,7 +247,7 @@ describe("traverseStructure", () => {
     });
     expect(traverseStructure(structureJson, [{ type: "name", name: "myJson" }])).toEqual({
       msgPathPart: undefined,
-      structureItem: { structureType: "primitive", primitiveType: "json", datatype: "msgs/Log" },
+      structureItem: { structureType: "primitive", primitiveType: "json", parentDatatype: "msgs/Log" },
       valid: true,
     });
 
@@ -249,7 +255,7 @@ describe("traverseStructure", () => {
       traverseStructure(structureJson, [{ type: "name", name: "myJson" }, { type: "name", name: "fieldInsideMyJson" }])
     ).toEqual({
       msgPathPart: undefined,
-      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      structureItem: { parentDatatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
       valid: true,
     });
 
@@ -260,7 +266,7 @@ describe("traverseStructure", () => {
       ])
     ).toEqual({
       msgPathPart: undefined,
-      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      structureItem: { parentDatatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
       valid: true,
     });
 
@@ -268,7 +274,7 @@ describe("traverseStructure", () => {
       traverseStructure(structureJson, [{ type: "name", name: "myJson" }, { type: "slice", start: 50, end: 100 }])
     ).toEqual({
       msgPathPart: undefined,
-      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      structureItem: { parentDatatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
       valid: true,
     });
 

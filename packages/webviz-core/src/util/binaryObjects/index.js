@@ -238,3 +238,15 @@ export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
     return stamp;
   }
 };
+
+export const getBobjectProxy = (bobject: any) => {
+  return new Proxy(bobject, {
+    get(target, prop) {
+      const field = getFieldFromPath(target, [prop]);
+      if (isBobject(field)) {
+        return getBobjectProxy(field);
+      }
+      return field;
+    },
+  });
+};

@@ -8,11 +8,11 @@
   }
 
   &.disabled {
-    color: $text-disabled;
+    color: $textDisabled;
     cursor: not-allowed;
     &:hover {
       background-color: transparent;
-      color: $text-disabled;
+      color: $textDisabled;
     }
   }
 }

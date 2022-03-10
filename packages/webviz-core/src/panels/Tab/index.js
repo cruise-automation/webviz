@@ -90,7 +90,7 @@ function Tab({ config, saveConfig }: Props) {
     !draggingTabState.isOver;
 
   return (
-    <Flex col>
+    <Flex grow col>
       <TabbedToolbar
         panelId={panelId}
         tabs={tabs}
@@ -99,6 +99,7 @@ function Tab({ config, saveConfig }: Props) {
         setDraggingTabState={setDraggingTabState}
       />
       <Flex
+        grow
         style={{
           position: "relative",
         }}>

@@ -124,11 +124,11 @@ function DiagnosticSummary({ config, saveConfig, openSiblingPanel, topics }: Pro
   const buffer = useDiagnostics(topicToRender);
 
   return (
-    <Flex col className={styles.panel}>
+    <Flex grow col className={styles.panel}>
       <PanelToolbar helpContent={helpContent} additionalIcons={topicToRenderMenu} menuContent={menuContent}>
         {hardwareFilter}
       </PanelToolbar>
-      <Flex col>
+      <Flex grow col>
         {buffer.diagnosticsByNameByTrimmedHardwareId.size === 0 ? (
           <EmptyState>
             Waiting for <code>{topicToRender}</code> messages

@@ -19,8 +19,8 @@ import { RenderToBodyPortal } from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { useArbitraryTopicMessage } from "webviz-core/src/PanelAPI";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import type { SetCurrentEditingTopic } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/types";
 import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
-import type { Topic } from "webviz-core/src/players/types";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -132,17 +132,16 @@ function MainEditor({
 }
 
 type Props = {|
-  currentEditingTopic: Topic,
+  currentEditingTopic: { datatypeName: string, name: string },
   hasFeatureColumn: boolean,
   saveConfig: Save3DConfig,
-  setCurrentEditingTopic: (?Topic) => void,
+  setCurrentEditingTopic: SetCurrentEditingTopic,
   settingsByKey: { [topic: string]: any },
   structuralDatatypes: StructuralDatatypes,
 |};
 
 function TopicSettingsModal({
-  currentEditingTopic,
-  currentEditingTopic: { datatype, name: topicName },
+  currentEditingTopic: { datatypeName, name: topicName },
   hasFeatureColumn,
   saveConfig,
   setCurrentEditingTopic,
@@ -175,7 +174,7 @@ function TopicSettingsModal({
   const editorElem = (
     <MainEditor
       columnIndex={columnIndex}
-      datatype={datatype}
+      datatype={datatypeName}
       message={message}
       onFieldChange={onFieldChange}
       onSettingsChange={onSettingsChange}
@@ -196,8 +195,8 @@ function TopicSettingsModal({
           overflow: "auto",
         }}>
         <STopicSettingsEditor>
-          <STitle>{currentEditingTopic.name}</STitle>
-          <SDatatype>{currentEditingTopic.datatype}</SDatatype>
+          <STitle>{topicName}</STitle>
+          <SDatatype>{datatypeName}</SDatatype>
           {hasFeatureColumn ? (
             <STabWrapper>
               <Tabs
@@ -205,7 +204,7 @@ function TopicSettingsModal({
                 onChange={(newKey) => {
                   const newEditingTopicName =
                     newKey === "0" ? nonPrefixedTopic : `${$WEBVIZ_SOURCE_2}${nonPrefixedTopic}`;
-                  setCurrentEditingTopic({ datatype, name: newEditingTopicName });
+                  setCurrentEditingTopic({ datatypeName, name: newEditingTopicName });
                 }}>
                 <TabPane tab={"base"} key={"0"}>
                   {editorElem}

@@ -126,11 +126,11 @@ function SourceInfo(): Node {
                 {t.name}
               </SCell>
               <SCell
-                title={`Click to copy topic type ${t.datatype} to clipboard.`}
+                title={`Click to copy topic type ${t.datatypeName} to clipboard.`}
                 onClick={() => {
-                  clipboard.copy(t.datatype);
+                  clipboard.copy(t.datatypeName);
                 }}>
-                {t.datatype}
+                {t.datatypeName}
               </SCell>
               {t.numMessages != null ? (
                 <SCell>

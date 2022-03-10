@@ -25,7 +25,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import type { Config } from "webviz-core/src/panels/diagnostics/DiagnosticStatusPanel";
 import { openSiblingPlotPanel } from "webviz-core/src/panels/Plot";
 import { openSiblingStateTransitionsPanel } from "webviz-core/src/panels/StateTransitions";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 
 const MIN_SPLIT_FRACTION = 0.1;
@@ -342,7 +342,7 @@ class DiagnosticStatus extends React.Component<Props, *> {
             </tr>
             <tr className={cx(style.row, statusClass)}>
               <td colSpan={2}>
-                <Flex style={{ justifyContent: "space-between" }}>
+                <Flex grow style={{ justifyContent: "space-between" }}>
                   <div>
                     {status.message}{" "}
                     <Icon

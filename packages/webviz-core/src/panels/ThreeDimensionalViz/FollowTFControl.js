@@ -20,7 +20,7 @@ import Autocomplete from "webviz-core/src/components/Autocomplete";
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import { objectValues } from "webviz-core/src/util";
 
 type TfTreeNode = {
@@ -79,12 +79,12 @@ const buildTfTree = (transforms: Transform[]): TfTree => {
   return tree;
 };
 
-type Props = {
+type Props = {|
   transforms: any,
   tfToFollow?: string,
   followOrientation?: boolean,
   onFollowChange: (tfId?: string | false, followOrientation?: boolean) => void,
-};
+|};
 
 function* getDescendants(nodes: TfTreeNode[]) {
   for (const node of nodes) {

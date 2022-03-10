@@ -42,6 +42,7 @@ const systemStateMessages = [
 const fixture = {
   datatypes: {
     "msgs/SystemState": {
+      name: "msgs/SystemState",
       fields: [
         { type: "std_msgs/Header", name: "header", isArray: false },
         { type: "int8", name: "UNKNOWN", isConstant: true, value: -1 },
@@ -54,6 +55,7 @@ const fixture = {
       ],
     },
     "std_msgs/Header": {
+      name: "std_msgs/Header",
       fields: [
         { name: "seq", type: "uint32", isArray: false },
         {
@@ -65,7 +67,7 @@ const fixture = {
       ],
     },
   },
-  topics: [{ name: "/some/topic/with/state", datatype: "msgs/SystemState" }],
+  topics: [{ name: "/some/topic/with/state", datatypeName: "msgs/SystemState", datatypeId: "msgs/SystemState" }],
   activeData: {
     startTime: { sec: 1526191527, nsec: 202050 },
     endTime: { sec: 1526191551, nsec: 999997069 },

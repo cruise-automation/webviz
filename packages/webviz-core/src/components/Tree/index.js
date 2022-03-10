@@ -14,7 +14,7 @@ import TreeNode from "./TreeNode";
 // export the node flow type
 export type { Node } from "./Node";
 
-type Props = {
+type Props = {|
   disableCheckbox?: boolean,
   enableVisibilityToggle?: boolean,
   hideRoot?: boolean,
@@ -24,7 +24,7 @@ type Props = {
   onToggleExpand: (node: Node) => void,
   onToggleVisibility?: (node: Node) => void,
   root: Node,
-};
+|};
 
 export default class Tree extends PureComponent<Props> {
   // make onEditClick optional. A no-op if not supplied

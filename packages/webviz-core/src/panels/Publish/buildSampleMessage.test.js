@@ -10,16 +10,17 @@ import buildSampleMessage, { builtinSampleValues } from "./buildSampleMessage";
 
 describe("buildSampleMessage", () => {
   const datatypes = {
-    A: { fields: [] },
-    B: { fields: [{ name: "data", type: "A" }] },
+    A: { name: "A", fields: [] },
+    B: { name: "B", fields: [{ name: "data", type: "A" }] },
     C: {
+      name: "C",
       fields: [
         { name: "foo", type: "B", isConstant: true },
         { name: "bar", type: "B", isConstant: true, isArray: true },
       ],
     },
-    D: { fields: [{ name: "foo", type: "B", isArray: true }] },
-    E: { fields: [{ name: "foo", type: "B", isArray: true, arrayLength: 4 }] },
+    D: { name: "D", fields: [{ name: "foo", type: "B", isArray: true }] },
+    E: { name: "E", fields: [{ name: "foo", type: "B", isArray: true, arrayLength: 4 }] },
   };
 
   it("handles empty types", () => {
@@ -43,7 +44,7 @@ describe("buildSampleMessage", () => {
   it("handles builtin types", () => {
     for (const type in builtinSampleValues) {
       expect(buildSampleMessage({}, type)).toEqual(builtinSampleValues[type]);
-      expect(buildSampleMessage({ A: { fields: [{ name: "data", type }] } }, "A")).toEqual({
+      expect(buildSampleMessage({ A: { name: "A", fields: [{ name: "data", type }] } }, "A")).toEqual({
         data: builtinSampleValues[type],
       });
     }

@@ -15,7 +15,7 @@
     border-top: 2px solid transparent;
     border-bottom: 2px solid transparent;
     &.selected {
-      border-bottom: 2px solid $text-normal;
+      border-bottom: 2px solid $textNormal;
     }
   }
 
@@ -26,6 +26,6 @@
 }
 
 .tabBody {
-  background-color: $dark;
+  background-color: $DARK;
   padding: 4px 12px 12px 12px;
 }

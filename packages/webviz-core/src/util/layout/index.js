@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import { compact, cloneDeep, flatMap, isEmpty, xor, uniq } from "lodash";
+import { compact, cloneDeep, isEmpty, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -182,24 +182,38 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   return { configs: newConfigs };
 };
 
-export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: SavedProps): string[] {
-  const tabPanelIds = panelIds.filter(isTabPanel);
-  const tabLayouts = [];
-  tabPanelIds.forEach((panelId) => {
-    if (savedProps[panelId]?.tabs) {
-      savedProps[panelId].tabs.forEach((tab) => {
-        tabLayouts.push(tab.layout, ...getPanelIdsInsideTabPanels(getLeaves(tab.layout), savedProps));
-      });
-    }
-  });
-  return flatMap(tabLayouts, getLeaves);
+export function getPanelIdsInsideTabPanels(
+  panelIds: string[],
+  savedProps: SavedProps,
+  activeTabsOnly?: boolean = false
+): string[] {
+  return panelIds
+    .filter(isTabPanel)
+    .flatMap((panelId) => {
+      const panelConfig = savedProps[panelId];
+      if (!panelConfig?.tabs) {
+        return;
+      }
+
+      if (activeTabsOnly) {
+        const tab = panelConfig.tabs[panelConfig.activeTabIdx];
+        if (tab) {
+          return [tab.layout, ...getPanelIdsInsideTabPanels(getLeaves(tab.layout), savedProps, activeTabsOnly)];
+        }
+      } else {
+        return panelConfig.tabs.flatMap((tab) => {
+          return [tab.layout, ...getPanelIdsInsideTabPanels(getLeaves(tab.layout), savedProps, activeTabsOnly)];
+        });
+      }
+    })
+    .flatMap(getLeaves);
 }
 
 export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
 // Returns all panelIds for a given layout (including layouts stored in Tab panels)
-export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps): string[] {
+export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps, activeTabsOnly?: boolean = false): string[] {
   const layoutPanelIds = getLeaves(layout);
-  const tabPanelIds = getPanelIdsInsideTabPanels(layoutPanelIds, savedProps);
+  const tabPanelIds = getPanelIdsInsideTabPanels(layoutPanelIds, savedProps, activeTabsOnly);
   return [...layoutPanelIds, ...tabPanelIds];
 }
 

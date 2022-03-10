@@ -25,7 +25,7 @@ describe("<Internals>", () => {
     const wrapper = mount(
       <PanelSetup
         fixture={{
-          topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
+          topics: [{ name: "/foo", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" }],
           frame: {},
         }}>
         <Internals />
@@ -40,7 +40,7 @@ describe("<Internals>", () => {
     const wrapperWithDeprecatedMessageHistory = mount(
       <PanelSetup
         fixture={{
-          topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
+          topics: [{ name: "/foo", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" }],
           frame: {},
         }}>
         <Internals />
@@ -61,7 +61,7 @@ describe("<Internals>", () => {
       <PanelSetup
         fixture={{
           frame: {},
-          topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
+          topics: [{ name: "/foo", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" }],
         }}>
         <Internals />
         <MessageHistoryDEPRECATED paths={["/foo"]}>{() => null}</MessageHistoryDEPRECATED>
@@ -103,7 +103,10 @@ describe("<Internals>", () => {
     downloadButton.simulate("click");
     expect(mockDownloadTextFile.mock.calls).toEqual([
       [
-        JSON.stringify({ topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }], frame: { "/foo": [message] } }),
+        JSON.stringify({
+          topics: [{ name: "/foo", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" }],
+          frame: { "/foo": [message] },
+        }),
         "fixture.json",
       ],
     ]);

@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { flatten } from "lodash";
-import path from "path";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Message } from "webviz-core/src/players/types";
@@ -17,7 +16,6 @@ import type {
 } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { BobWriter, getSerializeFunctions } from "webviz-core/src/util/binaryObjects/binaryMessageWriter";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { getEventInfos, logEventError } from "webviz-core/src/util/logEvent";
 
 // Each node runtime worker runs one node at a time, hence why we have one
@@ -66,18 +64,20 @@ const getArgsToPrint = (args: any[]) => {
 };
 
 // Exported for tests.
+// Looks up source code using require'd file ids.
+// Find files by matching ids (like "./colors") to projectCode entries (like "/colors.js")
 export const requireImplementation = (id: string, projectCode: Map<string, string>) => {
-  const requestedFile = `${path.join(DEFAULT_WEBVIZ_NODE_PREFIX, id)}.js`;
-  for (const [file, source] of projectCode.entries()) {
-    if (requestedFile.endsWith(file)) {
-      const sourceExports = {};
-      const require = (reqId: string) => requireImplementation(reqId, projectCode);
-      // $FlowFixMe
-      new Function("exports", "require", source)(sourceExports, require); /* eslint-disable-line no-new-func */
-      return sourceExports;
-    }
+  const requestedFile = `/${id.replace("./", "")}.js`;
+  const sourceCode = projectCode.get(requestedFile);
+  if (!sourceCode) {
+    throw new Error(`User node required unknown module: '${id}'`);
   }
-  throw new Error(`User node required unknown module: '${id}'`);
+
+  const sourceExports = {};
+  const require = (reqId: string) => requireImplementation(reqId, projectCode);
+  // $FlowFixMe
+  new Function("exports", "require", sourceCode)(sourceExports, require); /* eslint-disable-line no-new-func */
+  return sourceExports;
 };
 
 export const registerNode = ({

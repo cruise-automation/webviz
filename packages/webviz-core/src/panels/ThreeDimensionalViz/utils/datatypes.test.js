@@ -13,6 +13,7 @@ describe("getStructuralDatatypes", () => {
     expect(
       getStructuralDatatypes({
         radarPoint: {
+          name: "radarPoint",
           fields: [
             { name: "range", type: "float32" },
             { name: "azimuth_angle_0", type: "float32" },
@@ -21,6 +22,7 @@ describe("getStructuralDatatypes", () => {
           ],
         },
         notRadarPoint: {
+          name: "notRadarPoint",
           fields: [
             { name: "range", type: "float32" },
             { name: "azimuth_angle_0", type: "float32" },
@@ -28,9 +30,12 @@ describe("getStructuralDatatypes", () => {
             { name: "radial_vel", type: "float32", isArray: true },
           ],
         },
-        pointCloud: { fields: [{ type: "radarPoint", name: "points", isArray: true }] },
-        pointsNotArray: { fields: [{ type: "radarPoint", name: "points" }] },
-        pointsWrongType: { fields: [{ type: "notRadarPoint", name: "points", isArray: true }] },
+        pointCloud: { name: "pointCloud", fields: [{ type: "radarPoint", name: "points", isArray: true }] },
+        pointsNotArray: { name: "pointsNotArray", fields: [{ type: "radarPoint", name: "points" }] },
+        pointsWrongType: {
+          name: "pointsWrongType",
+          fields: [{ type: "notRadarPoint", name: "points", isArray: true }],
+        },
       })
     ).toEqual({ pointCloud: "radarPointCloud" });
   });

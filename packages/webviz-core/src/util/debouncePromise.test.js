@@ -15,7 +15,6 @@ process.on("unhandledRejection", () => {
 });
 
 /* eslint-disable jest/valid-expect-in-promise */
-
 describe("debouncePromise", () => {
   it("debounces with resolved and rejected promises", async () => {
     const promises = [signal(), signal(), signal(), signal()];

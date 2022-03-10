@@ -85,7 +85,14 @@ export function printStoreSingularVariable(
           `const ${stringVariableName} = JSON.stringify(${variableName} === undefined ? null : ${variableName});`
         );
       } else {
-        statements.push(`const ${stringVariableName} = ${variableName} || "";`);
+        // Note: Bad things happen if we pass a non-string to $writer.string -- v.length is invariably
+        // null, then some NaNs creep into our "string size" state, and all future strings get
+        // corrupted. We can cast the value to a string with `v+""`. In microbenchmarks in Chrome it
+        // runs just as quickly (and is both around 4x faster and more robust than `v.toString()`.
+        // We're not too fussed about the particular value of non-strings, but the || check is both
+        // very fast and also gives us empty-string results for missing fields, which is a lot nicer
+        // than "undefined".
+        statements.push(`const ${stringVariableName} = (${variableName} == null ? "" : ${variableName} + "");`);
       }
       statements.push(`$view.setInt32(${pointer.toString()}, ${stringVariableName}.length, true);`);
       statements.push(`$view.setInt32(${pointer.add(4).toString()}, $writer.string(${stringVariableName}), true);`);

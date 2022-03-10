@@ -28,7 +28,7 @@ describe("parseRosPath", () => {
         { type: "name", name: "stuff" },
         { type: "slice", start: 0, end: 0 },
       ],
-      modifier: "derivative",
+      modifier: [["derivative"]],
     });
   });
 

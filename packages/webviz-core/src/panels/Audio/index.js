@@ -113,7 +113,7 @@ const memoizedGetAudioDataFromBlocks = memoizeWeak(
 function Audio({ config, config: { topicToRender: configTopic }, saveConfig }: Props) {
   const availableTopics = useMessagePipeline(
     useCallback(
-      ({ sortedTopics, datatypes }) => sortedTopics.filter(({ datatype }) => isAudioDatatype(datatype, datatypes)),
+      ({ sortedTopics, datatypes }) => sortedTopics.filter(({ datatypeId }) => isAudioDatatype(datatypes[datatypeId])),
       []
     )
   );
@@ -188,7 +188,7 @@ function Audio({ config, config: { topicToRender: configTopic }, saveConfig }: P
       {renderAudioPlayer && <AudioPlayer config={config} {...processedAudioData} saveConfig={saveConfig} />}
       {!renderAudioPlayer && isAudioTopicAvailable && (
         <SLoading>
-          <Flex center style={{ flex: 1 }}>
+          <Flex grow center style={{ flex: 1 }}>
             <BlockLoadingProgress blockLoadingStates={blockLoadingStates} />
           </Flex>
           <SLoadingToolbarWrapper>

@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import AlertCircleIcon from "@mdi/svg/svg/alert-circle.svg";
 import MenuIcon from "@mdi/svg/svg/menu.svg";
 import cx from "classnames";
 import { last } from "lodash";
@@ -17,13 +16,13 @@ import styles from "./PlotLegend.module.scss";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import type { LineStyle } from "webviz-core/src/panels/Plot";
 import {
   type PlotPath,
   type BasePlotPath,
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
-import { lineColors } from "webviz-core/src/util/plotColors";
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
+import PlotLegendItem from "webviz-core/src/panels/Plot/PlotLegendItem";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
 type PlotLegendProps = {|
@@ -32,6 +31,7 @@ type PlotLegendProps = {|
   showLegend: boolean,
   xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath,
+  lineStyles: LineStyle[],
   pathsWithMismatchedDataLengths: string[],
 |};
 
@@ -52,7 +52,7 @@ const shortXAxisLabel = (path: PlotXAxisVal): string => {
 };
 
 export default function PlotLegend(props: PlotLegendProps) {
-  const { paths, saveConfig, showLegend, xAxisVal, xAxisPath, pathsWithMismatchedDataLengths } = props;
+  const { paths, lineStyles, saveConfig, showLegend, xAxisVal, xAxisPath, pathsWithMismatchedDataLengths } = props;
   const lastPath = last(paths);
 
   const onInputChange = useCallback((value: string, index: ?number) => {
@@ -97,7 +97,7 @@ export default function PlotLegend(props: PlotLegendProps) {
         <MenuIcon />
       </Icon>
       <div className={styles.item}>
-        x:
+        <div className={styles.itemAxisLabel}>x:</div>
         <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal", zIndex: 2 }}>
           <Dropdown
             dataTest="plot-legend-x-axis-menu"
@@ -131,73 +131,33 @@ export default function PlotLegend(props: PlotLegendProps) {
           ) : null}
         </div>
       </div>
-      {paths.map((path: PlotPath, index: number) => {
-        const isReferenceLinePlotPath = isReferenceLinePlotPathType(path);
-        let timestampMethod;
-        // Only allow chosing the timestamp method if it is applicable (not a reference line) and there is at least
-        // one character typed.
-        if (!isReferenceLinePlotPath && path.value.length > 0) {
-          timestampMethod = path.timestampMethod;
-        }
-        const hasMismatchedDataLength = pathsWithMismatchedDataLengths.includes(path.value);
-
-        return (
-          <React.Fragment key={index}>
-            <div className={styles.item}>
-              y:
-              <div
-                className={styles.itemIconContainer}
-                style={{ zIndex: 1 }}
-                onClick={() => {
-                  const newPaths = paths.slice();
-                  newPaths[index] = { ...newPaths[index], enabled: !newPaths[index].enabled };
-                  saveConfig({ paths: newPaths });
-                }}>
-                <div
-                  className={styles.itemIcon}
-                  style={{ color: path.enabled ? lineColors[index % lineColors.length] : "#777" }}
-                />
-              </div>
-              <div
-                className={cx({
-                  [styles.itemInput]: true,
-                  [styles.itemInputDisabled]: !path.enabled,
-                })}>
-                <MessagePathInput
-                  path={path.value}
-                  onChange={onInputChange}
-                  onTimestampMethodChange={onInputTimestampMethodChange}
-                  validTypes={plotableRosTypes}
-                  placeholder="Enter a topic name or a number"
-                  index={index}
-                  autoSize
-                  disableAutocomplete={isReferenceLinePlotPath}
-                  {...(xAxisVal === "timestamp" ? { timestampMethod } : null)}
-                />
-                {hasMismatchedDataLength && (
-                  <Icon
-                    style={{ color: colors.RED }}
-                    clickable={false}
-                    small
-                    tooltipProps={{ placement: "top" }}
-                    tooltip="Mismatch in the number of elements in x-axis and y-axis messages">
-                    <AlertCircleIcon />
-                  </Icon>
-                )}
-              </div>
-              <div
-                className={styles.itemRemove}
-                onClick={() => {
-                  const newPaths = paths.slice();
-                  newPaths.splice(index, 1);
-                  saveConfig({ paths: newPaths });
-                }}>
-                ✕
-              </div>
-            </div>
-          </React.Fragment>
-        );
-      })}
+      {paths.map((path: PlotPath, index: number) => (
+        <PlotLegendItem
+          key={index}
+          path={path}
+          index={index}
+          xAxisVal={xAxisVal}
+          onPathInputChange={onInputChange}
+          onChangeLineStyle={(partialLineStyle) => {
+            const newLineStyles = lineStyles.slice();
+            newLineStyles[index] = { ...newLineStyles[index], ...partialLineStyle };
+            saveConfig({ lineStyles: newLineStyles });
+          }}
+          onInputTimestampMethodChange={onInputTimestampMethodChange}
+          pathsWithMismatchedDataLengths={pathsWithMismatchedDataLengths}
+          onToggleEnabled={() => {
+            const newPaths = paths.slice();
+            newPaths[index] = { ...newPaths[index], enabled: !newPaths[index].enabled };
+            saveConfig({ paths: newPaths });
+          }}
+          onRemove={() => {
+            const newPaths = paths.slice();
+            newPaths.splice(index, 1);
+            saveConfig({ paths: newPaths });
+          }}
+          lineStyle={lineStyles[index]}
+        />
+      ))}
       <div
         className={styles.addLine}
         onClick={() =>

@@ -22,7 +22,7 @@ export type TopicGroup = {
   datatype: string,
 };
 
-type Props = {
+type Props = {|
   onChange: (topic: string) => void,
   topicToRender: string,
   topics: $ReadOnlyArray<Topic>,
@@ -32,7 +32,15 @@ type Props = {
   singleTopicDatatype?: string,
   topicsGroups?: TopicGroup[],
   defaultTopicToRender: ?string,
-};
+|};
+
+type RawProps = {|
+  onChange: (topic: string) => void,
+  topicToRender: string,
+  availableTopics: $ReadOnlyArray<string>,
+  defaultTopicToRender: ?string,
+  tooltip: ?string,
+|};
 
 const SDiv = styled.div`
   display: flex;
@@ -56,7 +64,7 @@ const SIconSpan = styled.span`
   }
 `;
 
-export default function TopicToRenderMenu({
+function TopicToRenderMenu({
   onChange,
   topicToRender,
   topics,
@@ -71,15 +79,39 @@ export default function TopicToRenderMenu({
   for (const topic of topics) {
     if (topicsGroups) {
       for (const topicGroup of topicsGroups) {
-        if (topic.name.endsWith(topicGroup.suffix) && topic.datatype === topicGroup.datatype) {
+        if (topic.name.endsWith(topicGroup.suffix) && topic.datatypeName === topicGroup.datatype) {
           const parentTopic = topic.name.slice(0, topic.name.length - topicGroup.suffix.length);
           availableTopics.push(parentTopic);
         }
       }
-    } else if (singleTopicDatatype == null || topic.datatype === singleTopicDatatype) {
+    } else if (singleTopicDatatype == null || topic.datatypeName === singleTopicDatatype) {
       availableTopics.push(topic.name);
     }
   }
+  let tooltip;
+  if (topicsGroups) {
+    tooltip = `Parent topics selected by topic suffixes:\n ${topicsGroups.map((group) => group.suffix).join("\n")}`;
+  } else if (singleTopicDatatype != null) {
+    tooltip = `Topics selected by datatype: ${singleTopicDatatype}`;
+  }
+  return (
+    <RawTopicToRenderMenu
+      onChange={onChange}
+      topicToRender={topicToRender}
+      availableTopics={availableTopics}
+      defaultTopicToRender={defaultTopicToRender}
+      tooltip={tooltip}
+    />
+  );
+}
+
+function UnmemoizedRawTopicToRenderMenu({
+  onChange,
+  topicToRender,
+  availableTopics,
+  defaultTopicToRender,
+  tooltip = "Select topic:",
+}: RawProps) {
   // Keeps only the first occurrence of each topic.
   // $FlowFixMe: Flow only understands .filter(Boolean), but we want to keep empty strings.
   const renderTopics: string[] = uniq(
@@ -95,11 +127,6 @@ export default function TopicToRenderMenu({
     );
   };
 
-  const tooltip = topicsGroups
-    ? `Parent topics selected by topic suffixes:\n ${topicsGroups.map((group) => group.suffix).join("\n")}`
-    : singleTopicDatatype != null
-    ? `Topics selected by datatype: ${singleTopicDatatype}`
-    : "Select topic:";
   return (
     <Dropdown
       toggleComponent={
@@ -130,3 +157,6 @@ export default function TopicToRenderMenu({
     </Dropdown>
   );
 }
+
+export const RawTopicToRenderMenu = React.memo<RawProps>(UnmemoizedRawTopicToRenderMenu);
+export default React.memo<Props>(TopicToRenderMenu);

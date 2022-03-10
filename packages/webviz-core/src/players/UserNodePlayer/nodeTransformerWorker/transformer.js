@@ -27,6 +27,7 @@ import {
   type Diagnostic,
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
+import { NODE_FILE_NAME } from "webviz-core/src/players/UserNodePlayer/utils";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -230,40 +231,12 @@ export const validateOutputTopic = (nodeData: NodeData): NodeData => {
 export const compile = (nodeData: NodeData): NodeData => {
   const { sourceCode, rosLib } = nodeData;
 
-  // If a node name does not start with a forward slash, the compiler host will
-  // not be able to match the correct filename.
-  if (!nodeData.name.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
-    const error: Diagnostic = {
-      severity: DiagnosticSeverity.Error,
-      message: `The filename of your node "${nodeData.name}" must start with "/webviz_node/."`,
-      source: Sources.Other,
-      code: ErrorCodes.Other.FILENAME,
-    };
-    return {
-      ...nodeData,
-      diagnostics: [...nodeData.diagnostics, error],
-    };
-  }
-  if (nodeData.name.replace(DEFAULT_WEBVIZ_NODE_PREFIX, "").includes("/")) {
-    const error: Diagnostic = {
-      severity: DiagnosticSeverity.Error,
-      message: `Your node "${nodeData.name}" cannot contain more than two forward slashes.`,
-      source: Sources.Other,
-      code: ErrorCodes.Other.FILENAME,
-    };
-    return {
-      ...nodeData,
-      diagnostics: [...nodeData.diagnostics, error],
-    };
-  }
-
   const options: ts.CompilerOptions = baseCompilerOptions;
-  const nodeFileName = `${nodeData.name}.ts`;
   const projectConfig = getNodeProjectConfig();
   const projectCode = new Map<string, string>();
 
   const sourceCodeMap = new Map<string, string>();
-  sourceCodeMap.set(nodeFileName, sourceCode);
+  sourceCodeMap.set(NODE_FILE_NAME, sourceCode);
   sourceCodeMap.set(projectConfig.rosLib.filePath, rosLib);
   projectConfig.utilityFiles.forEach((file) => sourceCodeMap.set(file.filePath, file.sourceCode));
   projectConfig.declarations.forEach((lib) => sourceCodeMap.set(lib.filePath, lib.sourceCode));
@@ -295,7 +268,7 @@ export const compile = (nodeData: NodeData): NodeData => {
     },
     writeFile: (name: string, data: string) => {
       codeEmitted = true;
-      if (name === `${nodeData.name}.js`) {
+      if (name === NODE_FILE_NAME.replace(/\.ts$/, ".js")) {
         transpiledCode = data;
       } else {
         // It's one of our utility files
@@ -316,7 +289,7 @@ export const compile = (nodeData: NodeData): NodeData => {
   };
 
   const program = ts.createProgram(
-    [...projectConfig.utilityFiles.map((file) => file.filePath), nodeFileName],
+    [...projectConfig.utilityFiles.map((file) => file.filePath), NODE_FILE_NAME],
     options,
     host
   );
@@ -332,7 +305,7 @@ export const compile = (nodeData: NodeData): NodeData => {
 
   const newDiagnostics = diagnostics.map(transformDiagnosticToMarkerData);
 
-  const sourceFile: ts.SourceFile = program.getSourceFile(nodeFileName);
+  const sourceFile: ts.SourceFile = program.getSourceFile(NODE_FILE_NAME);
   const typeChecker = program.getTypeChecker();
 
   return {

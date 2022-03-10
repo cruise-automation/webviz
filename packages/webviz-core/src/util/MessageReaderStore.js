@@ -13,10 +13,12 @@ import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 class ReaderItem {
   md5: string;
   reader: MessageReader;
+  type: string;
 
-  constructor(md5: string, messageDefinition: string) {
+  constructor(md5: string, type: string, messageDefinition: string) {
     this.md5 = md5;
-    this.reader = new MessageReader(parseMessageDefinition(messageDefinition), { freeze: FREEZE_MESSAGES });
+    this.type = type;
+    this.reader = new MessageReader(parseMessageDefinition(messageDefinition, type), type, { freeze: FREEZE_MESSAGES });
   }
 }
 
@@ -26,12 +28,12 @@ export default class MessageReaderStore {
   get(type: string, md5: string, messageDefinition: string): MessageReader {
     let item = this.storage[type];
     if (!item) {
-      item = new ReaderItem(md5, messageDefinition);
+      item = new ReaderItem(md5, type, messageDefinition);
       this.storage[type] = item;
     }
     if (item.md5 !== md5) {
       delete this.storage[type];
-      item = new ReaderItem(md5, messageDefinition);
+      item = new ReaderItem(md5, type, messageDefinition);
       this.storage[type] = item;
     }
     return item.reader;

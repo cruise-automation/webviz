@@ -22,8 +22,8 @@ describe("rosDatatypesToMessageDefinition", () => {
 
   it("produces a correct message definition", () => {
     const definitions = rosDatatypesToMessageDefinition(basicDatatypes, VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY);
-    // Should have 1 definition without a name, the root datatype.
-    expect(definitions.filter(({ name }) => !name).length).toEqual(1);
+    // Should have 1 definition corresponding to the root datatype.
+    expect(definitions.filter(({ name }) => name === VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY).length).toEqual(1);
     // Should not duplicate definitions.
     expect(uniqBy(definitions, "name").length).toEqual(definitions.length);
   });
@@ -31,6 +31,7 @@ describe("rosDatatypesToMessageDefinition", () => {
   it("Errors if it can't find the definition", () => {
     const datatypes = {
       [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
+        name: VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
         fields: [
           {
             isArray: true,

@@ -8,6 +8,8 @@
 
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import type { NotifyPlayerManagerData } from "webviz-core/src/players/types";
+import type { UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
+import type { CompiledUserNodeDataById } from "webviz-core/src/types/panels";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
 // The "other side" of `RpcDataProvider`. Instantiates a `DataProviderDescriptor` tree underneath,
@@ -28,6 +30,13 @@ export default class RpcDataProviderRemote {
         },
         notifyPlayerManager: (data: NotifyPlayerManagerData) =>
           rpc.send("extensionPointCallback", { type: "notifyPlayerManager", data }),
+        nodePlaygroundActions: {
+          setCompiledNodeData: (data: CompiledUserNodeDataById) =>
+            rpc.send("extensionPointCallback", { type: "setCompiledNodeData", data }),
+          addUserNodeLogs: (data: UserNodeLogs) =>
+            rpc.send("extensionPointCallback", { type: "addUserNodeLogs", data }),
+          setUserNodeRosLib: (data: string) => rpc.send("extensionPointCallback", { type: "setUserNodeRosLib", data }),
+        },
       });
     });
     rpc.receive("getMessages", async ({ start, end, topics }) => {

@@ -14,7 +14,7 @@ describe("bagConnectionsToDatatypes", () => {
       bagConnectionsToDatatypes([
         {
           topic: "/some/topic/with/points",
-          type: "something/points",
+          type: "geometry_msgs/points",
           messageDefinition: `
             Point[] points
             ============
@@ -24,7 +24,7 @@ describe("bagConnectionsToDatatypes", () => {
         },
         {
           topic: "/some/topic/with/two_points",
-          type: "something/two_points",
+          type: "geometry_msgs/two_points",
           messageDefinition: `
             Point point1
             Point point2
@@ -35,14 +35,21 @@ describe("bagConnectionsToDatatypes", () => {
         },
       ])
     ).toEqual({
-      "something/points": { fields: [{ name: "points", type: "geometry_msgs/Point", isArray: true, isComplex: true }] },
-      "something/two_points": {
+      "geometry_msgs/points": {
+        name: "geometry_msgs/points",
+        fields: [{ name: "points", type: "geometry_msgs/Point", isArray: true, isComplex: true }],
+      },
+      "geometry_msgs/two_points": {
+        name: "geometry_msgs/two_points",
         fields: [
           { name: "point1", type: "geometry_msgs/Point", isArray: false, isComplex: true },
           { name: "point2", type: "geometry_msgs/Point", isArray: false, isComplex: true },
         ],
       },
-      "geometry_msgs/Point": { fields: [{ name: "x", type: "float64", isArray: false, isComplex: false }] },
+      "geometry_msgs/Point": {
+        name: "geometry_msgs/Point",
+        fields: [{ name: "x", type: "float64", isArray: false, isComplex: false }],
+      },
     });
   });
 });
@@ -76,12 +83,14 @@ describe("bagConnectionsToTopics", () => {
     ).toEqual([
       {
         name: "/some/topic/with/points",
-        datatype: "something/points",
+        datatypeName: "something/points",
+        datatypeId: "something/points",
         numMessages: 0,
       },
       {
         name: "/some/topic/with/two_points",
-        datatype: "something/two_points",
+        datatypeName: "something/two_points",
+        datatypeId: "something/two_points",
         numMessages: 0,
       },
     ]);

@@ -5,15 +5,15 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { useCleanup } from "@cruise-automation/hooks";
 import memoizeWeak from "memoize-weak";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import uuid from "uuid";
 
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import ParsedMessageCache from "webviz-core/src/dataProviders/ParsedMessageCache";
+import { useSetSubscriptions } from "webviz-core/src/PanelAPI/useMessageReducer";
 import type { SubscribePayload, BobjectMessage } from "webviz-core/src/players/types";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 
@@ -62,15 +62,11 @@ export const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) =>
   const [id] = useState(() => uuid.v4());
   const { type: panelType = undefined } = useContext(PanelContext) || {};
 
-  const { setSubscriptions } = useMessagePipeline(
-    useCallback((messagePipeline) => ({ setSubscriptions: messagePipeline.setSubscriptions }), [])
-  );
   const subscriptions: SubscribePayload[] = useMemo(() => {
     const requester = panelType ? { type: "panel", name: panelType } : undefined;
-    return topics.map((topic) => ({ topic, requester, format: "bobjects" }));
+    return topics.map((topic) => ({ topic, requester, format: "bobjects", preloading: true }));
   }, [panelType, topics]);
-  useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
-  useCleanup(() => setSubscriptions(id, []));
+  useSetSubscriptions(id, subscriptions);
 };
 
 function getBlocksFromPlayerState({ playerState }): { allBlocks: ?$ReadOnlyArray<?MemoryCacheBlock> } {

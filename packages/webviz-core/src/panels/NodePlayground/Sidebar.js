@@ -10,9 +10,14 @@ import ArrowLeftBoldIcon from "@mdi/svg/svg/arrow-left-bold.svg";
 import DeleteIcon from "@mdi/svg/svg/delete.svg";
 import FileMultipleIcon from "@mdi/svg/svg/file-multiple.svg";
 import HelpCircleIcon from "@mdi/svg/svg/help-circle.svg";
+import PlusIcon from "@mdi/svg/svg/plus.svg";
+import ToyBrickSearchOutlineIcon from "@mdi/svg/svg/toy-brick-search-outline.svg";
 import React from "react";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
 
+import { fetchPublishedNodesList } from "webviz-core/src/actions/userNodes";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import TextContent from "webviz-core/src/components/TextContent";
@@ -25,7 +30,9 @@ import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nod
 import templates from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/templates";
 import userUtilsReadMe from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/README.md";
 import type { UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
-import { type UserNodes } from "webviz-core/src/types/panels";
+import type { UserNodes } from "webviz-core/src/types/panels";
+import type { PublishedPlaygroundNode } from "webviz-core/src/types/PublishedPlaygroundNodesApi";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const MenuWrapper = styled.div`
@@ -99,6 +106,7 @@ type NodesListProps = {|
   nodes: UserNodes,
   selectNode: (id: string) => void,
   deleteNode: (id: string) => void,
+  selectPublishedNode: (id: string) => void,
   collapse: () => void,
   selectedNodeId: ?string,
   userNodeDiagnostics: {
@@ -108,7 +116,7 @@ type NodesListProps = {|
 
 const NodesList = ({ nodes, selectNode, deleteNode, collapse, selectedNodeId }: NodesListProps) => {
   return (
-    <Flex col>
+    <Flex grow col>
       <SidebarTitle title={"nodes"} collapse={collapse} />
       {Object.keys(nodes).map((nodeId) => {
         return (
@@ -124,7 +132,67 @@ const NodesList = ({ nodes, selectNode, deleteNode, collapse, selectedNodeId }: 
   );
 };
 
+type PublishedNodesListProps = {|
+  publishedNodes: PublishedPlaygroundNode[],
+  addPublishedNode: (publishedTopic: string) => void,
+  collapse: () => void,
+  selectPublishedNode: (id: string) => void,
+|};
+
+const PublishedNodesList = ({
+  publishedNodes,
+  addPublishedNode,
+  collapse,
+  selectPublishedNode,
+}: PublishedNodesListProps) => {
+  return (
+    <Flex grow col>
+      <SidebarTitle title={"Public Nodes"} tooltip={`Fill in!`} collapse={collapse} />
+      {publishedNodes.map(({ inputTopics, outputTopic, description, username, versionNumber }) => {
+        return (
+          <ListItem key={outputTopic} onClick={() => selectPublishedNode(outputTopic)}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 5, color: colors.BLUE1 }}>
+                {outputTopic}
+              </div>
+              <div>Input: {Array.isArray(inputTopics) && inputTopics.join(", ")}</div>
+              <div>Description: {description}</div>
+              <div>Username: {username}</div>
+              <div>Version: {versionNumber}</div>
+            </div>
+
+            <Icon onClick={() => addPublishedNode(outputTopic)} medium>
+              <PlusIcon />
+            </Icon>
+          </ListItem>
+        );
+      })}
+    </Flex>
+  );
+};
+
+const { utilityFiles } = getNodeProjectConfig();
+
+const SidebarTitle = ({ title, tooltip, collapse }: { title: string, tooltip?: string, collapse: () => void }) => (
+  <Flex grow row style={{ alignItems: "center", color: colors.DARK9, padding: "5px" }}>
+    <h3 style={{ textTransform: "uppercase" }}>{title}</h3>
+    {tooltip && (
+      <Icon style={{ cursor: "unset", marginLeft: "5px" }} medium tooltip={tooltip}>
+        <HelpCircleIcon />
+      </Icon>
+    )}
+    <div style={{ display: "flex", justifyContent: "flex-end", flexGrow: 1 }}>
+      <Icon onClick={collapse} medium tooltip={"collapse"}>
+        <ArrowLeftBoldIcon />
+      </Icon>
+    </div>
+  </Flex>
+);
+
 type Props = {|
+  publishedNodes: PublishedPlaygroundNode[],
+  selectPublishedNode: (publishedTopic: string) => void,
+  addPublishedNode: (publishedTopic: string) => void,
   selectNode: (nodeId: string) => void,
   deleteNode: (nodeId: string) => void,
   userNodes: UserNodes,
@@ -140,29 +208,14 @@ type Props = {|
   addNewNode: (_: any, sourceCode?: string) => void,
 |};
 
-const { utilityFiles } = getNodeProjectConfig();
-
-const SidebarTitle = ({ title, tooltip, collapse }: { title: string, tooltip?: string, collapse: () => void }) => (
-  <Flex row style={{ alignItems: "center", color: colors.DARK9, padding: "5px" }}>
-    <h3 style={{ textTransform: "uppercase" }}>{title}</h3>
-    {tooltip && (
-      <Icon style={{ cursor: "unset", marginLeft: "5px" }} medium tooltip={tooltip}>
-        <HelpCircleIcon />
-      </Icon>
-    )}
-    <div style={{ display: "flex", justifyContent: "flex-end", flexGrow: 1 }}>
-      <Icon onClick={collapse} medium tooltip={"collapse"}>
-        <ArrowLeftBoldIcon />
-      </Icon>
-    </div>
-  </Flex>
-);
-
 const Sidebar = ({
   userNodes,
+  publishedNodes,
   selectNode,
   deleteNode,
   selectedNodeId,
+  selectPublishedNode,
+  addPublishedNode,
   otherMarkdownDocsForTest,
   userNodeDiagnostics,
   explorer,
@@ -172,9 +225,19 @@ const Sidebar = ({
   addNewNode,
 }: Props) => {
   const nodesSelected = explorer === "nodes";
+  const publishedNodesSelected = explorer === "publishedNodes";
   const docsSelected = explorer === "docs";
   const utilsSelected = explorer === "utils";
   const templatesSelected = explorer === "templates";
+
+  const dispatch = useDispatch();
+  const nodePlaygroundSourceControl = useExperimentalFeature("nodePlaygroundSourceControl");
+  const publishedNodesSelectedChanged = useChangeDetector([publishedNodesSelected], false);
+
+  // Refresh the publishedNodesList when we switch to the publishedNodes explorer
+  if (publishedNodesSelectedChanged && publishedNodesSelected) {
+    dispatch(fetchPublishedNodesList());
+  }
 
   const gotoUtils = React.useCallback((filePath) => {
     import(/* webpackChunkName: "monaco-api" */ "monaco-editor/esm/vs/editor/editor.api").then((monacoApi) => {
@@ -195,16 +258,25 @@ const Sidebar = ({
     });
   }, [setScriptOverride]);
 
-  const explorers = React.useMemo(
-    () => ({
+  const explorers = React.useMemo(() => {
+    return {
       nodes: (
         <NodesList
           nodes={userNodes}
           selectNode={selectNode}
+          selectPublishedNode={selectPublishedNode}
           deleteNode={deleteNode}
           collapse={() => updateExplorer(null)}
           selectedNodeId={selectedNodeId}
           userNodeDiagnostics={userNodeDiagnostics}
+        />
+      ),
+      publishedNodes: (
+        <PublishedNodesList
+          publishedNodes={publishedNodes}
+          collapse={() => updateExplorer(null)}
+          selectPublishedNode={selectPublishedNode}
+          addPublishedNode={addPublishedNode}
         />
       ),
       docs: (
@@ -221,7 +293,7 @@ const Sidebar = ({
         </SFlex>
       ),
       utils: (
-        <Flex col style={{ position: "relative" }}>
+        <Flex grow col style={{ position: "relative" }}>
           <SidebarTitle
             collapse={() => updateExplorer(null)}
             title={"utilities"}
@@ -237,9 +309,8 @@ const Sidebar = ({
           ))}
         </Flex>
       ),
-
       templates: (
-        <Flex col>
+        <Flex grow col>
           <SidebarTitle
             title={"templates"}
             tooltip={"Create nodes from these templates"}
@@ -253,20 +324,22 @@ const Sidebar = ({
           ))}
         </Flex>
       ),
-    }),
-    [
-      addNewNode,
-      deleteNode,
-      gotoUtils,
-      otherMarkdownDocsForTest,
-      script,
-      selectNode,
-      selectedNodeId,
-      updateExplorer,
-      userNodeDiagnostics,
-      userNodes,
-    ]
-  );
+    };
+  }, [
+    addNewNode,
+    addPublishedNode,
+    deleteNode,
+    gotoUtils,
+    otherMarkdownDocsForTest,
+    publishedNodes,
+    script,
+    selectNode,
+    selectPublishedNode,
+    selectedNodeId,
+    updateExplorer,
+    userNodeDiagnostics,
+    userNodes,
+  ]);
 
   return (
     <>
@@ -279,6 +352,16 @@ const Sidebar = ({
           style={{ color: nodesSelected ? "inherit" : colors.DARK9, position: "relative" }}>
           <FileMultipleIcon />
         </Icon>
+        {nodePlaygroundSourceControl && (
+          <Icon
+            dataTest="published-node-explorer"
+            onClick={() => updateExplorer(publishedNodesSelected ? null : "publishedNodes")}
+            large
+            tooltip={"published nodes"}
+            style={{ color: publishedNodesSelected ? "inherit" : colors.DARK9, position: "relative" }}>
+            <ToyBrickSearchOutlineIcon />
+          </Icon>
+        )}
         <Icon
           dataTest="utils-explorer"
           onClick={() => updateExplorer(utilsSelected ? null : "utils")}

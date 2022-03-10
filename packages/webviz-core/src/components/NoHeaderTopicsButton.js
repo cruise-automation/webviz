@@ -43,7 +43,7 @@ function useTopicsWithoutHeaders() {
   return useMemo(() => {
     const topicsByName = groupBy(topics, "name");
     return (topicsWithoutHeaderStamps || []).map((topicName) => {
-      return { topic: topicName, datatype: topicsByName[topicName]?.[0]?.datatype };
+      return { topic: topicName, datatypeName: topicsByName[topicName]?.[0]?.datatypeName };
     });
   }, [topicsWithoutHeaderStamps, topics]);
 }
@@ -53,10 +53,10 @@ function NoHeaderTopicsButton() {
   if (!topicsWithoutHeaders.length) {
     return null;
   }
-  const rows = topicsWithoutHeaders.sort().map(({ topic, datatype }) => (
+  const rows = topicsWithoutHeaders.sort().map(({ topic, datatypeName }) => (
     <tr key={topic}>
       <td>{topic}</td>
-      <td>{datatype}</td>
+      <td>{datatypeName}</td>
     </tr>
   ));
   const color = topicsWithoutHeaders.length > COLOR_THRESHOLD ? colors.YELLOW : "default";

@@ -13,10 +13,10 @@ import { cameraStateSelectors, type CameraState, type Vec3 } from "regl-worldvie
 
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/PositionControl.module.scss";
 
-type Props = {
+type Props = {|
   cameraState: ?CameraState,
   onCameraStateChange: (CameraState) => void,
-};
+|};
 
 const TEMP_VEC3 = [0, 0, 0];
 const ZERO_VEC3 = Object.freeze([0, 0, 0]);

@@ -12,7 +12,7 @@ import styled from "styled-components";
 
 import CopyText from "webviz-core/src/components/CopyText";
 import Icon from "webviz-core/src/components/Icon";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 import { formatDate, formatTime, parseTimeStr } from "webviz-core/src/util/formatTime";
 import { parseRosTimeStr, clampTime, formatTimeRaw } from "webviz-core/src/util/time";
@@ -27,7 +27,7 @@ const DateWrapper = styled.div`
   font-family: ${mixins.monospaceFont};
   font-size: 14px;
   font-weight: normal;
-  color: ${colors.grey};
+  color: ${colors.LIGHT1};
   margin-left: 8px;
 `;
 
@@ -36,7 +36,7 @@ const TimestampWrapper = styled.div`
   font-family: ${mixins.monospaceFont};
   font-size: 14px;
   font-weight: normal;
-  color: ${colors.grey};
+  color: ${colors.LIGHT1};
   align-items: center;
   flex: 0 0 auto;
 `;
@@ -62,14 +62,14 @@ const SInput = styled.input`
   background-color: transparentize(${colors.textNormal}, 0.2);
 `;
 
-type Props = {
+type Props = {|
   currentTime: Time,
   startTime: Time,
   endTime: Time,
   pausePlayback: () => void,
   seekPlayback: (Time) => void,
   timezone?: ?string,
-};
+|};
 
 function getValidTime(timeStr: string, start: Time, end: Time, isRosTime: boolean) {
   const validTime = isRosTime ? parseRosTimeStr(timeStr) : parseTimeStr(timeStr);

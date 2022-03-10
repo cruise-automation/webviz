@@ -14,33 +14,28 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 // `datatypes` should contain the root datatype and all complex sub-datatypes.
 export default function rosDatatypesToMessageDefinition(
   datatypes: RosDatatypes,
-  rootDatatypeName: string
+  rootDatatypeId: string
 ): RosMsgDefinition[] {
   const result = [];
-  const seenDatatypeNames = new Set([rootDatatypeName]);
+  const seenDatatypeIds = new Set([rootDatatypeId]);
   // It doesn't matter if we use a stack or queue here, but we use a stack.
-  const datatypeNameStack = [rootDatatypeName];
+  const datatypeIdStack = [rootDatatypeId];
 
-  while (datatypeNameStack.length) {
-    const currentDatatypeName = datatypeNameStack.pop();
-    const currentDatatype = datatypes[currentDatatypeName];
+  while (datatypeIdStack.length) {
+    const currentDatatypeId = datatypeIdStack.pop();
+    const currentDatatype = datatypes[currentDatatypeId];
     if (!currentDatatype) {
       throw new Error(
-        `While searching datatypes for "${rootDatatypeName}", could not find datatype "${currentDatatypeName}"`
+        `While searching datatypes for "${rootDatatypeId}", could not find datatype "${currentDatatypeId}"`
       );
     }
-    // The root datatype has no name field.
-    const msgDefinition: RosMsgDefinition =
-      currentDatatypeName === rootDatatypeName
-        ? { definitions: currentDatatype.fields }
-        : { name: currentDatatypeName, definitions: currentDatatype.fields };
-    result.push(msgDefinition);
+    result.push({ name: currentDatatype.name, definitions: currentDatatype.fields });
     for (const field of currentDatatype.fields) {
       // Only search subfields if we haven't already seen it and it is "complex", IE it has its own fields and should
       // be contained in `datatypes`.
-      if (field.isComplex && !seenDatatypeNames.has(field.type)) {
-        datatypeNameStack.push(field.type);
-        seenDatatypeNames.add(field.type);
+      if (field.isComplex && !seenDatatypeIds.has(field.type)) {
+        datatypeIdStack.push(field.type);
+        seenDatatypeIds.add(field.type);
       }
     }
   }

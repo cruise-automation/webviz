@@ -28,6 +28,10 @@ export const TOGGLE_SIZE_CONFIG = {
   SMALL: { name: "SMALL", size: 10 },
 };
 
+const SToggleIcon = styled.span`
+  transition: transform 0.2s;
+`;
+
 const SToggle = styled.label`
   width: ${TOGGLE_WRAPPER_SIZE}px;
   height: ${TOGGLE_WRAPPER_SIZE}px;
@@ -37,19 +41,18 @@ const SToggle = styled.label`
   position: relative;
   cursor: pointer;
   outline: 0;
+
   :hover {
     background-color: rgba(255, 255, 255, 0.1);
+
+    ${SToggleIcon} {
+      transform: scale(1.2);
+    }
   }
   :focus {
     span {
       border: 1px solid ${colors.BLUE} !important;
     }
-  }
-`;
-
-const SSpan = styled.span`
-  :hover {
-    transform: scale(1.2);
   }
 `;
 
@@ -66,8 +69,8 @@ type Props = {|
   overrideColor?: ?Color,
   size?: ?Size,
   unavailableTooltip?: string,
-  visibleInScene: boolean,
-  diffModeEnabled: boolean,
+  visibleInScene?: boolean,
+  diffModeEnabled?: boolean,
   columnIndex: number,
 |};
 
@@ -93,11 +96,11 @@ function getStyles({
   diffModeEnabled,
   columnIndex,
 }: {
-  checked: boolean,
-  visibleInScene: boolean,
+  checked?: boolean,
+  visibleInScene?: boolean,
   overrideColor: ?Color,
   size: ?Size,
-  diffModeEnabled: boolean,
+  diffModeEnabled?: boolean,
   columnIndex: number,
 }): any {
   const sizeInNumber =
@@ -107,7 +110,7 @@ function getStyles({
   if (diffModeEnabled) {
     return {
       ...styles,
-      ...diffModeStyleOverrides(checked, columnIndex),
+      ...diffModeStyleOverrides(!!checked, columnIndex),
     };
   }
 
@@ -194,7 +197,7 @@ export default function VisibilityToggle({
       onClick={onChange}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}>
-      <SSpan
+      <SToggleIcon
         style={getStyles({
           checked,
           visibleInScene,

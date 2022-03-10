@@ -17,7 +17,7 @@ import { useDelayedEffect } from "webviz-core/src/util/hooks";
 const fixture = {
   topics: [],
   datatypes: {
-    Foo: { fields: [] },
+    Foo: { name: "Foo", fields: [] },
   },
   frame: {},
   capabilities: [],

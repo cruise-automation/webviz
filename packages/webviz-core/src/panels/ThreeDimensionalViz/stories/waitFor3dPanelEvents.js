@@ -11,6 +11,7 @@ import * as React from "react";
 import delay from "webviz-core/shared/delay";
 import signal, { type Signal } from "webviz-core/shared/signal";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import { useScreenshotWaitFor } from "webviz-core/src/stories/withWaitForStory";
 
 export type StoryEventsContextType = $ReadOnly<{
   ready: Signal<void>,
@@ -42,6 +43,10 @@ export const waitFor3dPanelEvent = (eventName: string, delayMs: number = DEFAULT
     worldEvents.selection = signal<void>();
     worldEvents.storyCompleted = signal<void>();
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const waitFor = useScreenshotWaitFor();
+    waitFor(worldEvents[eventName].then(() => delay(delayMs)));
+
     return (
       <StoryEventsContext.Provider value={worldEvents}>
         <StoryType />
@@ -51,9 +56,6 @@ export const waitFor3dPanelEvent = (eventName: string, delayMs: number = DEFAULT
 
   return {
     decorators: [withStoryEventContext],
-    screenshot: {
-      waitFor: () => worldEvents[eventName].then(() => delay(delayMs)),
-    },
   };
 };
 

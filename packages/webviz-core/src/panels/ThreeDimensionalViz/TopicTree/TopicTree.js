@@ -11,7 +11,7 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
-import { clamp, groupBy } from "lodash";
+import { groupBy } from "lodash";
 import Tree from "rc-tree";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSpring, animated } from "react-spring";
@@ -20,8 +20,8 @@ import styled from "styled-components";
 import { type Save3DConfig } from "../index";
 import DiffModeSettings from "./DiffModeSettings";
 import NoMatchesSvg from "./noMatches.svg";
-import renderTreeNodes, { SWITCHER_WIDTH } from "./renderTreeNodes";
-import TopicTreeSwitcher, { SWITCHER_HEIGHT } from "./TopicTreeSwitcher";
+import renderTreeNodes from "./renderTreeNodes";
+import TopicTreeSwitcher from "./TopicTreeSwitcher";
 import TopicViewModeSelector from "./TopicViewModeSelector";
 import { ROW_HEIGHT } from "./TreeNodeRow";
 import type {
@@ -47,39 +47,62 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const CONTAINER_SPACING = 15;
 const DEFAULT_WIDTH = 360;
-const DEFAULT_XS_WIDTH = 240;
-// Computed height--not actually set to the search bar component.
-const SEARCH_BAR_HEIGHT = 40;
-// Computed height--not actually set to diff mode.
-const DIFF_MODE_HEIGHT = 42;
-const SWITCHER_ICON_SIZE = 20;
-export const TREE_SPACING = 8;
-const MAX_CONTAINER_WIDTH_RATIO = 0.9;
+const SWITCHER_WIDTH = 24;
+const TREE_SPACING = 8;
+const TREE_INDENT_PER_LEVEL = 16;
+const BORDER_RADIUS = 6;
 
 const STopicTreeWrapper = styled.div`
   position: absolute;
   top: ${CONTAINER_SPACING}px;
   left: ${CONTAINER_SPACING}px;
   z-index: 102;
-  max-width: ${MAX_CONTAINER_WIDTH_RATIO * 100}%;
+  height: calc(100% - ${CONTAINER_SPACING * 2}px);
+  width: calc(100% - ${CONTAINER_SPACING * 2}px);
 
   // Allow clicks right above the TopicTree to close it
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+
+  min-width: 100px;
+  max-width: calc(100% - 100px);
+`;
+
+const STopicTreeResizable = styled.div`
+  width: ${DEFAULT_WIDTH}px;
+  min-width: 176px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  resize: horizontal;
+  overflow: hidden;
+  background: ${colors.DARK2};
+  pointer-events: auto;
+  border-bottom-left-radius: ${BORDER_RADIUS}px;
+  border-bottom-right-radius: ${BORDER_RADIUS}px;
 `;
 
 const STopicTree = styled(animated.div)`
+  flex: 1 1 auto;
   position: relative;
   color: ${colors.TEXT};
-  border-radius: 6px;
-  background-color: ${colors.DARK2};
-  padding-bottom: 6px;
   max-width: 100%;
-  overflow: auto;
-  pointer-events: auto;
+  pointer-events: none;
+  min-height: 0;
+  display: flex;
 `;
 
 const STopicTreeInner = styled.div`
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+
   .rc-tree {
+    .rc-tree-list-holder {
+      padding-bottom: 8px;
+    }
+
     li {
       ul {
         padding: 0 0 0 ${SWITCHER_WIDTH}px;
@@ -87,9 +110,12 @@ const STopicTreeInner = styled.div`
     }
     .rc-tree-node-content-wrapper {
       cursor: unset;
+      flex: 1 1;
+      min-width: 0;
     }
     /* Make the chevron icon transition nicely between pointing down and right. */
     .rc-tree-switcher {
+      flex: 0 0;
       height: ${ROW_HEIGHT}px;
       transition: transform 80ms ease-in-out;
     }
@@ -102,10 +128,11 @@ const STopicTreeInner = styled.div`
     /* Hide the chevron switcher icon when it's not usable. */
     .rc-tree-switcher-noop {
       visibility: hidden;
+      width: ${SWITCHER_WIDTH}px;
     }
     .rc-tree-treenode {
       display: flex;
-      padding: 0 ${({ isXSWidth }) => (isXSWidth ? 0 : TREE_SPACING)}px;
+      padding: 0 ${TREE_SPACING}px;
       &:hover {
         background: ${colors.DARK4};
       }
@@ -118,10 +145,12 @@ const STopicTreeInner = styled.div`
       }
     }
     .rc-tree-indent {
-      width: 100%;
+      display: flex;
+      flex: 0 0 auto;
     }
     .rc-tree-indent-unit {
-      width: 24px;
+      transition: width 0.2s;
+      width: ${TREE_INDENT_PER_LEVEL}px;
     }
     .rc-tree-treenode-switcher-close,
     .rc-tree-treenode-switcher-open {
@@ -133,15 +162,31 @@ const STopicTreeInner = styled.div`
 `;
 
 const STopicTreeHeader = styled.div`
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  flex: 0 0 auto;
   display: flex;
-  padding-left: 8px;
   align-items: center;
+  pointer-events: auto;
   background-color: ${colors.DARK5};
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+  overflow: hidden;
+  position: relative;
+  height: 40px;
+`;
+
+const STopicTreeHeaderCollapse = styled.div`
+  overflow: hidden;
+  display: flex;
+  flex: 1 1 0px;
+  min-width: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  padding-left: 8px;
+  justify-content: space-between;
 `;
 
 const SFilter = styled.div`
@@ -149,6 +194,7 @@ const SFilter = styled.div`
   padding: 8px 4px;
   align-items: center;
   flex: 1;
+  min-width: 0;
 `;
 
 const SInput = styled.input`
@@ -161,6 +207,7 @@ const SInput = styled.input`
   padding: 4px 8px;
   min-width: 80px;
   border: none;
+  overflow: hidden;
   :focus,
   :hover {
     outline: none;
@@ -178,12 +225,14 @@ const SSwitcherIcon = styled.div`
 `;
 
 const SNoMatches = styled.div`
-  margin-top: 57px;
+  padding: 57px 8px 74px 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-bottom: 74px;
+  background-color: ${colors.DARK2};
+  border-bottom-left-radius: ${BORDER_RADIUS}px;
+  border-bottom-right-radius: ${BORDER_RADIUS}px;
 `;
 
 const SNoMatchesText = styled.div`
@@ -226,15 +275,11 @@ type SharedProps = {|
 
 type Props = {|
   ...SharedProps,
-  containerHeight: number,
-  containerWidth: number,
 |};
 
 type BaseProps = {|
   ...SharedProps,
   showDiffMode: boolean,
-  treeWidth: number,
-  treeHeight: number,
 |};
 
 function TopicTree({
@@ -263,12 +308,9 @@ function TopicTree({
   showDiffMode,
   structuralDatatypes,
   topicDisplayMode,
-  treeHeight,
-  treeWidth,
   visibleTopicsCountByKey,
 }: BaseProps) {
   const renderTopicTree = pinTopics || showTopicTree;
-  const scrollContainerRef = useRef<?HTMLDivElement>();
   const checkedKeysSet = useMemo(() => new Set(checkedKeys), [checkedKeys]);
 
   const filterTextFieldRef = useRef<?HTMLInputElement>();
@@ -296,9 +338,7 @@ function TopicTree({
   }, [expandedKeys, rootTreeNode]);
 
   const showNoMatchesState = !getIsTreeNodeVisibleInTree(rootTreeNode.key);
-
-  const isXSWidth = treeWidth < DEFAULT_XS_WIDTH;
-  const headerRightIconStyle = { margin: `4px ${(isXSWidth ? 0 : TREE_SPACING) + 2}px 4px 8px` };
+  const headerRightIconStyle = { margin: `4px ${TREE_SPACING}px 4px 8px` };
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const linkedGlobalVariablesByTopic = groupBy(linkedGlobalVariables, ({ topic }) => topic);
@@ -311,114 +351,140 @@ function TopicTree({
     }
   }, [setShowTopicTree]);
 
+  const treeData = useMemo(
+    () =>
+      renderTreeNodes({
+        availableNamespacesByTopic,
+        checkedKeysSet,
+        children: rootTreeNode.type === "group" ? rootTreeNode.children : [],
+        getIsTreeNodeVisibleInScene,
+        getIsTreeNodeVisibleInTree,
+        getIsNamespaceCheckedByDefault,
+        hasFeatureColumn,
+        onNamespaceOverrideColorChange,
+        sceneErrorsByKey,
+        setCurrentEditingTopic,
+        derivedCustomSettingsByKey,
+        setEditingNamespace,
+        structuralDatatypes,
+        topicDisplayMode,
+        visibleTopicsCountByKey,
+        filterText,
+        linkedGlobalVariablesByTopic,
+        diffModeEnabled: hasFeatureColumn && diffModeEnabled,
+      }),
+    [
+      availableNamespacesByTopic,
+      checkedKeysSet,
+      derivedCustomSettingsByKey,
+      diffModeEnabled,
+      filterText,
+      getIsNamespaceCheckedByDefault,
+      getIsTreeNodeVisibleInScene,
+      getIsTreeNodeVisibleInTree,
+      hasFeatureColumn,
+      linkedGlobalVariablesByTopic,
+      onNamespaceOverrideColorChange,
+      rootTreeNode,
+      sceneErrorsByKey,
+      setCurrentEditingTopic,
+      setEditingNamespace,
+      structuralDatatypes,
+      topicDisplayMode,
+      visibleTopicsCountByKey,
+    ]
+  );
+
   return (
-    <STopicTreeInner style={{ width: treeWidth }} isXSWidth={isXSWidth}>
+    <STopicTreeInner>
       <STopicTreeHeader>
-        <SFilter>
-          <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
-            <MagnifyIcon style={{ width: 16, height: 16 }} />
-          </Icon>
-          <SInput
-            size={3}
-            data-test="topic-tree-filter-input"
-            value={filterText}
-            placeholder="Type to filter"
-            onChange={(event) => setFilterText(event.target.value)}
-            onKeyDown={onKeyDown}
-            ref={filterTextFieldRef}
-          />
-        </SFilter>
-        {rootTreeNode.providerAvailable && (
-          <TopicViewModeSelector isXSWidth={isXSWidth} saveConfig={saveConfig} topicDisplayMode={topicDisplayMode} />
-        )}
-        {!filterText && (
-          <Icon
-            dataTest="expand-all-icon"
-            tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
-            small
-            fade
-            onClick={() => {
-              saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] });
-            }}
-            style={headerRightIconStyle}>
-            {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
-          </Icon>
-        )}
-        {filterText && (
-          <Icon dataTest="clear-filter-icon" small fade style={headerRightIconStyle} onClick={() => setFilterText("")}>
-            <CloseIcon />
-          </Icon>
-        )}
+        <STopicTreeHeaderCollapse>
+          <SFilter>
+            <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
+              <MagnifyIcon style={{ width: 16, height: 16 }} />
+            </Icon>
+            <SInput
+              size={3}
+              data-test="topic-tree-filter-input"
+              value={filterText}
+              placeholder="Type to filter"
+              onChange={(event) => setFilterText(event.target.value)}
+              onKeyDown={onKeyDown}
+              ref={filterTextFieldRef}
+            />
+          </SFilter>
+          {rootTreeNode.providerAvailable && (
+            <TopicViewModeSelector saveConfig={saveConfig} topicDisplayMode={topicDisplayMode} />
+          )}
+          {!filterText && (
+            <Icon
+              dataTest="expand-all-icon"
+              tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
+              small
+              fade
+              onClick={() => {
+                saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] });
+              }}
+              style={headerRightIconStyle}>
+              {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
+            </Icon>
+          )}
+          {filterText && (
+            <Icon
+              dataTest="clear-filter-icon"
+              small
+              fade
+              style={headerRightIconStyle}
+              onClick={() => setFilterText("")}>
+              <CloseIcon />
+            </Icon>
+          )}
+        </STopicTreeHeaderCollapse>
       </STopicTreeHeader>
       {showDiffMode && <DiffModeSettings enabled={diffModeEnabled} saveConfig={saveConfig} />}
-      <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
-        {showNoMatchesState ? (
-          <SNoMatches>
-            <NoMatchesSvg />
-            <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
-          </SNoMatches>
-        ) : (
-          <Tree
-            treeData={renderTreeNodes({
-              availableNamespacesByTopic,
-              checkedKeysSet,
-              children: rootTreeNode.children || [],
-              getIsTreeNodeVisibleInScene,
-              getIsTreeNodeVisibleInTree,
-              getIsNamespaceCheckedByDefault,
-              hasFeatureColumn,
-              isXSWidth,
-              onNamespaceOverrideColorChange,
-              sceneErrorsByKey,
-              setCurrentEditingTopic,
-              derivedCustomSettingsByKey,
-              setEditingNamespace,
-              structuralDatatypes,
-              topicDisplayMode,
-              visibleTopicsCountByKey,
-              width: treeWidth,
-              filterText,
-              linkedGlobalVariablesByTopic,
-              diffModeEnabled: hasFeatureColumn && diffModeEnabled,
-            })}
-            height={treeHeight}
-            itemHeight={ROW_HEIGHT}
-            // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
-            // the tree). This bug would result in nodes no longer being rendered after a search.
-            motion={null}
-            selectable={false}
-            onExpand={(newExpandedKeys) => {
-              if (!shouldExpandAllKeys) {
-                saveConfig({ expandedKeys: newExpandedKeys });
-              }
-            }}
-            expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
-            autoExpandParent={false /* Set autoExpandParent to true when filtering */}
-            switcherIcon={
-              <SSwitcherIcon style={filterText ? { visibility: "hidden" } : {}}>
-                <ChevronDownIcon
-                  fill="currentColor"
-                  style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
+
+      <div style={{ flex: "1 1 auto", overflow: "hidden" }}>
+        <Dimensions>
+          {({ height: treeHeight }) => (
+            <STopicTreeResizable>
+              {showNoMatchesState ? (
+                <SNoMatches>
+                  <NoMatchesSvg />
+                  <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
+                </SNoMatches>
+              ) : (
+                <Tree
+                  treeData={treeData}
+                  height={treeHeight}
+                  itemHeight={ROW_HEIGHT}
+                  // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
+                  // the tree). This bug would result in nodes no longer being rendered after a search.
+                  motion={null}
+                  selectable={false}
+                  onExpand={(newExpandedKeys) => {
+                    if (!shouldExpandAllKeys) {
+                      saveConfig({ expandedKeys: newExpandedKeys });
+                    }
+                  }}
+                  expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
+                  autoExpandParent={false /* Set autoExpandParent to true when filtering */}
+                  switcherIcon={
+                    <SSwitcherIcon style={filterText ? { visibility: "hidden" } : {}}>
+                      <ChevronDownIcon fill="currentColor" style={{ width: 20, height: 20 }} />
+                    </SSwitcherIcon>
+                  }
                 />
-              </SSwitcherIcon>
-            }
-          />
-        )}
+              )}
+            </STopicTreeResizable>
+          )}
+        </Dimensions>
       </div>
     </STopicTreeInner>
   );
 }
 
-// A wrapper that can be resized horizontally, and it dynamically calculates the width of the base topic tree component.
-function TopicTreeWrapper({
-  containerWidth,
-  containerHeight,
-  pinTopics,
-  showTopicTree,
-  hasFeatureColumn,
-  ...rest
-}: Props) {
-  const defaultTreeWidth = clamp(containerWidth, DEFAULT_XS_WIDTH, DEFAULT_WIDTH);
+// An animated wrapper.
+function TopicTreeWrapper({ pinTopics, showTopicTree, hasFeatureColumn, ...rest }: Props) {
   const renderTopicTree = pinTopics || showTopicTree;
   const { sceneErrorsByKey, saveConfig, setShowTopicTree, isPlaying } = rest;
   const springProps = useSpring({
@@ -431,56 +497,31 @@ function TopicTreeWrapper({
     config: { tension: 340, friction: 26, clamp: true },
   });
 
-  const showDiffMode = hasFeatureColumn;
-  // TODO(troy): Remove hardcoded heights. We could use the <Dimension />
-  // component on top of the topic tree for a cleaner result.
-  const treeHeightRaw = containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2;
-  const treeHeight = showDiffMode ? treeHeightRaw - DIFF_MODE_HEIGHT : treeHeightRaw;
-
   return (
-    <STopicTreeWrapper style={{ height: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
-      <Dimensions>
-        {({ width }) => (
-          <div
-            style={{
-              width: defaultTreeWidth,
-              resize: renderTopicTree ? "horizontal" : "none",
-              overflow: renderTopicTree ? "hidden auto" : "visible",
-              minWidth: DEFAULT_XS_WIDTH,
-              maxWidth: containerWidth - 100,
-            }}
-            onClick={(ev) => ev.stopPropagation()}>
-            <TopicTreeSwitcher
-              showErrorBadge={!renderTopicTree && Object.keys(sceneErrorsByKey).length > 0}
-              pinTopics={pinTopics}
-              renderTopicTree={renderTopicTree}
-              saveConfig={saveConfig}
-              setShowTopicTree={setShowTopicTree}
-            />
-            <STopicTree
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                pointerEvents: renderTopicTree ? "auto" : "none",
-                opacity: springProps.opacity,
-                transform: springProps.transformX.interpolate((x) =>
-                  x === 0 ? "none" : `translate3d(${x}px, 0px, 0px)`
-                ),
-              }}>
-              {renderTopicTree && (
-                <TopicTree
-                  {...rest}
-                  pinTopics={pinTopics}
-                  showTopicTree={showTopicTree}
-                  treeWidth={width}
-                  treeHeight={treeHeight}
-                  showDiffMode={showDiffMode}
-                  hasFeatureColumn={hasFeatureColumn}
-                />
-              )}
-            </STopicTree>
-          </div>
+    <STopicTreeWrapper>
+      <TopicTreeSwitcher
+        showErrorBadge={!renderTopicTree && Object.keys(sceneErrorsByKey).length > 0}
+        pinTopics={pinTopics}
+        renderTopicTree={renderTopicTree}
+        saveConfig={saveConfig}
+        setShowTopicTree={setShowTopicTree}
+      />
+      <STopicTree
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          opacity: springProps.opacity,
+          transform: springProps.transformX.interpolate((x) => (x === 0 ? "none" : `translate3d(${x}px, 0px, 0px)`)),
+        }}>
+        {renderTopicTree && (
+          <TopicTree
+            {...rest}
+            pinTopics={pinTopics}
+            showTopicTree={showTopicTree}
+            showDiffMode={hasFeatureColumn}
+            hasFeatureColumn={hasFeatureColumn}
+          />
         )}
-      </Dimensions>
+      </STopicTree>
     </STopicTreeWrapper>
   );
 }

@@ -60,7 +60,6 @@ describe("useBlocksByTopic", () => {
           },
           undefined,
         ],
-        startTime: { sec: 0, nsec: 0 },
       },
     };
     const Test = createTest();
@@ -92,12 +91,7 @@ describe("useBlocksByTopic", () => {
     // messagesByTopic will not exist.
     const activeData = undefined;
     // Note: progress.blocks.map() does not iterate over the blocks.
-    const progress = {
-      messageCache: {
-        blocks: new Array(2),
-        startTime: { sec: 0, nsec: 0 },
-      },
-    };
+    const progress = { messageCache: { blocks: new Array(2) } };
     const Test = createTest();
     const root = mount(
       <MockMessagePipelineProvider activeData={activeData} progress={progress}>
@@ -109,13 +103,10 @@ describe("useBlocksByTopic", () => {
   });
 
   it("maintains block identity across repeated renders", async () => {
-    const activeData = { parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id") } };
-    const progress = {
-      messageCache: {
-        blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic": [] } }],
-        startTime: { sec: 0, nsec: 0 },
-      },
+    const activeData = {
+      parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id", "foo_msgs/Bar") },
     };
+    const progress = { messageCache: { blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic": [] } }] } };
     const Test = createTest();
 
     const root = mount(

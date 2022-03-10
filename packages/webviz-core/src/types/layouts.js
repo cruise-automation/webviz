@@ -23,7 +23,11 @@ export type SaveLayoutPayload = {|
   isAutosaved?: boolean,
 |};
 
-export type TabConfig = {| title: string, layout: ?MosaicNode |};
+export type TabConfig = {|
+  title: string,
+  // Null when a user creates an empty tab which has not been assigned a panel
+  layout: ?MosaicNode,
+|};
 
 export type TabPanelConfig = {
   activeTabIdx: number,

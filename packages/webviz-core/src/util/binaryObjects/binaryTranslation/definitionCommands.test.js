@@ -18,6 +18,7 @@ describe("definitionCommands", () => {
   it("optimize commands for MarkerArray", () => {
     writer.registerDefinitions({
       "std_msgs/Header": {
+        name: "std_msgs/Header",
         fields: [
           { type: "uint32", name: "seq" },
           { type: "time", name: "stamp" },
@@ -25,9 +26,11 @@ describe("definitionCommands", () => {
         ],
       },
       "geometry_msgs/Point": {
+        name: "geometry_msgs/Point",
         fields: [{ type: "float64", name: "x" }, { type: "float64", name: "y" }, { type: "float64", name: "z" }],
       },
       "geometry_msgs/Quaternion": {
+        name: "geometry_msgs/Quaternion",
         fields: [
           { type: "float64", name: "x" },
           { type: "float64", name: "y" },
@@ -36,15 +39,18 @@ describe("definitionCommands", () => {
         ],
       },
       "geometry_msgs/Pose": {
+        name: "geometry_msgs/Pose",
         fields: [
           { type: "geometry_msgs/Point", name: "position", isComplex: true },
           { type: "geometry_msgs/Quaternion", name: "orientation", isComplex: true },
         ],
       },
       "geometry_msgs/Vector3": {
+        name: "geometry_msgs/Vector3",
         fields: [{ type: "float64", name: "x" }, { type: "float64", name: "y" }, { type: "float64", name: "z" }],
       },
       "std_msgs/ColorRGBA": {
+        name: "std_msgs/ColorRGBA",
         fields: [
           { type: "float32", name: "r" },
           { type: "float32", name: "g" },
@@ -53,6 +59,7 @@ describe("definitionCommands", () => {
         ],
       },
       "visualization_msgs/Marker": {
+        name: "visualization_msgs/Marker",
         fields: [
           { type: "std_msgs/Header", name: "header", isComplex: true },
           { type: "string", name: "ns" },
@@ -72,6 +79,7 @@ describe("definitionCommands", () => {
         ],
       },
       "visualization_msgs/MarkerArray": {
+        name: "visualization_msgs/MarkerArray",
         fields: [{ type: "visualization_msgs/Marker", name: "markers", isArray: true }],
       },
     });

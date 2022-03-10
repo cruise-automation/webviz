@@ -47,11 +47,11 @@ const SKey = styled.kbd`
   }
 `;
 
-type Props = {
+type Props = {|
   keys: string[],
   description?: string,
   descriptionMaxWidth?: number,
-};
+|};
 
 export default function KeyboardShortcut({ keys, description, descriptionMaxWidth }: Props) {
   return (

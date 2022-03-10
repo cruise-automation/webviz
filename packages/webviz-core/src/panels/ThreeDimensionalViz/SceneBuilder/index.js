@@ -50,6 +50,7 @@ import {
   GEOMETRY_MSGS$POSE_STAMPED,
   NAV_MSGS$PATH,
   NAV_MSGS$OCCUPANCY_GRID,
+  WEBVIZ_MSGS$OCCUPANCY_GRID,
   SENSOR_MSGS$POINT_CLOUD_2,
   SENSOR_MSGS$LASER_SCAN,
   GEOMETRY_MSGS$POLYGON_STAMPED,
@@ -146,11 +147,11 @@ export function getSceneErrorsByTopic(
 }
 
 // Only display one non-lifetime message at a time, so we filter to the last one.
-export function filterOutSupersededMessages(messages: any, datatype: string) {
+export function filterOutSupersededMessages(messages: any, datatypeName: string) {
   // Later messages take precedence over earlier messages, so iterate from latest to earliest to
   // find the last one that matters.
   const reversedMessages = messages.slice().reverse();
-  if (MARKER_ARRAY_DATATYPES.includes(datatype)) {
+  if (MARKER_ARRAY_DATATYPES.includes(datatypeName)) {
     // Many marker arrays begin with a command to "delete all markers on this topic". If we see
     // this, we can ignore any earlier messages on the topic.
     const earliestMessageToKeepIndex = reversedMessages.findIndex(({ message }) => {
@@ -758,9 +759,9 @@ export default class SceneBuilder implements MarkerProvider {
     this.topicsToRender.clear();
   }
 
-  _consumeMessage = (topic: string, datatype: string, msg: BobjectMessage): void => {
+  _consumeMessage = (topic: string, datatypeName: string, datatypeId: string, msg: BobjectMessage): void => {
     const { message } = msg;
-    switch (datatype) {
+    switch (datatypeName) {
       case VISUALIZATION_MSGS$WEBVIZ_MARKER:
       case VISUALIZATION_MSGS$MARKER:
         this._consumeMarker(topic, cast<BinaryMarker>(message));
@@ -782,6 +783,9 @@ export default class SceneBuilder implements MarkerProvider {
       case NAV_MSGS$OCCUPANCY_GRID:
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, deepParse(message));
+        break;
+      case WEBVIZ_MSGS$OCCUPANCY_GRID:
+        this._consumeNonMarkerMessage(topic, deepParse(message), 101);
         break;
       case NAV_MSGS$PATH: {
         const pathStamped = cast<BinaryPath>(message);
@@ -826,19 +830,19 @@ export default class SceneBuilder implements MarkerProvider {
         break;
       }
       default: {
-        const structuralDatatype = this._structuralDatatypes[datatype];
-        if (structuralDatatype === RADAR_POINT_CLOUD) {
+        const structuralDatatypeName = this._structuralDatatypes[datatypeId];
+        if (structuralDatatypeName === RADAR_POINT_CLOUD) {
           this._consumeNonMarkerMessage(topic, deepParse(message), 106);
           break;
         }
-        if (structuralDatatype === WRAPPED_POINT_CLOUD) {
+        if (structuralDatatypeName === WRAPPED_POINT_CLOUD) {
           this._consumeNonMarkerMessage(topic, deepParse(cast<WrappedPointCloud>(message).cloud()), 102, message);
           break;
         }
         const { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState } = this;
         this._hooks.consumeBobject(
           topic,
-          datatype,
+          datatypeName,
           msg,
           {
             consumeMarkerArray: this._consumeMarkerArray,
@@ -865,14 +869,14 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].setClock(this._clock);
     this.collectors[topic].flush();
 
-    const datatype = this.topicsByName[topic].datatype;
+    const { datatypeId, datatypeName } = this.topicsByName[topic];
     // If topic has a decayTime set, markers with no lifetime will get one
     // later on, so we don't need to filter them. Note: A decayTime of zero is
     // defined as an infinite lifetime
     const decayTime = this._settingsByKey[`t:${topic}`]?.decayTime;
-    const filteredMessages = decayTime === undefined ? filterOutSupersededMessages(messages, datatype) : messages;
+    const filteredMessages = decayTime === undefined ? filterOutSupersededMessages(messages, datatypeName) : messages;
     for (const message of filteredMessages) {
-      this._consumeMessage(topic, datatype, message);
+      this._consumeMessage(topic, datatypeName, datatypeId, message);
     }
   };
 
@@ -899,18 +903,18 @@ export default class SceneBuilder implements MarkerProvider {
         }
 
         // Highlight if marker matches any of this topic's highlightMarkerMatchers; dim other markers
-        if (Object.keys(this._highlightMarkerMatchersByTopic).length > 0) {
-          const markerMatches = (this._highlightMarkerMatchersByTopic[topic.name] || []).some(({ checks = [] }) =>
-            checks.every(({ markerKeyPath, value }) => {
-              const markerValue = _.get(message, markerKeyPath);
-              return value === markerValue;
-            })
-          );
-          marker.interactionData.highlighted = markerMatches;
-        }
+        const markerMatches = (this._highlightMarkerMatchersByTopic[topic.name] || []).some(({ checks = [] }) =>
+          checks.every(({ markerKeyPath, value }) => {
+            const markerValue = _.get(message, markerKeyPath);
+            return value === markerValue;
+          })
+        );
+
+        marker.interactionData.highlighted = markerMatches;
 
         // TODO(bmc): once we support more topic settings
         // flesh this out to be more marker type agnostic
+
         const settings = this._settingsByKey[`t:${topic.name}`];
         if (settings) {
           marker.settings = settings;

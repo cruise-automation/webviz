@@ -12,25 +12,22 @@ import React, { type Node, useCallback, useContext, useMemo } from "react";
 import styled from "styled-components";
 
 import NodeName from "./NodeName";
-import { TREE_SPACING } from "./TopicTree";
 import TreeNodeMenu, { DOT_MENU_WIDTH } from "./TreeNodeMenu";
 import type { DerivedCustomSettings, SetCurrentEditingTopic, TreeNode } from "./types";
-import VisibilityToggle, { TOGGLE_WRAPPER_SIZE, TOPIC_ROW_PADDING } from "./VisibilityToggle";
+import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
-import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
+import { useTopicTreeActions } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import type { StructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
-import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
 export const ICON_SIZE = 22;
 export const ROW_HEIGHT = 24;
 const MAX_GROUP_ERROR_WIDTH = 64;
-const VISIBLE_COUNT_WIDTH = 18;
 const VISIBLE_COUNT_MARGIN = 4;
 
 export const STreeNodeRow = styled.div`
@@ -43,13 +40,18 @@ export const STreeNodeRow = styled.div`
 export const SLeft = styled.div`
   display: flex;
   align-items: center;
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: ${TOGGLE_WRAPPER_SIZE}px;
-  padding: ${TOPIC_ROW_PADDING}px 0px;
+  overflow: hidden;
 `;
 
 const SErrorCount = styled.small`
   color: ${colors.RED};
+  font-size: 10px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
   width: ${MAX_GROUP_ERROR_WIDTH}px;
 `;
 
@@ -58,7 +60,7 @@ const SIconWrapper = styled.div`
   align-items: center;
   justify-content: center;
   width: ${ICON_SIZE}px;
-  height: ${ICON_SIZE}px;
+  flex: 0 0 auto;
 `;
 
 const SErrorList = styled.ul`
@@ -88,9 +90,8 @@ export const SDotMenuPlaceholder = styled.span`
 `;
 
 const SVisibleCount = styled.span`
-  width: ${VISIBLE_COUNT_WIDTH}px;
+  width: 18px;
   height: ${ROW_HEIGHT - 6}px;
-  padding-top: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -99,11 +100,28 @@ const SVisibleCount = styled.span`
   margin: 0 ${VISIBLE_COUNT_MARGIN}px;
 `;
 
+const STopicSettingsIcon = styled(Icon)`
+  padding: 0 4px;
+  color: ${colors.HIGHLIGHT};
+  line-height: 1;
+  width: 22px;
+  font-size: 11px;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+`;
+
+const STopicErrorIcon = styled(Icon)`
+  color: ${colors.RED};
+  align-items: center;
+  display: inline-flex;
+  font-size: 14px;
+`;
+
 type Props = {|
   checkedKeysSet: Set<string>,
   hasChildren: boolean,
   hasFeatureColumn: boolean,
-  isXSWidth: boolean,
   node: TreeNode,
   nodeVisibleInScene: boolean,
   visibleByColumn: (?boolean)[],
@@ -111,20 +129,18 @@ type Props = {|
   setCurrentEditingTopic: SetCurrentEditingTopic,
   structuralDatatypes: StructuralDatatypes,
   derivedCustomSettings: ?DerivedCustomSettings,
-  width: number,
   filterText: string,
   tooltips?: Node[],
   visibleTopicsCount: number,
   diffModeEnabled: boolean,
 |};
 
-export default function TreeNodeRow({
+function TreeNodeRow({
   checkedKeysSet,
   derivedCustomSettings,
   filterText,
   hasChildren,
   hasFeatureColumn,
-  isXSWidth,
   node,
   node: { availableByColumn, providerAvailable, name, key, featureKey },
   nodeVisibleInScene,
@@ -134,7 +150,6 @@ export default function TreeNodeRow({
   tooltips,
   visibleByColumn,
   visibleTopicsCount,
-  width,
   diffModeEnabled,
 }: Props) {
   const topicName = node.type === "topic" ? node.topicName : "";
@@ -147,23 +162,6 @@ export default function TreeNodeRow({
   const showTopicError = node.type === "topic" && sceneErrors && sceneErrors.length > 0;
   const showGroupError = node.type === "group" && sceneErrors && sceneErrors.length > 0;
 
-  const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2);
-
-  const togglesWidth = hasFeatureColumn ? TOGGLE_WRAPPER_SIZE * 2 : TOGGLE_WRAPPER_SIZE;
-  const rightActionWidth = providerAvailable ? togglesWidth + DOT_MENU_WIDTH : DOT_MENU_WIDTH;
-  // -8px to add some spacing between the name and right action area.
-  let maxNodeNameWidth = rowWidth - rightActionWidth - 8;
-
-  if (showTopicSettingsChanged) {
-    maxNodeNameWidth -= ICON_SIZE;
-  }
-  if (showGroupError) {
-    maxNodeNameWidth -= MAX_GROUP_ERROR_WIDTH;
-  }
-  if (showTopicError) {
-    maxNodeNameWidth -= ICON_SIZE;
-  }
-
   const errorTooltip = sceneErrors && (
     <SErrorList>
       {sceneErrors.map((errStr) => (
@@ -173,8 +171,6 @@ export default function TreeNodeRow({
   );
 
   const showVisibleTopicsCount = providerAvailable && node.type === "group" && node.children && visibleTopicsCount > 0;
-
-  maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
   const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
@@ -196,17 +192,15 @@ export default function TreeNodeRow({
     toggleNodeChecked,
     toggleNodeExpanded,
     toggleCheckAllDescendants,
-  } = useGuaranteedContext(TopicTreeContext, "TopicTreeContext");
+  } = useTopicTreeActions();
 
   return (
-    <STreeNodeRow visibleInScene={nodeVisibleInScene} style={{ width: rowWidth }}>
+    <STreeNodeRow visibleInScene={nodeVisibleInScene}>
       <SLeft
         style={{ cursor: hasChildren && !filterText ? "pointer" : "default" }}
         data-test={`name~${key}`}
         onClick={hasChildren ? () => toggleNodeExpanded(key) : undefined}>
         <NodeName
-          isXSWidth={isXSWidth}
-          maxWidth={maxNodeNameWidth}
           displayName={name || topicName}
           tooltips={tooltips}
           topicName={topicName}
@@ -226,13 +220,12 @@ export default function TreeNodeRow({
             : undefined)}
         />
         {showTopicSettingsChanged && datatype && (
-          <Icon
-            style={{ padding: "0 4px", color: colors.HIGHLIGHT, lineHeight: 1 }}
+          <STopicSettingsIcon
             fade
-            tooltip="Topic settings edited"
-            onClick={() => setCurrentEditingTopic({ name: topicName, datatype })}>
+            tooltip="Edit Topic settings"
+            onClick={() => setCurrentEditingTopic({ name: topicName, datatypeName: datatype })}>
             <LeadPencilIcon />
-          </Icon>
+          </STopicSettingsIcon>
         )}
         {showGroupError && errorTooltip && sceneErrors && (
           <Tooltip contents={errorTooltip} placement="top">
@@ -241,14 +234,12 @@ export default function TreeNodeRow({
         )}
         {showTopicError && errorTooltip && (
           <SIconWrapper>
-            <Icon
-              style={{ color: colors.RED, fontSize: 14, display: "inline-flex", alignItems: "center" }}
-              small
+            <STopicErrorIcon
               tooltipProps={{ placement: "top" }}
               tooltip={errorTooltip}
               onClick={(e) => e.stopPropagation()}>
               <AlertCircleIcon />
-            </Icon>
+            </STopicErrorIcon>
           </SIconWrapper>
         )}
       </SLeft>
@@ -304,3 +295,30 @@ export default function TreeNodeRow({
     </STreeNodeRow>
   );
 }
+
+export function TreeNodeRowSimple({ onToggle, tooltips, topicName, disabled, togglePropsByColumn }: any) {
+  return (
+    <STreeNodeRow visibleInScene={!disabled}>
+      <SLeft>
+        <NodeName displayName={topicName} tooltips={tooltips} topicName={topicName} searchText={""} />
+      </SLeft>
+      <SRightActions>
+        <SToggles>
+          {togglePropsByColumn.map(({ available, checked, enabled, topicName: topicNameWithSource }, columnIdx) => (
+            <VisibilityToggle
+              available={available}
+              dataTest={`visibility-toggle~${topicNameWithSource}~column${columnIdx}`}
+              key={topicNameWithSource}
+              checked={checked}
+              onToggle={() => onToggle(topicNameWithSource)}
+              visibleInScene={enabled}
+              columnIndex={columnIdx}
+            />
+          ))}
+        </SToggles>
+      </SRightActions>
+    </STreeNodeRow>
+  );
+}
+
+export default React.memo<Props>(TreeNodeRow);

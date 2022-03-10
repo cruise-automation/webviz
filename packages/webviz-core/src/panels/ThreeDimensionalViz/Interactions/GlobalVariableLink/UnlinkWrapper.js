@@ -43,7 +43,7 @@ const SIconWrapper = styled.span`
   }
 `;
 
-type Props = {
+type Props = {|
   linkedGlobalVariable: LinkedGlobalVariable,
   style?: any,
   children: ({
@@ -51,7 +51,7 @@ type Props = {
     linkedGlobalVariable: LinkedGlobalVariable,
   }) => Node,
   tooltip?: Node,
-};
+|};
 
 export default function UnlinkWrapper({ children, linkedGlobalVariable, tooltip }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);

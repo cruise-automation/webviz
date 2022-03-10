@@ -38,8 +38,6 @@ import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-export const SWITCHER_WIDTH = 24;
-
 export const SToggles = styled.div`
   display: flex;
   align-items: center;
@@ -89,7 +87,6 @@ type Props = {|
   getIsTreeNodeVisibleInScene: GetIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
   hasFeatureColumn: boolean,
-  isXSWidth: boolean,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
@@ -97,7 +94,6 @@ type Props = {|
   structuralDatatypes: StructuralDatatypes,
   topicDisplayMode: TopicDisplayMode,
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
-  width: number,
   linkedGlobalVariablesByTopic: { [string]: LinkedGlobalVariable[] },
   diffModeEnabled: boolean,
 |};
@@ -191,7 +187,6 @@ export default function renderTreeNodes({
   getIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
-  isXSWidth,
   onNamespaceOverrideColorChange,
   sceneErrorsByKey,
   setCurrentEditingTopic,
@@ -199,11 +194,9 @@ export default function renderTreeNodes({
   structuralDatatypes,
   topicDisplayMode,
   visibleTopicsCountByKey,
-  width,
   linkedGlobalVariablesByTopic,
   diffModeEnabled,
 }: Props): TreeUINode[] {
-  const titleWidth = width - SWITCHER_WIDTH;
   return children
     .filter(({ key }) => getIsTreeNodeVisibleInTree(key))
     .map((item) => {
@@ -280,14 +273,12 @@ export default function renderTreeNodes({
           filterText={filterText}
           hasChildren={itemChildren.length > 0 || namespaceNodes.length > 0}
           hasFeatureColumn={hasFeatureColumn}
-          isXSWidth={isXSWidth}
           node={item}
           nodeVisibleInScene={nodeVisibleInScene}
           sceneErrors={sceneErrorsByKey[item.key]}
           setCurrentEditingTopic={setCurrentEditingTopic}
           structuralDatatypes={structuralDatatypes}
           visibleByColumn={visibleByColumn}
-          width={titleWidth}
           visibleTopicsCount={visibleTopicsCountByKey[item.key] || 0}
           {...(tooltips.length ? { tooltips } : undefined)}
           diffModeEnabled={diffModeEnabled}
@@ -298,12 +289,10 @@ export default function renderTreeNodes({
       if (item.type === "topic") {
         childrenNodes.push(
           ...renderStyleExpressionNodes({
-            isXSWidth,
             topicName,
             hasFeatureColumn,
             linkedGlobalVariablesByTopic,
             visible: nodeVisibleInScene,
-            width: titleWidth,
           })
         );
 
@@ -312,11 +301,9 @@ export default function renderTreeNodes({
             children: namespaceNodes.sort(naturalSort("namespace")),
             getIsTreeNodeVisibleInTree,
             hasFeatureColumn,
-            isXSWidth,
             onNamespaceOverrideColorChange,
             setEditingNamespace,
             topicNode: item,
-            width: titleWidth,
             filterText,
             diffModeEnabled,
           })
@@ -332,7 +319,6 @@ export default function renderTreeNodes({
             getIsTreeNodeVisibleInTree,
             getIsNamespaceCheckedByDefault,
             hasFeatureColumn,
-            isXSWidth,
             onNamespaceOverrideColorChange,
             setEditingNamespace,
             topicDisplayMode,
@@ -341,7 +327,6 @@ export default function renderTreeNodes({
             structuralDatatypes,
             derivedCustomSettingsByKey,
             visibleTopicsCountByKey,
-            width: titleWidth,
             filterText,
             linkedGlobalVariablesByTopic,
             diffModeEnabled,

@@ -28,7 +28,7 @@ import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panel
 import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util/layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-type Props = {
+type Props = {|
   layout: ?MosaicNode,
   onChange: (panels: any) => void,
   setMosaicId: (mosaicId: string) => void,
@@ -43,7 +43,7 @@ type Props = {
    * layout.
    */
   removeRootDropTarget?: boolean,
-};
+|};
 
 // we subclass the mosaic layout without dragdropcontext
 // dragdropcontext is initialized in the App container
@@ -104,7 +104,7 @@ export function UnconnectedPanelLayout(props: Props) {
           if (!PanelComponent) {
             return (
               <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
-                <Flex col center>
+                <Flex grow col center>
                   <PanelToolbar floating isUnknownPanel />
                   Unknown panel type: {type}.
                 </Flex>
@@ -126,7 +126,7 @@ export function UnconnectedPanelLayout(props: Props) {
             zIndex: 1,
             transition: `all ${0.35}s ease-out ${Math.random() + 0.25}s`,
           }}>
-          <Flex center style={{ width: "100%", height: "100%" }}>
+          <Flex grow center style={{ width: "100%", height: "100%" }}>
             <Icon large>
               <SpinningLoadingIcon />
             </Icon>

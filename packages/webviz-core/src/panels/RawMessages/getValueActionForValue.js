@@ -56,7 +56,7 @@ export function getValueActionForValue(
       structureItem =
         structureItem.structureType === "message" && typeof pathItem === "string"
           ? structureItem.nextByName[pathItem]
-          : { structureType: "primitive", primitiveType: "json", datatype: "" };
+          : { structureType: "primitive", primitiveType: "json", parentDatatype: "" };
       value = getField(value, pathItem);
       if (multiSlicePath.endsWith("[:]")) {
         // We're just inside a message that is inside an array, so we might want to pivot on this new value.
@@ -71,7 +71,7 @@ export function getValueActionForValue(
       structureItem =
         structureItem.structureType === "array"
           ? structureItem.next
-          : { structureType: "primitive", primitiveType: "json", datatype: "" };
+          : { structureType: "primitive", primitiveType: "json", parentDatatype: "" };
       if (!structureItem) {
         break;
       }

@@ -8,14 +8,14 @@
 
 import * as React from "react";
 
-type Props = {
+type Props = {|
   children: React.Node, // Shown when dragging in a file.
   filesSelected: ({
     files: FileList | File[],
     shiftPressed: boolean,
     onConfirmLocalFilesModalClose?: () => void,
   }) => any,
-};
+|};
 
 type State = {
   hovering: boolean,

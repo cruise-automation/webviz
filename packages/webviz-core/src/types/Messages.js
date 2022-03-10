@@ -132,7 +132,6 @@ type ArrowSize = $ReadOnly<{|
   headWidth: number,
 |}>;
 
-// TODO: Is this correct?
 export type ArrowMarker = $ReadOnly<
   BaseMarker & {
     type: 0,
@@ -251,6 +250,12 @@ export type OccupancyGridMessage = $ReadOnly<{|
   data: $ReadOnlyArray<number>,
 |}>;
 
+export type WebvizMsgs$OccupancyGrid = $ReadOnly<{|
+  ...OccupancyGridMessage,
+  header: Header,
+  overrideMapData: $ReadOnlyArray<number>,
+|}>;
+
 export type TriangleListMarker = $ReadOnly<
   BaseMarker &
     MultiPointMarker & {
@@ -271,6 +276,17 @@ export type InstancedLineListMarker = $ReadOnly<
       type: 108,
       metadataByIndex?: $ReadOnlyArray<$ReadOnly<any>>,
     }
+>;
+
+export type ClearingMarker = $ReadOnly<
+  StampedMessage & {
+    type: 0 /* Technically an arrow marker, added here for convenience */,
+    action: 3,
+    ns: string,
+    id: string,
+    pose: Pose,
+    scale: Scale,
+  }
 >;
 
 export type Marker =
@@ -432,4 +448,17 @@ export type WebvizTickProps = $ReadOnly<{|
   stamp: Time,
   text: string, // markdown
   color: Color,
+  sourceIndex: number,
+|}>;
+
+export type BppeMsgs$WebvizTickMarker = $ReadOnly<{|
+  id: string,
+  stamp: Time,
+  text: string, // markdown
+  color: Color,
+|}>;
+
+export type BppeMsgs$WebvizTickMarkers = $ReadOnly<{|
+  header: Header,
+  markers: $ReadOnlyArray<BppeMsgs$WebvizTickMarker>,
 |}>;

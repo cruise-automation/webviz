@@ -13,6 +13,7 @@ import { hot } from "react-hot-loader/root";
 import { Creatable as ReactSelectCreatable } from "react-select";
 import VirtualizedSelect from "react-virtualized-select";
 import { createSelector } from "reselect";
+import "webviz-core/src/components/ReactVirtualized.scss";
 
 import helpContent from "./index.help.md";
 import styles from "./index.module.scss";
@@ -212,7 +213,7 @@ class RosoutPanel extends PureComponent<Props> {
           msgs.forEach((msg) => seenNodeNames.add(cast<RosgraphMsgs$Log>(msg.message.message).name));
 
           return (
-            <Flex col>
+            <Flex grow col>
               <PanelToolbar floating helpContent={helpContent} additionalIcons={topicToRenderMenu}>
                 {this._renderFiltersBar(seenNodeNames, msgs)}
               </PanelToolbar>

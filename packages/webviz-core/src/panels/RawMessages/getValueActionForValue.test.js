@@ -35,7 +35,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
           some_id: {
             structureType: "primitive",
             primitiveType: "uint32",
-            datatype: "",
+            parentDatatype: "",
           },
         },
         datatype: "",
@@ -55,7 +55,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
         some_id: {
           structureType: "primitive",
           primitiveType: "uint32",
-          datatype: "",
+          parentDatatype: "",
         },
       },
       datatype: "",
@@ -77,7 +77,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
           some_value: {
             structureType: "primitive",
             primitiveType: "uint32",
-            datatype: "",
+            parentDatatype: "",
           },
         },
         datatype: "",
@@ -101,12 +101,12 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
           some_id: {
             structureType: "primitive",
             primitiveType: "uint32",
-            datatype: "",
+            parentDatatype: "",
           },
           some_value: {
             structureType: "primitive",
             primitiveType: "uint32",
-            datatype: "",
+            parentDatatype: "",
           },
         },
         datatype: "",
@@ -122,7 +122,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
   });
 
   it("returns value when looking inside a 'json' primitive", () => {
-    const structureItem = { structureType: "primitive", primitiveType: "json", datatype: "" };
+    const structureItem = { structureType: "primitive", primitiveType: "json", parentDatatype: "" };
     expect(getAction({ abc: 0, def: 0 }, structureItem, ["abc"])).toEqual({
       multiSlicePath: ".abc",
       primitiveType: "json",
@@ -136,7 +136,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
       structureType: "array",
       next: {
         structureType: "message",
-        nextByName: { outer_key: { structureType: "primitive", primitiveType: "json", datatype: "" } },
+        nextByName: { outer_key: { structureType: "primitive", primitiveType: "json", parentDatatype: "" } },
         datatype: "",
       },
       datatype: "",
@@ -153,7 +153,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
     const structureItem = {
       structureType: "primitive",
       primitiveType: "time",
-      datatype: "",
+      parentDatatype: "",
     };
     expect(getAction({ sec: 0, nsec: 0 }, structureItem, ["sec"])).toEqual(undefined);
   });
@@ -165,7 +165,7 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
         some_id: {
           structureType: "primitive",
           primitiveType: "json",
-          datatype: "",
+          parentDatatype: "",
         },
       },
       datatype: "",
@@ -198,12 +198,12 @@ describe.each(["parsedMessages", "bobjects"])("getValueActionForValue %s", (form
               level: {
                 structureType: "primitive",
                 primitiveType: "int8",
-                datatype: "msgs/node",
+                parentDatatype: "msgs/node",
               },
               node_id: {
                 structureType: "primitive",
                 primitiveType: "string",
-                datatype: "msgs/node",
+                parentDatatype: "msgs/node",
               },
             },
             datatype: "msgs/node",
@@ -229,13 +229,13 @@ describe("getStructureItemForPath", () => {
       next: {
         structureType: "primitive",
         primitiveType: "uint32",
-        datatype: "",
+        parentDatatype: "",
       },
     };
     expect(getStructureItemForPath(structureItem, "0")).toEqual({
       structureType: "primitive",
       primitiveType: "uint32",
-      datatype: "",
+      parentDatatype: "",
     });
   });
 
@@ -246,7 +246,7 @@ describe("getStructureItemForPath", () => {
         some_id: {
           structureType: "primitive",
           primitiveType: "uint32",
-          datatype: "",
+          parentDatatype: "",
         },
       },
       datatype: "",
@@ -254,7 +254,7 @@ describe("getStructureItemForPath", () => {
     expect(getStructureItemForPath(structureItem, "some_id")).toEqual({
       structureType: "primitive",
       primitiveType: "uint32",
-      datatype: "",
+      parentDatatype: "",
     });
   });
 
@@ -267,7 +267,7 @@ describe("getStructureItemForPath", () => {
           some_id: {
             structureType: "primitive",
             primitiveType: "uint32",
-            datatype: "",
+            parentDatatype: "",
           },
         },
         datatype: "",
@@ -277,7 +277,7 @@ describe("getStructureItemForPath", () => {
     expect(getStructureItemForPath(structureItem, "0,some_id")).toEqual({
       structureType: "primitive",
       primitiveType: "uint32",
-      datatype: "",
+      parentDatatype: "",
     });
   });
 });

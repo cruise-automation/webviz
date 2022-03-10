@@ -8,8 +8,12 @@
 
 import { type RosMsgField } from "rosbag";
 
-export type RosDatatype = {|
+export type RosDatatype = $ReadOnly<{|
+  name: string,
   fields: RosMsgField[],
-|};
+|}>;
 
-export type RosDatatypes = { [string]: RosDatatype };
+// The RosDatatypes key is the datatype id. Datatypes with different definitions can (and often do)
+// have different definitions, but datatype ids should unambiguously refer to a type with a given
+// structure.
+export type RosDatatypes = { [datatypeId: string]: RosDatatype };

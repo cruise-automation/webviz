@@ -11,9 +11,9 @@ import * as React from "react";
 
 import Menu from "webviz-core/src/components/Menu";
 
-type Props = {
+type Props = {|
   children: React.Node,
-};
+|};
 
 // a tiny wrapper around the tooltip component that automatically
 // hides on the next mouse click so you don't have to manage window listeners yourself
@@ -23,12 +23,14 @@ export default class ContextMenu extends React.Component<Props> {
   }
 
   componentDidMount() {
-    window.addEventListener("click", this.hide);
+    // Listen for a click during the capture phase so other
+    // components don't cancel it before it reaches the window
+    window.addEventListener("click", this.hide, true);
   }
 
   hide = () => {
-    window.removeEventListener("click", this.hide);
-    Tooltip.hide();
+    window.removeEventListener("click", this.hide, true);
+    setImmediate(() => Tooltip.hide());
   };
 
   render() {

@@ -5,10 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-// URL params
-// DANGER: if you change this you break existing urls
 export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
 export const REMOTE_BAG_URL_2_QUERY_KEY = "remote-bag-url-2";
 export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
@@ -37,9 +34,12 @@ export const $TF_STATIC = "/tf_static";
 export const $DIAGNOSTICS = "/diagnostics";
 export const $ROSOUT = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
+// Local storage key representing whether or not to show websocket connection by default
+export const SHOW_WEBSOCKET_BY_DEFAULT_KEY = "dataSource.showWebsocketByDefault";
 export const $WEBVIZ_SOURCE_2 = "/webviz_source_2";
 
 export const GEOMETRY_MSGS$POLYGON_STAMPED = "geometry_msgs/PolygonStamped";
+export const NAV_MSGS$MAP_META_DATA = "nav_msgs/MapMetaData";
 export const NAV_MSGS$OCCUPANCY_GRID = "nav_msgs/OccupancyGrid";
 export const NAV_MSGS$PATH = "nav_msgs/Path";
 export const SENSOR_MSGS$POINT_CLOUD_2 = "sensor_msgs/PointCloud2";
@@ -52,6 +52,7 @@ export const TF2_MSGS$TF_MESSAGE = "tf2_msgs/TFMessage";
 export const VISUALIZATION_MSGS$MARKER = "visualization_msgs/Marker";
 export const VISUALIZATION_MSGS$MARKER_ARRAY = "visualization_msgs/MarkerArray";
 
+export const WEBVIZ_MSGS$OCCUPANCY_GRID = "webviz_msgs/OccupancyGrid";
 export const WEBVIZ_ICON_MSGS$WEBVIZ_2D_ICON_ARRAY = "webviz_icon_msgs/WebViz2dIconArray";
 export const WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY = "webviz_icon_msgs/WebViz3dIconArray";
 
@@ -113,16 +114,6 @@ export const METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR = 3.6;
 export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 1 / METERS_PER_SECOND_TO_MILES_PER_HOUR;
 export const MILES_PER_HOUR_TO_KILOMETERS_PER_HOUR =
   MILES_PER_HOUR_TO_METERS_PER_SECOND * METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR;
-
-export const jsonTreeTheme = {
-  base00: "transparent", // bg
-  base07: colors.BLUEL1, // text
-  base0B: colors.YELLOW1, // string & date, item string
-  base09: colors.REDL1, // # & boolean
-  base08: colors.RED, // null, undefined, function, & symbol
-  base0D: colors.BLUEL1, // label & arrow
-  base03: colors.DARK9, // item string expanded
-};
 
 export const TAB_PANEL_TYPE = "Tab";
 

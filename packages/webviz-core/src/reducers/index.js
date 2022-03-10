@@ -21,6 +21,10 @@ import tests from "webviz-core/src/reducers/tests";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { Auth as AuthState } from "webviz-core/src/types/Auth";
 import type { SetFetchedLayoutPayload } from "webviz-core/src/types/panels";
+import type {
+  PublishedPlaygroundNode,
+  PublishedPlaygroundNodeMeta,
+} from "webviz-core/src/types/PublishedPlaygroundNodesApi";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 
 const getReducers = (history: any) => [
@@ -42,18 +46,26 @@ export type PersistedState = {|
 
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
 
-export type Comment = {
+export type Comment = {|
   id: string,
   authorId: string,
+  createdAt: number,
+  updatedAt: number,
   body: string,
   metadata: { [string]: any },
   attachments: { url: string }[],
-};
+|};
+
 export type State = {
   persistedState: PersistedState,
   mosaic: { mosaicId: string, selectedPanelIds: string[] },
   auth: AuthState,
-  userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
+  userNodes: {
+    rosLib: string,
+    userNodeDiagnostics: UserNodeDiagnostics,
+    publishedNodesList: ?(PublishedPlaygroundNodeMeta[]),
+    publishedNodesByTopic: { [string]: PublishedPlaygroundNode },
+  },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
   commenting: {
@@ -74,7 +86,12 @@ export default function createRootReducer(history: any, args?: { testAuth?: any 
     mosaic: { mosaicId: "", selectedPanelIds: [] },
     auth: Object.freeze(args?.testAuth || { username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),
-    userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
+    userNodes: {
+      userNodeDiagnostics: {},
+      rosLib: ros_lib_dts,
+      publishedNodesList: null,
+      publishedNodesByTopic: {},
+    },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,
     commenting: {

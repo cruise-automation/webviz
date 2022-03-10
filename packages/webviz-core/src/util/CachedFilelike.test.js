@@ -23,13 +23,17 @@ class InMemoryFileReader implements FileReader {
   }
 
   fetch(offset: number, length: number): FileStream {
+    const bufferInstance = this._buffer;
     return {
-      on: (type, callback) => {
+      on(type, callback) {
         if (type === "data") {
-          setTimeout(() => callback(this._buffer.slice(offset, offset + length)));
+          setTimeout(() => callback(bufferInstance.slice(offset, offset + length)));
         }
+        return this;
       },
-      destroy() {},
+      destroy() {
+        return this;
+      },
     };
   }
 }

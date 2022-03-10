@@ -18,7 +18,10 @@ storiesOf("<Internals>", module)
     return (
       <PanelSetup
         fixture={{
-          topics: [{ name: "/my/topic", datatype: "my_datatype" }, { name: "/another/topic", datatype: "my_datatype" }],
+          topics: [
+            { name: "/my/topic", datatypeName: "my_datatype", datatypeId: "my_datatype" },
+            { name: "/another/topic", datatypeName: "my_datatype", datatypeId: "my_datatype" },
+          ],
           frame: {},
         }}>
         <Internals />
@@ -33,9 +36,14 @@ storiesOf("<Internals>", module)
       <PanelSetup
         fixture={{
           topics: [
-            { name: "/webviz_node/story_node", datatype: "my_datatype", inputTopics: ["/my/topic", "/another/topic"] },
-            { name: "/another/topic", datatype: "my_datatype" },
-            { name: "/my/topic", datatype: "my_datatype" },
+            {
+              name: "/webviz_node/story_node",
+              datatypeName: "my_datatype",
+              datatypeId: "my_datatype",
+              inputTopics: ["/my/topic", "/another/topic"],
+            },
+            { name: "/another/topic", datatypeName: "my_datatype", datatypeId: "my_datatype" },
+            { name: "/my/topic", datatypeName: "my_datatype", datatypeId: "my_datatype" },
           ],
           frame: {},
         }}>

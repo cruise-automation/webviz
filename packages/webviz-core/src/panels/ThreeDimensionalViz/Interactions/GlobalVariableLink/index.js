@@ -68,7 +68,7 @@ const SValue = styled.span`
   padding: 0;
 `;
 
-type Props = {
+type Props = {|
   addLinkTooltip?: React.Node,
   hasNestedValue?: boolean,
   highlight?: boolean,
@@ -81,7 +81,7 @@ type Props = {
   topic?: string,
   unlinkTooltip?: React.Node,
   variableValue?: any,
-};
+|};
 
 export default function GlobalVariableLink({
   addLinkTooltip,
@@ -124,10 +124,7 @@ export default function GlobalVariableLink({
       {label && <SValue>{label}</SValue>}
       <SGlobalVariableLink style={wrapperStyle}>
         {linkedGlobalVariableLocal && !onlyRenderAddLink && (
-          <UnlinkWrapper
-            linkedGlobalVariable={linkedGlobalVariableLocal}
-            name={linkedGlobalVariableLocal.name}
-            tooltip={unlinkTooltip}>
+          <UnlinkWrapper linkedGlobalVariable={linkedGlobalVariableLocal} tooltip={unlinkTooltip}>
             {({ setIsOpen, linkedGlobalVariable: linkedVar }) => (
               <UnlinkGlobalVariable linkedGlobalVariable={linkedVar} setIsOpen={setIsOpen} />
             )}

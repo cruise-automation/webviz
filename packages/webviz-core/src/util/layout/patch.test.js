@@ -17,17 +17,9 @@ import {
   dictForPatchCompression,
   deflatePatch,
   applyPatchToLayout,
+  DEFAULT_LAYOUT,
 } from "webviz-core/src/util/layout/patch";
 import sendNotification from "webviz-core/src/util/sendNotification";
-
-const DEFAULT_LAYOUT = {
-  layout: "",
-  savedProps: {},
-  globalVariables: {},
-  userNodes: {},
-  linkedGlobalVariables: [],
-  playbackConfig: { speed: 0.1, messageOrder: "receiveTime", timeDisplayMethod: "ROS" },
-};
 
 describe("patch", () => {
   describe("getLayoutPatch", () => {
@@ -125,6 +117,27 @@ describe("patch", () => {
 
       expect(sendNotification).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), "app", "error");
       sendNotification.expectCalledDuringTest();
+    });
+    it("handles patches on layouts with missing top-level keys", () => {
+      const patch = deflatePatch({
+        playbackConfig: {
+          tickMarkerTopics: [["/foo"]],
+        },
+      });
+      const layout = {
+        layout: "3D Panel!A",
+        savedProps: {
+          "3D Panel!A": { savedPropsVersion: 1 },
+        },
+      };
+      expect(applyPatchToLayout(patch, layout)).toEqual({
+        ...DEFAULT_LAYOUT,
+        ...layout,
+        playbackConfig: {
+          ...DEFAULT_LAYOUT.playbackConfig,
+          tickMarkerTopics: ["/foo"],
+        },
+      });
     });
   });
 });

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures/storage";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
 import { DISABLE_WORKERS_QUERY_KEY } from "webviz-core/src/util/globalConstants";

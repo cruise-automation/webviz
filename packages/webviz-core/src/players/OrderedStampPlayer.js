@@ -20,7 +20,6 @@ import {
   type PlayerState,
   type PlayerWarnings,
 } from "webviz-core/src/players/types";
-import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import type { BinaryStampedMessage } from "webviz-core/src/types/BinaryMessages";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import { deepParse, maybeGetBobjectHeaderStamp, compareBinaryTimes } from "webviz-core/src/util/binaryObjects";
@@ -32,7 +31,7 @@ import { clampTime, isTime, type TimestampMethod } from "webviz-core/src/util/ti
 export const BUFFER_DURATION_SECS = 1.0;
 
 export default class OrderedStampPlayer implements Player {
-  _player: UserNodePlayer;
+  _player: Player;
   _messageOrder: TimestampMethod;
   // When messageOrder is "headerStamp", contains buffered, unsorted messages with receiveTime "in
   // the near future". Only messages with headers are stored.
@@ -46,7 +45,7 @@ export default class OrderedStampPlayer implements Player {
   _warnings: PlayerWarnings = Object.freeze({});
   _topicsWithoutHeadersSinceSeek = new Set<string>();
 
-  constructor(player: UserNodePlayer, messageOrder: TimestampMethod) {
+  constructor(player: Player, messageOrder: TimestampMethod) {
     this._player = player;
     this._messageOrder = messageOrder;
   }
@@ -182,9 +181,6 @@ export default class OrderedStampPlayer implements Player {
   }
   setGlobalVariables(globalVariables: GlobalVariables) {
     this._player.setGlobalVariables(globalVariables);
-    // So that downstream players can re-send messages that depend on global
-    // variable state.
-    this.requestBackfill();
   }
   setMessageOrder(order: TimestampMethod) {
     if (this._messageOrder !== order) {

@@ -11,13 +11,15 @@ import styled from "styled-components";
 
 import TextHighlight from "./TextHighlight";
 import TextMiddleTruncate from "./TextMiddleTruncate";
-import Tooltip from "webviz-core/src/components/Tooltip";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 
 // Extra text length to make sure text such as `1000 visible topics` don't get truncated.
 const DEFAULT_END_TEXT_LENGTH = 22;
 
 export const STopicNameDisplay = styled.div`
+  width: 100%;
+  min-width: 0px;
+  flex: 1 1 auto;
   display: inline-block;
 `;
 
@@ -29,6 +31,7 @@ export const SDisplayName = styled.div`
   /* disallow selection to prevent shift + click from accidentally select */
   user-select: none;
   width: 100%;
+  max-width: 100%;
 `;
 
 export const SName = styled.div`
@@ -38,7 +41,9 @@ export const SName = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
+
 const SWrapper = styled.div`
+  width: 100%;
   display: flex;
   align-items: center;
 `;
@@ -47,24 +52,13 @@ type Props = {|
   // Additional element to show in non xs view when not searching. Currently only used for showing visible topic count.
   additionalElem?: React.Node,
   displayName: string,
-  isXSWidth: boolean,
-  maxWidth: number,
   topicName: string,
   searchText?: string,
   style?: { [attr: string]: string | number },
   tooltips?: React.Node[],
 |};
 
-export default function NodeName({
-  additionalElem,
-  displayName,
-  isXSWidth,
-  maxWidth,
-  topicName,
-  searchText,
-  style = {},
-  tooltips,
-}: Props) {
+export default function NodeName({ additionalElem, displayName, topicName, searchText, style = {}, tooltips }: Props) {
   let targetStr = displayName || topicName;
 
   if (searchText) {
@@ -81,15 +75,6 @@ export default function NodeName({
       targetStr = `${displayName} (${topicNameToShow})`;
     }
   }
-  const xsWidthElem =
-    isXSWidth &&
-    (tooltips ? (
-      <Tooltip contents={tooltips} placement="top">
-        <SName>{targetStr}</SName>
-      </Tooltip>
-    ) : (
-      <SName>{targetStr}</SName>
-    ));
 
   const textTruncateElem = (
     <TextMiddleTruncate
@@ -100,24 +85,18 @@ export default function NodeName({
   );
   return (
     <STopicNameDisplay style={style}>
-      <SDisplayName style={{ maxWidth }}>
+      <SDisplayName>
         {searchText ? (
           <TextHighlight targetStr={targetStr} searchText={searchText} />
         ) : (
           <>
-            {isXSWidth ? (
-              xsWidthElem
+            {additionalElem ? (
+              <SWrapper>
+                {textTruncateElem}
+                {additionalElem}
+              </SWrapper>
             ) : (
-              <>
-                {additionalElem ? (
-                  <SWrapper style={{ width: maxWidth }}>
-                    {textTruncateElem}
-                    {additionalElem}
-                  </SWrapper>
-                ) : (
-                  textTruncateElem
-                )}
-              </>
+              textTruncateElem
             )}
           </>
         )}

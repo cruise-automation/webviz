@@ -24,7 +24,7 @@ export default function MarkerOverrideColorSettingsEditor(
 ) {
   const { settings = {}, onFieldChange } = props;
   return (
-    <Flex col>
+    <Flex grow col>
       <SLabel>Color</SLabel>
       <SDescription>
         Overrides <code>color</code>/<code>colors</code> for all markers on this topic.

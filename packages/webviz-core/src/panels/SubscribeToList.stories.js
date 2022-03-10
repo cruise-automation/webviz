@@ -15,7 +15,7 @@ storiesOf("<SubscribeToList>", module).add("shows a topic list", () => {
   return (
     <PanelSetup
       fixture={{
-        topics: [{ name: "/my/topic", datatype: "my_datatype" }],
+        topics: [{ name: "/my/topic", datatypeName: "my_datatype", datatypeId: "my_datatype" }],
         frame: {
           "/my/topic": [
             {

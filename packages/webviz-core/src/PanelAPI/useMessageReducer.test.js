@@ -381,7 +381,10 @@ describe("useMessageReducer", () => {
       { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: { value: 2 } },
       { topic: "/bar", receiveTime: { sec: 0, nsec: 0 }, message: { value: 3 } },
     ];
-    const topics = [{ name: "/foo", datatype: "foo", preloadable: true }, { name: "/bar", datatype: "bar" }];
+    const topics = [
+      { name: "/foo", datatypeName: "foo", datatypeId: "foo", preloadable: true },
+      { name: "/bar", datatypeName: "bar", datatypeId: "bar" },
+    ];
 
     const root = mount(
       <MockMessagePipelineProvider topics={topics} messages={messages}>

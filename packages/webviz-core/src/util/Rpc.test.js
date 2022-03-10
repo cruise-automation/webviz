@@ -8,6 +8,7 @@
 
 import Rpc, { type ChannelImpl, createLinkedChannels } from "./Rpc";
 import delay from "webviz-core/shared/delay";
+import invariant from "webviz-core/src/util/invariant";
 
 describe("Rpc", () => {
   it("only allows setting Rpc once per channel", () => {
@@ -106,8 +107,8 @@ describe("Rpc", () => {
       onmessage: null,
       postMessage(data: any, transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
+        invariant(transfer != null, "got a buffer");
         expect(transfer).toHaveLength(1);
-        // $FlowFixMe - flow doesn't understand the assertion above
         expect(transfer[0]).toBe(expectedTransfer);
         if (mainChannel.onmessage) {
           mainChannel.onmessage(ev);

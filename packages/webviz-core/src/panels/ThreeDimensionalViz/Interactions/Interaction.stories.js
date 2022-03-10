@@ -31,7 +31,7 @@ import {
 import { normalizeMouseEventObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import { ScreenshotSizedContainer } from "webviz-core/src/stories/storyHelpers";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import { simulateDragClick } from "webviz-core/src/test/mouseEventsHelper";
 
 const SWrapper = styled.div`
@@ -178,8 +178,8 @@ function PanelSetupWithData({
             }
           }}>
           <p>{title}</p>
-          <Flex>
-            <Flex col style={{ flex: 1 }}>
+          <Flex grow>
+            <Flex grow col style={{ flex: 1 }}>
               {showGlobalVariables && <GlobalVariablesDisplay />}
               {showLinkedGlobalVariables && <LinkedGlobalVariablesDisplay />}
             </Flex>

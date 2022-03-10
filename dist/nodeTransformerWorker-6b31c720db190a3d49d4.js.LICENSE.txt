@@ -1,0 +1,1558 @@
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved. 
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0  
+ 
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, 
+MERCHANTABLITY OR NON-INFRINGEMENT. 
+ 
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+/*! ../../../../util/globalConstants */
+
+/*! ../../../util/Rpc */
+
+/*! ../../../util/RpcWorkerUtils */
+
+/*! ../../../util/globalConstants */
+
+/*! ../../../util/sendNotification */
+
+/*! ../../../util/workers */
+
+/*! ../../asn1 */
+
+/*! ../../elliptic */
+
+/*! ../../types */
+
+/*! ../asn1 */
+
+/*! ../base */
+
+/*! ../common */
+
+/*! ../constants */
+
+/*! ../curve */
+
+/*! ../des */
+
+/*! ../elliptic */
+
+/*! ../incr32 */
+
+/*! ../package.json */
+
+/*! ../types */
+
+/*! ../utils */
+
+/*! ./../../../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
+
+/*! ./../../../../../../node_modules/webpack/node_modules/process/browser.js */
+
+/*! ./../../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../../node_modules/webpack/node_modules/process/browser.js */
+
+/*! ./../../../../node_modules/buffer/index.js */
+
+/*! ./../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../node_modules/webpack/buildin/module.js */
+
+/*! ./../../../../node_modules/webpack/node_modules/process/browser.js */
+
+/*! ./../../buffer/index.js */
+
+/*! ./../../timers-browserify/main.js */
+
+/*! ./../../webpack/buildin/global.js */
+
+/*! ./../../webpack/buildin/module.js */
+
+/*! ./../../webpack/node_modules/process/browser.js */
+
+/*! ./../buffer/index.js */
+
+/*! ./../process/browser.js */
+
+/*! ./../webpack/buildin/global.js */
+
+/*! ./../webpack/node_modules/process/browser.js */
+
+/*! ./256 */
+
+/*! ./512 */
+
+/*! ./DEPRECATED_ros */
+
+/*! ./Rpc */
+
+/*! ./_stream_duplex */
+
+/*! ./_stream_readable */
+
+/*! ./_stream_transform */
+
+/*! ./_stream_writable */
+
+/*! ./aes */
+
+/*! ./aesid.json */
+
+/*! ./algorithms.json */
+
+/*! ./array-set */
+
+/*! ./asn1 */
+
+/*! ./asn1/api */
+
+/*! ./asn1/base */
+
+/*! ./asn1/constants */
+
+/*! ./asn1/decoders */
+
+/*! ./asn1/encoders */
+
+/*! ./authCipher */
+
+/*! ./base */
+
+/*! ./base64 */
+
+/*! ./base64-vlq */
+
+/*! ./baseDatatypes */
+
+/*! ./binary-search */
+
+/*! ./browser/algorithms.json */
+
+/*! ./buffer */
+
+/*! ./cbc */
+
+/*! ./certificate */
+
+/*! ./cfb */
+
+/*! ./cfb1 */
+
+/*! ./cfb8 */
+
+/*! ./colors.ts */
+
+/*! ./common */
+
+/*! ./ctr */
+
+/*! ./curves.json */
+
+/*! ./decrypter */
+
+/*! ./default-encoding */
+
+/*! ./der */
+
+/*! ./des/cbc */
+
+/*! ./des/cipher */
+
+/*! ./des/des */
+
+/*! ./des/ede */
+
+/*! ./des/utils */
+
+/*! ./ecb */
+
+/*! ./edwards */
+
+/*! ./elliptic/curve */
+
+/*! ./elliptic/curves */
+
+/*! ./elliptic/ec */
+
+/*! ./elliptic/eddsa */
+
+/*! ./elliptic/utils */
+
+/*! ./encrypter */
+
+/*! ./errors */
+
+/*! ./fixProc */
+
+/*! ./generatePrime */
+
+/*! ./ghash */
+
+/*! ./hash */
+
+/*! ./hash/common */
+
+/*! ./hash/hmac */
+
+/*! ./hash/ripemd */
+
+/*! ./hash/sha */
+
+/*! ./hash/utils */
+
+/*! ./incr32 */
+
+/*! ./internal/streams/BufferList */
+
+/*! ./internal/streams/destroy */
+
+/*! ./internal/streams/stream */
+
+/*! ./is */
+
+/*! ./key */
+
+/*! ./legacy */
+
+/*! ./lib */
+
+/*! ./lib/_stream_duplex.js */
+
+/*! ./lib/_stream_passthrough.js */
+
+/*! ./lib/_stream_readable.js */
+
+/*! ./lib/_stream_transform.js */
+
+/*! ./lib/_stream_writable.js */
+
+/*! ./lib/async */
+
+/*! ./lib/dh */
+
+/*! ./lib/generatePrime */
+
+/*! ./lib/primes.json */
+
+/*! ./lib/source-map-consumer */
+
+/*! ./lib/source-map-generator */
+
+/*! ./lib/source-node */
+
+/*! ./lib/sync */
+
+/*! ./list.json */
+
+/*! ./lodash.ts */
+
+/*! ./logEvent */
+
+/*! ./mapping-list */
+
+/*! ./markers.ts */
+
+/*! ./memo */
+
+/*! ./mgf */
+
+/*! ./misc */
+
+/*! ./modes */
+
+/*! ./modes/list.json */
+
+/*! ./mont */
+
+/*! ./node */
+
+/*! ./ofb */
+
+/*! ./overwriteFetch */
+
+/*! ./pem */
+
+/*! ./pointClouds.ts */
+
+/*! ./precomputed/secp256k1 */
+
+/*! ./precondition */
+
+/*! ./privateDecrypt */
+
+/*! ./publicEncrypt */
+
+/*! ./quick-sort */
+
+/*! ./readable */
+
+/*! ./readers.ts */
+
+/*! ./reporter */
+
+/*! ./ros */
+
+/*! ./scope */
+
+/*! ./sendNotification */
+
+/*! ./sha */
+
+/*! ./sha/1 */
+
+/*! ./sha/224 */
+
+/*! ./sha/256 */
+
+/*! ./sha/384 */
+
+/*! ./sha/512 */
+
+/*! ./sha1 */
+
+/*! ./sha224 */
+
+/*! ./sha256 */
+
+/*! ./sha384 */
+
+/*! ./sha512 */
+
+/*! ./sharedStyleConstants */
+
+/*! ./short */
+
+/*! ./sign */
+
+/*! ./signature */
+
+/*! ./source-map-generator */
+
+/*! ./streamCipher */
+
+/*! ./string */
+
+/*! ./sync */
+
+/*! ./time.ts */
+
+/*! ./transformer */
+
+/*! ./typegen */
+
+/*! ./types.ts */
+
+/*! ./typescript/ast */
+
+/*! ./typescript/projectConfig */
+
+/*! ./userUtils */
+
+/*! ./util */
+
+/*! ./utils */
+
+/*! ./vectors.ts */
+
+/*! ./verify */
+
+/*! ./withPublic */
+
+/*! ./workers */
+
+/*! ./xor */
+
+/*! @sentry/browser */
+
+/*! @sentry/types */
+
+/*! @sentry/utils */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js (<- Module uses injected variables (module)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js (<- Module uses injected variables (process, global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js (<- Module uses injected variables (global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/string.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tslib/tslib.es6.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (global) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (module) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
+
+/*! all exports used */
+
+/*! asn1.js */
+
+/*! base64-js */
+
+/*! bn.js */
+
+/*! brorand */
+
+/*! browserify-aes */
+
+/*! browserify-aes/browser */
+
+/*! browserify-aes/modes */
+
+/*! browserify-cipher */
+
+/*! browserify-des */
+
+/*! browserify-des/modes */
+
+/*! browserify-rsa */
+
+/*! browserify-sign */
+
+/*! browserify-sign/algos */
+
+/*! buffer */
+
+/*! buffer-from */
+
+/*! buffer-xor */
+
+/*! cipher-base */
+
+/*! core-util-is */
+
+/*! create-ecdh */
+
+/*! create-hash */
+
+/*! create-hash/md5 */
+
+/*! create-hmac */
+
+/*! crypto */
+
+/*! des.js */
+
+/*! diffie-hellman */
+
+/*! elliptic */
+
+/*! events */
+
+/*! evp_bytestokey */
+
+/*! exports provided: 1.3.132.0.10, 1.3.132.0.33, 1.2.840.10045.3.1.1, 1.2.840.10045.3.1.7, 1.3.132.0.34, 1.3.132.0.35, default */
+
+/*! exports provided: 2.16.840.1.101.3.4.1.1, 2.16.840.1.101.3.4.1.2, 2.16.840.1.101.3.4.1.3, 2.16.840.1.101.3.4.1.4, 2.16.840.1.101.3.4.1.21, 2.16.840.1.101.3.4.1.22, 2.16.840.1.101.3.4.1.23, 2.16.840.1.101.3.4.1.24, 2.16.840.1.101.3.4.1.41, 2.16.840.1.101.3.4.1.42, 2.16.840.1.101.3.4.1.43, 2.16.840.1.101.3.4.1.44, default */
+
+/*! exports provided: API_VERSION, Hub, getMainCarrier, makeMain, getCurrentHub, getHubFromCarrier, setHubOnCarrier */
+
+/*! exports provided: LogLevel, Severity, SpanStatus, Status */
+
+/*! exports provided: Memo */
+
+/*! exports provided: Scope, addGlobalEventProcessor */
+
+/*! exports provided: Severity */
+
+/*! exports provided: Severity, Status, addGlobalEventProcessor, addBreadcrumb, captureException, captureEvent, captureMessage, configureScope, getHubFromCarrier, getCurrentHub, Hub, Scope, setContext, setExtra, setExtras, setTag, setTags, setUser, withScope, BrowserClient, defaultIntegrations, forceLoad, init, lastEventId, onLoad, showReportDialog, flush, close, wrap, SDK_NAME, SDK_VERSION, Integrations, Transports */
+
+/*! exports provided: Status */
+
+/*! exports provided: SyncPromise */
+
+/*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __spreadArrays, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault, __classPrivateFieldGet, __classPrivateFieldSet */
+
+/*! exports provided: aes-128-ecb, aes-192-ecb, aes-256-ecb, aes-128-cbc, aes-192-cbc, aes-256-cbc, aes128, aes192, aes256, aes-128-cfb, aes-192-cfb, aes-256-cfb, aes-128-cfb8, aes-192-cfb8, aes-256-cfb8, aes-128-cfb1, aes-192-cfb1, aes-256-cfb1, aes-128-ofb, aes-192-ofb, aes-256-ofb, aes-128-ctr, aes-192-ctr, aes-256-ctr, aes-128-gcm, aes-192-gcm, aes-256-gcm, default */
+
+/*! exports provided: dynamicRequire, isNodeEnv, getGlobalObject, uuid4, parseUrl, getEventDescription, consoleSandbox, addExceptionTypeValue, addExceptionMechanism, getLocationHref, htmlTreeAsString, timestampWithMs, parseSemver, parseRetryAfterHeader, getFunctionName */
+
+/*! exports provided: fill, urlEncode, normalizeToSize, walk, normalize, extractExceptionKeysForMessage */
+
+/*! exports provided: isError, isErrorEvent, isDOMError, isDOMException, isString, isPrimitive, isPlainObject, isEvent, isElement, isRegExp, isThenable, isSyntheticEvent, isInstanceOf */
+
+/*! exports provided: logger */
+
+/*! exports provided: modp1, modp2, modp5, modp14, modp15, modp16, modp17, modp18, default */
+
+/*! exports provided: name, version, description, main, files, scripts, repository, keywords, author, license, bugs, homepage, devDependencies, dependencies, default */
+
+/*! exports provided: sha224WithRSAEncryption, RSA-SHA224, sha256WithRSAEncryption, RSA-SHA256, sha384WithRSAEncryption, RSA-SHA384, sha512WithRSAEncryption, RSA-SHA512, RSA-SHA1, ecdsa-with-SHA1, sha256, sha224, sha384, sha512, DSA-SHA, DSA-SHA1, DSA, DSA-WITH-SHA224, DSA-SHA224, DSA-WITH-SHA256, DSA-SHA256, DSA-WITH-SHA384, DSA-SHA384, DSA-WITH-SHA512, DSA-SHA512, DSA-RIPEMD160, ripemd160WithRSA, RSA-RIPEMD160, md5WithRSAEncryption, RSA-MD5, default */
+
+/*! exports provided: truncate, snipLine, safeJoin, isMatchingPattern */
+
+/*! exports used: Hub, getCurrentHub, getHubFromCarrier */
+
+/*! exports used: Memo */
+
+/*! exports used: Scope, addGlobalEventProcessor */
+
+/*! exports used: Severity */
+
+/*! exports used: Status */
+
+/*! exports used: SyncPromise */
+
+/*! exports used: __assign, __extends, __read, __spread, __values */
+
+/*! exports used: addExceptionMechanism, addExceptionTypeValue, consoleSandbox, dynamicRequire, getEventDescription, getFunctionName, getGlobalObject, getLocationHref, htmlTreeAsString, isNodeEnv, parseRetryAfterHeader, parseUrl, timestampWithMs, uuid4 */
+
+/*! exports used: extractExceptionKeysForMessage, fill, normalize, normalizeToSize, urlEncode */
+
+/*! exports used: isDOMError, isDOMException, isElement, isError, isErrorEvent, isEvent, isInstanceOf, isPlainObject, isPrimitive, isRegExp, isString, isSyntheticEvent, isThenable */
+
+/*! exports used: isMatchingPattern, safeJoin, truncate */
+
+/*! exports used: logger */
+
+/*! fs */
+
+/*! hash-base */
+
+/*! hash.js */
+
+/*! hmac-drbg */
+
+/*! ieee754 */
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/*! inherits */
+
+/*! isarray */
+
+/*! lodash */
+
+/*! md5.js */
+
+/*! miller-rabin */
+
+/*! minimalistic-assert */
+
+/*! minimalistic-crypto-utils */
+
+/*! no static exports found */
+
+/*! os */
+
+/*! parse-asn1 */
+
+/*! path */
+
+/*! pbkdf2 */
+
+/*! process-nextick-args */
+
+/*! public-encrypt */
+
+/*! randombytes */
+
+/*! randomfill */
+
+/*! readable-stream/duplex.js */
+
+/*! readable-stream/passthrough.js */
+
+/*! readable-stream/readable.js */
+
+/*! readable-stream/transform.js */
+
+/*! readable-stream/writable.js */
+
+/*! ripemd160 */
+
+/*! safe-buffer */
+
+/*! setimmediate */
+
+/*! sha.js */
+
+/*! source-map */
+
+/*! source-map-support */
+
+/*! stream */
+
+/*! string_decoder */
+
+/*! string_decoder/ */
+
+/*! tinycolor2 */
+
+/*! tslib */
+
+/*! typescript/lib/typescript */
+
+/*! util */
+
+/*! util-deprecate */
+
+/*! vm */
+
+/*!********************!*\
+  !*** fs (ignored) ***!
+  \********************/
+
+/*!********************!*\
+  !*** os (ignored) ***!
+  \********************/
+
+/*!**********************!*\
+  !*** path (ignored) ***!
+  \**********************/
+
+/*!**********************!*\
+  !*** util (ignored) ***!
+  \**********************/
+
+/*!************************!*\
+  !*** crypto (ignored) ***!
+  \************************/
+
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+
+/*!***********************************!*\
+  !*** (webpack)/buildin/module.js ***!
+  \***********************************/
+
+/*!************************************!*\
+  !*** ./node_modules/sha.js/sha.js ***!
+  \************************************/
+
+/*!*************************************!*\
+  !*** ./node_modules/sha.js/hash.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./node_modules/sha.js/sha1.js ***!
+  \*************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/bn.js/lib/bn.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/buffer/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/md5.js/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/sha.js/index.js ***!
+  \**************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/brorand/index.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/events/events.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/ieee754/index.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/isarray/index.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha224.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha256.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha384.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha512.js ***!
+  \***************************************/
+
+/*!****************************************!*\
+  !*** ./node_modules/des.js/lib/des.js ***!
+  \****************************************/
+
+/*!****************************************!*\
+  !*** ./node_modules/pbkdf2/browser.js ***!
+  \****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/base64-js/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/create-hash/md5.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/hash-base/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/parse-asn1/asn1.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/ripemd160/index.js ***!
+  \*****************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/buffer-xor/index.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/hash.js/lib/hash.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/parse-asn1/index.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/pbkdf2/lib/async.js ***!
+  \******************************************/
+
+/*!*******************************************!*\
+  !*** (webpack)/buildin/harmony-module.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/cipher-base/index.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/safe-buffer/index.js ***!
+  \*******************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/browserify-aes/aes.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/create-hmac/legacy.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/cbc.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/des.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/ede.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/elliptic/package.json ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/parse-asn1/aesid.json ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/parse-asn1/fixProc.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/public-encrypt/mgf.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/public-encrypt/xor.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/randomfill/browser.js ***!
+  \********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-ecdh/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-hash/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-hmac/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/miller-rabin/lib/mr.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/randombytes/browser.js ***!
+  \*********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/api.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-aes/ghash.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-des/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-des/modes.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-rsa/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/des.js/lib/des/utils.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/evp_bytestokey/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./packages/webviz-core/src/util/Rpc.js ***!
+  \**********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/browserify-aes/incr32.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/browserify-sign/algos.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/core-util-is/lib/util.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/des.js/lib/des/cipher.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/dh.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/hmac.js ***!
+  \***********************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/browserify-aes/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/diffie-hellman/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/1.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/utils.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/parse-asn1/certificate.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/public-encrypt/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/timers-browserify/main.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/util-deprecate/browser.js ***!
+  \************************************************/
+
+/*!*************************************************!*\
+  !*** (webpack)/node_modules/process/browser.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/crypto-browserify/index.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/common.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/ripemd.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hmac-drbg/lib/hmac-drbg.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/precondition.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/sync-browser.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/stream-browserify/index.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./packages/webviz-core/src/util/errors.js ***!
+  \*************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/decrypter.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/encrypter.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cbc.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ctr.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ecb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ofb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/224.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/256.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/384.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/512.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./packages/webviz-core/src/util/workers.js ***!
+  \**************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/authCipher.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb1.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb8.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-cipher/browser.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/inherits/inherits_browser.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/minimalistic-assert/index.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/public-encrypt/withPublic.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/readable-stream/transform.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/setimmediate/setImmediate.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./packages/webviz-core/src/util/logEvent.js ***!
+  \***************************************************/
+
+/*!****************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/node.js ***!
+  \****************************************************/
+
+/*!****************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/index.js ***!
+  \****************************************************/
+
+/*!****************************************************!*\
+  !*** ./node_modules/process-nextick-args/index.js ***!
+  \****************************************************/
+
+/*!*****************************************************!*\
+  !*** (webpack)/node_modules/vm-browserify/index.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/index.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/list.json ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/browserify-aes/streamCipher.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/primes.json ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/utils.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/common.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/default-encoding.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/readable-stream/passthrough.js ***!
+  \*****************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/buffer.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/sign.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curves.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/key.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/public-encrypt/publicEncrypt.js ***!
+  \******************************************************/
+
+/*!*******************************************************!*\
+  !*** (webpack)/node_modules/path-browserify/index.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/der.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/pem.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/der.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/pem.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/index.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/public-encrypt/privateDecrypt.js ***!
+  \*******************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/reporter.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/constants/der.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/verify.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/index.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/readable-stream/duplex-browser.js ***!
+  \********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/index.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/index.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/key.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/RpcWorkerUtils.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/overwriteFetch.js ***!
+  \*********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/constants/index.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/curves.json ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/generatePrime.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/base.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/mont.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/readable-stream/readable-browser.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/readable-stream/writable-browser.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/src/util/globalConstants.js ***!
+  \**********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/short.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/string_decoder/lib/string_decoder.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/buffer/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/src/util/sendNotification.js ***!
+  \***********************************************************/
+
+/*!************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/signature.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/_stream_duplex.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/ieee754/index.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/lodash.js ***!
+  \************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/edwards.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./node_modules/minimalistic-crypto-utils/lib/utils.js ***!
+  \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** (webpack)/node_modules/node-libs-browser/mock/empty.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/algorithms.json ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/_stream_readable.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/_stream_writable.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/base64-js/index.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/tslib/tslib.es6.js ***!
+  \**************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/signature.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/_stream_transform.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/src/util/sharedStyleConstants.js ***!
+  \***************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/buffer-from/index.js ***!
+  \****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/_stream_passthrough.js ***!
+  \*****************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/types.js ***!
+  \******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/tinycolor2/tinycolor.js ***!
+  \*******************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js ***!
+  \********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/memo.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js ***!
+  \*********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/internal/streams/destroy.js ***!
+  \**********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/status.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/string.js ***!
+  \***********************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/typescript/lib/typescript.js ***!
+  \************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/internal/streams/BufferList.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js ***!
+  \*************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js ***!
+  \****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./node_modules/readable-stream/lib/internal/streams/stream-browser.js ***!
+  \*****************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
+  \**********************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/source-map-support.js ***!
+  \************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
+  \*************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/utils.js ***!
+  \****************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen.js ***!
+  \******************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer.js ***!
+  \**********************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ast.js ***!
+  \*************************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib.js ***!
+  \*************************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros.js ***!
+  \*************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/util.js ***!
+  \**************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/base64.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/source-map.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/errors.js ***!
+  \****************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/array-set.js ***!
+  \*******************************************************************************************************/
+
+/*!********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/base64-vlq.js ***!
+  \********************************************************************************************************/
+
+/*!********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/quick-sort.js ***!
+  \********************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/source-node.js ***!
+  \*********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/mapping-list.js ***!
+  \**********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/binary-search.js ***!
+  \***********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/baseDatatypes.js ***!
+  \***********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig.js ***!
+  \***********************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/DEPRECATED_ros.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time.ts ***!
+  \************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/index.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/types.ts ***!
+  \*************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/colors.ts ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/lodash.ts ***!
+  \**************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/markers.ts ***!
+  \***************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts ***!
+  \***************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts ***!
+  \***************************************************************************************************************/
+
+/*!*****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/source-map-consumer.js ***!
+  \*****************************************************************************************************************/
+
+/*!******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/source-map-support/node_modules/source-map/lib/source-map-generator.js ***!
+  \******************************************************************************************************************/
+
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts ***!
+  \*******************************************************************************************************************/
+
+/*!***************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib?cacheDirectory!./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/index.js ***!
+  \***************************************************************************************************************************************/
+
+/**
+ * @license
+ * Lodash <https://lodash.com/>
+ * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */

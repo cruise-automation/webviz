@@ -7,14 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import flatten from "lodash/flatten";
+import microMemoize from "micro-memoize";
 import React, { memo, useMemo } from "react";
 import { Time } from "rosbag";
 import uuid from "uuid";
 
-import type { PlotXAxisVal } from "./index";
+import type { PlotXAxisVal, LineStyle } from "./index";
 import styles from "./PlotChart.module.scss";
 import Dimensions from "webviz-core/src/components/Dimensions";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import TimeBasedChart, { type ChartDefaultView } from "webviz-core/src/components/TimeBasedChart";
 import { type TimeBasedChartTooltipData, type TooltipItem } from "webviz-core/src/components/TimeBasedChart/utils";
 import filterMap from "webviz-core/src/filterMap";
@@ -25,8 +25,9 @@ import {
 } from "webviz-core/src/panels/Plot/internalTypes";
 import { derivative, applyToDataOrTooltips, mathFunctions } from "webviz-core/src/panels/Plot/transformPlotRange";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import createExpressionEvaluator from "webviz-core/src/util/expressionEval";
 import { format } from "webviz-core/src/util/formatTime";
-import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
+import { lightColor, lineColors, DEFAULT_PLOT_LINE_STYLE } from "webviz-core/src/util/plotColors";
 import { isTime, subtractTimes, toSec, formatTimeRaw } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
@@ -37,6 +38,7 @@ export type PlotChartPoint = {|
 export type DataSet = {|
   borderColor: string,
   borderWidth: number,
+  borderDash?: [number, number],
   data: Array<PlotChartPoint>,
   fill: boolean,
   key: string,
@@ -55,6 +57,10 @@ export type PlotDataByPath = {
 const Y_AXIS_ID = "Y_AXIS_ID";
 
 const isCustomScale = (xAxisVal: PlotXAxisVal): boolean => xAxisVal === "custom" || xAxisVal === "currentCustom";
+
+const getPathExpression = microMemoize((path: string) => path.match(/\.@\{([a-zA-Z0-9!^%=><?():.+\-/*\s]+)\}$/), {
+  maxSize: 100,
+});
 
 function getXForPoint(
   xAxisVal: PlotXAxisVal,
@@ -160,6 +166,7 @@ function getPointsAndTooltipsForMessagePathItem(
 
 function getDatasetAndTooltipsFromMessagePlotPath(
   path: PlotPath,
+  lineStyle: LineStyle,
   yAxisRanges: $ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   index: number,
   startTime: Time,
@@ -241,6 +248,19 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     }
   }
 
+  const matchesCustomExpression = getPathExpression(path.value);
+  if (matchesCustomExpression) {
+    const [_, expression] = matchesCustomExpression;
+    const customMathFn = createExpressionEvaluator(expression);
+    const processDataPointFn = (val) => customMathFn({ val });
+    try {
+      rangesOfPoints = rangesOfPoints.map((points) => applyToDataOrTooltips(points, processDataPointFn));
+      rangesOfTooltips = rangesOfTooltips.map((tooltips) => applyToDataOrTooltips(tooltips, processDataPointFn));
+    } catch (e) {
+      // Ignore expression parsing errors for now
+    }
+  }
+
   // Put gaps between ranges.
   rangesOfPoints.forEach((rangePoints, i) => {
     if (i !== rangesOfPoints.length - 1) {
@@ -250,16 +270,18 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     }
   });
 
+  const defaultColor = lineColors[index % lineColors.length];
   const dataset = {
-    borderColor: lineColors[index % lineColors.length],
+    borderColor: lineStyle?.color ?? defaultColor,
+    borderDash: lineStyle?.borderDash,
     label: path.value || uuid.v4(),
     key: datasetKey,
     showLine,
     fill: false,
-    borderWidth: 1,
-    pointRadius: 1.5,
+    borderWidth: lineStyle?.borderWidth ?? DEFAULT_PLOT_LINE_STYLE.borderWidth,
+    pointRadius: lineStyle?.pointRadius ?? DEFAULT_PLOT_LINE_STYLE.pointRadius,
     pointHoverRadius: 3,
-    pointBackgroundColor: lightColor(lineColors[index % lineColors.length]),
+    pointBackgroundColor: lightColor(lineStyle?.color ?? defaultColor),
     pointBorderColor: "transparent",
     data: flatten(rangesOfPoints),
   };
@@ -288,18 +310,29 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
 
 export function getDatasetsAndTooltips(
   paths: PlotPath[],
+  lineStyles: LineStyle[],
   itemsByPath: PlotDataByPath,
   startTime: Time,
   xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath
 ): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], pathsWithMismatchedDataLengths: string[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
+    const lineStyle = lineStyles?.[index];
     const yRanges = itemsByPath[path.value];
     const xRanges = xAxisPath && itemsByPath[xAxisPath.value];
     if (!path.enabled) {
       return null;
     } else if (!isReferenceLinePlotPathType(path)) {
-      return getDatasetAndTooltipsFromMessagePlotPath(path, yRanges, index, startTime, xAxisVal, xRanges, xAxisPath);
+      return getDatasetAndTooltipsFromMessagePlotPath(
+        path,
+        lineStyle,
+        yRanges,
+        index,
+        startTime,
+        xAxisVal,
+        xRanges,
+        xAxisPath
+      );
     }
     return null;
   });
@@ -326,6 +359,7 @@ function getAnnotations(paths: PlotPath[]) {
 
 type PlotChartProps = {|
   paths: PlotPath[],
+  lineStyles?: LineStyle[],
   minYValue: number,
   maxYValue: number,
   saveCurrentView: (minY: number, maxY: number, width: ?number) => void,
@@ -370,8 +404,6 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
     ];
   }, [maxYValue, minYValue]);
 
-  const chartRenderPath = useExperimentalFeature("useGLChartInPlotPanel") ? "webgl" : "chartjs";
-
   return (
     <div className={styles.root}>
       <Dimensions>
@@ -394,7 +426,6 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
             currentTime={currentTime}
             defaultView={defaultView}
             onClick={onClick}
-            renderPath={chartRenderPath}
           />
         )}
       </Dimensions>

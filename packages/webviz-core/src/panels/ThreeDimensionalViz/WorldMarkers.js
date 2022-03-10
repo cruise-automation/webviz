@@ -28,6 +28,7 @@ import {
   PointClouds,
   LinedConvexHulls,
   RadarPointClusters,
+  GLIcon,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
 import { LAYER_INDEX_TEXT, LAYER_INDEX_OCCUPANCY_GRIDS } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
 import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
@@ -73,15 +74,6 @@ export type InteractiveMarkersByType = {
   triangleList: MarkerWithInteractionData[],
 };
 
-// Generate an alphabet for text makers with the most
-// used ASCII characters to prevent recreating the texture
-// atlas too many times for dynamic texts.
-const ALPHABET = (() => {
-  const start = 32; // SPACE
-  const end = 125; // "}"
-  return new Array(end - start + 1).fill().map((_, i) => String.fromCodePoint(start + i));
-})();
-
 const glTextAtlasPromise = glTextAtlasLoader();
 
 type GLTextAtlasStatus = {
@@ -121,6 +113,7 @@ export default function WorldMarkers({
     linedConvexHull,
     lineList,
     lineStrip,
+    overlayIcon,
     pointcloud,
     points,
     poseMarker,
@@ -153,6 +146,8 @@ export default function WorldMarkers({
   // Group all line strips and line lists into as few markers as possible
   const groupedLines = groupLinesIntoInstancedLineLists([...lineList, ...lineStrip]);
 
+  const alphabet = useMemo(() => Object.keys(glTextAtlasInfo.glTextAtlas?.charInfo || {}), [glTextAtlasInfo]);
+
   return (
     <>
       <OccupancyGrids layerIndex={layerIndex + LAYER_INDEX_OCCUPANCY_GRIDS} getMapPalette={hooks.getMapPalette}>
@@ -179,14 +174,22 @@ export default function WorldMarkers({
         {laserScan}
       </LaserScans>
       {glTextAtlasInfo.status === "LOADED" && (
-        <GLText
-          layerIndex={layerIndex + LAYER_INDEX_TEXT}
-          alphabet={ALPHABET}
-          scaleInvariantFontSize={14}
-          autoBackgroundColor={autoTextBackgroundColor}
-          textAtlas={glTextAtlasInfo.glTextAtlas}>
-          {glText}
-        </GLText>
+        <>
+          <GLText
+            alphabet={alphabet}
+            layerIndex={layerIndex + LAYER_INDEX_TEXT}
+            scaleInvariantFontSize={14}
+            autoBackgroundColor={autoTextBackgroundColor}
+            textAtlas={glTextAtlasInfo.glTextAtlas}>
+            {glText}
+          </GLText>
+          <GLIcon
+            alphabet={alphabet}
+            layerIndex={layerIndex + LAYER_INDEX_TEXT}
+            textAtlas={glTextAtlasInfo.glTextAtlas}>
+            {overlayIcon}
+          </GLIcon>
+        </>
       )}
       <FilledPolygons layerIndex={layerIndex}>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap} layerIndex={layerIndex}>

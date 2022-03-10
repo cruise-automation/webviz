@@ -22,7 +22,7 @@ function $write$std_msgs_Header($v, $o) {
     $write$time(v$stamp, ($o + 4));
   }
   const v$frame_id = $v.frame_id;
-  const v$frame_id$str = v$frame_id || \\"\\";
+  const v$frame_id$str = (v$frame_id == null ? \\"\\" : v$frame_id + \\"\\");
   $view.setInt32(($o + 12), v$frame_id$str.length, true);
   $view.setInt32(($o + 16), $writer.string(v$frame_id$str), true);
 }
@@ -48,7 +48,7 @@ function $write$fake_msgs_HasComplexAndArray($v, $o) {
     $view.setInt32(($o + 24), v$stringArray$o, true);
     for (let v$stringArray$i = 0; v$stringArray$i < v$stringArray$l; ++v$stringArray$i) {
       const v$stringArray$e = v$stringArray[v$stringArray$i];
-      const v$stringArray$e$str = v$stringArray$e || \\"\\";
+      const v$stringArray$e$str = (v$stringArray$e == null ? \\"\\" : v$stringArray$e + \\"\\");
       $view.setInt32(v$stringArray$o, v$stringArray$e$str.length, true);
       $view.setInt32((v$stringArray$o + 4), $writer.string(v$stringArray$e$str), true);
       v$stringArray$o += 8;

@@ -88,7 +88,7 @@ Below is an example of an output message (in JavaScript) that could be consumed 
         pointBackgroundColor: "teal",
         pointBorderColor: "teal",
         pointStyle: "crossRot",
-        pointRadius: 10,
+        pointRadius: "10",
         data: [{ x: 2, y: 1 }, { x: 4, y: 1 }],
       },
     ],

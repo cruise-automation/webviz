@@ -143,4 +143,26 @@ const migrateCheckedKeys = (
   return [...newCheckedKeys].sort(); // sort for determinism.
 };
 
+type CompressedTree = string | [string, $ReadOnlyArray<CompressedTree>];
+export function compressTopicTree(tree: TopicTreeConfig): CompressedTree {
+  if (tree.topicName) {
+    return tree.topicName;
+  }
+  if (tree.name == null) {
+    throw new Error("Satisfy flow -- non-topic nodes always have names.");
+  }
+  return [tree.name, (tree.children ?? []).map(compressTopicTree)];
+}
+
+export function inflateTopicTree(tree: CompressedTree): TopicTreeConfig {
+  if (typeof tree === "string") {
+    return { topicName: tree };
+  }
+  return { name: tree[0], children: tree[1].map(inflateTopicTree) };
+}
+
+export function applyPatch(s: string, patch: any) {
+  return patch.map((elem) => (typeof elem === "string" ? elem : s.slice(elem[0], elem[1]))).join("");
+}
+
 export default migrateCheckedKeys;

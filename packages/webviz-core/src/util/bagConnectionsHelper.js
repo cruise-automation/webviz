@@ -24,15 +24,9 @@ type DatatypeDescription = {
 export function bagConnectionsToDatatypes(connections: $ReadOnlyArray<DatatypeDescription>): RosDatatypes {
   const datatypes = {};
   connections.forEach((connection) => {
-    const connectionTypes = parseMessageDefinition(connection.messageDefinition);
-    connectionTypes.forEach(({ name, definitions }, index) => {
-      // The first definition usually doesn't have an explicit name,
-      // so we get the name from the connection.
-      if (index === 0) {
-        datatypes[connection.type] = { fields: definitions };
-      } else if (name) {
-        datatypes[name] = { fields: definitions };
-      }
+    const connectionTypes = parseMessageDefinition(connection.messageDefinition, connection.type);
+    connectionTypes.forEach(({ name, definitions }) => {
+      datatypes[name] = { name, fields: definitions };
     });
   });
   return datatypes;
@@ -53,13 +47,14 @@ export function bagConnectionsToTopics(
   const topics: { [string]: Topic } = {};
   connections.forEach((connection, index) => {
     const existingTopic = topics[connection.topic];
-    if (existingTopic && existingTopic.datatype !== connection.type) {
+    if (existingTopic && existingTopic.datatypeName !== connection.type) {
       console.warn("duplicate topic with differing datatype", existingTopic, connection);
       return;
     }
     topics[connection.topic] = {
       name: connection.topic,
-      datatype: connection.type,
+      datatypeName: connection.type,
+      datatypeId: connection.type,
       numMessages: numMessagesByConnectionIndex[index],
     };
   });

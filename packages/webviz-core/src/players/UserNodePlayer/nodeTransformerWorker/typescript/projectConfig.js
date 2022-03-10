@@ -16,7 +16,6 @@ import {
   ros_lib_dts,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import userUtilities from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils";
-import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 export type NodeProjectFile = {
   fileName: string,
@@ -32,7 +31,7 @@ export type NodeProjectConfig = {
 
 const utilityFiles: NodeProjectFile[] = userUtilities.map((utility) => ({
   ...utility,
-  filePath: `${DEFAULT_WEBVIZ_NODE_PREFIX}${utility.fileName}`,
+  filePath: `/${utility.fileName}`,
 }));
 
 export function getNodeProjectConfig() {

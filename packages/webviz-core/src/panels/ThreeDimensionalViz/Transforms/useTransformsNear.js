@@ -20,13 +20,10 @@ import type { TypedMessage } from "webviz-core/src/players/types";
 import type { BinaryTfMessage, BinaryTransformStamped } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
 import { $TF_STATIC, $TF } from "webviz-core/src/util/globalConstants";
+import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { toSec } from "webviz-core/src/util/time";
 
-const {
-  skipTransformFrame,
-  useDynamicTransformsData,
-  useStaticTransformsData,
-} = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
+const { useDynamicTransformsData, useStaticTransformsData } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
 
 const NO_HOOK_TRANSFORMS = [];
 
@@ -126,17 +123,12 @@ const useDynamicTransformsNear = (time: Time, framesToIgnore: Set<string>): $Rea
 // monotonically increasing header stamps.
 const useTransformsNear = (time: Time, staticTransformPath: ?string): TransformElement[] => {
   const hookStaticTransforms: TransformElement[] = useStaticTransformsData(staticTransformPath);
-  const framesToIgnore = React.useMemo(
-    () =>
-      new Set(
-        hookStaticTransforms
-          .map((t) => t.childFrame)
-          .concat(skipTransformFrame?.frameId)
-          .filter(Boolean)
-      ),
-    [hookStaticTransforms]
-  );
   const hookDynamicTransforms = useDynamicTransformsData() ?? NO_HOOK_TRANSFORMS;
+  const dynamicFramesToIgnore = useShallowMemo(hookDynamicTransforms.map(({ childFrame }) => childFrame));
+  const framesToIgnore = React.useMemo(
+    () => new Set(dynamicFramesToIgnore.concat(hookStaticTransforms.map((t) => t.childFrame))),
+    [dynamicFramesToIgnore, hookStaticTransforms]
+  );
   const dynamicTransforms = useDynamicTransformsNear(time, framesToIgnore);
   return React.useMemo(() => dynamicTransforms.concat(hookStaticTransforms, hookDynamicTransforms), [
     dynamicTransforms,

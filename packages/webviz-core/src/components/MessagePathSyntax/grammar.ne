@@ -104,8 +104,14 @@ filter -> "{" simplePath:? "}"
               })
             %}
 
+modifierByEval -> "{" [a-zA-Z0-9!^%=><?.():+\-/*\s]:+ "}"
+modifierByName -> "abs" | "acos" | "asin" | "atan" | "ceil" | "cos" | "log" | "log1p" | "log2" | "log10" 
+| "round" | "sign" | "sin" | "sqrt" | "tan" | "trunc" | "negative" | "deg2rad" | "rad2deg" | "mps2kph" 
+| "kph2mps" | "mps2mph" | "mph2mps" | "mph2kph" | "kph2mph" | "derivative" | "length"
+modifierParam -> modifierByEval | modifierByName
+
 ## Modifier.
 # Optional modifier at the end of a path, e.g. `.@derivative` or Math modifiers. Currently only used by the Plot
 # panel, and we should either deprecate this or actually support it properly.
-modifier -> ".@" id:?
+modifier -> ".@" modifierParam:?
   {% (d) => d[1] || "" %}

@@ -14,6 +14,7 @@ import { Router } from "react-router-dom";
 import getGlobalStore from "webviz-core/src/store/getGlobalStore";
 import history from "webviz-core/src/util/history";
 import { useForceUpdate } from "webviz-core/src/util/hooks.js";
+import invariant from "webviz-core/src/util/invariant";
 
 type RenderedToBodyHandle = {| update: (React.Element<*>) => void, remove: () => void |};
 
@@ -23,9 +24,7 @@ type RenderedToBodyHandle = {| update: (React.Element<*>) => void, remove: () =>
 export default function renderToBody(element: any): RenderedToBodyHandle {
   const container = document.createElement("div");
   container.dataset.modalcontainer = "true";
-  if (!document.body) {
-    throw new Error("document.body not found"); // appease flow
-  }
+  invariant(document.body != null, "document.body not found");
   document.body.appendChild(container);
 
   function ComponentToRender({ children }) {
@@ -45,9 +44,7 @@ export default function renderToBody(element: any): RenderedToBodyHandle {
 
     remove() {
       unmountComponentAtNode(container);
-      if (!document.body) {
-        throw new Error("document.body not found"); // appease flow
-      }
+      invariant(document.body != null, "document.body not found");
       document.body.removeChild(container);
     },
   };
@@ -61,16 +58,12 @@ export function RenderToBodyPortal({ children }: { children: React$Node }) {
   React.useEffect(() => {
     container.current = document.createElement("div");
     container.current.dataset.modalcontainer = "true";
-    if (!document.body) {
-      throw new Error("document.body not found"); // appease flow
-    }
+    invariant(document.body != null, "document.body not found");
     document.body.appendChild(container.current);
     forceUpdate();
 
     return () => {
-      if (!document.body) {
-        throw new Error("document.body not found"); // appease flow
-      }
+      invariant(document.body != null, "document.body not found");
       if (container.current) {
         document.body.removeChild(container.current);
       }

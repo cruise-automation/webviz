@@ -13,6 +13,8 @@ import {
   FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
   VISUALIZATION_MSGS$WEBVIZ_MARKER,
   VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
+  WEBVIZ_MSGS$OCCUPANCY_GRID,
+  NAV_MSGS$MAP_META_DATA,
 } from "webviz-core/src/util/globalConstants";
 
 // Returns the subset of allDatatypes needed to fully define datatypes.
@@ -80,6 +82,7 @@ const markerFields = [
 
 export const basicDatatypes: RosDatatypes = {
   [FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
+    name: FUTURE_VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     fields: [
       { type: "std_msgs/Header", name: "header", isArray: false, isComplex: true },
       {
@@ -92,6 +95,7 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   [VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY]: {
+    name: VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     fields: [
       {
         isArray: true,
@@ -109,6 +113,7 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   "visualization_msgs/MarkerArray": {
+    name: "visualization_msgs/MarkerArray",
     fields: [
       {
         isArray: true,
@@ -119,10 +124,11 @@ export const basicDatatypes: RosDatatypes = {
       },
     ],
   },
-  "visualization_msgs/Marker": { fields: markerFields },
+  "visualization_msgs/Marker": { name: "visualiztion_msgs/Marker", fields: markerFields },
   // This is a special marker type that has a string instead of an int ID field and an additional JSON "metadata" field.
   // For use internally to webviz, when we need to add extra data to markers.
   [VISUALIZATION_MSGS$WEBVIZ_MARKER]: {
+    name: VISUALIZATION_MSGS$WEBVIZ_MARKER,
     fields: markerFields
       .filter(({ name }) => name !== "id")
       .concat([
@@ -131,6 +137,7 @@ export const basicDatatypes: RosDatatypes = {
       ]),
   },
   "std_msgs/ColorRGBA": {
+    name: "std_msgs/ColorRGBA",
     fields: [
       { type: "float32", name: "r", isArray: false, isComplex: false },
       { type: "float32", name: "g", isArray: false, isComplex: false },
@@ -139,6 +146,7 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   "std_msgs/Header": {
+    name: "std_msgs/Header",
     fields: [
       { type: "uint32", name: "seq", isArray: false, isComplex: false },
       { type: "time", name: "stamp", isArray: false, isComplex: false },
@@ -146,12 +154,14 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Pose": {
+    name: "geometry_msgs/Pose",
     fields: [
       { type: "geometry_msgs/Point", name: "position", isArray: false, isComplex: true },
       { type: "geometry_msgs/Quaternion", name: "orientation", isArray: false, isComplex: true },
     ],
   },
   "geometry_msgs/PoseStamped": {
+    name: "geometry_msgs/PoseStamped",
     fields: [
       {
         isArray: false,
@@ -169,6 +179,7 @@ export const basicDatatypes: RosDatatypes = {
   },
 
   "geometry_msgs/Vector3": {
+    name: "geometry_msgs/Vector3",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -176,6 +187,7 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Point": {
+    name: "geometry_msgs/Point",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },
@@ -183,11 +195,80 @@ export const basicDatatypes: RosDatatypes = {
     ],
   },
   "geometry_msgs/Quaternion": {
+    name: "geometry_msgs/Quaternion",
     fields: [
       { type: "float64", name: "x", isArray: false, isComplex: false },
       { type: "float64", name: "y", isArray: false, isComplex: false },
       { type: "float64", name: "z", isArray: false, isComplex: false },
       { type: "float64", name: "w", isArray: false, isComplex: false },
+    ],
+  },
+  [NAV_MSGS$MAP_META_DATA]: {
+    name: NAV_MSGS$MAP_META_DATA,
+    fields: [
+      { type: "time", name: "map_load_time", isArray: false, isComplex: false },
+      { type: "int32", name: "resolution", isArray: false, isComplex: false },
+      { type: "int32", name: "width", isArray: false, isComplex: false },
+      { type: "int32", name: "height", isArray: false, isComplex: false },
+      {
+        isArray: false,
+        isComplex: true,
+        name: "origin",
+        type: "geometry_msgs/Pose",
+      },
+    ],
+  },
+  [WEBVIZ_MSGS$OCCUPANCY_GRID]: {
+    name: WEBVIZ_MSGS$OCCUPANCY_GRID,
+    fields: [
+      {
+        isArray: false,
+        isComplex: true,
+        name: "header",
+        type: "std_msgs/Header",
+      },
+      {
+        isArray: false,
+        isComplex: false,
+        name: "name",
+        type: "string",
+      },
+      {
+        isArray: false,
+        isComplex: false,
+        name: "type",
+        type: "int32",
+      },
+      {
+        isArray: false,
+        isComplex: false,
+        name: "map",
+        type: "string",
+      },
+      {
+        isArray: true,
+        isComplex: false,
+        name: "overrideMapData",
+        type: "uint8",
+      },
+      {
+        isArray: false,
+        isComplex: false,
+        name: "alpha",
+        type: "int32",
+      },
+      {
+        isArray: false,
+        isComplex: true,
+        name: "info",
+        type: NAV_MSGS$MAP_META_DATA,
+      },
+      {
+        isArray: true,
+        isComplex: false,
+        name: "data",
+        type: "uint8",
+      },
     ],
   },
 };
@@ -222,6 +303,7 @@ const renameDatatypes = (datatypes: RosDatatypes, typeName: string, getNewName) 
   const idMappedDatatypes = {};
   Object.keys(datatypes).forEach((datatype) => {
     idMappedDatatypes[nameMapping[datatype]] = {
+      name: datatype,
       fields: datatypes[datatype].fields.map((field) => ({
         ...field,
         type: nameMapping[field.type] ?? field.type,
@@ -240,13 +322,13 @@ export const getContentBasedDatatypes = (
   messageDefinitionsByTopic: MessageDefinitionsByTopic,
   parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic,
   datatypesByTopic: { [topic: string]: string }
-): { fakeDatatypesByTopic: { [topic: string]: string }, fakeDatatypes: RosDatatypes } => {
+): { rewrittenDatatypeIdsByTopic: { [topic: string]: string }, rewrittenDatatypes: RosDatatypes } => {
   // Parsing message definitions is expensive, but topics often share message definitions.
   // We only compute new datatypes for unique string message definitions, and copy the result to
   // topics with those definitions.
   const topicsByStringDefinition = {};
-  const fakeDatatypesByStringDefinition = {};
-  const allFakeDatatypes = {};
+  const rewrittenDatatypeIdsByStringDefinition = {};
+  const allRewrittenDatatypes = {};
   const getDatatypeName = getGetDatatypeName();
 
   // The string message definitions by topic could be incomplete, so use the parsed ones to turn into datatypes.
@@ -266,7 +348,7 @@ export const getContentBasedDatatypes = (
       const datatypes = {};
       parsedDefinition.forEach((datatype) => {
         const typeName = datatype.name ?? datatypesByTopic[topic];
-        datatypes[typeName] = { fields: datatype.definitions };
+        datatypes[typeName] = { name: typeName, fields: datatype.definitions };
       });
 
       // Rename datatypes for this set of message definitions (reusing types we've seen before.)
@@ -275,18 +357,18 @@ export const getContentBasedDatatypes = (
         datatypesByTopic[topic],
         getDatatypeName
       );
-      Object.assign(allFakeDatatypes, idMappedDatatypes);
-      fakeDatatypesByStringDefinition[stringDefinitionKey] = topicDatatypeId;
+      Object.assign(allRewrittenDatatypes, idMappedDatatypes);
+      rewrittenDatatypeIdsByStringDefinition[stringDefinitionKey] = topicDatatypeId;
     }
   });
 
   // Transform "per stringified set of message definitions" output to "per topic".
-  const fakeDatatypesByTopic = {};
+  const rewrittenDatatypeIdsByTopic = {};
   Object.keys(topicsByStringDefinition).forEach((stringDefinition) => {
     topicsByStringDefinition[stringDefinition].forEach((topic) => {
-      fakeDatatypesByTopic[topic] = fakeDatatypesByStringDefinition[stringDefinition];
+      rewrittenDatatypeIdsByTopic[topic] = rewrittenDatatypeIdsByStringDefinition[stringDefinition];
     });
   });
 
-  return { fakeDatatypesByTopic, fakeDatatypes: allFakeDatatypes };
+  return { rewrittenDatatypeIdsByTopic, rewrittenDatatypes: allRewrittenDatatypes };
 };

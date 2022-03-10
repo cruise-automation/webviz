@@ -29,7 +29,7 @@ export const SLabel = styled.label`
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
-export type Props = {
+export type Props = {|
   checked: boolean,
   disabled?: boolean,
   label: string,
@@ -39,7 +39,7 @@ export type Props = {
   onChange: (newChecked: boolean) => void,
   style?: { [string]: string | number },
   dataTest?: string,
-};
+|};
 
 export default function Checkbox({
   label,

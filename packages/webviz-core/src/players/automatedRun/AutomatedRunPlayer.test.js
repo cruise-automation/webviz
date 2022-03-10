@@ -50,13 +50,18 @@ class TestRunClient implements AutomatedRunClient {
 }
 
 const getMessagesResult = { parsedMessages: [], rosBinaryMessages: undefined, bobjects: [] };
+const dummyNodePlaygroundActions = {
+  setCompiledNodeData: jest.fn(),
+  addUserNodeLogs: jest.fn(),
+  setUserNodeRosLib: jest.fn(),
+};
 
 /* eslint-disable no-underscore-dangle */
 describe("AutomatedRunPlayer", () => {
   it("waits to start playing until all frames are loaded when shouldLoadDataBeforePlaying=true", async () => {
     const provider = new TestProvider({ getMessages: async () => getMessagesResult });
     const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
-    const player = new AutomatedRunPlayer(provider, client);
+    const player = new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
     player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     expect(player._initialized).toEqual(true);
@@ -74,7 +79,7 @@ describe("AutomatedRunPlayer", () => {
   it("measures preloading performance", async () => {
     const provider = new TestProvider({ getMessages: async () => getMessagesResult });
     const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
-    const player = new AutomatedRunPlayer(provider, client);
+    const player = new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
     let emitStateCalls = 0;
     player.setListener(async () => {
       emitStateCalls += 1;
@@ -126,7 +131,7 @@ describe("AutomatedRunPlayer", () => {
     });
     const client = new TestRunClient();
 
-    const player = new AutomatedRunPlayer(provider, client);
+    const player = new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
     player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     expect(player._initialized).toEqual(true);
@@ -155,7 +160,7 @@ describe("AutomatedRunPlayer", () => {
     });
     const client = new TestRunClient();
     client.msPerFrame = 500;
-    const player = new AutomatedRunPlayer(provider, client);
+    const player = new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
     player.setMessageOrder("headerStamp");
     player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     const listener = { signal: signal() };
@@ -172,7 +177,7 @@ describe("AutomatedRunPlayer", () => {
   it("ignores warnings and info notifications", async () => {
     const provider = new TestProvider({ getMessages: async () => getMessagesResult });
     const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
-    new AutomatedRunPlayer(provider, client);
+    new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
 
     expect(() => {
       sendNotification("Some warning", "message", "user", "warn");
@@ -204,7 +209,7 @@ describe("AutomatedRunPlayer", () => {
     }
 
     const client = new TestRunClient();
-    const player = new AutomatedRunPlayer(provider, client);
+    const player = new AutomatedRunPlayer(provider, { client, nodePlaygroundActions: dummyNodePlaygroundActions });
     player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     player.setListener(() => listener.signal);

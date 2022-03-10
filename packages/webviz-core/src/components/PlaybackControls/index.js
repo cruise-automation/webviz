@@ -9,8 +9,6 @@
 import Tooltip from "@cruise-automation/tooltip";
 import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
-import SkipNextOutlineIcon from "@mdi/svg/svg/skip-next-outline.svg";
-import SkipPreviousOutlineIcon from "@mdi/svg/svg/skip-previous-outline.svg";
 import classnames from "classnames";
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
 import type { Time } from "rosbag";
@@ -19,7 +17,6 @@ import uuid from "uuid";
 
 import styles from "./index.module.scss";
 import { ProgressPlot } from "./ProgressPlot";
-import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import Flex from "webviz-core/src/components/Flex";
 import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
@@ -29,17 +26,16 @@ import KeyListener from "webviz-core/src/components/KeyListener";
 import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PlaybackTimeDisplayMethod from "webviz-core/src/components/PlaybackControls/PlaybackTimeDisplayMethod";
-import { togglePlayPause, jumpSeek, DIRECTION } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
+import SeekControls from "webviz-core/src/components/PlaybackControls/SeekControls";
+import { togglePlayPause } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
 import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { type PlayerState } from "webviz-core/src/players/types";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import { formatTime } from "webviz-core/src/util/formatTime";
 import { colors as sharedColors } from "webviz-core/src/util/sharedStyleConstants";
 import { subtractTimes, toSec, fromSec, formatTimeRaw } from "webviz-core/src/util/time";
-
-const cx = classnames.bind(styles);
 
 export const StyledFullWidthBar = styled.div`
   position: absolute;
@@ -61,7 +57,6 @@ export const StyledMarker = styled.div.attrs(({ value }) => ({
   top: 32%;
   will-change: transform;
 `;
-
 export type PlaybackControlProps = {|
   player: PlayerState,
   auxiliaryData?: any,
@@ -92,13 +87,12 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   const keyDownHandlers = useMemo(
     () => ({
       " ": () => togglePlayPause({ pause, play, player: playerState.current }),
-      ArrowLeft: (ev: KeyboardEvent) => jumpSeek(DIRECTION.BACKWARD, { seek, player: playerState.current }, ev),
-      ArrowRight: (ev: KeyboardEvent) => jumpSeek(DIRECTION.FORWARD, { seek, player: playerState.current }, ev),
     }),
-    [pause, play, seek]
+    [pause, play]
   );
 
   const [hoverComponentId] = useState<string>(uuid.v4());
+
   const setHoverValue = useSetHoverValue();
   const onMouseMove = useCallback((e: SyntheticMouseEvent<HTMLDivElement>) => {
     const { activeData } = playerState.current;
@@ -148,30 +142,6 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   const value = currentTime == null ? null : toSec(currentTime);
   const step = (max - min) / 500;
 
-  const seekControls = useMemo(
-    () => (
-      <>
-        <Button
-          onClick={() => jumpSeek(DIRECTION.BACKWARD, { seek, player: playerState.current })}
-          style={{ borderRadius: "4px 0px 0px 4px", marginLeft: "16px", marginRight: "1px" }}
-          className={cx([styles.seekBtn, { [styles.inactive]: !activeData }])}>
-          <Icon medium tooltip="Seek backward">
-            <SkipPreviousOutlineIcon />
-          </Icon>
-        </Button>
-        <Button
-          onClick={() => jumpSeek(DIRECTION.FORWARD, { seek, player: playerState.current })}
-          style={{ borderRadius: "0px 4px 4px 0px" }}
-          className={cx([styles.seekBtn, { [styles.inactive]: !activeData }])}>
-          <Icon medium tooltip="Seek forward">
-            <SkipNextOutlineIcon />
-          </Icon>
-        </Button>
-      </>
-    ),
-    [activeData, seek]
-  );
-
   const sliderCallback = useCallback(
     ({ width }) => (
       <Slider
@@ -190,7 +160,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   );
 
   return (
-    <Flex row className={styles.container}>
+    <Flex grow row className={styles.container}>
       <KeyListener global keyDownHandlers={keyDownHandlers} />
       <MessageOrderControls />
       <PlaybackSpeedControls />
@@ -217,7 +187,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
         onPause={pause}
         isPlaying={isPlaying}
       />
-      {seekControls}
+      <SeekControls hasActiveData={!!activeData} seek={seek} currentTime={activeData?.currentTime} />
     </Flex>
   );
 });

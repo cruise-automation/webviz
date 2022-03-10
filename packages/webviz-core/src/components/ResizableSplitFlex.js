@@ -62,7 +62,7 @@ const convertPercentToAbsolute = (valueRaw: string | number, containerSize: numb
   }
   return value / containerSize;
 };
-// A container similar to <Flex> that adds a draggable, split border between the container's child elements.
+// A container similar to <Flex grow> that adds a draggable, split border between the container's child elements.
 const ResizableSplitFlex = ({ children, column, defaultSplitPercent, splitPercent, onChange }: Props) => {
   const resizingCursor = getDraggingCursor(column);
   const positionPropName = column ? "top" : "left";

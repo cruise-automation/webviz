@@ -76,12 +76,14 @@ const withEndTime = (testFixture, endTime) => ({
 
 const datatypes = {
   "msgs/PoseDebug": {
+    name: "msgs/PoseDebug",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "pose", type: "msgs/Pose", isArray: false, isComplex: true },
     ],
   },
   "msgs/Pose": {
+    name: "msgs/Pose",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "x", type: "float64", isArray: false },
@@ -93,15 +95,18 @@ const datatypes = {
     ],
   },
   "msgs/State": {
+    name: "msgs/State",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "items", type: "msgs/OtherState", isArray: true, isComplex: true },
     ],
   },
   "msgs/OtherState": {
+    name: "msgs/OtherState",
     fields: [{ name: "id", type: "int32", isArray: false }, { name: "speed", type: "float32", isArray: false }],
   },
   "std_msgs/Header": {
+    name: "std_msgs/Header",
     fields: [
       { name: "seq", type: "uint32", isArray: false },
       {
@@ -112,14 +117,19 @@ const datatypes = {
       { name: "frame_id", type: "string", isArray: false },
     ],
   },
-  "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
+  "std_msgs/Bool": {
+    name: "std_msgs/Bool",
+    fields: [{ name: "data", type: "bool", isArray: false }],
+  },
   "nonstd_msgs/Float64Array": {
+    name: "nonstd_msgs/Float64Array",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "data", type: "float64", isArray: true },
     ],
   },
   "nonstd_msgs/Float64Stamped": {
+    name: "nonstd_msgs/Float64Stamped",
     fields: [
       { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "data", type: "float64", isArray: false },
@@ -166,18 +176,17 @@ const messageCache = {
       },
     })),
   ],
-  startTime: fromSec(0.6),
 };
 
 export const fixture = {
   datatypes,
   topics: [
-    { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
-    { name: "/some_topic/location_subset", datatype: "msgs/PoseDebug" },
-    { name: "/some_topic/state", datatype: "msgs/State" },
-    { name: "/boolean_topic", datatype: "std_msgs/Bool" },
-    { name: "/preloaded_topic", datatype: "nonstd_msgs/Float64Stamped" },
-    { name: "/array_topic", datatype: "nonstd_msgs/Float64Array" },
+    { name: "/some_topic/location", datatypeName: "msgs/PoseDebug", datatypeId: "msgs/PoseDebug" },
+    { name: "/some_topic/location_subset", datatypeName: "msgs/PoseDebug", datatypeId: "msgs/PoseDebug" },
+    { name: "/some_topic/state", datatypeName: "msgs/State", datatypeId: "msgs/State" },
+    { name: "/boolean_topic", datatypeName: "std_msgs/Bool", datatypeId: "std_msgs/Bool" },
+    { name: "/preloaded_topic", datatypeName: "nonstd_msgs/Float64Stamped", datatypeId: "nonstd_msgs/Float64Stamped" },
+    { name: "/array_topic", datatypeName: "nonstd_msgs/Float64Array", datatypeId: "nonstd_msgs/Float64Array" },
   ],
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
@@ -185,8 +194,8 @@ export const fixture = {
     currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
     parsedMessageDefinitionsByTopic: {
-      "/preloaded_topic": parseMessageDefinition(float64StampedDefinition),
-      "/array_topic": parseMessageDefinition(float64ArrayStampedDefinition),
+      "/preloaded_topic": parseMessageDefinition(float64StampedDefinition, "nonstd_msgs/Float64Stamped"),
+      "/array_topic": parseMessageDefinition(float64ArrayStampedDefinition, "nonstd_msgs/Float64Array"),
     },
     speed: 0.2,
   },
@@ -239,6 +248,25 @@ storiesOf("<Plot>", module)
     return (
       <PanelSetup fixture={fixture}>
         <Plot config={exampleConfig} />
+      </PanelSetup>
+    );
+  })
+  .add("custom line styles", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            lineStyles: [
+              { borderWidth: 2, color: "#ff00ff" },
+              { borderWidth: 4, borderDash: [2, 2], color: "#ff4411" },
+              { borderWidth: 2, borderDash: [7, 7], color: "#5522ff" },
+              { borderDash: [1, 1], color: "#23ff23" },
+              { borderDash: [1, 5], color: "#51f222" },
+              { color: "#efef22", pointRadius: 0 },
+            ],
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -535,8 +563,13 @@ storiesOf("<Plot>", module)
     return (
       <PanelSetup
         fixture={{
-          datatypes: { "std_msgs/Float32": { fields: [{ name: "data", type: "float32", isArray: false }] } },
-          topics: [{ name: "/some_number", datatype: "std_msgs/Float32" }],
+          datatypes: {
+            "std_msgs/Float32": {
+              name: "std_msgs/Float32",
+              fields: [{ name: "data", type: "float32", isArray: false }],
+            },
+          },
+          topics: [{ name: "/some_number", datatypeName: "std_msgs/Float32", datatypeId: "std_msgs/Float32" }],
           activeData: { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 10, nsec: 0 }, isPlaying: false, speed: 0.2 },
           frame: {
             "/some_number": [
@@ -658,6 +691,121 @@ storiesOf("<Plot>", module)
           config={{
             ...exampleConfig,
             paths: [{ value: "/array_topic.data.@length", enabled: true, timestampMethod: "receiveTime" }],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  // There is a weird bug with storybook and jest where using the same numbers in the story names is causing errors in `yarn test`.
+  // Make sure to use unique numbers for any additional mathematical stories (x+1, x-2, x*3, etc)
+  .add("preloaded data and the .@{val + 1} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@{val + 1}", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{val - 4} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@{val - 4}", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{val * 3} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@{val * 3}", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{val / 2} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@{val / 2}", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{5 + val/5 + sin val} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@{5 + val/5 + sin val}", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{(val^2 - 5) * 2} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "/preloaded_topic.data.@{(val^2 - 5) * 2}",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and the .@{val > .7 ? val + 5 : val - 5} modifier", () => {
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "/preloaded_topic.data.@{val > .7 ? val + 5 : val - 5}",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
           }}
         />
       </PanelSetup>

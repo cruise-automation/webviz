@@ -24,9 +24,9 @@ const STable = styled.table`
   }
 `;
 
-type Props = {
+type Props = {|
   linkedGlobalVariables: LinkedGlobalVariables,
-};
+|};
 
 export default function LinkedGlobalVariableList({ linkedGlobalVariables }: Props) {
   if (linkedGlobalVariables.length === 0) {

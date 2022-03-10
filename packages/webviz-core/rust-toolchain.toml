@@ -1,0 +1,4 @@
+# Important: Keep this file in sync with the one in the internal repository.
+
+[toolchain]
+channel = "nightly-2022-01-18"

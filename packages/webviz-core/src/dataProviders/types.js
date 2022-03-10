@@ -8,6 +8,7 @@
 
 import { type Time } from "rosbag";
 
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type {
   BobjectMessage,
   Progress,
@@ -18,6 +19,9 @@ import type {
   TypedMessage,
 } from "webviz-core/src/players/types";
 import { type NotifyPlayerManager } from "webviz-core/src/players/types";
+import type { UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
+import { type CompiledUserNodeDataById } from "webviz-core/src/types/panels";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // `DataProvider` describes a more specific kind of data ingesting than `Player`, namely ingesting
@@ -55,6 +59,7 @@ export type GetMessagesTopics = $ReadOnly<{|
   parsedMessages?: ?$ReadOnlyArray<string>,
   rosBinaryMessages?: ?$ReadOnlyArray<string>,
   bobjects?: ?$ReadOnlyArray<string>,
+  preloadedTopics?: ?Set<string>,
 |}>;
 
 export type GetMessagesResult = $ReadOnly<{|
@@ -82,6 +87,18 @@ export type MessageDefinitions =
       messageDefinitionMd5SumByTopic?: { [string]: string },
     |}>
   | ParsedMessageDefinitions;
+
+// setUserNodes returns null before initialization.
+export type SetUserNodesResult = ?$ReadOnly<{|
+  topics: $ReadOnlyArray<Topic>,
+  messageDefinitions: ParsedMessageDefinitions,
+  topicsToInvalidate: Set<string>,
+|}>;
+
+// setGLobalVariables returns null before initialization.
+export type SetGlobalVariablesResult = ?$ReadOnly<{|
+  topicsToInvalidate: Set<string>,
+|}>;
 
 // We disable no-use-before-define so we can have the most important types at the top.
 /* eslint-disable no-use-before-define */
@@ -115,6 +132,9 @@ export interface DataProvider {
   // Close the provider (e.g. close any connections to a server). Must be called only after
   // `initialize` has finished.
   close(): Promise<void>;
+
+  setUserNodes(userNodes: UserNodes): Promise<SetUserNodesResult>;
+  setGlobalVariables(globalVariables: GlobalVariables): Promise<SetGlobalVariablesResult>;
 }
 
 export type InitializationResult = {|
@@ -130,6 +150,12 @@ export type InitializationResult = {|
   messageDefinitions: MessageDefinitions,
 |};
 
+export type NodePlaygroundActions = {|
+  addUserNodeLogs: (UserNodeLogs) => Promise<void>,
+  setUserNodeRosLib: (string) => Promise<void>,
+  setCompiledNodeData: (CompiledUserNodeDataById) => Promise<void>,
+|};
+
 export type ExtensionPoint = {|
   // Report some sort of progress, e.g. of caching or downloading.
   progressCallback: (Progress) => void,
@@ -139,6 +165,7 @@ export type ExtensionPoint = {|
   // `progressCallback` and have one type of "status" object?
   reportMetadataCallback: (DataProviderMetadata) => void,
   notifyPlayerManager: NotifyPlayerManager,
+  nodePlaygroundActions: NodePlaygroundActions,
 |};
 
 export type InitializationPerformanceMetadata = $ReadOnly<{|
@@ -155,6 +182,7 @@ export type AverageThroughput = $ReadOnly<{|
   receivedRangeDuration: Time, // Connections could be canceled on seeks.
   topics: $ReadOnlyArray<string>,
   totalTransferTime: Time,
+  totalDecompressTimeMs: number,
 |}>;
 
 // To report chunks of data received in realtime. Aggregation can happen downstream. For bags, this
@@ -172,6 +200,11 @@ export type DataProviderStall = $ReadOnly<{|
   bytesReceivedBeforeStall: number,
 |}>;
 
+export type WebvizNodePerformance = $ReadOnly<{|
+  type: "webviz_node_performance",
+  performanceByTopic: { [string]: {| count: number, executionMs: number, serializationMs: number |} },
+|}>;
+
 export type DataProviderMetadata =
   // Report whether or not the DataProvider is reconnecting to some external server. Used to show a
   // loading indicator in the UI.
@@ -179,7 +212,8 @@ export type DataProviderMetadata =
   | AverageThroughput
   | InitializationPerformanceMetadata
   | ReceivedBytes
-  | DataProviderStall;
+  | DataProviderStall
+  | WebvizNodePerformance;
 
 // A ROS bag "connection", used for parsing messages.
 export type Connection = {|

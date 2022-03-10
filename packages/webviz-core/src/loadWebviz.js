@@ -29,7 +29,9 @@ if (process.env.NODE_ENV === "development" && getEnableWhyDidYouRender()) {
 
 let importedPanelsByCategory;
 let importedPerPanelHooks;
-const defaultHooks = {
+
+// Only exported for tests
+export const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
@@ -173,15 +175,9 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
-      useGLChartIn2dPlot: {
-        name: "Enable WebGL-based charts for the 2D plot panel",
-        description: "Replaces the Chartjs-based charts with a new implementation using WebGL instead.",
-        developmentDefault: false,
-        productionDefault: false,
-      },
-      useGLChartInPlotPanel: {
-        name: "Enable WebGL-based charts for the Plot panel",
-        description: "Replaces the Chartjs-based charts with a new implementation using WebGL instead.",
+      zaplib: {
+        name: "Enable Webviz Rust Framework (requires reload)",
+        description: "Use Webviz Rust Framework (WRF) for performance improvements.",
         developmentDefault: false,
         productionDefault: false,
       },
@@ -195,6 +191,9 @@ const defaultHooks = {
   updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
     // Persist the layout state in URL or remote storage if needed.
     await Promise.resolve();
+  },
+  getPublishedNodesApi() {
+    return null;
   },
 };
 

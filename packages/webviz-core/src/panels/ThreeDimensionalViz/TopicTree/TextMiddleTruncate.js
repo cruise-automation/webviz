@@ -18,6 +18,7 @@ export const STextMiddleTruncate = styled.div`
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: flex-start;
+  min-width: 0;
 `;
 
 const SStart = styled.div`

@@ -33,7 +33,7 @@ const readFile = util.promisify(fs.readFile);
 const log = new ServerLogger(__filename);
 
 const baseUrlObject = new URL("http://localhost:3000/");
-const perFrameTimeoutMs = 1 * 60000; // 1 minute
+const perFrameTimeoutMs = 2 * 60000; // 2 minutes
 const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 const pendingRequestPauseDurationMs = 1000; // Amount of time to wait for any pending XHR requests to settle
@@ -117,7 +117,7 @@ export async function recordVideo(
   const { onProgress } = options;
 
   // This is used primarily to ensure the map tile requests resolve before taking screenshots
-  const pendingRequestUrls = new Set();
+  const pendingRequestUrlsById = new Map<string, string>();
   const startEpoch = Date.now();
 
   let hasFailed = false;
@@ -160,15 +160,18 @@ export async function recordVideo(
           await client.send("Fetch.enable", {
             patterns: [{ urlPattern: "*", requestStage: "Request" }, { urlPattern: "*", requestStage: "Response" }],
           });
-          await client.on("Fetch.requestPaused", async ({ requestId, request, responseStatusCode }) => {
+          await client.on("Fetch.requestPaused", async (params) => {
+            const { requestId, request, responseStatusCode, responseErrorReason } = params;
             const parallelUrl = `${request.url}#${parallelIndex}`;
-            if (!responseStatusCode) {
-              pendingRequestUrls.add(parallelUrl);
+            const isResponse = responseStatusCode || responseErrorReason;
+
+            if (isResponse) {
+              pendingRequestUrlsById.delete(requestId);
             } else {
-              pendingRequestUrls.delete(parallelUrl);
+              pendingRequestUrlsById.set(requestId, parallelUrl);
             }
             if (DEBUG_REQUEST_INTERCEPTION) {
-              log.info(`[Fetch DEBUG] ${!responseStatusCode ? "adding" : "removing"}: ${parallelUrl}`);
+              log.info(`[Fetch DEBUG] ${isResponse ? "removing" : "adding"}: ${requestId}, URL: ${parallelUrl}`);
             }
             try {
               await client.send("Fetch.continueRequest", { requestId });
@@ -249,7 +252,7 @@ export async function recordVideo(
                     log.info(`Waiting for ${delayMs}ms to ensure all assets have loaded...`);
                     await delay(delayMs);
                   }
-                  await waitForXhrRequests(pendingRequestUrls);
+                  await waitForXhrRequests(pendingRequestUrlsById);
 
                   // Take a screenshot, and then tell the client that we're done taking a screenshot,
                   // so it can continue executing.
@@ -354,15 +357,15 @@ export async function recordVideo(
 }
 
 // Exported for tests
-export async function waitForXhrRequests(pendingRequestUrls: Set<string>) {
+export async function waitForXhrRequests(pendingRequestUrlsById: Map<string, string>) {
   let timeout = false;
-  const hasPendingRequests = () => pendingRequestUrls.size > 0 && !timeout;
+  const hasPendingRequests = () => pendingRequestUrlsById.size > 0 && !timeout;
   const waitForPendingRequests = async () => {
     const hadPendingRequests = hasPendingRequests();
     while (hasPendingRequests()) {
       log.info(
-        `Waiting for ${pendingRequestUrls.size} request(s) to resolve...${
-          DEBUG_REQUEST_INTERCEPTION ? `pendingRequestUrls:\n ${[...pendingRequestUrls].join("\n")}` : ""
+        `Waiting for ${pendingRequestUrlsById.size} request(s) to resolve...${
+          DEBUG_REQUEST_INTERCEPTION ? `pendingRequestUrls:\n${[...pendingRequestUrlsById.values()].join("\n")}` : ""
         }`
       );
       await delay(pendingRequestPauseDurationMs);
@@ -381,11 +384,11 @@ export async function waitForXhrRequests(pendingRequestUrls: Set<string>) {
         resolve();
       }),
       30000,
-      `Waiting for XHR Requests: ${JSON.stringify([...pendingRequestUrls])}`
+      `Waiting for XHR Requests: ${JSON.stringify([...pendingRequestUrlsById])}`
     );
   } catch (error) {
     // Clear the pending urls or else they'll continue to timeout forever
-    pendingRequestUrls.clear();
+    pendingRequestUrlsById.clear();
     log.warn(error);
   } finally {
     timeout = true;

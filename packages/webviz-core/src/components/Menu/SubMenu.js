@@ -16,7 +16,7 @@ type State = {
   open: boolean,
 };
 
-type Props = {
+type Props = {|
   children: React.Node,
   text: React.Node,
   checked?: boolean,
@@ -24,7 +24,7 @@ type Props = {
   icon?: React.Node,
   style?: { [string]: any },
   dataTest?: string,
-};
+|};
 
 export default class SubMenu extends React.Component<Props, State> {
   _unmounted: boolean = false;

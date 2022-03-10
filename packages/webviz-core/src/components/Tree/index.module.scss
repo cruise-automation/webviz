@@ -90,11 +90,11 @@ $padding: 6px;
 }
 
 .hasChildren {
-  color: $text-bright;
+  color: $textBright;
 }
 
 .disabled {
-  color: $text-disabled;
+  color: $textDisabled;
   cursor: auto;
   &:hover {
     background: transparent;

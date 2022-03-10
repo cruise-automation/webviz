@@ -79,12 +79,12 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
     : { mode: "flat", flatColor: DEFAULT_FLAT_COLOR };
 
   return (
-    <Flex col>
+    <Flex grow col>
       <CommonPointSettings settings={settings} defaultPointSize={2} onFieldChange={onFieldChange} />
       <CommonDecaySettings settings={settings} onFieldChange={onFieldChange} />
 
       <SLabel>Color by</SLabel>
-      <Flex row style={{ justifyContent: "space-between", marginBottom: "8px" }}>
+      <Flex grow row style={{ justifyContent: "space-between", marginBottom: "8px" }}>
         <SegmentedControlWrapper>
           <SegmentedControl
             selectedId={colorMode.mode === "flat" ? "flat" : "data"}
@@ -106,7 +106,7 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
             options={[{ id: "flat", label: "Flat" }, { id: "data", label: "Point data" }]}
           />
         </SegmentedControlWrapper>
-        <Flex row style={{ margin: "2px 0 2px 12px", alignItems: "center" }}>
+        <Flex grow row style={{ margin: "2px 0 2px 12px", alignItems: "center" }}>
           {colorMode.mode === "flat" ? (
             // For flat mode, pick a single color
             <ColorPickerForTopicSettings
@@ -145,10 +145,10 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
       </Flex>
 
       {(colorMode.mode === "gradient" || colorMode.mode === "rainbow") && (
-        <Flex col style={{ marginBottom: "8px" }}>
+        <Flex grow col style={{ marginBottom: "8px" }}>
           <SLabel>Value range</SLabel>
-          <Flex row style={{ marginLeft: "8px" }}>
-            <Flex row style={{ flex: "1 1 100%", alignItems: "baseline", marginRight: "20px" }}>
+          <Flex grow row style={{ marginLeft: "8px" }}>
+            <Flex grow row style={{ flex: "1 1 100%", alignItems: "baseline", marginRight: "20px" }}>
               Min
               <SValueRangeInput
                 value={colorMode.minValue ?? ""}
@@ -160,7 +160,7 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
                 }
               />
             </Flex>
-            <Flex row style={{ flex: "1 1 100%", alignItems: "baseline" }}>
+            <Flex grow row style={{ flex: "1 1 100%", alignItems: "baseline" }}>
               Max
               <SValueRangeInput
                 value={colorMode.maxValue ?? ""}

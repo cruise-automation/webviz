@@ -18,12 +18,12 @@ import { openSiblingPlotPanel, plotableRosTypes } from "webviz-core/src/panels/P
 import { openSiblingStateTransitionsPanel, transitionableRosTypes } from "webviz-core/src/panels/StateTransitions";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 
-type Props = {
+type Props = {|
   valueAction: ValueAction,
   basePath: string,
   onTopicPathChange: (string) => void,
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
-};
+|};
 
 export default function RawMessagesIcons({ valueAction, basePath, onTopicPathChange, openSiblingPanel }: Props): Node {
   const openPlotPanel = useCallback(

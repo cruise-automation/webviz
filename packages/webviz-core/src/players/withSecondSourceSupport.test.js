@@ -24,7 +24,7 @@ describe("withSecondSourceSupport", () => {
       }),
       defaultState: {},
       inputs: ["/foo", "/bar"],
-      output: { name: "/baz", datatype: "datatype" },
+      output: { name: "/baz", datatypeName: "datatype", datatypeId: "datatype" },
       datatypes: {},
       format: "parsedMessages",
     };
@@ -35,7 +35,7 @@ describe("withSecondSourceSupport", () => {
         callback: expect.any(Function),
         defaultState: {},
         inputs: addTopicPrefix(nodeDefinition.inputs, $WEBVIZ_SOURCE_2),
-        output: { name: joinTopics($WEBVIZ_SOURCE_2, "/baz"), datatype: "datatype" },
+        output: { name: joinTopics($WEBVIZ_SOURCE_2, "/baz"), datatypeName: "datatype", datatypeId: "datatype" },
         datatypes: {},
       })
     );

@@ -40,8 +40,8 @@ function getPlayerState(): PlayerState {
       isPlaying: true,
       speed: 0.2,
       lastSeekTime: 0,
-      topics: [{ name: "/empty_topic", datatype: "VoidType" }],
-      datatypes: { VoidType: { fields: [] } },
+      topics: [{ name: "/empty_topic", datatypeName: "VoidType", datatypeId: "VoidType" }],
+      datatypes: { VoidType: { name: "VoidType", fields: [] } },
       parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
       totalBytesReceived: 1234,
@@ -209,4 +209,34 @@ storiesOf("<PlaybackControls>", module)
         <ControlsWithModal />
       </Wrapper>
     );
+  })
+  .add("seek time dropdown", () => {
+    const store = configureStore(createRootReducer(createMemoryHistory()));
+    store.dispatch(setPlaybackConfig({ messageOrder: "headerStamp" }));
+    const player = getPlayerState();
+
+    const pause = action("pause");
+    const play = action("play");
+    const seek = action("seek");
+
+    function click() {
+      const element = document.querySelector("[data-testid='seek-select']");
+      if (element) {
+        TestUtils.Simulate.click(element);
+      }
+    }
+
+    // wrap the component so we can get a ref to it and force a mouse over and out event
+    function Controls() {
+      React.useEffect(() => click());
+      return <UnconnectedPlaybackControls player={player} pause={pause} play={play} seek={seek} />;
+    }
+
+    return (
+      <Wrapper activeData={player.activeData} store={store}>
+        <Controls />
+      </Wrapper>
+    );
   });
+
+export { getPlayerState };

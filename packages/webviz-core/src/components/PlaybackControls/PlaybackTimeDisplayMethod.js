@@ -120,7 +120,7 @@ const PlaybackTimeDisplayMethod = ({
   }, [hasError, inputText, isPlaying]);
 
   return (
-    <Flex start style={{ maxWidth: `${MAX_WIDTH}px`, alignItems: "center", marginLeft: "8px" }}>
+    <Flex grow start style={{ maxWidth: `${MAX_WIDTH}px`, alignItems: "center", marginLeft: "8px" }}>
       {currentTime ? (
         isEditing ? (
           <form onSubmit={onSubmit} style={{ width: "100%" }}>

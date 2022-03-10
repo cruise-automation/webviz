@@ -29,11 +29,12 @@ describe("useArbitraryTopicMessage", () => {
       {
         name: "/foo",
         preloadable: true,
-        datatype: "fake",
+        datatypeName: "fake",
+        datatypeId: "fake",
       },
     ];
 
-    it("returns an empty structure when there are no blocks", async () => {
+    it("returns an empty structure when there are no blocks", () => {
       const Test = createTest();
 
       const root = mount(
@@ -47,14 +48,9 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("handles uninitialized block states", async () => {
+    it("handles uninitialized block states", () => {
       // Note: progress.blocks.map() does not iterate over the blocks.
-      const progress = {
-        messageCache: {
-          blocks: new Array(2),
-          startTime: { sec: 0, nsec: 0 },
-        },
-      };
+      const progress = { messageCache: { blocks: new Array(2) } };
 
       const Test = createTest();
       const root = mount(
@@ -66,12 +62,9 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("handles empty blocks", async () => {
+    it("handles empty blocks", () => {
       const progress = {
-        messageCache: {
-          blocks: [{ messagesByTopic: {}, sizeInBytes: 0 }, { messagesByTopic: {}, sizeInBytes: 0 }],
-          startTime: { sec: 0, nsec: 0 },
-        },
+        messageCache: { blocks: [{ messagesByTopic: {}, sizeInBytes: 0 }, { messagesByTopic: {}, sizeInBytes: 0 }] },
       };
 
       const Test = createTest();
@@ -83,12 +76,9 @@ describe("useArbitraryTopicMessage", () => {
       expect(Test.result.mock.calls).toEqual([[undefined]]);
       root.unmount();
     });
-    it("does not update when we haven't found a message yet", async () => {
+    it("does not update when we haven't found a message yet", () => {
       const progress = {
-        messageCache: {
-          blocks: [{ messagesByTopic: {}, sizeInBytes: 0 }, { messagesByTopic: {}, sizeInBytes: 0 }],
-          startTime: { sec: 0, nsec: 0 },
-        },
+        messageCache: { blocks: [{ messagesByTopic: {}, sizeInBytes: 0 }, { messagesByTopic: {}, sizeInBytes: 0 }] },
       };
 
       const Test = createTest();
@@ -111,7 +101,7 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("does not update when new blocks arrive", async () => {
+    it("does not update when new blocks arrive", () => {
       const progress = {
         messageCache: {
           blocks: [
@@ -128,7 +118,6 @@ describe("useArbitraryTopicMessage", () => {
               sizeInBytes: 0,
             },
           ],
-          startTime: { sec: 0, nsec: 0 },
         },
       };
 
@@ -166,7 +155,7 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("updates when new blocks arrive, as long a new playerId arrives too", async () => {
+    it("updates when new blocks arrive, as long a new playerId arrives too", () => {
       const progress = {
         messageCache: {
           blocks: [
@@ -183,7 +172,6 @@ describe("useArbitraryTopicMessage", () => {
               sizeInBytes: 0,
             },
           ],
-          startTime: { sec: 0, nsec: 0 },
         },
       };
 
@@ -219,11 +207,12 @@ describe("useArbitraryTopicMessage", () => {
       {
         name: "/foo",
         preloadable: false,
-        datatype: "fake",
+        datatypeName: "fake",
+        datatypeId: "fake",
       },
     ];
 
-    it("returns an empty structure when there are no messages", async () => {
+    it("returns an empty structure when there are no messages", () => {
       const Test = createTest();
 
       const root = mount(
@@ -237,7 +226,7 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("does not update when we haven't found the message yet", async () => {
+    it("does not update when we haven't found the message yet", () => {
       const Test = createTest();
 
       const root = mount(
@@ -256,7 +245,7 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("does not update when new messages arrive", async () => {
+    it("does not update when new messages arrive", () => {
       const bobjects = [
         {
           topic: "/foo",
@@ -283,7 +272,7 @@ describe("useArbitraryTopicMessage", () => {
       root.unmount();
     });
 
-    it("updates when new messages arrive, as long a new playerId arrives too", async () => {
+    it("updates when new messages arrive, as long a new playerId arrives too", () => {
       const bobjects = [
         {
           topic: "/foo",

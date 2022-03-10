@@ -6,12 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { keyBy } from "lodash";
+
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
 import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
 import RewriteBinaryDataProvider from "webviz-core/src/dataProviders/RewriteBinaryDataProvider";
+import { objectValues } from "webviz-core/src/util";
 
 function getProvider() {
   return new ParseMessagesDataProvider(
@@ -43,6 +46,11 @@ const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
   notifyPlayerManager: async () => {},
+  nodePlaygroundActions: {
+    setCompiledNodeData: jest.fn(),
+    addUserNodeLogs: jest.fn(),
+    setUserNodeRosLib: jest.fn(),
+  },
 };
 
 describe("ParseMessagesDataProvider", () => {
@@ -51,22 +59,57 @@ describe("ParseMessagesDataProvider", () => {
     const result = await provider.initialize(dummyExtensionPoint);
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
-    expect(result.topics).toContainOnly([
-      { datatype: "rosgraph_msgs/Log", name: "/rosout", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle1/color_sensor", numMessages: 1351 },
-      { datatype: "tf2_msgs/TFMessage", name: "/tf_static", numMessages: 1 },
-      { datatype: "turtlesim/Color", name: "/turtle2/color_sensor", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle1/pose", numMessages: 1344 },
-      { datatype: "turtlesim/Pose", name: "/turtle2/pose", numMessages: 1344 },
-      { datatype: "tf/tfMessage", name: "/tf", numMessages: 1344 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel", numMessages: 208 },
-      { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel", numMessages: 357 },
-    ]);
+    expect(keyBy(result.topics, "name")).toEqual({
+      "/rosout": { datatypeName: "rosgraph_msgs/Log", datatypeId: expect.any(String), name: "/rosout", numMessages: 1 },
+      "/turtle1/color_sensor": {
+        datatypeName: "turtlesim/Color",
+        datatypeId: expect.any(String),
+        name: "/turtle1/color_sensor",
+        numMessages: 1351,
+      },
+      "/tf_static": {
+        datatypeName: "tf2_msgs/TFMessage",
+        datatypeId: expect.any(String),
+        name: "/tf_static",
+        numMessages: 1,
+      },
+      "/turtle2/color_sensor": {
+        datatypeName: "turtlesim/Color",
+        datatypeId: expect.any(String),
+        name: "/turtle2/color_sensor",
+        numMessages: 1344,
+      },
+      "/turtle1/pose": {
+        datatypeName: "turtlesim/Pose",
+        datatypeId: expect.any(String),
+        name: "/turtle1/pose",
+        numMessages: 1344,
+      },
+      "/turtle2/pose": {
+        datatypeName: "turtlesim/Pose",
+        datatypeId: expect.any(String),
+        name: "/turtle2/pose",
+        numMessages: 1344,
+      },
+      "/tf": { datatypeName: "tf/tfMessage", datatypeId: expect.any(String), name: "/tf", numMessages: 1344 },
+      "/turtle2/cmd_vel": {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: expect.any(String),
+        name: "/turtle2/cmd_vel",
+        numMessages: 208,
+      },
+      "/turtle1/cmd_vel": {
+        datatypeName: "geometry_msgs/Twist",
+        datatypeId: expect.any(String),
+        name: "/turtle1/cmd_vel",
+        numMessages: 357,
+      },
+    });
     const { messageDefinitions } = result;
     if (messageDefinitions.type !== "parsed") {
       throw new Error("ParseMessagesDataProvider should return parsed message definitions");
     }
-    expect(Object.keys(messageDefinitions.datatypes)).toContainOnly([
+    expect(objectValues(messageDefinitions.datatypes).map(({ name }) => name)).toContainOnly([
       "rosgraph_msgs/Log",
       "std_msgs/Header",
       "turtlesim/Color",

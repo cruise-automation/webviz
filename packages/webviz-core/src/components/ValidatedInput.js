@@ -197,8 +197,8 @@ export function YamlInput(props: BaseProps) {
 export default function ValidatedInput({ format = EDIT_FORMAT.JSON, onSelectFormat, children, ...rest }: Props) {
   const InputComponent = format === EDIT_FORMAT.JSON ? JsonInput : YamlInput;
   return (
-    <Flex col>
-      <Flex row reverse>
+    <Flex grow col>
+      <Flex grow row reverse>
         {children}
         <STransparentDropdownButton>
           <Dropdown position="right" value={format} text={format.toUpperCase()} onChange={onSelectFormat}>

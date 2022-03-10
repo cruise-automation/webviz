@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
@@ -32,10 +33,20 @@ export type PlaybackConfig = {
   speed: number,
   messageOrder: TimestampMethod,
   timeDisplayMethod: "ROS" | "TOD",
+  tickMarkerTopics?: string[],
 };
 
-export type UserNode = { name: string, sourceCode: string };
+export type UserNode = { name: string, sourceCode?: string, published?: boolean };
 export type UserNodes = { [nodeId: string]: UserNode };
+
+export type CompiledUserNodeData = {
+  diagnostics?: $ReadOnlyArray<Diagnostic>,
+  metadata?: {
+    outputTopic: string,
+    inputTopics: $ReadOnlyArray<string>,
+  },
+};
+export type CompiledUserNodeDataById = { [nodeId: string]: CompiledUserNodeData };
 
 // May want finer-grained controls in the future, currently just a boolean "suppress" condition.
 // Unused, but should be used for intermediate states like during a panel move when the panel isn't

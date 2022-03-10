@@ -1,0 +1,10 @@
+[package]
+name = "webviz-core"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+# Build zaplib from latest commit, but keep it in sync with package.json
+# https://github.com/Zaplib/zaplib/commit/44da444
+zaplib = { git = "https://github.com/Zaplib/zaplib", rev = "44da444" }

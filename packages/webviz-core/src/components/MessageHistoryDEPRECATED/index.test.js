@@ -18,7 +18,7 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
-const singleTopic = [{ name: "/some/topic", datatype: "some/datatype" }];
+const singleTopic = [{ name: "/some/topic", datatypeName: "some/datatype", datatypeId: "some/datatype" }];
 
 describe("<MessageHistoryDEPRECATED />", () => {
   it("passes through children", () => {
@@ -34,7 +34,10 @@ describe("<MessageHistoryDEPRECATED />", () => {
     const setSubscriptions = jest.fn();
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        topics={[
+          { name: "/some/topic", datatypeName: "dummy", datatypeId: "dummy" },
+          { name: "/some/other/topic", datatypeName: "dummy", datatypeId: "dummy" },
+        ]}
         setSubscriptions={setSubscriptions}>
         <MessageHistoryDEPRECATED paths={["/some/topic", "/some/other/topic"]}>{() => null}</MessageHistoryDEPRECATED>
       </MockMessagePipelineProvider>
@@ -262,7 +265,10 @@ describe("<MessageHistoryDEPRECATED />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "some/datatype" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        topics={[
+          { name: "/some/topic", datatypeName: "some/datatype", datatypeId: "some/datatype" },
+          { name: "/some/other/topic", datatypeName: "dummy", datatypeId: "dummy" },
+        ]}
         datatypes={datatypes}
         messages={[messages[0]]}>
         <MessageHistoryDEPRECATED paths={["/some/topic"]}>{childFn}</MessageHistoryDEPRECATED>
@@ -310,7 +316,10 @@ describe("<MessageHistoryDEPRECATED />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "some/datatype" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        topics={[
+          { name: "/some/topic", datatypeName: "some/datatype", datatypeId: "some/datatype" },
+          { name: "/some/other/topic", datatypeName: "dummy", datatypeId: "dummy" },
+        ]}
         datatypes={datatypes}
         messages={[messages[0]]}>
         <MessageHistoryDEPRECATED paths={["/some/topic"]}>{childFn}</MessageHistoryDEPRECATED>
@@ -353,8 +362,8 @@ describe("<MessageHistoryDEPRECATED />", () => {
 
   describe("global variables in paths", () => {
     const exampleDatatypes = {
-      "dtype/Foo": { fields: [{ name: "bars", type: "dtype/Bar", isArray: true, isComplex: true }] },
-      "dtype/Bar": { fields: [{ name: "index", type: "int32" }, { name: "baz", type: "int32" }] },
+      "dtype/Foo": { name: "dtype/Foo", fields: [{ name: "bars", type: "dtype/Bar", isArray: true, isComplex: true }] },
+      "dtype/Bar": { name: "dtype/Bar", fields: [{ name: "index", type: "int32" }, { name: "baz", type: "int32" }] },
     };
 
     const message = {
@@ -372,7 +381,7 @@ describe("<MessageHistoryDEPRECATED />", () => {
       const provider = mount(
         <MockMessagePipelineProvider
           store={store}
-          topics={[{ name: "/some/topic", datatype: "dtype/Foo" }]}
+          topics={[{ name: "/some/topic", datatypeName: "dtype/Foo", datatypeId: "dtype/Foo" }]}
           datatypes={exampleDatatypes}
           messages={[message]}>
           <MessageHistoryDEPRECATED paths={["/some/topic.bars[:]{index==$foo}.baz"]}>
@@ -423,7 +432,7 @@ describe("<MessageHistoryDEPRECATED />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "some/datatype" }]}
+        topics={[{ name: "/some/topic", datatypeName: "some/datatype", datatypeId: "some/datatype" }]}
         datatypes={datatypes}
         messages={[messages[0]]}>
         <MessageHistoryDEPRECATED paths={["/some/topic"]}>{childFn}</MessageHistoryDEPRECATED>
@@ -465,7 +474,10 @@ describe("<MessageHistoryDEPRECATED />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        topics={[
+          { name: "/some/topic", datatypeName: "dummy", datatypeId: "dummy" },
+          { name: "/some/other/topic", datatypeName: "dummy", datatypeId: "dummy" },
+        ]}
         datatypes={datatypes}
         messages={[messages[0]]}>
         <MessageHistoryDEPRECATED paths={["/some/other/topic"]}>{childFn}</MessageHistoryDEPRECATED>
@@ -497,7 +509,7 @@ describe("<MessageHistoryDEPRECATED />", () => {
     let itemsByPath1, itemsByPath2;
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "dummy" }]}
+        topics={[{ name: "/some/topic", datatypeName: "dummy", datatypeId: "dummy" }]}
         datatypes={datatypes}
         messages={[messages[0], messages[1]]}>
         <MessageHistoryDEPRECATED paths={paths}>

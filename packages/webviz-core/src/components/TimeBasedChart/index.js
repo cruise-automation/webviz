@@ -23,10 +23,10 @@ import {
   useForceRerenderOnVisibilityChange,
 } from "./utils";
 import Button from "webviz-core/src/components/Button";
-import GLChart from "webviz-core/src/components/GLChart";
 import HoverBar, { getChartTopAndHeight, SBar } from "webviz-core/src/components/HoverBar";
 import { useClearHoverValue, useSetHoverValue } from "webviz-core/src/components/HoverBar/context";
 import KeyListener from "webviz-core/src/components/KeyListener";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import ReactChartjs, {
   type HoveredElement,
   type ChartCallbacks,
@@ -43,6 +43,7 @@ import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/Time
 import Tooltip from "webviz-core/src/components/Tooltip";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 import { useDeepChangeDetector, useDeepMemo, useForceUpdate } from "webviz-core/src/util/hooks";
+import invariant from "webviz-core/src/util/invariant";
 
 const SRoot = styled.div`
   position: relative;
@@ -128,7 +129,6 @@ type Props = {|
   scaleOptions?: ?ScaleOptions,
   currentTime?: ?number,
   defaultView?: ChartDefaultView,
-  renderPath?: "webgl" | "chartjs",
 |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
@@ -145,6 +145,8 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const hasUserPannedOrZoomedRef = useRef(hasUserPannedOrZoomed);
   hasUserPannedOrZoomedRef.current = hasUserPannedOrZoomed;
   const [followPlaybackState, setFollowPlaybackState] = useState<?FollowPlaybackState>(null);
+
+  const isPlaying = useMessagePipeline(useCallback(({ playerState }) => playerState.activeData?.isPlaying, []));
 
   useForceRerenderOnVisibilityChange();
 
@@ -191,6 +193,15 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       if (value == null) {
         return;
       }
+
+      if (bounds.axes === "xAxes" && bounds.min != null && bounds.max != null && hasUserPannedOrZoomedRef.current) {
+        // if the viewer is zoomed in at all, refocus the bounds to the clicked timestamp
+        setFollowPlaybackState({
+          xOffsetMin: bounds.min - value,
+          xOffsetMax: bounds.max - value,
+        });
+      }
+
       values[bounds.id] = value;
     });
     return onClick(ev, datalabel, values);
@@ -332,7 +343,8 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   const onMouseMove = useCallback(async (event: MouseEvent) => {
     const canvas = chartCallbacks.current && chartCallbacks.current.canvasRef.current;
-    if (!canvas) {
+    const dragging = event.buttons !== 0; // buttons will be non-zero if any mouse button is pressed
+    if (!canvas || dragging) {
       removeTooltip();
       clearGlobalHoverTime();
       return;
@@ -394,9 +406,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     maxX = defaultView.maxXValue;
   } else {
     // Following with non-null currentTime.
-    if (currentTime == null) {
-      throw new Error("Flow doesn't know that currentTime != null");
-    }
+    invariant(currentTime != null, "Flow doesn't know that currentTime != null");
     minX = currentTime - defaultView.width / 2;
     maxX = currentTime + defaultView.width / 2;
   }
@@ -411,6 +421,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const bounds = usingSyncedBounds ? { minX: syncedMinX, maxX: syncedMaxX } : { minX, maxX };
 
   const enableFollowingPlayback =
+    isPlaying &&
     followPlaybackState &&
     (lastPanTime.current == null || new Date() - lastPanTime.current > FOLLOW_PLAYBACK_PAN_THRESHOLD_MS);
   const followPlaybackCurrentTime = enableFollowingPlayback ? currentTime : undefined;
@@ -534,8 +545,6 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const currentTimePx: ?number = currentTime != null ? getChartPx(xBounds, currentTime) : undefined;
   const chartTopAndHeight = getChartTopAndHeight(scaleBounds.current);
 
-  const ChartComponent = props.renderPath === "webgl" ? GLChart : ReactChartjs;
-
   return (
     <div style={{ display: "flex", width: "100%" }}>
       <div style={{ display: "flex", width }}>
@@ -552,7 +561,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
               }}
             />
           )}
-          <ChartComponent
+          <ReactChartjs
             type={type}
             width={width}
             height={height}

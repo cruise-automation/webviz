@@ -11,7 +11,15 @@ import Queue from "promise-queue";
 import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
-import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
+import type {
+  DataProvider,
+  DataProviderMetadata,
+  InitializationResult,
+  NodePlaygroundActions,
+  ParsedMessageDefinitions,
+} from "webviz-core/src/dataProviders/types";
+import filterMap from "webviz-core/src/filterMap";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { BUFFER_DURATION_SECS } from "webviz-core/src/players/OrderedStampPlayer";
 import { SEEK_BACK_NANOSECONDS } from "webviz-core/src/players/RandomAccessPlayer";
 import type {
@@ -25,6 +33,7 @@ import type {
   SubscribePayload,
   Topic,
 } from "webviz-core/src/players/types";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import {
@@ -77,9 +86,11 @@ export default class AutomatedRunPlayer implements Player {
   _endTime: Time;
   _providerResult: InitializationResult;
   _providerTopics: Topic[] = [];
+  _messageDefinitions: ParsedMessageDefinitions;
   _progress: Progress;
   _bobjectTopics: Set<string> = new Set();
   _parsedTopics: Set<string> = new Set();
+  _preloadingTopics: Set<string> = new Set();
   _listener: (PlayerState) => Promise<void>;
   _initializeTimeout: TimeoutID;
   _initialized: boolean = false;
@@ -90,15 +101,20 @@ export default class AutomatedRunPlayer implements Player {
   _startCalled: boolean = false;
   _receivedBytes: number = 0;
   _globalMessageOrder: TimestampMethod = "receiveTime";
+  _nodePlaygroundActions: NodePlaygroundActions;
   // Calls to this._listener must not happen concurrently, and we want them to happen
   // deterministically so we put them in a FIFO queue.
   _emitStateQueue: Queue = new Queue(1);
 
-  constructor(provider: DataProvider, client: AutomatedRunClient) {
+  constructor(
+    provider: DataProvider,
+    { client, nodePlaygroundActions }: { client: AutomatedRunClient, nodePlaygroundActions: NodePlaygroundActions }
+  ) {
     this._provider = provider;
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
+    this._nodePlaygroundActions = nodePlaygroundActions;
   }
 
   async _getMessages(
@@ -117,6 +133,7 @@ export default class AutomatedRunPlayer implements Player {
     const messages = await this._provider.getMessages(start, end, {
       parsedMessages: parsedTopics,
       bobjects: bobjectTopics,
+      preloadedTopics: this._preloadingTopics,
     });
     const { parsedMessages, rosBinaryMessages, bobjects } = messages;
     if (rosBinaryMessages?.length || bobjects == null || parsedMessages == null) {
@@ -133,7 +150,7 @@ export default class AutomatedRunPlayer implements Player {
           throw new Error(`Could not find topic for message ${message.topic}`);
         }
 
-        if (!topic.datatype) {
+        if (!topic.datatypeName) {
           throw new Error(`Missing datatype for topic: ${message.topic}`);
         }
         return {
@@ -154,8 +171,7 @@ export default class AutomatedRunPlayer implements Player {
       if (!this._listener) {
         return;
       }
-      const initializationResult = this._providerResult;
-      if (!initializationResult.messageDefinitions || initializationResult.messageDefinitions.type === "raw") {
+      if (!this._messageDefinitions) {
         throw new Error("AutomatedRunPlayer requires parsed message definitions");
       }
       return this._listener({
@@ -177,8 +193,8 @@ export default class AutomatedRunPlayer implements Player {
           messageOrder: "receiveTime",
           lastSeekTime: 0,
           topics: this._providerTopics,
-          datatypes: initializationResult.messageDefinitions.datatypes,
-          parsedMessageDefinitionsByTopic: initializationResult.messageDefinitions.parsedMessageDefinitionsByTopic,
+          datatypes: this._messageDefinitions.datatypes,
+          parsedMessageDefinitionsByTopic: this._messageDefinitions.parsedMessageDefinitionsByTopic,
           playerWarnings: NO_WARNINGS,
         },
       });
@@ -193,6 +209,7 @@ export default class AutomatedRunPlayer implements Player {
     const [bobjectSubscriptions, parsedSubscriptions] = partition(subscriptions, ({ format }) => format === "bobjects");
     this._bobjectTopics = new Set(bobjectSubscriptions.map(({ topic }) => topic));
     this._parsedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
+    this._preloadingTopics = new Set(filterMap(subscriptions, ({ preloading, topic }) => preloading && topic));
 
     // Wait with running until we've subscribed to a bunch of topics.
     clearTimeout(this._initializeTimeout);
@@ -230,14 +247,21 @@ export default class AutomatedRunPlayer implements Player {
             break;
           case "data_provider_stall":
             break;
+          case "webviz_node_performance":
+            break;
           default:
             (metadata.type: empty);
         }
       },
       notifyPlayerManager: async () => {},
+      nodePlaygroundActions: this._nodePlaygroundActions,
     });
-    this._providerTopics = this._providerResult.topics.map((t) => ({ ...t, preloadable: true }));
-
+    const { topics, messageDefinitions } = this._providerResult;
+    this._setTopics(topics);
+    if (messageDefinitions.type === "raw") {
+      throw new Error("AutomatedRunPlayer requires parsed message definitions");
+    }
+    this._setMessageDefinitions(messageDefinitions);
     this._startTime = clampTime(
       subtractTimes(this._client.rangeStartTime || this._providerResult.start, fromMillis(BUFFER_DURATION_SECS * 1000)),
       this._providerResult.start,
@@ -414,8 +438,18 @@ export default class AutomatedRunPlayer implements Player {
   }
 
   requestBackfill() {}
-  setGlobalVariables() {
-    console.warn(`setGlobalVariables: Unsupported in AutomatedRunPlayer`);
+
+  _setTopics(topics: $ReadOnlyArray<Topic>) {
+    this._providerTopics = topics.map((t) => ({ ...t, preloadable: true }));
+  }
+  _setMessageDefinitions(messageDefinitions: ParsedMessageDefinitions) {
+    this._messageDefinitions = messageDefinitions;
+  }
+  setGlobalVariables(globalVariables: GlobalVariables) {
+    this._provider.setGlobalVariables(globalVariables);
+  }
+  async setUserNodes(userNodes: UserNodes) {
+    await this._provider.setUserNodes(userNodes);
   }
   setMessageOrder(messageOrder: TimestampMethod) {
     this._globalMessageOrder = messageOrder;

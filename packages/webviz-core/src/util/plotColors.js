@@ -37,3 +37,9 @@ export const darkColor: (_: string) => string = memoize(
       .darken(30)
       .toString()
 );
+
+export const DEFAULT_PLOT_LINE_STYLE = {
+  borderDash: undefined,
+  borderWidth: 1,
+  pointRadius: 1.5,
+};

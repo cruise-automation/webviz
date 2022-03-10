@@ -16,8 +16,8 @@ import FilterIcon from "@mdi/svg/svg/filter.svg";
 import FormatFillIcon from "@mdi/svg/svg/format-color-fill.svg";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns, useFilters } from "react-table";
-import { type RosMsgField, type Time } from "rosbag";
+import { useTable, usePagination, useBlockLayout, useResizeColumns, useFilters } from "react-table";
+import { TimeUtil, type RosMsgField, type Time } from "rosbag";
 import shallowequal from "shallowequal";
 import styled from "styled-components";
 
@@ -61,9 +61,11 @@ import {
   getFormattedColor,
   getLastAccessor,
   stripLastAccessor,
-  sortTimestamps,
   filterColumn,
   COMPARATOR_LIST,
+  flattenColumnOptions,
+  setSortConfig,
+  sortTableData,
 } from "webviz-core/src/panels/Table/utils";
 import { type Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
@@ -238,6 +240,7 @@ type TableContextProps = {|
   setColumnFilter: (columnId: string, columnFilter: ColumnFilter) => void,
   setColumnWidth: (columnId: string, width: number) => void,
   updateConditionalFormats: (columnId: string, conditionalFormats: ConditionalFormat[]) => void,
+  setSortDesc: (columnId: string, sortDesc: ?boolean, shiftPressed: boolean) => void,
 |};
 
 export const TableContext = React.createContext<TableContextProps>({
@@ -246,6 +249,7 @@ export const TableContext = React.createContext<TableContextProps>({
   setColumnFilter: () => {},
   setColumnWidth: () => {},
   updateConditionalFormats: () => {},
+  setSortDesc: () => {},
 });
 
 export const ConfigContext = createSelectableContext<Config>();
@@ -254,7 +258,11 @@ export const useColumnConfigValue = <T: ColumnConfigKey>(columnId: string, key: 
   return useContextSelector(
     ConfigContext,
     React.useCallback((config) => {
-      if (config.columnConfigs?.[columnId]?.[key]) {
+      if (
+        config.columnConfigs &&
+        config.columnConfigs[columnId] &&
+        config.columnConfigs[columnId].hasOwnProperty(key)
+      ) {
         // $FlowFixMe -- Flow confusing this return value with BAILOUTTOKEN
         return config.columnConfigs?.[columnId]?.[key];
       }
@@ -458,6 +466,11 @@ function getColumnsFromDatatype(
       const columnId = accessorPath ? `${accessorPath}.${accessor}` : accessor;
       const lastAccessor = getLastAccessor(columnId);
       const isComplexType = isComplex(field.type);
+      const isPrimitiveColumn = !isComplexType && !parentField?.isArray;
+      const isPrimitiveArrayColumn = !isComplexType && field.isArray;
+      const isPrimitiveinComplexArrayColumn = !isComplexType && parentField?.isArray;
+      const isComplexColumn = isComplexType && !parentField?.isArray;
+
       const isExpanded = expandedColumns.includes(columnId);
 
       const Cell = ({ value }: CellProps<ColumnInstance, Row>) => {
@@ -510,7 +523,9 @@ function getColumnsFromDatatype(
       };
 
       const HeaderCell = ({ column }: HeaderCellProps) => {
-        const { setExpandColumn, setHideColumn, setColumnFilter, setColumnWidth } = React.useContext(TableContext);
+        const { setExpandColumn, setHideColumn, setColumnFilter, setColumnWidth, setSortDesc } = React.useContext(
+          TableContext
+        );
         if (useChangeDetector([column.isResizing], false) && !column.isResizing) {
           setColumnWidth(columnId, column.width);
         }
@@ -518,6 +533,8 @@ function getColumnsFromDatatype(
         const isColumnExpanded = useColumnConfigValue<"isExpanded">(columnId, "isExpanded");
         const filter = useColumnConfigValue<"filter">(columnId, "filter") || DEFAULT_FILTER;
         const conditionalFormats = useColumnConfigValue<"conditionalFormats">(columnId, "conditionalFormats") || [];
+        const sortDesc = useColumnConfigValue<"sortDesc">(columnId, "sortDesc");
+        const hasSortDescSet = typeof sortDesc === "boolean";
 
         const setFilterValueCallback = React.useCallback((e) => {
           setColumnFilter(columnId, { ...filter, value: e.target.value });
@@ -530,7 +547,7 @@ function getColumnsFromDatatype(
         const renderedHeader = getLastAccessor(columnId);
 
         return (
-          <Flex>
+          <Flex grow>
             <Dropdown
               dataTest={`column-header-dropdown-${columnId}`}
               style={{ width: "100%" }}
@@ -540,7 +557,7 @@ function getColumnsFromDatatype(
                   <Tooltip contents={renderedHeader} delay={1000}>
                     <span>{renderedHeader}</span>
                   </Tooltip>
-                  {column.isSorted ? <Icon>{column.isSortedDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
+                  {typeof sortDesc === "boolean" ? <Icon>{sortDesc ? <DownArrow /> : <UpArrow />}</Icon> : null}
                   {column.filterValue ? (
                     <Icon>
                       <FilterIcon />
@@ -556,7 +573,7 @@ function getColumnsFromDatatype(
                   </Icon>
                 </STableHeaderDropdown>
               }>
-              {!isComplexType && !parentField?.isArray ? (
+              {isPrimitiveColumn ? (
                 <>
                   <SFilterInput>
                     <div style={{ color: colors.TEXT_MUTED, whiteSpace: "nowrap" }}>if value</div>
@@ -581,19 +598,9 @@ function getColumnsFromDatatype(
                       </Icon>
                     )}
                   </SFilterInput>
-                  <SHeaderDropdownItem data-test={"sort-column"} {...column.getSortByToggleProps()}>
-                    <Tooltip contents={"To multi-sort, hold shift and click."} delay={500}>
-                      <Flex style={{ alignItems: "center" }}>
-                        <Icon className="menu-item">
-                          {column.isSorted ? column.isSortedDesc ? <CloseIcon /> : <DownArrow /> : <UpArrow />}
-                        </Icon>
-                        Sort {column.isSorted ? (column.isSortedDesc ? "(clear)" : "(desc)") : "(asc)"}
-                      </Flex>
-                    </Tooltip>
-                  </SHeaderDropdownItem>
                 </>
               ) : (
-                !parentField?.isArray && (
+                isComplexColumn && (
                   <SHeaderDropdownItem
                     data-test={"toggle-expand-column"}
                     onClick={() => {
@@ -616,6 +623,21 @@ function getColumnsFromDatatype(
                 </Icon>
                 Hide column
               </SHeaderDropdownItem>
+              {(isPrimitiveColumn || isPrimitiveArrayColumn || isPrimitiveinComplexArrayColumn) && (
+                <SHeaderDropdownItem
+                  onClick={(e) => {
+                    setSortDesc(columnId, hasSortDescSet ? (!sortDesc ? true : undefined) : false, e.shiftKey);
+                  }}>
+                  <Flex grow style={{ alignItems: "center" }}>
+                    <Icon className="menu-item">
+                      {hasSortDescSet ? sortDesc ? <CloseIcon /> : <DownArrow /> : <UpArrow />}
+                    </Icon>
+                    Sort Values {hasSortDescSet ? (sortDesc ? "(clear)" : "(desc)") : "(asc)"}{" "}
+                    {"(hold 'shift' to multi-sort)"}
+                  </Flex>
+                </SHeaderDropdownItem>
+              )}
+
               {!isComplexType && <ConditionaFormatsInput columnId={columnId} />}
             </Dropdown>
           </Flex>
@@ -646,15 +668,15 @@ function getColumnsFromDatatype(
         Cell: isExpanded ? undefined : Cell,
         columns: subColumns,
         filter: filterColumn.bind(null, field.type, columnId),
+        typeInfo: { isPrimitiveArrayColumn, isPrimitiveinComplexArrayColumn },
       };
 
       if (field.type === "time" || field.type === "duration") {
-        columnOptions.sortType = sortTimestamps;
+        columnOptions.sortType = TimeUtil.compare;
       }
 
       return columnOptions;
     });
-
   return columns;
 }
 
@@ -678,7 +700,9 @@ const Table = React.memo(
     const expandedColumns = useColumnConfigFilterMap("isExpanded");
 
     const initialFilters = useColumnConfigFilterReduce("filter");
-    const initialSortBy = useColumnConfigFilterReduce<"sortDesc">("sortDesc");
+    const sortDesc = useColumnConfigFilterReduce<"sortDesc">("sortDesc");
+    const sortDescTime = useColumnConfigFilterReduce<"sortDescTime">("sortDescTime");
+
     const columnWidths = useColumnConfigFilterReduce<"width">("width", true);
 
     const fields = React.useMemo(
@@ -694,19 +718,24 @@ const Table = React.memo(
 
     const data = React.useMemo(() => (Array.isArray(msg) ? msg : [msg]), [msg]);
 
+    const flattenedColumnOptions = React.useMemo(() => flattenColumnOptions(columns), [columns]);
+
+    const preSortedData = React.useMemo(() => {
+      // $FlowFixMe - Flow not understanding that sortDesc/primarySort are of type `{ [colId: string]: boolean }`
+      return sortTableData(sortDesc, sortDescTime, flattenedColumnOptions, data);
+    }, [data, flattenedColumnOptions, sortDesc, sortDescTime]);
+
     const tableInstance: TableInstance<PaginationProps, PaginationState> = useTable(
       {
         columns,
-        data,
+        data: preSortedData,
         initialState: {
           pageSize: 30,
-          sortBy: mapValues(initialSortBy, "desc"),
           hiddenColumns,
           filters: mapValues(initialFilters, "value"),
         },
       },
       useFilters,
-      useSortBy,
       useResizeColumns,
       useBlockLayout,
       usePagination
@@ -715,14 +744,6 @@ const Table = React.memo(
     const updateColumnConfig = React.useCallback((...args) => updateColumnConfigWrapper(updateConfig, ...args), [
       updateConfig,
     ]);
-
-    // $FlowFixMe: useSortBy above adds the sortBy prop, but flow doesn't know.
-    const { sortBy }: { sortBy: SortBy[] } = tableInstance.state;
-    if (useChangeDetector([sortBy], false)) {
-      sortBy.forEach((sort) => {
-        updateColumnConfig(sort.id, "sortDesc", sort.desc);
-      });
-    }
 
     if (primitiveList.has(msgDatatype)) {
       return (
@@ -769,6 +790,15 @@ const Table = React.memo(
       updateColumnConfig(columnId, "width", width);
     }, [updateColumnConfig]);
 
+    const setSortDesc = React.useCallback((columnId: string, sortDesc_: ?boolean, shiftPressed: boolean) => {
+      updateConfig((config) => {
+        return {
+          ...config,
+          columnConfigs: setSortConfig(config.columnConfigs, columnId, sortDesc_, shiftPressed),
+        };
+      });
+    }, [updateConfig]);
+
     const toggleAllColumns = React.useCallback((hidden: boolean) => {
       rcToggleHideAllColumns(hidden);
       updateConfig((config) => {
@@ -800,6 +830,7 @@ const Table = React.memo(
             setColumnFilter,
             setColumnWidth,
             updateConditionalFormats,
+            setSortDesc,
           }}>
           <STable className="table" {...getTableProps()}>
             <ColumnDropdown
@@ -900,7 +931,8 @@ function TablePanel({ config, saveConfig }: Props) {
     if (!topic || !topicRosPath) {
       return;
     }
-    return traverseStructure(messagePathStructures(datatypes)[topic.datatype], topicRosPath.messagePath).structureItem;
+    return traverseStructure(messagePathStructures(datatypes)[topic.datatypeId], topicRosPath.messagePath)
+      .structureItem;
   }, [datatypes, topic, topicRosPath]);
 
   const msgs = useMessagesByTopic({ topics: [topicName], historySize: 1 })[topicName];
@@ -940,8 +972,8 @@ function TablePanel({ config, saveConfig }: Props) {
 
   return (
     <ConfigContext.Provider value={config}>
-      <Flex col clip style={{ position: "relative" }}>
-        <Flex col style={{ flexGrow: "unset" }}>
+      <Flex grow col clip style={{ position: "relative" }}>
+        <Flex grow col style={{ flexGrow: "unset" }}>
           <PanelToolbar
             helpContent={helpContent}
             additionalIcons={
@@ -954,11 +986,11 @@ function TablePanel({ config, saveConfig }: Props) {
                   saveConfig({ topicPath: newTopicPath });
                 }}
                 topics={topics}
-                singleTopicDatatype={topic?.datatype}
+                singleTopicDatatype={topic?.datatypeName}
                 defaultTopicToRender={""}
               />
             }>
-            <Flex row style={{ width: "100%", lineHeight: "20px", marginLeft: "16px" }}>
+            <Flex grow row style={{ width: "100%", lineHeight: "20px", marginLeft: "16px" }}>
               <MessagePathInput
                 index={0}
                 path={topicPath}

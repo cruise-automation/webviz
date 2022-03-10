@@ -85,8 +85,8 @@ export function fieldSize(typesByName: RosDatatypes, field: RosMsgField): number
 // (Note, this might change depending on the code written next.)
 export const addTimeTypes = (typesByName: RosDatatypes): RosDatatypes => ({
   ...typesByName,
-  time: { fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
-  duration: { fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
+  time: { name: "time", fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
+  duration: { name: "duration", fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
 });
 
 // String.prototype.replaceAll is not implemented in Chrome.

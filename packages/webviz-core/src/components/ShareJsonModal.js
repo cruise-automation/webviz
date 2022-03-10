@@ -20,7 +20,7 @@ import { LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY, PATCH_QUERY_KEY } from "webviz-
 import { stringifyParams } from "webviz-core/src/util/layout";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
-type Props = {
+type Props = {|
   onRequestClose: () => void,
   onChange: (value: any) => void,
   // the panel state from redux
@@ -28,7 +28,7 @@ type Props = {
   value: any, // eslint-disable-line react/no-unused-prop-types
   noun: string,
   history?: BrowserHistory,
-};
+|};
 
 type State = {|
   value: string,
@@ -124,7 +124,7 @@ export default class ShareJsonModal extends Component<Props, State> {
           width: 600,
           display: "flex",
         }}>
-        <Flex col className={styles.container}>
+        <Flex grow col className={styles.container}>
           <p style={{ lineHeight: "22px" }}>
             <em>Paste a new {this.props.noun} to use it, or copy this one to share it:</em>
           </p>

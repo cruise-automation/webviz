@@ -12,16 +12,16 @@ import styled from "styled-components";
 import { usePanelContext } from "webviz-core/src/components/PanelContext";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import RawMessages, { type RawMessagesConfig } from "webviz-core/src/panels/RawMessages/index";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 
 const STopicLink = styled.span`
   cursor: pointer;
   color: ${colors.highlight};
 `;
 
-type Props = {
+type Props = {|
   topic: string,
-};
+|};
 
 export default function TopicLink({ topic }: Props) {
   const { openSiblingPanel } = usePanelContext();

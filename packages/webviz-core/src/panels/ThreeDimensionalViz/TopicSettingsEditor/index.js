@@ -63,7 +63,7 @@ export function CommonPointSettings({
   ));
 
   return (
-    <Flex col>
+    <Flex grow col>
       <SLabel>Point size</SLabel>
       <SInput
         data-test="point-size-input"
@@ -101,7 +101,7 @@ export function CommonDecaySettings({
   const decayTimeValue = decayTime === undefined ? "" : decayTime;
 
   return (
-    <Flex col>
+    <Flex grow col>
       <SLabel>Decay time (seconds)</SLabel>
       <SDescription>When set to 0, only the latest received data will be displayed.</SDescription>
       <SInput
@@ -177,16 +177,16 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
     onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
   }, [onSettingsChange]);
 
-  const Editor = topicSettingsEditorForDatatype(topic.datatype, structuralDatatypes);
+  const Editor = topicSettingsEditorForDatatype(topic.datatypeName, structuralDatatypes);
   if (!Editor) {
-    throw new Error(`No topic settings editor available for ${topic.datatype}`);
+    throw new Error(`No topic settings editor available for ${topic.datatypeName}`);
   }
 
   return (
     <div className={styles.container}>
       <h3 className={styles.topicName}>{topic.name}</h3>
       <h4 className={styles.datatype}>
-        <tt>{topic.datatype}</tt>
+        <tt>{topic.datatypeName}</tt>
       </h4>
       <ErrorBoundary>
         <Editor

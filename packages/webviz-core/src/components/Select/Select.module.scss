@@ -1,7 +1,8 @@
 @import "~webviz-core/src/styles/mixins.module.scss";
+@import "~webviz-core/src/styles/colors.module.scss";
+
 .container {
   position: relative;
-  margin: $control-margin;
   flex: 1 1 auto;
   display: flex;
 
@@ -14,15 +15,18 @@
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.5);
-  background-color: transparentize($text-normal, 0.2);
-  border-radius: 4px;
+  background-color: $DARK4;
   height: auto;
   min-height: 26px;
   border: none;
   padding: $control-padding;
   cursor: pointer;
-  color: $text-input;
+  color: $textNormal;
+  border-radius: 4px;
+
+  &.fromBelow {
+    border-radius: 0;
+  }
 
   .value {
     @include sans-serif;
@@ -35,7 +39,7 @@
     border-bottom-right-radius: 0px;
     padding: $control-padding;
     padding-right: 20px;
-    color: $text-control;
+    color: $textControl;
   }
 
   .icon {
@@ -43,10 +47,14 @@
   }
 }
 
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .menu {
   @extend %floating-box;
   position: absolute;
-  top: 0;
   left: 0;
   width: 100%;
   z-index: 999999999;

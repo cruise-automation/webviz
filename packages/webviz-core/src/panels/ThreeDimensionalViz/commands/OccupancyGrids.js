@@ -9,14 +9,17 @@
 import * as React from "react";
 import { Command, withPose, pointToVec3, defaultBlend, type CommonCommandProps } from "regl-worldview";
 
-import { TextureCache } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
-import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
+import { TextureCache, toTypedArray } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
+import type { WebvizMsgs$OccupancyGrid } from "webviz-core/src/types/Messages";
 
 const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any) => {
   // make a buffer holding the verticies of a 1x1 plane
   // it will be resized in the shader
   const positionBuffer = regl.buffer([0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0]);
 
+  const paletteTextureCommon = { format: "rgba", type: "uint8", mipmap: false, width: 256, height: 1 };
+
+  let paletteOverrideTexture = null;
   const cache = new TextureCache(regl);
   const paletteTextures = new Map<Uint8Array, any>();
 
@@ -46,8 +49,8 @@ const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any)
       float planeWidth = width * resolution;
       float planeHeight = height * resolution;
 
-      // rotate the point by the ogrid orientation & scale the point by the plane vertex dimensions
-      vec3 position = rotate(point, orientation) * vec3(planeWidth, planeHeight, 1.);
+      // scale the point by the plane vertex dimensions & rotate the point by the ogrid orientation
+      vec3 position = rotate(point * vec3(planeWidth, planeHeight, 1.), orientation);
 
       // move the vertex by the marker offset
       vec3 loc = applyPose(position + offset);
@@ -89,17 +92,28 @@ const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any)
       height: regl.prop("info.height"),
       resolution: regl.prop("info.resolution"),
       // make alpha a uniform so in the future it can be controlled by topic settings
-      alpha: (context: any, props: OccupancyGridMessage) => {
+      alpha: (context: any, props: WebvizMsgs$OccupancyGrid) => {
         return props.alpha || 0.5;
       },
-      offset: (context: any, props: OccupancyGridMessage) => {
+      offset: (context: any, props: WebvizMsgs$OccupancyGrid) => {
         return pointToVec3(props.info.origin.position);
       },
-      orientation: (context: any, props: OccupancyGridMessage) => {
+      orientation: (context: any, props: WebvizMsgs$OccupancyGrid) => {
         const { x, y, z, w } = props.info.origin.orientation;
         return [x, y, z, w];
       },
-      palette: (context: any, props: OccupancyGridMessage) => {
+      palette: (context: any, props: WebvizMsgs$OccupancyGrid) => {
+        // If overrideMapData is present, use it as the palette
+        if (props.overrideMapData && props.overrideMapData.length > 0) {
+          const texProps = { ...paletteTextureCommon, data: toTypedArray(props.overrideMapData) };
+          if (paletteOverrideTexture) {
+            paletteOverrideTexture = paletteOverrideTexture(texProps);
+          } else {
+            paletteOverrideTexture = regl.texture(texProps);
+          }
+          return paletteOverrideTexture;
+        }
+
         const palette = getMapPalette(props.map);
         // track which palettes we've uploaded as textures
         let texture = paletteTextures.get(palette);
@@ -107,14 +121,7 @@ const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any)
           return texture;
         }
         // if we haven't already uploaded this palette, upload it to the GPU
-        texture = regl.texture({
-          format: "rgba",
-          type: "uint8",
-          mipmap: false,
-          data: palette,
-          width: 256,
-          height: 1,
-        });
+        texture = regl.texture({ ...paletteTextureCommon, data: palette });
         paletteTextures.set(palette, texture);
         return texture;
       },
@@ -127,11 +134,11 @@ const getOccupancyGrids = (getMapPalette: (string) => Uint8Array) => (regl: any)
   });
 };
 
-type Props = {
+type Props = {|
   ...CommonCommandProps,
   getMapPalette: (string) => Uint8Array,
-  children: OccupancyGridMessage[],
-};
+  children: WebvizMsgs$OccupancyGrid[],
+|};
 
 export default function OccupancyGrids(props: Props) {
   // We can click through OccupancyGrids.

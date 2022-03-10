@@ -91,11 +91,11 @@ export function getDefaultColorOverrideBySourceIdx(defaultColorIndex: number): C
 export const TAB_TYPE_VARIABLES = "Global Variables";
 export type TabType = typeof TAB_TYPE_VARIABLES;
 
-type Props = {
+type Props = {|
   defaultSelectedTab?: ?TabType, // for UI testing
   colorOverrideBySourceIdxByVariable: ColorOverrideBySourceIdxByVariable,
   setColorOverrideBySourceIdxByVariable: (ColorOverrideBySourceIdxByVariable) => void,
-};
+|};
 
 export default function GlobalVariableStyles(props: Props) {
   const { defaultSelectedTab, colorOverrideBySourceIdxByVariable = {}, setColorOverrideBySourceIdxByVariable } = props;

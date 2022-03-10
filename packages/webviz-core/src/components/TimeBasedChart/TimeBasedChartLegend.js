@@ -15,13 +15,13 @@ import { PLOT_DASHED_STYLE, PLOT_DOT_DASHED_STYLE } from "webviz-core/src/compon
 // https://www.chartjs.org/docs/latest/charts/line.html#dataset-properties
 type Dataset = $ReadOnly<{ label: string, color?: string, borderDash?: $ReadOnlyArray<number> }>;
 
-type Props = {
+type Props = {|
   canToggleLines?: boolean,
   datasets: $ReadOnlyArray<Dataset>,
   linesToHide: ?{ [string]: boolean },
   toggleLine: (datasetId: string | typeof undefined, lineToHide: string) => void,
   datasetId?: string,
-};
+|};
 
 const checkboxStyle = { height: 12, marginBottom: -2 };
 

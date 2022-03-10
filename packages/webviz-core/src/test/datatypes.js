@@ -127,7 +127,7 @@ const addRosDatatypes = (
       }
     }
   );
-  datatypes[datatype] = { fields };
+  datatypes[datatype] = { name: datatype, fields };
 };
 
 export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame: Frame): RosDatatypes => {
@@ -135,7 +135,7 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
   // markers and times do not get their "real" names. We might consider adding a "seed" set of known
   // datatypes, and doing structural deduplication in a post-processing step.
   const ret = {};
-  topics.forEach(({ name, datatype }) => {
+  topics.forEach(({ name, datatypeName }) => {
     const messages = frame[name];
     if (messages == null) {
       return;
@@ -147,7 +147,7 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
     if (schema.type === "message") {
       let typesDeclared = 0;
       const getTypeName = () => `test_msgs${name}/auto_${typesDeclared++}`;
-      addRosDatatypes(ret, schema.object, datatype, getTypeName);
+      addRosDatatypes(ret, schema.object, datatypeName, getTypeName);
     }
   });
   return ret;
@@ -155,7 +155,7 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
 
 export const wrapMessages = <T>(messages: $ReadOnlyArray<Message>, wrapAsJsObjects: ?boolean): TypedMessage<T>[] => {
   const frame = groupBy(messages, "topic");
-  const topics = Object.keys(frame).map((topic) => ({ name: topic, datatype: topic }));
+  const topics = Object.keys(frame).map((topic) => ({ name: topic, datatypeName: topic, datatypeId: topic }));
   const datatypes = createRosDatatypesFromFrame(topics, frame);
   if (wrapAsJsObjects) {
     // Some tests depend on nulled fields, which don't happen with binary messages.

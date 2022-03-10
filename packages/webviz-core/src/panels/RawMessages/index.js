@@ -58,8 +58,10 @@ import {
   isArrayView,
   isBobject,
 } from "webviz-core/src/util/binaryObjects";
-import { jsonTreeTheme, $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
-import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
+import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
+import invariant from "webviz-core/src/util/invariant";
+import { enumValuesByDatatypeAndField, type EnumMap } from "webviz-core/src/util/selectors";
+import { jsonTreeTheme } from "webviz-core/src/util/sharedStyleConstants";
 
 export const CUSTOM_METHOD = "custom";
 export const PREV_MSG_METHOD = "previous message";
@@ -111,6 +113,18 @@ const maybeDeepParse = (obj: mixed): mixed => {
   return deepParse(obj);
 };
 
+function tryGetConstantName(
+  enumValues: EnumMap,
+  structureItem: ?MessagePathStructureItem,
+  fieldName: ?string,
+  value: mixed
+): void | string {
+  if (fieldName == null || !structureItem || structureItem.structureType !== "primitive") {
+    return;
+  }
+  return enumValues[structureItem.parentDatatype]?.[fieldName]?.[value];
+}
+
 function RawMessages(props: Props) {
   const { config, saveConfig, openSiblingPanel } = props;
   const { topicPath, diffMethod, diffTopicPath, diffEnabled, showFullMessageForDiff } = config;
@@ -121,12 +135,27 @@ function RawMessages(props: Props) {
     topicRosPath,
     topics,
   ]);
-  const rootStructureItem: ?MessagePathStructureItem = useMemo(() => {
+  const { structureItem: rootStructureItem, fieldName: rootFieldName } = useMemo(() => {
     if (!topic || !topicRosPath) {
-      return;
+      return { structureItem: null, fieldName: null };
     }
-    return traverseStructure(messagePathStructures(datatypes)[topic.datatype], topicRosPath.messagePath).structureItem;
+    const { structureItem } = traverseStructure(
+      messagePathStructures(datatypes)[topic.datatypeId],
+      topicRosPath.messagePath
+    );
+    if (structureItem) {
+      let fieldName;
+      topicRosPath.messagePath.forEach((part) => {
+        // Flow disliked .filter and .find
+        if (part.type === "name") {
+          fieldName = part.name;
+        }
+      });
+      return { structureItem, fieldName };
+    }
+    return { structureItem: null, fieldName: null };
   }, [datatypes, topic, topicRosPath]);
+  const enumValues = useMemo(() => enumValuesByDatatypeAndField(datatypes), [datatypes]);
 
   // When expandAll is unset, we'll use expandedFields to get expanded info
   const [expandAll, setExpandAll] = useState(false);
@@ -209,6 +238,7 @@ function RawMessages(props: Props) {
 
           // Find enum name. When the message-path items are messages, we have enough datatype
           // information to associate nested fields with specific enums using structureItem.
+          // keyPath is stored in reverse order.
           let constantName: ?string;
           if (structureItem) {
             const childStructureItem = getStructureItemForPath(
@@ -218,27 +248,9 @@ function RawMessages(props: Props) {
                 .reverse()
                 .join(",")
             );
-            if (childStructureItem) {
-              const field = keyPath[0];
-              if (typeof field === "string") {
-                const enumMapping = enumValuesByDatatypeAndField(datatypes);
-                const datatype = childStructureItem.datatype;
-                if (enumMapping[datatype] && enumMapping[datatype][field] && enumMapping[datatype][field][itemValue]) {
-                  constantName = enumMapping[datatype][field][itemValue];
-                }
-              }
-            }
-          }
-          // When the message-path items are primitives, the datatype info (uint8, etc) isn't
-          // sufficient to deduce names based on values. In this case we use the constants
-          // associated with the values returned by the message path algorithm.
-          if (
-            constantName == null &&
-            keyPath.length === 1 &&
-            typeof keyPath[0] === "number" &&
-            itemValue === queriedData[keyPath[0]].value // just in case
-          ) {
-            constantName = queriedData[keyPath[0]].constantName;
+            const fieldName = keyPath.find((key) => typeof key === "string") ?? rootFieldName;
+            invariant(fieldName == null || typeof fieldName === "string", "Convince flow this is a string");
+            constantName = tryGetConstantName(enumValues, childStructureItem, fieldName, itemValue);
           }
           const basePath: string = queriedData[lastKeyPath] && queriedData[lastKeyPath].path;
           let itemLabel = label;
@@ -287,7 +299,7 @@ function RawMessages(props: Props) {
         }}
       </ReactHoverObserver>
     ),
-    [datatypes, onTopicPathChange, openSiblingPanel]
+    [enumValues, onTopicPathChange, openSiblingPanel, rootFieldName]
   );
 
   const renderSingleTopicOrDiffOutput = useCallback(() => {
@@ -319,10 +331,9 @@ function RawMessages(props: Props) {
       (data !== undefined && typeof data !== "object") ||
       (isSingleElemArray(data) && getIndex(data, 0) != null && typeof getIndex(data, 0) !== "object");
     let singleVal = String(isSingleElemArray(data) ? getIndex(data, 0) : data);
-    if (baseItem.queriedData.length && baseItem.queriedData[0].constantName) {
-      // Handles the message path algorithm returning a single-element array (e.g. [enum]), but not nested arrays (e.g. [[enum]]) - arrays of enums are uncommon.
-      // Handle queriedData.length==0, which happens sometimes when diff-mode is enabled.
-      singleVal += ` (${baseItem.queriedData[0].constantName})`;
+    const singleEnumValue = tryGetConstantName(enumValues, rootStructureItem, rootFieldName, singleVal);
+    if (singleEnumValue) {
+      singleVal += ` (${singleEnumValue})`;
     }
 
     const diffData = diffItem && dataWithoutWrappingArray(diffItem.queriedData.map(({ value }) => (value: any)));
@@ -331,12 +342,12 @@ function RawMessages(props: Props) {
 
     const CheckboxComponent = showFullMessageForDiff ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
     return (
-      <Flex col clip scroll className={styles.container}>
+      <Flex grow col clip scroll className={styles.container}>
         <Metadata
           data={data}
           diffData={diffData}
           diff={diff}
-          datatype={topic?.datatype}
+          datatype={topic?.datatypeName}
           message={baseItem.message}
           diffMessage={diffItem?.message}
         />
@@ -460,10 +471,12 @@ function RawMessages(props: Props) {
     diffItem,
     diffMethod,
     diffTopicPath,
+    enumValues,
     expandAll,
     expandedFields,
     onLabelClick,
     otherSourceTopic,
+    rootFieldName,
     rootStructureItem,
     saveConfig,
     showFullMessageForDiff,
@@ -473,7 +486,7 @@ function RawMessages(props: Props) {
   ]);
 
   return (
-    <Flex col clip style={{ position: "relative" }}>
+    <Flex grow col clip style={{ position: "relative" }}>
       <PanelToolbar helpContent={helpContent}>
         <Icon tooltip="Toggle diff" medium fade onClick={onToggleDiff} active={diffEnabled}>
           <PlusMinusIcon />
@@ -489,7 +502,7 @@ function RawMessages(props: Props) {
         <div className={styles.topicInputs}>
           <MessagePathInput index={0} path={topicPath} onChange={onTopicPathChange} inputStyle={{ height: "100%" }} />
           {diffEnabled && (
-            <Flex>
+            <Flex grow>
               <Tooltip contents="Diff method" placement="top">
                 <>
                   <Dropdown
@@ -508,7 +521,7 @@ function RawMessages(props: Props) {
                   path={diffTopicPath}
                   onChange={onDiffTopicPathChange}
                   inputStyle={{ height: "100%" }}
-                  prioritizedDatatype={topic?.datatype}
+                  prioritizedDatatype={topic?.datatypeName}
                 />
               ) : null}
             </Flex>

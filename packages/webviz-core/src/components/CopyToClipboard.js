@@ -31,11 +31,11 @@ const Wrapper = styled.div`
   }
 `;
 
-type Props = {
+type Props = {|
   children: React.Node,
-  styles: any,
+  styles?: any,
   copyValue?: any,
-};
+|};
 
 class CopyToClipboardComponent extends React.Component<Props> {
   wrapper: ?HTMLDivElement;
@@ -51,14 +51,14 @@ class CopyToClipboardComponent extends React.Component<Props> {
   render() {
     return (
       <Wrapper
-        style={this.props.styles}
+        style={this.props.styles || {}}
         onClick={this.copy}
         ref={(wrapper) => {
           this.wrapper = wrapper;
         }}>
         {this.props.children}
         <IconWrapper>
-          <Icon>
+          <Icon tooltip="Copy to clipboard" tooltipProps={{ delay: 500 }}>
             <ClipboardOutlineIcon />
           </Icon>
         </IconWrapper>

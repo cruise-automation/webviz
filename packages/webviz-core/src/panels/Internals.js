@@ -80,9 +80,7 @@ function getSubscriptionGroup({ requester }: SubscribePayload): string {
       return requester.name;
   }
   (requester.type: empty); // enforce that all cases are handled in switch above
-  // this shouldn't be necessary, but Flow doesn't let us fall off the end without returning a string
-  // https://github.com/facebook/flow/issues/451
-  return `<unknown: ${requester.type} ${requester.name}>`;
+  throw new Error("Satisfy flow https://github.com/facebook/flow/issues/451");
 }
 
 function getPublisherGroup({ advertiser }: AdvertisePayload): string {
@@ -199,7 +197,11 @@ function Internals(): React.Node {
           recordedData.current = {
             topics: filterMap(Object.keys(itemsByPath), (topic) =>
               itemsByPath[topic] && itemsByPath[topic].length
-                ? { name: topic, datatype: topicsByName[topic].datatype }
+                ? {
+                    name: topic,
+                    datatypeName: topicsByName[topic].datatypeName,
+                    datatypeId: topicsByName[topic].datatypeId,
+                  }
                 : null
             ),
             frame,
@@ -218,7 +220,7 @@ function Internals(): React.Node {
         Press to start recording topic data for debug purposes. The latest messages on each topic will be kept and
         formatted into a fixture that can be used to create a test.
       </TextContent>
-      <Flex row wrap style={{ padding: "8px 0 32px" }}>
+      <Flex grow row wrap style={{ padding: "8px 0 32px" }}>
         <Button isPrimary small onClick={onRecordClick} data-test="internals-record-button">
           {recordingTopics ? `Recording ${recordingTopics.length} topics…` : "Record raw data"}
         </Button>
@@ -241,7 +243,7 @@ function Internals(): React.Node {
         )}
         {historyRecorder}
       </Flex>
-      <Flex row>
+      <Flex grow row>
         <section data-test="internals-subscriptions">
           <h1>Subscriptions</h1>
           {renderedSubscriptions}

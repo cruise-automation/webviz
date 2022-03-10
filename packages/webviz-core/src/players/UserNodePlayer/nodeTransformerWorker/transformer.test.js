@@ -41,7 +41,7 @@ export const baseNodeData: NodeData = {
   typeChecker: undefined,
   enableSecondSource: false,
   rosLib: generateRosLib({
-    topics: [{ name: "/some_topic", datatype: "std_msgs/ColorRGBA" }],
+    topics: [{ name: "/some_topic", datatypeName: "std_msgs/ColorRGBA", datatypeId: "std_msgs/ColorRGBA" }],
     datatypes: exampleDatatypes,
   }),
 };
@@ -148,7 +148,8 @@ describe("pipeline", () => {
   });
 
   describe("checkForMultiSourceSupport", () => {
-    const getTopics = (topicNames) => topicNames.map((name) => ({ name, datatype: "some_datatype" }));
+    const getTopics = (topicNames) =>
+      topicNames.map((name) => ({ name, datatypeName: "some_datatype", datatypeId: "some_datatype" }));
 
     it("sets enableSecondSource", () => {
       const { enableSecondSource } = checkForMultiSourceSupport(
@@ -181,7 +182,7 @@ describe("pipeline", () => {
       (inputTopics, topics) => {
         const { diagnostics } = validateInputTopics(
           { ...baseNodeData, inputTopics },
-          topics.map((name) => ({ name, datatype: "" }))
+          topics.map((name) => ({ name, datatypeName: "", datatypeId: "" }))
         );
         expect(diagnostics.length).toEqual(1);
         expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
@@ -212,12 +213,12 @@ describe("pipeline", () => {
     it("should return an error if a node does not start with the default prefix", () => {
       const { diagnostics } = compose(
         compile,
-        getInputTopics
-      )({ ...baseNodeData, name: "/bad_name" }, []);
-      expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
+        validateOutputTopic
+      )({ ...baseNodeData, outputTopic: "/bad_name" }, []);
+      expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.BAD_PREFIX);
     });
 
-    it("should return an error if nodes contain extra slashes", () => {
+    it("should not return an error if nodes contain extra slashes", () => {
       const { diagnostics } = compile({
         ...baseNodeData,
         name: `${DEFAULT_WEBVIZ_NODE_PREFIX}subpath/main`,
@@ -226,7 +227,7 @@ describe("pipeline", () => {
           const x = norm({x:1, y:2, z:3})
         `,
       });
-      expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
+      expect(diagnostics.length).toEqual(0);
     });
 
     it.each(["const x: string = 'hello webviz'", "const num: number = 1222"])("can compile", (sourceCode) => {
@@ -341,6 +342,7 @@ describe("pipeline", () => {
     describe("generated types", () => {
       it("can successfully use dynamically typed definitions as input", () => {
         const tickInfoDatatype = {
+          name: "std_msgs/TickInfo",
           fields: [{ type: "uint64", name: "cpu_elapsed_ns", isArray: false, isComplex: false }],
         };
         const sourceCode = `
@@ -359,7 +361,7 @@ describe("pipeline", () => {
         `;
 
         const rosLib = generateRosLib({
-          topics: [{ name: "/tick_information", datatype: "std_msgs/TickInfo" }],
+          topics: [{ name: "/tick_information", datatypeName: "std_msgs/TickInfo", datatypeId: "std_msgs/TickInfo" }],
           datatypes: {
             "std_msgs/TickInfo": tickInfoDatatype,
           },
@@ -469,6 +471,7 @@ describe("pipeline", () => {
 
     const numDataType = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "num",
@@ -483,6 +486,7 @@ describe("pipeline", () => {
 
     const posDatatypes = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "pos",
@@ -494,6 +498,7 @@ describe("pipeline", () => {
         ],
       },
       [`${baseNodeData.name}/pos`]: {
+        name: `${baseNodeData.name}/pos`,
         fields: [
           {
             name: "x",
@@ -513,38 +518,37 @@ describe("pipeline", () => {
       },
     };
 
-    const pointFields = {
-      fields: [
-        {
-          name: "x",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-        {
-          name: "y",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-        {
-          name: "z",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-      ],
-    };
+    const pointFields = [
+      {
+        name: "x",
+        isArray: false,
+        isComplex: false,
+        arrayLength: undefined,
+        type: "float64",
+      },
+      {
+        name: "y",
+        isArray: false,
+        isComplex: false,
+        arrayLength: undefined,
+        type: "float64",
+      },
+      {
+        name: "z",
+        isArray: false,
+        isComplex: false,
+        arrayLength: undefined,
+        type: "float64",
+      },
+    ];
 
     const pointDataType = {
-      [baseNodeData.name]: pointFields,
+      [baseNodeData.name]: { name: baseNodeData.name, fields: pointFields },
     };
 
     const nestedPointDataType = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "point",
@@ -555,11 +559,12 @@ describe("pipeline", () => {
           },
         ],
       },
-      [`${baseNodeData.name}/point`]: pointFields,
+      [`${baseNodeData.name}/point`]: { name: `${baseNodeData.name}/point`, fields: pointFields },
     };
 
     const poseDataType = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "position",
@@ -577,10 +582,11 @@ describe("pipeline", () => {
           },
         ],
       },
-      [`${baseNodeData.name}/position`]: pointFields,
+      [`${baseNodeData.name}/position`]: { name: `${baseNodeData.name}/position`, fields: pointFields },
       [`${baseNodeData.name}/orientation`]: {
+        name: `${baseNodeData.name}/orientation`,
         fields: [
-          ...pointFields.fields,
+          ...pointFields,
           {
             name: "w",
             isArray: false,
@@ -594,6 +600,7 @@ describe("pipeline", () => {
 
     const timeDatatypes = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [{ arrayLength: undefined, isArray: false, isComplex: false, name: "stamp", type: "time" }],
       },
     };
@@ -601,6 +608,7 @@ describe("pipeline", () => {
     const baseDatatypesWithNestedColor = {
       ...baseDatatypes,
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           { arrayLength: undefined, isArray: false, isComplex: true, name: "color", type: "std_msgs/ColorRGBA" },
         ],
@@ -609,6 +617,7 @@ describe("pipeline", () => {
 
     const posArrayDatatypes = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "pos",
@@ -620,6 +629,7 @@ describe("pipeline", () => {
         ],
       },
       [`${baseNodeData.name}/pos`]: {
+        name: `${baseNodeData.name}/pos`,
         fields: [
           {
             name: "x",
@@ -641,6 +651,7 @@ describe("pipeline", () => {
 
     const mixedDatatypes = {
       [baseNodeData.name]: {
+        name: baseNodeData.name,
         fields: [
           {
             name: "details",
@@ -652,6 +663,7 @@ describe("pipeline", () => {
         ],
       },
       [`${baseNodeData.name}/details`]: {
+        name: `${baseNodeData.name}/details`,
         fields: [
           {
             name: "name",
@@ -827,6 +839,7 @@ describe("pipeline", () => {
           };`,
         datatypes: {
           [baseNodeData.name]: {
+            name: baseNodeData.name,
             fields: [
               {
                 name: "num",
@@ -873,6 +886,7 @@ describe("pipeline", () => {
           };`,
         datatypes: {
           [baseNodeData.name]: {
+            name: baseNodeData.name,
             fields: [
               {
                 name: "pos",
@@ -884,6 +898,7 @@ describe("pipeline", () => {
             ],
           },
           [`${baseNodeData.name}/pos`]: {
+            name: `${baseNodeData.name}/pos`,
             fields: [
               {
                 name: "header",
@@ -909,6 +924,7 @@ describe("pipeline", () => {
             ],
           },
           [`${baseNodeData.name}/pos/header`]: {
+            name: `${baseNodeData.name}/pos/header`,
             fields: [
               {
                 name: "time",
@@ -957,6 +973,7 @@ describe("pipeline", () => {
           };`,
         datatypes: {
           [baseNodeData.name]: {
+            name: baseNodeData.name,
             fields: [
               {
                 name: "pos",
@@ -1050,6 +1067,7 @@ describe("pipeline", () => {
           };`,
         datatypes: {
           [baseNodeData.name]: {
+            name: baseNodeData.name,
             fields: [
               {
                 name: "isTrue",
@@ -1210,6 +1228,7 @@ describe("pipeline", () => {
         `,
         datatypes: {
           "/webviz_node/main": {
+            name: "/webviz_node/main",
             fields: [
               { arrayLength: undefined, isArray: false, isComplex: false, name: "foo", type: "string" },
               { arrayLength: undefined, isArray: false, isComplex: false, name: "data", type: "json" },

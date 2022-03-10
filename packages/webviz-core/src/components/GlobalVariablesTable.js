@@ -175,8 +175,8 @@ function LinkedGlobalVariableRow({ name }: { name: string }): Node {
         />
       </td>
       <td>
-        <Flex center style={{ justifyContent: "space-between" }}>
-          <Flex style={{ marginRight: 16 }}>
+        <Flex grow center style={{ justifyContent: "space-between" }}>
+          <Flex grow style={{ marginRight: 16 }}>
             {linkedTopicPaths.length > 1 && <span>({linkedTopicPaths.length})</span>}
 
             <Tooltip
@@ -298,7 +298,7 @@ function GlobalVariablesTable(): Node {
                 />
               </td>
               <td width="100%">
-                <Flex center style={{ justifyContent: "space-between" }}>
+                <Flex grow center style={{ justifyContent: "space-between" }}>
                   --
                   <SIconWrapper onClick={() => setGlobalVariables({ [name]: undefined })}>
                     <Icon small>
@@ -311,7 +311,7 @@ function GlobalVariablesTable(): Node {
           ))}
         </tbody>
       </table>
-      <Flex style={{ margin: "20px 16px 16px", justifyContent: "flex-end" }}>
+      <Flex grow style={{ margin: "20px 16px 16px", justifyContent: "flex-end" }}>
         <button
           disabled={globalVariables[""] != null}
           onClick={() => setGlobalVariables({ "": "" })}

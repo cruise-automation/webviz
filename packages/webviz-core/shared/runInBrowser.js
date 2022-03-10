@@ -197,33 +197,32 @@ export async function withBrowser<T>(
 export async function setupPageLogging(page: Page, options: PageOptions) {
   const { captureLogs, onLog, onError } = options;
 
-  // Pass through console from the page.
-  page.on("console", (msg) => {
-    getArgStrings(msg).then((args) => {
-      const text = `${msg.text()} ${args.length > 1 ? `--- ${JSON.stringify(args.slice(1))}` : ""}`;
-      if (msg.type() === "error") {
-        onError(text);
-      }
-      if (captureLogs) {
+  // Pass through console from the page if captureLogs is enabled
+  if (captureLogs) {
+    page.on("console", (msg) => {
+      getArgStrings(msg).then((args) => {
+        const text = `${msg.text()} ${args.length > 1 ? `--- ${JSON.stringify(args.slice(1))}` : ""}`;
+        if (msg.type() === "error") {
+          log.error(text);
+        } else {
+          log.info(text);
+        }
         onLog(text);
-        log.info(text);
-      }
+      });
     });
-  });
+  }
 
-  function onPuppeteerError(error: any) {
+  function onPageError(error: any) {
     const errorMessage: string = (error.jsonValue && error.jsonValue()) || error.toString();
     log.error(`[runInBrowser error] ${errorMessage}`);
-    log.warn(errorMessage);
     onError(errorMessage);
   }
 
-  page.on("pageerror", (error) => {
-    onPuppeteerError(error);
-  });
-  page.on("error", (error) => {
-    onPuppeteerError(error);
-  });
+  // Expose the onPageError function to the page as window.reportError
+  await page.exposeFunction("reportError", (errorMessage) => onPageError(errorMessage));
+
+  page.on("pageerror", (error) => onPageError(error));
+  page.on("error", (error) => onPageError(error));
 
   await page.evaluate((_USER_ERROR_PREFIX) => {
     window.setNotificationHandler((message, details, type, severity) => {
@@ -231,12 +230,13 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
         // We can ignore warnings and info messages in automated runs
         return;
       }
+
       if (type === "user") {
-        console.error(`${(_USER_ERROR_PREFIX: any)} ${message} // ${details}`);
+        window.reportError(`${(_USER_ERROR_PREFIX: any)} ${message} // ${details}`);
       } else if (type === "app") {
-        console.error(`[WEBVIZ APPLICATION ERROR] ${details}`);
+        window.reportError(`[WEBVIZ APPLICATION ERROR] ${details}`);
       } else {
-        console.error(`Unknown error type! ${type} // ${details}`);
+        window.reportError(`Unknown error type! ${type} // ${details}`);
       }
     });
   }, USER_ERROR_PREFIX);
@@ -251,7 +251,7 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
       log.error(error);
     });
     window.addEventListener("unhandledrejection", (event) => {
-      log.error("Unhandled promise rejection.", event.reason);
+      log.error(`Unhandled promise rejection. Reason: ${event.reason}`);
     });
   });
 }

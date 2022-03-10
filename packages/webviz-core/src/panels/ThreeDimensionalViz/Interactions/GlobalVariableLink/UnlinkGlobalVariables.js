@@ -52,10 +52,10 @@ const STopicWithPath = styled.span`
   overflow: hidden;
 `;
 
-type Props = {
+type Props = {|
   name: string,
   showList?: boolean,
-};
+|};
 
 export default function UnlinkGlobalVariables({ name, showList }: Props) {
   const { linkedGlobalVariables, setLinkedGlobalVariables } = useLinkedGlobalVariables();

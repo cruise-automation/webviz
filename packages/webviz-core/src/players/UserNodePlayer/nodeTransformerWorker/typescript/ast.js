@@ -504,5 +504,8 @@ export const constructDatatypes = (
     getRosMsgField(name.getText(), type, false, false, currentTypeParamMap, depth + 1)
   );
 
-  return { outputDatatype: currentDatatype, datatypes: { ...datatypes, [currentDatatype]: { fields: rosMsgFields } } };
+  return {
+    outputDatatype: currentDatatype,
+    datatypes: { ...datatypes, [currentDatatype]: { name: currentDatatype, fields: rosMsgFields } },
+  };
 };

@@ -12,7 +12,7 @@ import Tree from "react-json-tree";
 import styled from "styled-components";
 
 import GlobalVariableLink from "./GlobalVariableLink/index";
-import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import { jsonTreeTheme } from "webviz-core/src/util/sharedStyleConstants";
 
 // Sort the keys of objects to make their presentation more predictable
 const PREFERRED_OBJECT_KEY_ORDER = [

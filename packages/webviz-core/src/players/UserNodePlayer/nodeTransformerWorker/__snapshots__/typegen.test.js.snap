@@ -2,26 +2,28 @@
 
 exports[`typegen generateRosLib basic snapshot 1`] = `
 "
-    export declare interface json {
+export declare interface json {
 }
-    export declare interface TopicsToMessageDefinition {
+export declare interface TopicsToMessageDefinition {
     \\"/my_topic\\": Messages.std_msgs__ColorRGBA;
     \\"/empty_topic\\": Messages.std_msgs__NoDef;
 }
-    export declare interface Duration {
+export declare interface Duration {
     sec: number;
     nsec: number;
 }
-    export declare interface Time {
+export declare interface Time {
     sec: number;
     nsec: number;
 }
 
-    /**
-     * This type contains every message declaration in your bag, so that you can
-     * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
-     */
-    export declare namespace Messages {
+/**
+ * This type contains message definitions in the input with convenient names,
+ * so that you can refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\"
+ * wherever you like. These names may be ambiguous if the input contains
+ * types with the same name but different definitions.
+ */
+export declare namespace Messages {
     export interface std_msgs__ColorRGBA {
         r: number;
         g: number;
@@ -32,18 +34,18 @@ exports[`typegen generateRosLib basic snapshot 1`] = `
     }
 }
 
-    /**
-     * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
-     * multiple input topics, use a union type, e.g.
-     * 'Input<\\"/your_input_topic_1\\"> |
-     * Input<\\"/your_input_topic_2\\">'.
-     *
-     * These types are dynamically generated from the bag(s) currently in your
-     * webviz session, so if a datatype changes, your Node Playground node may
-     * not compile on the newly formatted bag.
-     */
-    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
+/**
+ * To correctly type your inputs, you use this type to refer to specific
+ * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
+ * multiple input topics, use a union type, e.g.
+ * 'Input<\\"/your_input_topic_1\\"> |
+ * Input<\\"/your_input_topic_2\\">'.
+ *
+ * These types are dynamically generated from the bag(s) currently in your
+ * webviz session, so if a datatype changes, your Node Playground node may
+ * not compile on the newly formatted bag.
+ */
+export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
@@ -53,9 +55,9 @@ exports[`typegen generateRosLib basic snapshot 1`] = `
 
 exports[`typegen generateRosLib more complex snapshot 1`] = `
 "
-    export declare interface json {
+export declare interface json {
 }
-    export declare interface TopicsToMessageDefinition {
+export declare interface TopicsToMessageDefinition {
     \\"/topic_0\\": Messages.tf2_msgs__TFMessage;
     \\"/topic_1\\": Messages.geometry_msgs__TransformStamped;
     \\"/topic_2\\": Messages.std_msgs__Header;
@@ -87,20 +89,22 @@ exports[`typegen generateRosLib more complex snapshot 1`] = `
     \\"/topic_28\\": Messages.visualization_msgs__Marker;
     \\"/topic_29\\": Messages.std_msgs__ColorRGBA;
 }
-    export declare interface Duration {
+export declare interface Duration {
     sec: number;
     nsec: number;
 }
-    export declare interface Time {
+export declare interface Time {
     sec: number;
     nsec: number;
 }
 
-    /**
-     * This type contains every message declaration in your bag, so that you can
-     * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
-     */
-    export declare namespace Messages {
+/**
+ * This type contains message definitions in the input with convenient names,
+ * so that you can refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\"
+ * wherever you like. These names may be ambiguous if the input contains
+ * types with the same name but different definitions.
+ */
+export declare namespace Messages {
     export interface tf2_msgs__TFMessage {
         transforms: geometry_msgs__TransformStamped[];
     }
@@ -284,18 +288,67 @@ exports[`typegen generateRosLib more complex snapshot 1`] = `
     }
 }
 
-    /**
-     * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
-     * multiple input topics, use a union type, e.g.
-     * 'Input<\\"/your_input_topic_1\\"> |
-     * Input<\\"/your_input_topic_2\\">'.
-     *
-     * These types are dynamically generated from the bag(s) currently in your
-     * webviz session, so if a datatype changes, your Node Playground node may
-     * not compile on the newly formatted bag.
-     */
-    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
+/**
+ * To correctly type your inputs, you use this type to refer to specific
+ * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
+ * multiple input topics, use a union type, e.g.
+ * 'Input<\\"/your_input_topic_1\\"> |
+ * Input<\\"/your_input_topic_2\\">'.
+ *
+ * These types are dynamically generated from the bag(s) currently in your
+ * webviz session, so if a datatype changes, your Node Playground node may
+ * not compile on the newly formatted bag.
+ */
+export declare interface Input<T extends keyof TopicsToMessageDefinition> {
+    topic: T;
+    receiveTime: Time;
+    message: TopicsToMessageDefinition[T];
+}
+  "
+`;
+
+exports[`typegen generateRosLib works with ambiguous datatypes 1`] = `
+"
+export declare interface json {
+}
+export declare interface TopicsToMessageDefinition {
+    \\"/my_topic_0\\": Messages.nonstd_msgs__Ambiguous;
+    \\"/my_topic_1\\": Messages.nonstd_msgs__Ambiguous_1;
+}
+export declare interface Duration {
+    sec: number;
+    nsec: number;
+}
+export declare interface Time {
+    sec: number;
+    nsec: number;
+}
+
+/**
+ * This type contains message definitions in the input with convenient names,
+ * so that you can refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\"
+ * wherever you like. These names may be ambiguous if the input contains
+ * types with the same name but different definitions.
+ */
+export declare namespace Messages {
+    export interface nonstd_msgs__Ambiguous {
+    }
+    export interface nonstd_msgs__Ambiguous_1 {
+    }
+}
+
+/**
+ * To correctly type your inputs, you use this type to refer to specific
+ * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
+ * multiple input topics, use a union type, e.g.
+ * 'Input<\\"/your_input_topic_1\\"> |
+ * Input<\\"/your_input_topic_2\\">'.
+ *
+ * These types are dynamically generated from the bag(s) currently in your
+ * webviz session, so if a datatype changes, your Node Playground node may
+ * not compile on the newly formatted bag.
+ */
+export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
@@ -305,37 +358,39 @@ exports[`typegen generateRosLib more complex snapshot 1`] = `
 
 exports[`typegen generateRosLib works with zero topics or datatypes 1`] = `
 "
-    export declare interface json {
+export declare interface json {
 }
-    export declare interface TopicsToMessageDefinition {
+export declare interface TopicsToMessageDefinition {
 }
-    export declare interface Duration {
+export declare interface Duration {
     sec: number;
     nsec: number;
 }
-    export declare interface Time {
+export declare interface Time {
     sec: number;
     nsec: number;
 }
 
-    /**
-     * This type contains every message declaration in your bag, so that you can
-     * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
-     */
-    export declare namespace Messages { }
+/**
+ * This type contains message definitions in the input with convenient names,
+ * so that you can refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\"
+ * wherever you like. These names may be ambiguous if the input contains
+ * types with the same name but different definitions.
+ */
+export declare namespace Messages { }
 
-    /**
-     * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
-     * multiple input topics, use a union type, e.g.
-     * 'Input<\\"/your_input_topic_1\\"> |
-     * Input<\\"/your_input_topic_2\\">'.
-     *
-     * These types are dynamically generated from the bag(s) currently in your
-     * webviz session, so if a datatype changes, your Node Playground node may
-     * not compile on the newly formatted bag.
-     */
-    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
+/**
+ * To correctly type your inputs, you use this type to refer to specific
+ * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
+ * multiple input topics, use a union type, e.g.
+ * 'Input<\\"/your_input_topic_1\\"> |
+ * Input<\\"/your_input_topic_2\\">'.
+ *
+ * These types are dynamically generated from the bag(s) currently in your
+ * webviz session, so if a datatype changes, your Node Playground node may
+ * not compile on the newly formatted bag.
+ */
+export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];

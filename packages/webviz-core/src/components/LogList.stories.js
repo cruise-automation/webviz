@@ -33,14 +33,14 @@ const generateData = (size) => {
     });
 };
 
-type Props = {
+type Props = {|
   renderRow: RenderRow<any>,
-};
+|};
 
-type State = {
+type State = {|
   items: any[],
   paused: boolean,
-};
+|};
 
 class Example extends Component<Props, State> {
   _intervalId: IntervalID;

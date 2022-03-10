@@ -39,12 +39,7 @@ import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/s
 import DebugStatsOverlay from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats/Overlay";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
-import IconOverlay from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
-import {
-  InteractionContextMenu,
-  OBJECT_TAB_TYPE,
-  type Interactive,
-} from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import { InteractionContextMenu, OBJECT_TAB_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import { LayoutWorkerDataSender } from "webviz-core/src/panels/ThreeDimensionalViz/Layout/WorkerDataRpc";
@@ -70,11 +65,12 @@ import useTopicTree, { TopicTreeContext } from "webviz-core/src/panels/ThreeDime
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { useStructuralDatatypes } from "webviz-core/src/panels/ThreeDimensionalViz/utils/datatypes";
 import type { Frame, Topic } from "webviz-core/src/players/types";
-import type { Color, OverlayIconMarker } from "webviz-core/src/types/Messages";
+import type { Color } from "webviz-core/src/types/Messages";
 import { getField } from "webviz-core/src/util/binaryObjects";
 import { $WEBVIZ_SOURCE_2 } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo, useDeepMemo, useGetCurrentValue } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
+import { getEventTags, getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -195,7 +191,7 @@ export default function Layout({
     measureState: "idle",
     measurePoints: { start: undefined, end: undefined },
   });
-  const [currentEditingTopic, setCurrentEditingTopic] = useState<?Topic>(undefined);
+  const [currentEditingTopic, setCurrentEditingTopic] = useState<?{ datatypeName: string, name: string }>(undefined);
   const [editingNamespace, setEditingNamespace] = useState<?{
     namespaceKey: string,
     namespaceColor: ?string,
@@ -319,7 +315,7 @@ export default function Layout({
   const topicTreeTopics = useMemo(
     () =>
       memoizedTopics.filter(
-        (topic) => supportedMarkerDatatypesSet.has(topic.datatype) && !blacklistTopicsSet.has(topic.name)
+        (topic) => supportedMarkerDatatypesSet.has(topic.datatypeName) && !blacklistTopicsSet.has(topic.name)
       ),
     [blacklistTopicsSet, memoizedTopics, supportedMarkerDatatypesSet]
   );
@@ -426,6 +422,14 @@ export default function Layout({
   }, [topics, selectedTopicNames]);
 
   const handleDrawPolygons = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
+    // track how many polygons are created with this tool
+    if (eventName === "onMouseDown" && polygonBuilder.isActivePolygonClosed()) {
+      // pointCount has an extra point because the last point and the first point overlap
+      logEventAction(getEventInfos().POLYGON_ADD_NEW, {
+        [getEventTags().SIZE]: polygonBuilder.activePolygon.points.length - 1,
+      });
+    }
+
     polygonBuilder[eventName](ev, args);
     forceUpdate();
   }, [polygonBuilder]);
@@ -505,7 +509,6 @@ export default function Layout({
 
   const {
     onClick,
-    onIconClick,
     onControlsOverlayClick,
     onDoubleClick,
     onExitTopicTreeFocus,
@@ -536,23 +539,6 @@ export default function Layout({
           clickedPosition: newClickedPosition,
         });
         selectObject(newSelectedObject);
-      },
-      onIconClick: (iconMarker: Interactive<OverlayIconMarker>, newClickedPosition: ClickedPosition) => {
-        if (callbackInputsRef.current.isDrawing) {
-          return;
-        }
-        const object = { object: iconMarker, instanceIndex: undefined };
-        if (selectedObject && object.object.id != null && object.object.id === selectedObject.object.id) {
-          // Unselect the object when clicked the same object.
-          setSelectionState(DEFAULT_SELECTION_STATE);
-          return;
-        }
-        setSelectionState({
-          selectedObject: object,
-          clickedObjects: [object],
-          clickedPosition: newClickedPosition,
-        });
-        selectObject(object);
       },
       onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
         if (!containerRef.current) {
@@ -593,7 +579,7 @@ export default function Layout({
         }
       },
     };
-  }, [handleEvent, selectObject, selectedNamespacesByTopic, selectedObject, toggleNamespaceChecked, storyEvents]);
+  }, [handleEvent, selectObject, selectedNamespacesByTopic, toggleNamespaceChecked, storyEvents]);
 
   // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
   const worldRef = useRef<?typeof Worldview>(null);
@@ -927,41 +913,35 @@ export default function Layout({
             {isDemoMode && DemoModeComponent && <DemoModeComponent />}
             <div style={{ ...VIDEO_RECORDING_STYLE, position: "relative", width: "100%", height: "100%" }}>
               {(!isDemoMode || (isDemoMode && isHovered)) && (
-                <Dimensions>
-                  {({ width: containerWidth, height: containerHeight }) => (
-                    <TopicTree
-                      allKeys={allKeys}
-                      availableNamespacesByTopic={availableNamespacesByTopic}
-                      checkedKeys={checkedKeys}
-                      containerHeight={containerHeight}
-                      containerWidth={containerWidth}
-                      derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-                      expandedKeys={expandedKeys}
-                      filterText={filterText}
-                      getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-                      getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-                      getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-                      hasFeatureColumn={hasFeatureColumn}
-                      isPlaying={isPlaying}
-                      onExitTopicTreeFocus={onExitTopicTreeFocus}
-                      onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
-                      pinTopics={pinTopics}
-                      diffModeEnabled={diffModeEnabled}
-                      rootTreeNode={rootTreeNode}
-                      saveConfig={saveConfig}
-                      sceneErrorsByKey={sceneErrorsByKey}
-                      setCurrentEditingTopic={setCurrentEditingTopic}
-                      setEditingNamespace={setEditingNamespace}
-                      setFilterText={setFilterText}
-                      setShowTopicTree={setShowTopicTree}
-                      shouldExpandAllKeys={shouldExpandAllKeys}
-                      showTopicTree={showTopicTree}
-                      structuralDatatypes={structuralDatatypes}
-                      topicDisplayMode={topicDisplayMode}
-                      visibleTopicsCountByKey={visibleTopicsCountByKey}
-                    />
-                  )}
-                </Dimensions>
+                <TopicTree
+                  allKeys={allKeys}
+                  availableNamespacesByTopic={availableNamespacesByTopic}
+                  checkedKeys={checkedKeys}
+                  derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+                  expandedKeys={expandedKeys}
+                  filterText={filterText}
+                  getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+                  getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+                  getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+                  hasFeatureColumn={hasFeatureColumn}
+                  isPlaying={isPlaying}
+                  onExitTopicTreeFocus={onExitTopicTreeFocus}
+                  onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+                  pinTopics={pinTopics}
+                  diffModeEnabled={diffModeEnabled}
+                  rootTreeNode={rootTreeNode}
+                  saveConfig={saveConfig}
+                  sceneErrorsByKey={sceneErrorsByKey}
+                  setCurrentEditingTopic={setCurrentEditingTopic}
+                  setEditingNamespace={setEditingNamespace}
+                  setFilterText={setFilterText}
+                  setShowTopicTree={setShowTopicTree}
+                  shouldExpandAllKeys={shouldExpandAllKeys}
+                  showTopicTree={showTopicTree}
+                  structuralDatatypes={structuralDatatypes}
+                  topicDisplayMode={topicDisplayMode}
+                  visibleTopicsCountByKey={visibleTopicsCountByKey}
+                />
               )}
               {currentEditingTopic && (
                 <TopicSettingsModal
@@ -995,7 +975,7 @@ export default function Layout({
           <div className={styles.world}>
             <Dimensions>
               {({ width, height }) => (
-                <Flex col style={{ position: "relative" }}>
+                <Flex grow col style={{ position: "relative" }}>
                   <>
                     {updateViewport({ width, height })}
                     <CameraListener cameraStore={cameraStore} shiftKeys={true} ref={cameraListener}>
@@ -1012,11 +992,6 @@ export default function Layout({
                       />
                     </CameraListener>
                     {children}
-                    <IconOverlay
-                      onIconClick={onIconClick}
-                      rpc={rpc}
-                      cameraDistance={cameraState.distance || DEFAULT_CAMERA_STATE.distance}
-                    />
                     <div style={VIDEO_RECORDING_STYLE}>
                       <LayoutToolbar
                         cameraState={cameraState}

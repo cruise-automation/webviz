@@ -104,7 +104,7 @@ function GlobalVariablesMenu(props: Props) {
 
   return (
     <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen} dataTest="open-global-variables">
-      <Flex center>
+      <Flex grow center>
         <SAnimatedIcon
           medium
           fade

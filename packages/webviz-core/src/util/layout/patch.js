@@ -6,13 +6,22 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import CBOR from "cbor-js";
-import { cloneDeep } from "lodash";
+import { cloneDeep, defaultsDeep } from "lodash";
 import zlib from "zlib";
 
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import { LAYOUT_QUERY_KEY, PATCH_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import sendNotification from "webviz-core/src/util/sendNotification";
+
+export const DEFAULT_LAYOUT = {
+  layout: "",
+  savedProps: {},
+  globalVariables: {},
+  userNodes: {},
+  linkedGlobalVariables: [],
+  playbackConfig: { speed: 0.1, messageOrder: "receiveTime", timeDisplayMethod: "ROS" },
+};
 
 const jsondiffpatch = require("jsondiffpatch").create({});
 
@@ -63,7 +72,7 @@ export function hasEditedLayout() {
   return params.has(PATCH_QUERY_KEY);
 }
 
-export function applyPatchToLayout(patch: ?string, layout: PanelsState): PanelsState {
+export function applyPatchToLayout(patch: ?string, layout: $Shape<PanelsState>): PanelsState {
   if (!patch) {
     return layout;
   }
@@ -79,7 +88,12 @@ export function applyPatchToLayout(patch: ?string, layout: PanelsState): PanelsS
     const buffer = uint8Arr.buffer.slice(uint8Arr.byteOffset, uint8Arr.byteLength + uint8Arr.byteOffset);
     const bufferToJS = CBOR.decode(buffer);
     const clonedLayout = cloneDeep(layout);
+
+    // jsondiffpatch will fail if there are missing top-level keys
+    // so fill in defaults before applying the patch.
+    defaultsDeep(clonedLayout, DEFAULT_LAYOUT);
     jsondiffpatch.patch(clonedLayout, bufferToJS);
+
     return clonedLayout;
   } catch (e) {
     sendNotification(

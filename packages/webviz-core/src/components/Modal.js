@@ -12,7 +12,7 @@ import styled from "styled-components";
 
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import colors from "webviz-core/src/styles/colors";
 import { colors as sharedColors } from "webviz-core/src/util/sharedStyleConstants";
 
 // Generic modal that renders a semi-transparent backdrop and close icon.
@@ -33,7 +33,7 @@ const Container = styled.div`
   left: 0;
   bottom: 0;
   right: 0;
-  z-index: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;

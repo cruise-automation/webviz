@@ -13,8 +13,10 @@ import type {
   AverageThroughput,
   DataProviderStall,
   InitializationPerformanceMetadata,
+  WebvizNodePerformance,
 } from "webviz-core/src/dataProviders/types";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
 import type { TimestampMethod } from "webviz-core/src/util/time";
@@ -77,6 +79,7 @@ export interface Player {
   setGlobalVariables(globalVariables: GlobalVariables): void;
 
   setMessageOrder(order: TimestampMethod): void;
+  setUserNodes(userNodes: UserNodes): Promise<void>;
 }
 
 export type PlayerState = {|
@@ -181,8 +184,11 @@ export type Topic = {|
   // `<MessageHistroy>`, though we could relax this and support arbitrary strings. It's nice to have
   // a consistent representation for topics that people recognize though.
   name: string,
-  // Name of the datatype (see `type PlayerStateActiveData` for details).
-  datatype: string,
+  // A human-readable name of the datatype (see `type PlayerStateActiveData` for details).
+  // This is technically ambiguous: the same name may be used in different places to refer to
+  // different message definitions.
+  datatypeName: string,
+  datatypeId: string,
   // The original topic name, if the topic name was at some point renamed, e.g. in
   // RenameDataProvider.
   originalTopic?: string,
@@ -193,7 +199,7 @@ export type Topic = {|
   // will be set by the player to allow for optimizations in the PanelAPI and panels.
   preloadable?: boolean,
   // For our respective NodePlayers to publish their nodes' input topics.
-  inputTopics?: string[],
+  inputTopics?: $ReadOnlyArray<string>,
 |};
 
 // A ROS-like message.
@@ -271,6 +277,9 @@ export type SubscribePayload = {|
   // possible. Note: If there are other subscriptions without this flag set, the messages may still
   // be delivered to the fallback subscriber.
   preloadingFallback?: boolean,
+  // If a "node topic" has a preloading subscription, that topic will be preloaded. (Otherwise only
+  // its input topics will be eagerly preloaded, and the node will be run at playback time.)
+  preloading?: true,
   format: MessageFormat,
 |};
 
@@ -320,4 +329,5 @@ export interface PlayerMetricsCollectorInterface {
   recordTimeToFirstMsgs(): void;
   recordDataProviderInitializePerformance(metadata: InitializationPerformanceMetadata): void;
   recordDataProviderStall(metadata: DataProviderStall): void;
+  recordWebvizNodePerformance(webvizNodePerformance: WebvizNodePerformance): void;
 }

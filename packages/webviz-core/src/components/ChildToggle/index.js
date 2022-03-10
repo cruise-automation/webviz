@@ -177,6 +177,7 @@ export default class ChildToggle extends React.Component<Props> {
     const tree = (
       <div ref={(el) => (this.floatingEl = el)}>
         <Flex
+          grow
           row
           reverse={position === "left" || position === "bottom-left"}
           start={position !== "above"}

@@ -12,10 +12,10 @@ import { cameraStateSelectors, Lines, type CameraState } from "regl-worldview";
 
 import type { ThreeDimensionalVizHooks } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/types";
 
-type Props = {
+type Props = {|
   cameraState: CameraState,
   hooks: ThreeDimensionalVizHooks,
-};
+|};
 
 export default function Crosshair({ cameraState, hooks }: Props) {
   const { target, targetOffset, distance, thetaOffset } = cameraState;

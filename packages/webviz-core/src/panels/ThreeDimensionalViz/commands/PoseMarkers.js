@@ -20,10 +20,10 @@ import CarModel from "./CarModel";
 
 export type Scaling = $ReadOnly<{| x: number, y: number |}>;
 
-export type Props = {
+export type Props = {|
   children: Arrow[],
   ...CommonCommandProps,
-};
+|};
 
 export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
   const models = [];

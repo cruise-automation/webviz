@@ -7,6 +7,8 @@
 //  You may not use this file except in compliance with the License.
 import { Readable } from "stream";
 
+import invariant from "webviz-core/src/util/invariant";
+
 // A node.js-style readable stream wrapper for the Streams API:
 // https://developer.mozilla.org/en-US/docs/Web/API/Streams_API
 export default class FetchReader extends Readable {
@@ -84,10 +86,8 @@ export default class FetchReader extends Readable {
           if (done) {
             return this.push(null);
           }
-          // Flow doesn't know that value is only undefined when value done is true.
-          if (value != null) {
-            this.push(Buffer.from(value.buffer));
-          }
+          invariant(value != null, "Readable stream should only return null if done.");
+          this.push(Buffer.from(value.buffer));
         })
         .catch((err) => {
           // canceling the xhr request causes the promise to reject

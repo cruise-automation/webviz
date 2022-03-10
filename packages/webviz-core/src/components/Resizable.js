@@ -79,7 +79,7 @@ const SHandle = styled.div`
 
 export type ContainerSize = [number, number];
 
-type Props = {
+type Props = {|
   children: ({
     ref: { current: ?HTMLElement },
     width: ?number,
@@ -92,7 +92,7 @@ type Props = {
   minConstraints?: ContainerSize,
   initialSize?: ?ContainerSize,
   onResize?: (size: ContainerSize) => void,
-};
+|};
 
 // a small component which wraps its children in menu styles
 // and provides a helper { Item } component which can be used

@@ -206,8 +206,12 @@ const noMarkersMarkerData = {
 };
 
 const topics = [
-  { name: "/storybook_image", datatype: "sensor_msgs/Image" },
-  { name: "/storybook_compressed_image", datatype: "sensor_msgs/CompressedImage" },
+  { name: "/storybook_image", datatypeName: "sensor_msgs/Image", datatypeId: "sensor_msgs/Image" },
+  {
+    name: "/storybook_compressed_image",
+    datatypeName: "sensor_msgs/CompressedImage",
+    datatypeId: "sensor_msgs/CompressedImage",
+  },
 ];
 const config = getGlobalHooks().perPanelHooks().ImageView.defaultConfig;
 

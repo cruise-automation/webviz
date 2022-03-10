@@ -23,8 +23,8 @@ function getDatatypesFromContext(context) {
   return { datatypes: context.datatypes };
 }
 
-function isRadarPointCloud(typeName, datatypes) {
-  const datatype = datatypes[typeName];
+function isRadarPointCloud(datatypeId, datatypes) {
+  const datatype = datatypes[datatypeId];
   if (!datatype) {
     return false;
   }
@@ -42,23 +42,23 @@ function isRadarPointCloud(typeName, datatypes) {
   });
 }
 
-function isWrappedPointCloud(typeName, datatypes) {
-  const datatype = datatypes[typeName];
+function isWrappedPointCloud(datatypeId, datatypes) {
+  const datatype = datatypes[datatypeId];
   if (!datatype) {
     return false;
   }
   const cloudField = datatype.fields.find((f) => f.name === "cloud");
-  return cloudField && !cloudField.isArray && cloudField.type === SENSOR_MSGS$POINT_CLOUD_2;
+  return cloudField && !cloudField.isArray && datatypes[cloudField.type]?.name === SENSOR_MSGS$POINT_CLOUD_2;
 }
 
 // Exported for tests
 export function getStructuralDatatypes(datatypes: RosDatatypes) {
   const ret = {};
-  Object.keys(datatypes).forEach((datatype) => {
-    if (isRadarPointCloud(datatype, datatypes)) {
-      ret[datatype] = RADAR_POINT_CLOUD;
-    } else if (isWrappedPointCloud(datatype, datatypes)) {
-      ret[datatype] = WRAPPED_POINT_CLOUD;
+  Object.keys(datatypes).forEach((datatypeId) => {
+    if (isRadarPointCloud(datatypeId, datatypes)) {
+      ret[datatypeId] = RADAR_POINT_CLOUD;
+    } else if (isWrappedPointCloud(datatypeId, datatypes)) {
+      ret[datatypeId] = WRAPPED_POINT_CLOUD;
     }
   });
   return ret;

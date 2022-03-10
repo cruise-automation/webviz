@@ -40,6 +40,7 @@ export function panelsByCategory() {
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const { ndash } = require("webviz-core/src/util/entities");
   const Table = require("webviz-core/src/panels/Table").default;
+  const ZaplibVersion = require("webviz-core/src/panels/ZaplibVersion").default;
 
   const ros = [
     { title: "2D Plot", component: TwoDimensionalPlot },
@@ -73,6 +74,10 @@ export function panelsByCategory() {
     { title: "Subscribe to List", component: SubscribeToList },
   ];
 
+  if (process.env.NODE_ENV === "development") {
+    debugging.push({ title: "Zaplib Version", component: ZaplibVersion });
+  }
+
   return { ros, utilities, debugging };
 }
 
@@ -98,6 +103,7 @@ export function perPanelHooks() {
     VISUALIZATION_MSGS$WEBVIZ_MARKER,
     VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
+    WEBVIZ_MSGS$OCCUPANCY_GRID,
     $DIAGNOSTICS,
     RADAR_POINT_CLOUD,
     WRAPPED_POINT_CLOUD,
@@ -105,7 +111,7 @@ export function perPanelHooks() {
 
   const sceneBuilderHooks = require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks").default;
   const supportsOffscreenCanvas = require("webviz-core/src/util/supportsOffscreenCanvas").default;
-  const initLayoutNonWorker = require("webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker").default;
+  const { initLayoutNonWorker } = require("webviz-core/src/panels/ThreeDimensionalViz/Layout/LayoutWorker");
   const useStaticTransformsData = require("webviz-core/src/panels/ThreeDimensionalViz/Transforms/useStaticTransformsData")
     .default;
 
@@ -116,6 +122,7 @@ export function perPanelHooks() {
     VISUALIZATION_MSGS$WEBVIZ_MARKER,
     VISUALIZATION_MSGS$WEBVIZ_MARKER_ARRAY,
     WEBVIZ_ICON_MSGS$WEBVIZ_3D_ICON_ARRAY,
+    WEBVIZ_MSGS$OCCUPANCY_GRID,
     GEOMETRY_MSGS$POSE_STAMPED,
     SENSOR_MSGS$POINT_CLOUD_2,
     SENSOR_MSGS$LASER_SCAN,

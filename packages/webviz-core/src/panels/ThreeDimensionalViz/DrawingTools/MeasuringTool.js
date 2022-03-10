@@ -12,6 +12,7 @@ import { type ReglClickInfo } from "regl-worldview";
 
 import type { Point } from "webviz-core/src/types/Messages";
 import { arrayToPoint } from "webviz-core/src/util";
+import { getEventTags, getEventInfos, logEventAction } from "webviz-core/src/util/logEvent";
 
 export type MeasureState = "idle" | "place-start" | "place-finish";
 
@@ -64,6 +65,10 @@ export default class MeasuringTool extends React.Component<Props> {
       // If we call onMeasureInfoChange right away, the clicked object context menu will show up upon finishing measuring.
       setImmediate(() => {
         onMeasureInfoChange({ measurePoints, measureState: "idle" });
+      });
+
+      logEventAction(getEventInfos().MEASURE_DISTANCE, {
+        [getEventTags().SIZE]: this.measureDistance,
       });
     }
   };
@@ -122,15 +127,21 @@ export default class MeasuringTool extends React.Component<Props> {
     return measureState === "place-start" || measureState === "place-finish";
   }
 
-  get measureDistance(): string {
+  get measureDistance(): number {
     const { start, end } = this.props.measurePoints;
-    let dist_string = "";
-    if (start && end) {
-      const dist = Math.hypot(end.x - start.x, end.y - start.y, end.z - start.z);
-      dist_string = `${dist.toFixed(2)}m`;
+
+    if (!start || !end) {
+      return 0;
     }
 
-    return dist_string;
+    const dist = Math.hypot(end.x - start.x, end.y - start.y, end.z - start.z);
+
+    return Math.round(dist * 100) / 100;
+  }
+
+  get measureDistanceLabel(): string {
+    const dist = this.measureDistance;
+    return dist ? `${dist}m` : "";
   }
 
   render() {

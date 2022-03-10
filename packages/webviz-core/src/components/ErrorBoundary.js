@@ -42,7 +42,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Nod
     errorInfo: undefined,
   };
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
     Sentry.captureException(new AppError(error, errorInfo));
     this.setState({ error, errorInfo });
   }
@@ -58,7 +58,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Nod
         }
       }
       return (
-        <Flex col style={{ maxHeight: "100%", maxWidth: "100%" }}>
+        <Flex grow col style={{ maxHeight: "100%", maxWidth: "100%" }}>
           <PanelToolbar>
             <ErrorBanner>
               <div style={{ flexGrow: 1 }}>An error occurred in {name}.</div>
@@ -69,7 +69,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Nod
               </Button>
             </ErrorBanner>
           </PanelToolbar>
-          <Flex col scroll scrollX style={{ padding: "2px 6px" }}>
+          <Flex grow col scroll scrollX style={{ padding: "2px 6px" }}>
             <Heading>Error stack:</Heading>
             <pre>{error.stack}</pre>
             <Heading>Component stack:</Heading>

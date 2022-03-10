@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import child_process from "child_process";
+import fs from "fs";
 import path from "path";
 import type { Page } from "puppeteer";
 import rmfr from "rmfr";
@@ -61,6 +62,10 @@ async function measurePlaybackPerformance({
 
   // Necessary to start webviz without any persisted storage performance tests.
   await rmfr(userDataDir);
+
+  // Ensures that the user data directory exists before launching Puppeteer
+  // See: https://github.com/puppeteer/puppeteer/issues/8059
+  fs.mkdirSync(userDataDir, { recursive: true });
 
   return runInBrowser({
     filePaths,

@@ -8,14 +8,10 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import styled from "styled-components";
+import tinyColor from "tinycolor2";
 
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
-import {
-  DEFAULT_TEXT_COLOR,
-  sendIconTypeDeprecatedNotification,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/OverlayProjector";
 import { ICON_BY_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
-import { BG_COLOR, SText } from "webviz-core/src/panels/ThreeDimensionalViz/IconOverlay";
 import { SRow, SValue } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import ObjectDetails from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails";
 import TopicLink from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink";
@@ -27,8 +23,19 @@ import type { Icon2dMarkersMessage, Icon2dMarker } from "webviz-core/src/types/M
 import { colorToRgbaString } from "webviz-core/src/util/colorUtils";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+export const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
+
 const ICON_WRAPPER_HEIGHT = 24;
 const ICON_SIZE = 16;
+
+export const SText = styled.span`
+  margin-left: 4px;
+  margin-right: 8px;
+`;
+
+export const BG_COLOR = tinyColor(colors.DARK2)
+  .setAlpha(0.75)
+  .toRgbString();
 
 const SIconMarker = styled.div`
   border-radius: ${ICON_WRAPPER_HEIGHT / 2}px;
@@ -94,7 +101,6 @@ export default function IconMarkers({ iconMarkers, iconTextTemplate, style, zoom
               let iconTypes = metadata.icon_types;
               const iconType = icon_type || metadata.icon_type;
               if (!iconTypes && iconType) {
-                sendIconTypeDeprecatedNotification();
                 iconTypes = [{ icon_type: iconType }];
               }
               if (!iconTypes) {

@@ -137,7 +137,9 @@ describe("RosbridgePlayer", () => {
         return Promise.resolve();
       }
 
-      expect(topics).toStrictEqual([{ name: "/topic/A", datatype: "/std_msgs/Header" }]);
+      expect(topics).toStrictEqual([
+        { name: "/topic/A", datatypeName: "/std_msgs/Header", datatypeId: "/std_msgs/Header" },
+      ]);
       done();
       return Promise.resolve();
     });

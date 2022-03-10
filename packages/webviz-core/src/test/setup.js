@@ -78,6 +78,20 @@ if (global.FinalizationRegistry == null) {
   };
 }
 
+if (global.WeakRef == null) {
+  // A "real" weakref will return null on deref() if _elem has been garbage-collected. Difficult to
+  // test, but our code should only use these to inform caches so should be robust if the
+  // implementation "loses" data too often or not often enough.
+  global.WeakRef = class WeakRef {
+    _elem;
+    constructor(elem) {
+      this._elem = elem;
+    }
+    deref() {
+      return this._elem;
+    }
+  };
+}
 // Override lazy load components
 require("../hooksImporter").testSetup();
 

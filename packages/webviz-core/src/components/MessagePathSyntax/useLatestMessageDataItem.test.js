@@ -13,8 +13,10 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 import type { Message, MessageFormat } from "webviz-core/src/players/types";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
 
-const topics = [{ name: "/topic", datatype: "datatype" }];
-const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] } };
+const topics = [{ name: "/topic", datatypeName: "datatype", datatypeId: "datatype" }];
+const datatypes = {
+  datatype: { name: "datatype", fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] },
+};
 const messages: Message[] = [
   {
     topic: "/topic",

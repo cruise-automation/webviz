@@ -64,8 +64,10 @@ describe("useCachedGetMessagePathDataItems", () => {
       receiveTime: { sec: 0, nsec: 0 },
       message: { an_array: [5, 10, 15, 20] },
     };
-    const topics = [{ name: "/topic", datatype: "datatype" }];
-    const datatypes = { datatype: { fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] } };
+    const topics = [{ name: "/topic", datatypeName: "datatype", datatypeId: "datatype" }];
+    const datatypes = {
+      datatype: { name: "datatype", fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] },
+    };
 
     const store = configureStore(createRootReducer(createMemoryHistory()));
 
@@ -121,8 +123,10 @@ describe("useCachedGetMessagePathDataItems", () => {
       receiveTime: { sec: 0, nsec: 0 },
       message: { an_array: [5, 10, 15, 20] },
     };
-    const topics = [{ name: "/topic", datatype: "datatype" }];
-    const datatypes = { datatype: { fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] } };
+    const topics = [{ name: "/topic", datatypeName: "datatype", datatypeId: "datatype" }];
+    const datatypes = {
+      datatype: { name: "datatype", fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] },
+    };
 
     const store = configureStore(createRootReducer(createMemoryHistory()));
     store.dispatch(setGlobalVariables({ foo: 0 }));
@@ -171,15 +175,18 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
       ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
       const datatypes: RosDatatypes = {
         some_datatype: {
+          name: "some_datatype",
           fields: [{ name: "some_array", type: "some_other_datatype", isArray: true }],
         },
         some_other_datatype: {
+          name: "some_other_datatype",
           fields: [{ name: "some_id", type: "uint32" }, { name: "some_message", type: "yet_another_datatype" }],
         },
         yet_another_datatype: {
+          name: "yet_another_datatype",
           fields: [{ name: "x", type: "uint32" }, { name: "y", type: "uint32" }],
         },
       };
@@ -222,9 +229,9 @@ describe("useCachedGetMessagePathDataItems", () => {
             message: { someJson: { someId: 11, anotherId: 12, nested: { someNestedId: "8" } } },
           },
         ];
-        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
         const datatypes: RosDatatypes = {
-          some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
+          some_datatype: { name: "some_datatype", fields: [{ name: "someJson", type: "json", isArray: false }] },
         };
 
         expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes, useBobjects)).toEqual([
@@ -267,9 +274,9 @@ describe("useCachedGetMessagePathDataItems", () => {
         const messages: Message[] = [
           { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { jsonArr: [{ foo: { bar: 42 } }] } },
         ];
-        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
         const datatypes: RosDatatypes = {
-          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
+          some_datatype: { name: "some_datatype", fields: [{ name: "jsonArr", type: "json", isArray: false }] },
         };
 
         expect(
@@ -285,9 +292,9 @@ describe("useCachedGetMessagePathDataItems", () => {
             message: { jsonArr: [{ id: 1, val: 42 }, { id: 2 }] },
           },
         ];
-        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
         const datatypes: RosDatatypes = {
-          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
+          some_datatype: { name: "some_datatype", fields: [{ name: "jsonArr", type: "json", isArray: false }] },
         };
         const path = "/some/topic.jsonArr[:]{id==1}.val";
         expect(addValuesWithPathsToItems(messages, path, topics, datatypes, useBobjects)).toEqual([
@@ -299,9 +306,9 @@ describe("useCachedGetMessagePathDataItems", () => {
         const messages: Message[] = [
           { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { jsonArr: [{ foo: 42 }] } },
         ];
-        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
         const datatypes: RosDatatypes = {
-          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: true }] },
+          some_datatype: { name: "some_datatype", fields: [{ name: "jsonArr", type: "json", isArray: true }] },
         };
 
         expect(
@@ -317,9 +324,9 @@ describe("useCachedGetMessagePathDataItems", () => {
             message: { someJson: { someId: 11, anotherId: 12 } },
           },
         ];
-        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
         const datatypes: RosDatatypes = {
-          some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
+          some_datatype: { name: "some_datatype", fields: [{ name: "someJson", type: "json", isArray: false }] },
         };
 
         expect(
@@ -342,9 +349,9 @@ describe("useCachedGetMessagePathDataItems", () => {
           message: { some_array: [1, 2, 3, 4, 5] },
         },
       ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
       const datatypes: RosDatatypes = {
-        some_datatype: { fields: [{ name: "some_array", type: "int32", isArray: true }] },
+        some_datatype: { name: "some_datatype", fields: [{ name: "some_array", type: "int32", isArray: true }] },
       };
 
       expect(
@@ -370,9 +377,9 @@ describe("useCachedGetMessagePathDataItems", () => {
     });
 
     it("handles fields inside times", () => {
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "std_msgs/Header" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "std_msgs/Header", datatypeId: "std_msgs/Header" }];
       const datatypes: RosDatatypes = {
-        "std_msgs/Header": { fields: [{ name: "stamp", type: "time", isArray: false }] },
+        "std_msgs/Header": { name: "std_msgs/Header", fields: [{ name: "stamp", type: "time", isArray: false }] },
       };
       const messages: Message[] = [
         {
@@ -405,9 +412,10 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
       ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
       const datatypes: RosDatatypes = {
         some_datatype: {
+          name: "some_datatype",
           fields: [
             {
               name: "some_array",
@@ -417,6 +425,7 @@ describe("useCachedGetMessagePathDataItems", () => {
           ],
         },
         some_other_datatype: {
+          name: "some_other_datatype",
           fields: [
             {
               name: "some_filter_value",
@@ -470,9 +479,10 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
       ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
       const datatypes: RosDatatypes = {
         some_datatype: {
+          name: "some_datatype",
           fields: [
             {
               name: "str_field",
@@ -538,9 +548,10 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
       ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
       const datatypes: RosDatatypes = {
         some_datatype: {
+          name: "some_datatype",
           fields: [
             {
               name: "OFF",
@@ -582,8 +593,8 @@ describe("useCachedGetMessagePathDataItems", () => {
 
     it("is robust to incorrect datatypes", () => {
       const messages: Message[] = [{ topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { state: 0 } }];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
-      const datatypes: RosDatatypes = { some_datatype: { fields: [] } };
+      const topics: Topic[] = [{ name: "/some/topic", datatypeName: "some_datatype", datatypeId: "some_datatype" }];
+      const datatypes: RosDatatypes = { some_datatype: { name: "some_datatype", fields: [] } };
       expect(addValuesWithPathsToItems(messages, "/some/topic.state", topics, datatypes, useBobjects)).toEqual([
         [{ value: 0, path: "/some/topic.state" }],
       ]);
@@ -669,11 +680,13 @@ describe("useDecodeMessagePathsForMessagesByTopic", () => {
     const Test = createTest();
     const store = configureStore(createRootReducer(createMemoryHistory()));
     const topics = [
-      { name: "/topic1", datatype: "datatype" },
-      { name: "/topic2", datatype: "datatype" },
-      { name: "/topic3", datatype: "datatype" },
+      { name: "/topic1", datatypeName: "datatype", datatypeId: "datatype" },
+      { name: "/topic2", datatypeName: "datatype", datatypeId: "datatype" },
+      { name: "/topic3", datatypeName: "datatype", datatypeId: "datatype" },
     ];
-    const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] } };
+    const datatypes = {
+      datatype: { name: "datatype", fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] },
+    };
     const root = mount(
       <MockMessagePipelineProvider store={store} topics={topics} datatypes={datatypes}>
         <Test paths={["/topic1.value", "/topic2.value", "/topic3.value", "/topic3..value"]} />

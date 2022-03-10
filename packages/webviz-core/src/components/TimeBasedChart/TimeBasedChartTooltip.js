@@ -21,7 +21,12 @@ type Props = {|
 export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
   render() {
     const { tooltip } = this.props;
-    const value = typeof tooltip.value === "string" ? tooltip.value : JSON.stringify(tooltip.value);
+    const value =
+      typeof tooltip.value === "string"
+        ? tooltip.value
+        : typeof tooltip.value === "number"
+        ? new Intl.NumberFormat().format(tooltip.value)
+        : JSON.stringify(tooltip.value);
     const { receiveTime, headerStamp } = tooltip.item;
     const content = (
       <div className={styles.root}>

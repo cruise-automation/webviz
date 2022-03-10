@@ -40,10 +40,10 @@ import VirtualLRUBuffer from "./VirtualLRUBuffer";
 // possible into memory, with a preference given to ranges immediately following the last requested
 // byte range. If the cache spans the entire file size, we try to download the entire file.
 
-export type FileStream = {
-  on: (string, any) => void, // We only use "data" and "error".
-  destroy: () => void,
-};
+export type FileStream = $ReadOnly<{
+  on: (string, any) => FileStream, // We only use "data" and "error".
+  destroy: () => FileStream,
+}>;
 export interface FileReader {
   open(): Promise<{ size: number }>;
   fetch(offset: number, length: number): FileStream;

@@ -21,14 +21,21 @@ type Props = {|
 
 const SDiffModeWrapper = styled.div`
   display: flex;
-  padding: 8px 8px 8px 16px;
+  padding: 8px 30px 8px 16px;
   height: 42px;
   align-items: center;
+  justify-content: space-between;
+  pointer-events: auto;
+  background-color: ${colors.DARK2};
+`;
+
+const SLabeledSwitch = styled.div`
+  display: flex;
 `;
 
 const SDiffModeIcon = styled.div`
   display: flex;
-  margin: 0 30px 0 auto;
+  margin: 8px;
   width: 20px;
   height: 20px;
 `;
@@ -39,6 +46,7 @@ const STitle = styled.div`
   user-select: none;
   vertical-align: middle;
   margin-left: 8px;
+  align-self: flex-end;
 `;
 
 function DiffModeIconEnabled() {
@@ -70,8 +78,10 @@ export default function DiffModeSettings({ enabled, saveConfig }: Props) {
 
   return (
     <SDiffModeWrapper>
-      <Switch onChange={updateDiffModeFlag} isChecked={enabled} />
-      <STitle>Show diff</STitle>
+      <SLabeledSwitch>
+        <Switch onChange={updateDiffModeFlag} isChecked={enabled} />
+        <STitle>Show diff</STitle>
+      </SLabeledSwitch>
       <SDiffModeIcon>{enabled && <DiffModeIconEnabled />}</SDiffModeIcon>
     </SDiffModeWrapper>
   );

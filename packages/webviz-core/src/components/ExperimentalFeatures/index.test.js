@@ -8,8 +8,9 @@
 import { mount } from "enzyme";
 import * as React from "react";
 
-import { EXPERIMENTAL_FEATURES_STORAGE_KEY, ExperimentalFeaturesModal, useExperimentalFeature } from ".";
+import { ExperimentalFeaturesModal, useExperimentalFeature } from ".";
 import { dummyExperimentalFeaturesList, dummyExperimentalFeaturesStorage } from "./fixture";
+import { EXPERIMENTAL_FEATURES_STORAGE_KEY } from "./storage";
 import { resetHooksToDefault, setHooks } from "webviz-core/src/loadWebviz";
 import Storage from "webviz-core/src/util/Storage";
 

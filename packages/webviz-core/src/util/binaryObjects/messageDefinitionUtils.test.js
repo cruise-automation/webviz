@@ -42,8 +42,8 @@ describe("addTimeTypes", () => {
   it("adds time definitions to the definitions of 'real' complex types", () => {
     expect(addTimeTypes(definitions)).toEqual({
       ...definitions,
-      time: { fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
-      duration: { fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
+      time: { name: "time", fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
+      duration: { name: "duration", fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
     });
   });
 });

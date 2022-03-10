@@ -152,6 +152,31 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     expect(player.setGlobalVariables).toHaveBeenCalledWith({ futureTime: 1 });
   });
 
+  it("calls setGlobalVariables when the player is first provided", async () => {
+    const globalVariables = {};
+    const player = new FakePlayer();
+    jest.spyOn(player, "setGlobalVariables");
+
+    const promise = signal();
+    const pipeline = mount(
+      <MessagePipelineProvider player={undefined} globalVariables={globalVariables}>
+        <MessagePipelineConsumer>
+          {() => {
+            promise.resolve();
+            return null;
+          }}
+        </MessagePipelineConsumer>
+      </MessagePipelineProvider>
+    );
+    await Promise.all([promise, tick()]);
+    expect(player.setGlobalVariables).not.toHaveBeenCalled();
+    // Player becomes non-null, globalVariables has the same identity. Message pipeline is
+    // responsible for setting the value.
+    pipeline.setProps({ player, globalVariables });
+    await tick();
+    expect(player.setGlobalVariables).toHaveBeenCalledTimes(1);
+  });
+
   it("sets subscriptions", (done) => {
     const player = new FakePlayer();
     let callCount = 0;
@@ -466,8 +491,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       isPlaying: true,
       speed: 0.2,
       lastSeekTime: 1234,
-      topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: { fields: [] } },
+      topics: [{ name: "/input/foo", datatypeName: "foo", datatypeId: "foo" }],
+      datatypes: { foo: { name: "foo", fields: [] } },
       parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
       totalBytesReceived: 1234,
@@ -513,8 +538,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       isPlaying: true,
       speed: 0.2,
       lastSeekTime: 1234,
-      topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: { fields: [] } },
+      topics: [{ name: "/input/foo", datatypeName: "foo", datatypeId: "foo" }],
+      datatypes: { foo: { name: "foo", fields: [] } },
       parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
       totalBytesReceived: 1234,

@@ -51,6 +51,7 @@ const migrationsByVersion = {
   "017": [],
   "018": [],
   "019": [],
+  "020": [],
 };
 
 export default function migratePanels(originalPanelsState: any): any {

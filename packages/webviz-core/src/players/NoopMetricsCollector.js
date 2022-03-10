@@ -25,4 +25,5 @@ export default class NoopMetricsCollector implements PlayerMetricsCollectorInter
   recordTimeToFirstMsgs(): void {}
   recordDataProviderInitializePerformance() {}
   recordDataProviderStall() {}
+  recordWebvizNodePerformance() {}
 }

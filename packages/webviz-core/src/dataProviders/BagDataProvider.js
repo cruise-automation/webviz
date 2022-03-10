@@ -69,6 +69,7 @@ export const mergeStats = (a: TimedDataThroughput, b: TimedDataThroughput): Time
     receivedRangeDuration: TimeUtil.add(a.data.receivedRangeDuration, b.data.receivedRangeDuration),
     requestedRangeDuration: TimeUtil.add(a.data.requestedRangeDuration, b.data.requestedRangeDuration),
     totalTransferTime: TimeUtil.add(a.data.totalTransferTime, b.data.totalTransferTime),
+    totalDecompressTimeMs: a.data.totalDecompressTimeMs + b.data.totalDecompressTimeMs,
   },
 });
 
@@ -221,7 +222,7 @@ export default class BagDataProvider implements DataProvider {
       // reuse the connection.
       this._lastPerformanceStatsToLog = mergeStats(this._lastPerformanceStatsToLog, stats);
     } else {
-      // For the initial load, or after a seek, a fresh connectionwill be made for remote bags.
+      // For the initial load, or after a seek, a fresh connection will be made for remote bags.
       // Eagerly log any stats we know are "done".
       this._logStats();
       this._lastPerformanceStatsToLog = stats;
@@ -235,6 +236,7 @@ export default class BagDataProvider implements DataProvider {
     const connectionStart = fromMillis(new Date().getTime());
     let totalSizeOfMessages = 0;
     let numberOfMessages = 0;
+    let totalDecompressTimeMs = 0;
     const messages: Message[] = [];
     const onMessage = (msg) => {
       const { data, topic, timestamp } = msg;
@@ -262,7 +264,11 @@ export default class BagDataProvider implements DataProvider {
         },
         lz4: (...args) => {
           try {
-            return decompress(...args);
+            const startTime = performance.now();
+            const result = decompress(...args);
+            const decompressTimeMs = performance.now() - startTime;
+            totalDecompressTimeMs += decompressTimeMs;
+            return result;
           } catch (error) {
             reportMalformedError("lz4 decompression", error);
             throw error;
@@ -291,10 +297,18 @@ export default class BagDataProvider implements DataProvider {
         receivedRangeDuration: duration,
         topics,
         totalTransferTime: subtractTimes(fromMillis(new Date().getTime()), connectionStart),
+        totalDecompressTimeMs,
       },
     });
     return { rosBinaryMessages: messages, parsedMessages: undefined, bobjects: undefined };
   }
 
   async close(): Promise<void> {}
+
+  setUserNodes() {
+    throw new Error("Not implemented");
+  }
+  setGlobalVariables() {
+    throw new Error("Not implemented");
+  }
 }

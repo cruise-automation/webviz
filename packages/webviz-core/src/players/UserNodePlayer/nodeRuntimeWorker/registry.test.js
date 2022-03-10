@@ -53,13 +53,13 @@ describe("requireImplementation", () => {
   it("correctly matches modules", () => {
     const map = new Map();
     map.set(
-      "main.js",
+      "/main.js",
       `
         const { x } = require('module');
       `
     );
     map.set(
-      "module.js",
+      "/module.js",
       `
         exports.x = "hello";
       `
@@ -69,21 +69,21 @@ describe("requireImplementation", () => {
   it("correctly matches nested modules", () => {
     const map = new Map();
     map.set(
-      "main.js",
+      "/main.js",
       `
         const { x } = require('./1');
         exports.y = x;
       `
     );
     map.set(
-      "1.js",
+      "/1.js",
       `
         const { z } = require('./2');
         exports.x = z;
       `
     );
     map.set(
-      "2.js",
+      "/2.js",
       `
         exports.z = "hello";
       `

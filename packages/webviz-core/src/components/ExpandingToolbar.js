@@ -84,7 +84,7 @@ export default function ExpandingToolbar<T: string>({
   });
   return (
     <div className={cx(className, styles.expanded)}>
-      <Flex row className={styles.tabBar}>
+      <Flex grow row className={styles.tabBar}>
         {React.Children.map(children, (child) => {
           return (
             <Button

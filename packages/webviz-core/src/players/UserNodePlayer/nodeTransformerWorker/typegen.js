@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes, RosDatatype } from "webviz-core/src/types/RosDatatypes";
+import UniqueLabelGenerator from "webviz-core/src/util/incrementingLabels";
 
 const ts = require("typescript/lib/typescript");
 
@@ -49,7 +50,9 @@ const jsonInterfaceDeclaration = ts.createInterfaceDeclaration(
   [] /* members */
 );
 
-export const formatInterfaceName = (type: string) => type.replace(/\//g, "__");
+export function formatInterfaceName(type: string): string {
+  return type.replace(/\//g, "__");
+}
 
 // http://wiki.ros.org/msg
 const rosPrimitivesToTypeScriptMap = {
@@ -78,13 +81,33 @@ const rosSpecialTypesToTypescriptMap = {
   duration: createTimeInterfaceDeclaration("Duration"),
 };
 
+class TypeNameGenerator {
+  _labelGenerator: UniqueLabelGenerator = new UniqueLabelGenerator([], "UNDERSCORE");
+  _existingLabels: Map<string, string> = new Map();
+
+  getTypeName(datatypeId: string, datatypeName: string): string {
+    const maybeExistingLabel = this._existingLabels.get(datatypeId);
+    if (maybeExistingLabel) {
+      return maybeExistingLabel;
+    }
+    const prettyName = formatInterfaceName(datatypeName);
+    const uniquePrettyName = this._labelGenerator.suggestLabel(prettyName);
+    this._labelGenerator.addLabel(uniquePrettyName);
+    this._existingLabels.set(datatypeId, uniquePrettyName);
+    return uniquePrettyName;
+  }
+}
+
 // Creates a 1-1 mapping of ROS datatypes to Typescript interface declarations.
-export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations => {
+export const generateTypeDefs = (
+  datatypes: RosDatatypes,
+  typeNameGenerator: TypeNameGenerator = new TypeNameGenerator()
+): InterfaceDeclarations => {
   const interfaceDeclarations: InterfaceDeclarations = {};
   const datatypeEntries = ((Object.entries(datatypes): any): Array<[string, RosDatatype]>);
 
-  for (const [datatype, definition] of datatypeEntries) {
-    if (interfaceDeclarations[datatype]) {
+  for (const [datatypeId, definition] of datatypeEntries) {
+    if (interfaceDeclarations[datatypeId]) {
       continue;
     }
 
@@ -94,16 +117,19 @@ export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations
         if (isConstant) {
           // TODO: Support ROS constants at some point.
           return null;
-        } else if (isArray && typedArrayMap[type]) {
+        } else if (type === "json") {
+          node = ts.createTypeReferenceNode(jsonInterfaceDeclaration.name);
+        } else if (isArray && typedArrayMap[type] != null) {
           node = ts.createTypeReferenceNode(typedArrayMap[type]);
         } else if (rosPrimitivesToTypeScriptMap[type]) {
           node = ts.createKeywordTypeNode(rosPrimitivesToTypeScriptMap[type]);
         } else if (rosSpecialTypesToTypescriptMap[type]) {
           node = ts.createTypeReferenceNode(rosSpecialTypesToTypescriptMap[type].name);
         } else {
-          node = ts.createTypeReferenceNode(formatInterfaceName(type));
+          const childTypeName = datatypes[type].name;
+          node = ts.createTypeReferenceNode(typeNameGenerator.getTypeName(type, childTypeName));
         }
-        if (isArray && !typedArrayMap[type]) {
+        if (isArray && !(type in typedArrayMap)) {
           node = ts.createArrayTypeNode(node);
         }
 
@@ -111,10 +137,10 @@ export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations
       })
       .filter((val) => !!val);
 
-    interfaceDeclarations[datatype] = ts.createInterfaceDeclaration(
+    interfaceDeclarations[datatypeId] = ts.createInterfaceDeclaration(
       undefined /* decorators */,
       [ts.createModifier(ts.SyntaxKind.ExportKeyword)] /* modifiers */,
-      formatInterfaceName(datatype) /* name */,
+      typeNameGenerator.getTypeName(datatypeId, definition.name) /* name */,
       undefined /* typeParameters */,
       undefined /* heritageClauses */,
       typeMembers /* members */
@@ -152,13 +178,18 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
 
   const DATATYPES_IDENTIFIER = "Messages";
 
-  let datatypeInterfaces = generateTypeDefs(datatypes);
+  const datatypeNameGenerator = new TypeNameGenerator();
+  let datatypeInterfaces = generateTypeDefs(datatypes, datatypeNameGenerator);
 
-  topics.forEach(({ name, datatype }) => {
-    if (!datatypeInterfaces[datatype]) {
-      datatypeInterfaces = { ...datatypeInterfaces, ...generateTypeDefs({ [datatype]: { fields: [] } }) };
+  topics.forEach(({ name, datatypeId, datatypeName }) => {
+    if (!datatypeInterfaces[datatypeId]) {
+      datatypeInterfaces = {
+        ...datatypeInterfaces,
+        ...generateTypeDefs({ [datatypeId]: { name: datatypeName, fields: [] } }),
+      };
     }
 
+    const prettyName = datatypeNameGenerator.getTypeName(datatypeId, datatypeName);
     TopicsToMessageDefinition = ts.updateInterfaceDeclaration(
       TopicsToMessageDefinition /* node */,
       undefined /* decorators */,
@@ -170,7 +201,7 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
         ...TopicsToMessageDefinition.members,
         createProperty(
           ts.createStringLiteral(name),
-          ts.createTypeReferenceNode(`${DATATYPES_IDENTIFIER}.${formatInterfaceName(datatype)}`)
+          ts.createTypeReferenceNode(`${DATATYPES_IDENTIFIER}.${prettyName}`)
         ),
       ] /* members */
     );
@@ -200,29 +231,31 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
   // however adding inline comments this way was easier.
   const printer = ts.createPrinter();
   const result = `
-    ${printer.printNode(ts.EmitHint.Unspecified, jsonInterfaceDeclaration, sourceFile)}
-    ${printer.printNode(ts.EmitHint.Unspecified, TopicsToMessageDefinition, sourceFile)}
-    ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.duration, sourceFile)}
-    ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.time, sourceFile)}
+${printer.printNode(ts.EmitHint.Unspecified, jsonInterfaceDeclaration, sourceFile)}
+${printer.printNode(ts.EmitHint.Unspecified, TopicsToMessageDefinition, sourceFile)}
+${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.duration, sourceFile)}
+${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.time, sourceFile)}
 
-    /**
-     * This type contains every message declaration in your bag, so that you can
-     * refer to the type "std_msgs/RGBA" as "std_msgs__RGBA" wherever you like.
-     */
-    ${printer.printNode(ts.EmitHint.Unspecified, datatypesNamespace, sourceFile)}
+/**
+ * This type contains message definitions in the input with convenient names,
+ * so that you can refer to the type "std_msgs/RGBA" as "std_msgs__RGBA"
+ * wherever you like. These names may be ambiguous if the input contains
+ * types with the same name but different definitions.
+ */
+${printer.printNode(ts.EmitHint.Unspecified, datatypesNamespace, sourceFile)}
 
-    /**
-     * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'Input<"/your_input_topic">'. If you have
-     * multiple input topics, use a union type, e.g.
-     * 'Input<"/your_input_topic_1"> |
-     * Input<"/your_input_topic_2">'.
-     *
-     * These types are dynamically generated from the bag(s) currently in your
-     * webviz session, so if a datatype changes, your Node Playground node may
-     * not compile on the newly formatted bag.
-     */
-    ${printer.printNode(ts.EmitHint.Unspecified, typedMessage, sourceFile)}
+/**
+ * To correctly type your inputs, you use this type to refer to specific
+ * input topics, e.g. 'Input<"/your_input_topic">'. If you have
+ * multiple input topics, use a union type, e.g.
+ * 'Input<"/your_input_topic_1"> |
+ * Input<"/your_input_topic_2">'.
+ *
+ * These types are dynamically generated from the bag(s) currently in your
+ * webviz session, so if a datatype changes, your Node Playground node may
+ * not compile on the newly formatted bag.
+ */
+${printer.printNode(ts.EmitHint.Unspecified, typedMessage, sourceFile)}
   `;
 
   return result;

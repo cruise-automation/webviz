@@ -18,7 +18,11 @@ import type {
   GetMessagesResult,
   GetMessagesTopics,
   InitializationResult,
+  SetGlobalVariablesResult,
+  SetUserNodesResult,
 } from "webviz-core/src/dataProviders/types";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import Logger from "webviz-core/src/util/Logger";
 
 const log = new Logger(__filename);
@@ -74,5 +78,12 @@ export default class MeasureDataProvider implements DataProvider {
 
   async close(...args: any): Promise<void> {
     return this._provider.close(...args);
+  }
+
+  setUserNodes(userNodes: UserNodes): Promise<SetUserNodesResult> {
+    return this._provider.setUserNodes(userNodes);
+  }
+  setGlobalVariables(globalVariables: GlobalVariables): Promise<SetGlobalVariablesResult> {
+    return this._provider.setGlobalVariables(globalVariables);
   }
 }

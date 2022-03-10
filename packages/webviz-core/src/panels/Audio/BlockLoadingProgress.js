@@ -15,10 +15,10 @@ const CANVAS_HEIGHT = 5;
 const LOADED_COLOR = colors.RED;
 const UNLOADED_COLOR = colors.GRAY;
 
-type Props = {
+type Props = {|
   blockLoadingStates: boolean[],
   canvasWidth: number,
-};
+|};
 
 const SProgressWrapper = styled.div`
   display: flex;

@@ -153,8 +153,8 @@ export function fillInGlobalVariablesInPath(rosPath: RosPath, globalVariables: G
 }
 
 const TIME_NEXT_BY_NAME = Object.freeze({
-  sec: { structureType: "primitive", primitiveType: "int32", datatype: "time" },
-  nsec: { structureType: "primitive", primitiveType: "int32", datatype: "time" },
+  sec: { structureType: "primitive", primitiveType: "int32", parentDatatype: "time" },
+  nsec: { structureType: "primitive", primitiveType: "int32", parentDatatype: "time" },
 });
 
 // Get a new item that has `queriedData` set to the values and paths as queried by `rosPath`.
@@ -200,9 +200,9 @@ export function getMessagePathDataItems(
       // If we're at the end of the `messagePath`, we're done! Just store the point.
       let constantName: ?string;
       const prevPathItem = filledInPath.messagePath[pathIndex - 1];
-      if (prevPathItem && prevPathItem.type === "name") {
+      if (prevPathItem && prevPathItem.type === "name" && structureItem.structureType === "primitive") {
         const fieldName = prevPathItem.name;
-        const enumMap = enumValuesByDatatypeAndField(datatypes)[structureItem.datatype];
+        const enumMap = enumValuesByDatatypeAndField(datatypes)[structureItem.parentDatatype];
         if (enumMap && enumMap[fieldName]) {
           constantName = enumMap[fieldName][value];
         }
@@ -219,7 +219,7 @@ export function getMessagePathDataItems(
         getField(value, pathItem.name, bigInt),
         pathIndex + 1,
         `${path}.${pathItem.name}`,
-        !nextStructIsJson ? next : { structureType: "primitive", primitiveType: "json", datatype: "" }
+        !nextStructIsJson ? next : { structureType: "primitive", primitiveType: "json", parentDatatype: "" }
       );
     } else if (
       pathItem.type === "name" &&
@@ -286,13 +286,13 @@ export function getMessagePathDataItems(
       traverse(getField(value, pathItem.name), pathIndex + 1, `${path}.${pathItem.name}`, {
         structureType: "primitive",
         primitiveType: "json",
-        datatype: "",
+        parentDatatype: "",
       });
     } else {
       console.warn(`Unknown pathItem.type ${pathItem.type} for structureType: ${structureItem.structureType}`);
     }
   }
-  traverse(message.message, 0, filledInPath.topicName, structures[topic.datatype]);
+  traverse(message.message, 0, filledInPath.topicName, structures[topic.datatypeId]);
   return queriedData;
 }
 

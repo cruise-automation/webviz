@@ -10,22 +10,26 @@ import type { Diagnostic, UserNodeLog } from "webviz-core/src/players/UserNodePl
 import type { State } from "webviz-core/src/reducers";
 
 export type UserNodeDiagnostics = {
-  diagnostics: Diagnostic[],
+  diagnostics?: Diagnostic[],
   logs: UserNodeLog[],
+  metadata: {
+    outputTopic: string,
+    inputTopics: string[],
+  },
 };
 
 export default function userNodes(state: State, action: ActionTypes): State {
   switch (action.type) {
-    case "SET_USER_NODE_DIAGNOSTICS": {
+    case "SET_COMPILED_USER_NODE_DATA": {
       const userNodeDiagnostics = { ...state.userNodes.userNodeDiagnostics };
-      Object.keys(action.payload.diagnostics).forEach((nodeId) => {
-        const payloadDiagnostics = action.payload.diagnostics[nodeId].diagnostics;
-        if (action.payload.diagnostics[nodeId] === undefined) {
+      Object.keys(action.payload.compiledNodeData).forEach((nodeId) => {
+        const compiledNodeData = action.payload.compiledNodeData[nodeId];
+        if (action.payload.compiledNodeData[nodeId] === undefined) {
           delete userNodeDiagnostics[nodeId];
         } else if (!userNodeDiagnostics[nodeId]) {
-          userNodeDiagnostics[nodeId] = { diagnostics: payloadDiagnostics, logs: [] };
+          userNodeDiagnostics[nodeId] = { ...compiledNodeData, logs: [] };
         } else {
-          userNodeDiagnostics[nodeId] = { ...userNodeDiagnostics[nodeId], diagnostics: payloadDiagnostics };
+          userNodeDiagnostics[nodeId] = { ...userNodeDiagnostics[nodeId], ...compiledNodeData };
         }
       });
       return { ...state, userNodes: { ...state.userNodes, userNodeDiagnostics } };
@@ -58,6 +62,14 @@ export default function userNodes(state: State, action: ActionTypes): State {
 
     case "SET_USER_NODE_ROS_LIB": {
       return { ...state, userNodes: { ...state.userNodes, rosLib: action.payload } };
+    }
+
+    case "SET_PUBLISHED_NODES_LIST": {
+      return { ...state, userNodes: { ...state.userNodes, publishedNodesList: action.payload } };
+    }
+
+    case "SET_PUBLISHED_NODES_BY_TOPIC": {
+      return { ...state, userNodes: { ...state.userNodes, publishedNodesByTopic: action.payload } };
     }
 
     default:

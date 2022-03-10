@@ -77,10 +77,11 @@ const makeMessage = (message) => ({ receiveTime: { sec: 0, nsec: 0 }, topic: "",
 
 describe("createRosDatatypesFromFrame", () => {
   it("handles times", () => {
-    const topics = [{ name: "/t1", datatype: "time" }];
+    const topics = [{ name: "/t1", datatypeName: "time", datatypeId: "time" }];
     const frame = { "/t1": [makeMessage({ sec: 0, nsec: 0 })] };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       time: {
+        name: "time",
         fields: [
           { name: "sec", isComplex: false, type: "float64", isArray: false },
           { name: "nsec", isComplex: false, type: "float64", isArray: false },
@@ -90,7 +91,7 @@ describe("createRosDatatypesFromFrame", () => {
   });
 
   it("handles arrays", () => {
-    const topics = [{ name: "/t1", datatype: "foo" }];
+    const topics = [{ name: "/t1", datatypeName: "foo", datatypeId: "foo" }];
     const frame = {
       "/t1": [
         makeMessage({
@@ -100,38 +101,44 @@ describe("createRosDatatypesFromFrame", () => {
     };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       foo: {
+        name: "foo",
         fields: [{ name: "thingsWithArrays", isComplex: true, type: "test_msgs/t1/auto_0", isArray: true }],
       },
       "test_msgs/t1/auto_0": {
+        name: "test_msgs/t1/auto_0",
         fields: [{ name: "arr", isComplex: false, type: "float64", isArray: true }],
       },
     });
   });
 
   it("creates duplicate types when present in multiple places", () => {
-    const topics = [{ name: "/t1", datatype: "bar" }];
+    const topics = [{ name: "/t1", datatypeName: "bar", datatypeId: "bar" }];
     const frame = { "/t1": [makeMessage({ hasFoo1: { foo: 0 }, hasFoo2: { foo: 0 } })] };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       bar: {
+        name: "bar",
         fields: [
           { name: "hasFoo1", isComplex: true, isArray: false, type: "test_msgs/t1/auto_0" },
           { name: "hasFoo2", isComplex: true, isArray: false, type: "test_msgs/t1/auto_1" },
         ],
       },
       "test_msgs/t1/auto_0": {
+        name: "test_msgs/t1/auto_0",
         fields: [{ name: "foo", isComplex: false, type: "float64", isArray: false }],
       },
       "test_msgs/t1/auto_1": {
+        name: "test_msgs/t1/auto_1",
         fields: [{ name: "foo", isComplex: false, type: "float64", isArray: false }],
       },
     });
   });
 
   it("merges heterogeneous data", () => {
-    const topics = [{ name: "/t1", datatype: "foo" }];
+    const topics = [{ name: "/t1", datatypeName: "foo", datatypeId: "foo" }];
     const frame = { "/t1": [makeMessage({ bar: 1 }), makeMessage({ baz: 1 })] };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       foo: {
+        name: "foo",
         fields: [
           { name: "bar", isComplex: false, isArray: false, type: "float64" },
           { name: "baz", isComplex: false, isArray: false, type: "float64" },
@@ -141,13 +148,15 @@ describe("createRosDatatypesFromFrame", () => {
   });
 
   it("throws when fields change type", () => {
-    const topics = [{ name: "/t1", datatype: "foo" }];
+    const topics = [{ name: "/t1", datatypeName: "foo", datatypeId: "foo" }];
     const frame = { "/t1": [makeMessage({ bar: 1 }), makeMessage({ bar: "str" })] };
     expect(() => createRosDatatypesFromFrame(topics, frame)).toThrow("Type mismatch");
   });
 
   it("classifies marker metadata as a json field", () => {
-    const topics = [{ name: "/t1", datatype: "fake_msgs/MarkerWithMetadata" }];
+    const topics = [
+      { name: "/t1", datatypeName: "fake_msgs/MarkerWithMetadata", datatypeId: "fake_msgs/MarkerWithMetadata" },
+    ];
     const frame = {
       "/t1": [
         makeMessage({
@@ -172,6 +181,7 @@ describe("createRosDatatypesFromFrame", () => {
     };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       "fake_msgs/MarkerWithMetadata": {
+        name: "fake_msgs/MarkerWithMetadata",
         fields: [
           { name: "header", type: "float64", isArray: false, isComplex: false },
           { name: "ns", type: "float64", isArray: false, isComplex: false },
@@ -195,7 +205,9 @@ describe("createRosDatatypesFromFrame", () => {
   });
 
   it("classifies marker metadataByIndex as a json field", () => {
-    const topics = [{ name: "/t1", datatype: "fake_msgs/MarkerWithMetadata" }];
+    const topics = [
+      { name: "/t1", datatypeName: "fake_msgs/MarkerWithMetadata", datatypeId: "fake_msgs/MarkerWithMetadata" },
+    ];
     const frame = {
       "/t1": [
         makeMessage({
@@ -220,6 +232,7 @@ describe("createRosDatatypesFromFrame", () => {
     };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       "fake_msgs/MarkerWithMetadata": {
+        name: "fake_msgs/MarkerWithMetadata",
         fields: [
           { name: "header", type: "float64", isArray: false, isComplex: false },
           { name: "ns", type: "float64", isArray: false, isComplex: false },
@@ -243,13 +256,14 @@ describe("createRosDatatypesFromFrame", () => {
   });
 
   it("does not classify any old metadata field as JSON", () => {
-    const topics = [{ name: "/t1", datatype: "fake_msgs/HasMetadata" }];
+    const topics = [{ name: "/t1", datatypeName: "fake_msgs/HasMetadata", datatypeId: "fake_msgs/HasMetadata" }];
     const frame = { "/t1": [makeMessage({ metadata: {} })] };
     expect(createRosDatatypesFromFrame(topics, frame)).toEqual({
       "fake_msgs/HasMetadata": {
+        name: "fake_msgs/HasMetadata",
         fields: [{ name: "metadata", type: "test_msgs/t1/auto_0", isArray: false, isComplex: true }],
       },
-      "test_msgs/t1/auto_0": { fields: [] },
+      "test_msgs/t1/auto_0": { name: "test_msgs/t1/auto_0", fields: [] },
     });
   });
 });

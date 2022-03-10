@@ -19,12 +19,13 @@ type LinkProps = {
   children: React.Node | string,
   href: string,
 };
-type Props = {
+type Props = {|
   children: React.Node | string,
   linkTarget?: string,
   renderLink?: (LinkProps) => React.Node,
   style?: { [string]: number | string },
-};
+  onLinkClick?: () => void,
+|};
 
 const TextContent = (props: Props) => {
   const { children, linkTarget = undefined, style = {} } = props;
@@ -38,6 +39,7 @@ const TextContent = (props: Props) => {
         return link;
       }
     }
+
     if (getGlobalHooks().linkMessagePathSyntaxToHelpPage() && linkProps.href === "/help/message-path-syntax") {
       return (
         <a href="#" onClick={showHelpModalOpenSource}>
@@ -68,6 +70,7 @@ const TextContent = (props: Props) => {
 // For example, you can use markdown to set global variables:
 // [Click here to set $my_object_id to 12345](#global-variables={"my_object_id":12345})
 export const TextContentWithWebvizMarkdown = (props: Props) => {
+  const { onLinkClick } = props;
   const { setGlobalVariables } = useGlobalVariables();
   const renderLink = React.useCallback((linkProps: LinkProps) => {
     if (linkProps.href.startsWith("#")) {
@@ -85,6 +88,12 @@ export const TextContentWithWebvizMarkdown = (props: Props) => {
             title={title}
             onClick={(ev) => {
               ev.preventDefault();
+
+              // added to track clicks on Playback Hover Tick Popovers
+              if (onLinkClick) {
+                onLinkClick();
+              }
+
               setGlobalVariables(globalVariables);
             }}>
             {linkProps.children}
@@ -93,7 +102,7 @@ export const TextContentWithWebvizMarkdown = (props: Props) => {
       }
     }
     return null;
-  }, [setGlobalVariables]);
+  }, [onLinkClick, setGlobalVariables]);
 
   return <TextContent {...props} renderLink={renderLink} />;
 };

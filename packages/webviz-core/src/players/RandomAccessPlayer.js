@@ -11,8 +11,15 @@ import uuid from "uuid";
 
 import delay from "webviz-core/shared/delay";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
-import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
+import type {
+  DataProvider,
+  DataProviderDescriptor,
+  DataProviderMetadata,
+  NodePlaygroundActions,
+  ParsedMessageDefinitions,
+} from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import { BUFFER_DURATION_SECS } from "webviz-core/src/players/OrderedStampPlayer";
 import {
@@ -31,9 +38,11 @@ import {
   type NotifyPlayerManager,
 } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { SEEK_TO_QUERY_KEY, SEEK_ON_START_NS } from "webviz-core/src/util/globalConstants";
+import { isInIFrame } from "webviz-core/src/util/iframeUtils";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics, getTopicsByTopicName } from "webviz-core/src/util/selectors";
@@ -106,6 +115,7 @@ export default class RandomAccessPlayer implements Player {
   _cancelSeekBackfill: boolean = false;
   _parsedSubscribedTopics: Set<string> = new Set();
   _bobjectSubscribedTopics: Set<string> = new Set();
+  _preloadingTopics: Set<string> = new Set();
   _providerTopics: Topic[] = [];
   _providerTopicsByName: { [topicName: string]: Topic } = {};
   _providerDatatypes: RosDatatypes = {};
@@ -125,6 +135,7 @@ export default class RandomAccessPlayer implements Player {
   _notifyPlayerManager: NotifyPlayerManager;
   _lastRangeMillis: ?number;
   _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic;
+  _nodePlaygroundActions: NodePlaygroundActions;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -133,12 +144,14 @@ export default class RandomAccessPlayer implements Player {
       metricsCollector,
       seekToTime,
       notifyPlayerManager,
-    }: {
+      nodePlaygroundActions,
+    }: {|
       initialMessageOrder: TimestampMethod,
       metricsCollector: ?PlayerMetricsCollectorInterface,
       seekToTime: SeekToTimeSpec,
       notifyPlayerManager: NotifyPlayerManager,
-    }
+      nodePlaygroundActions: NodePlaygroundActions,
+    |}
   ) {
     if (process.env.NODE_ENV === "test" && providerDescriptor.name === "TestProvider") {
       this._provider = providerDescriptor.args.provider;
@@ -150,6 +163,7 @@ export default class RandomAccessPlayer implements Player {
     this._metricsCollector.playerConstructed();
     this._notifyPlayerManager = notifyPlayerManager;
     this._globalMessageOrder = initialMessageOrder;
+    this._nodePlaygroundActions = nodePlaygroundActions;
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
@@ -182,12 +196,12 @@ export default class RandomAccessPlayer implements Player {
     if (!this._initializing) {
       this._provider.close();
     }
-    this._emitState();
+    this._emitState(this._lastSeekStartTime);
   }
 
   setListener(listener: (PlayerState) => Promise<void>) {
     this._listener = listener;
-    this._emitState();
+    this._emitState(this._lastSeekStartTime);
 
     this._provider
       .initialize({
@@ -195,15 +209,17 @@ export default class RandomAccessPlayer implements Player {
           this._progress = progress;
           // Don't emit progress when we are playing, because we will emit whenever we get new messages anyways and
           // emitting unnecessarily will reduce playback performance.
-          if (!this._isPlaying) {
-            this._emitState();
+          // Also, don't emit progress if a seek is underway -- we'll emit a jarring blank frame,
+          // and should instead wait for playback data. (Note, we let playback preempt backfills.)
+          if (!this._isPlaying && this._lastSeekStartTime === this._lastSeekEmitTime) {
+            this._emitState(this._lastSeekStartTime);
           }
         },
         reportMetadataCallback: (metadata: DataProviderMetadata) => {
           switch (metadata.type) {
             case "updateReconnecting":
               this._reconnecting = metadata.reconnecting;
-              this._emitState();
+              this._emitState(this._lastSeekStartTime);
               break;
             case "average_throughput":
               this._metricsCollector.recordDataProviderPerformance(metadata);
@@ -217,11 +233,15 @@ export default class RandomAccessPlayer implements Player {
             case "data_provider_stall":
               this._metricsCollector.recordDataProviderStall(metadata);
               break;
+            case "webviz_node_performance":
+              this._metricsCollector.recordWebvizNodePerformance(metadata);
+              break;
             default:
               (metadata.type: empty);
           }
         },
         notifyPlayerManager: this._notifyPlayerManager,
+        nodePlaygroundActions: this._nodePlaygroundActions,
       })
       .then(({ start, end, topics, messageDefinitions, providesParsedMessages }) => {
         if (!providesParsedMessages) {
@@ -237,10 +257,8 @@ export default class RandomAccessPlayer implements Player {
         this._start = start;
         this._currentTime = initialTime;
         this._providerEnd = end;
-        this._providerTopics = topics.map((t) => ({ ...t, preloadable: true }));
-        this._providerTopicsByName = getTopicsByTopicName(this._providerTopics);
-        this._providerDatatypes = parsedMessageDefinitions.datatypes;
-        this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
+        this._setTopics(topics);
+        this._setMessageDefinitions(parsedMessageDefinitions);
         this._initializing = false;
         this._reportInitialized();
 
@@ -263,13 +281,13 @@ export default class RandomAccessPlayer implements Player {
       });
   }
 
-  _emitState = debouncePromise((emitTriggeredAtSeekTime: ?number) => {
+  _emitState = debouncePromise((emitTriggeredAtSeekTime: number) => {
     if (!this._listener) {
       return Promise.resolve();
     }
 
     // Don't emit the state if there's been a seek in the meantime to avoid emitting empty messages
-    if (emitTriggeredAtSeekTime != null && this._lastSeekStartTime > emitTriggeredAtSeekTime) {
+    if (this._lastSeekStartTime > emitTriggeredAtSeekTime) {
       return Promise.resolve();
     }
 
@@ -296,7 +314,7 @@ export default class RandomAccessPlayer implements Player {
     }
 
     // If we are paused at a certain time, update seek-to query param
-    if (this._currentTime && !this._isPlaying) {
+    if (this._currentTime && !this._isPlaying && !isInIFrame()) {
       const dataStart = clampTime(TimeUtil.add(this._start, fromNanoSec(SEEK_ON_START_NS)), this._start, this._end());
       const atDataStart = TimeUtil.areSame(this._currentTime, dataStart);
       const params = new URLSearchParams(location.search);
@@ -409,7 +427,7 @@ export default class RandomAccessPlayer implements Player {
     if (!this._isPlaying) {
       return;
     }
-    this._emitState();
+    this._emitState(seekTime);
   }
 
   _read = debouncePromise(async () => {
@@ -446,6 +464,7 @@ export default class RandomAccessPlayer implements Player {
     const messages = await this._provider.getMessages(requestStart, requestEnd, {
       bobjects: bobjectTopics,
       parsedMessages: parsedTopics,
+      preloadedTopics: this._preloadingTopics,
     });
     const { parsedMessages, bobjects } = messages;
     if (parsedMessages == null || bobjects == null) {
@@ -490,7 +509,7 @@ export default class RandomAccessPlayer implements Player {
           );
           return undefined;
         }
-        if (!topic.datatype) {
+        if (!topic.datatypeName) {
           sendNotification(
             `Missing datatype for topic: ${message.topic}; skipped message`,
             `Full message details: ${JSON.stringify(message)}`,
@@ -518,7 +537,7 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector.play(this._speed);
     this._isPlaying = true;
-    this._emitState();
+    this._emitState(this._lastSeekStartTime);
     this._read();
   }
 
@@ -530,14 +549,14 @@ export default class RandomAccessPlayer implements Player {
     // clear out last tick millis so we don't read a huge chunk when we unpause
     this._lastTickMillis = undefined;
     this._isPlaying = false;
-    this._emitState();
+    this._emitState(this._lastSeekStartTime);
   }
 
   setPlaybackSpeed(speed: number): void {
     delete this._lastRangeMillis;
     this._speed = speed;
     this._metricsCollector.setSpeed(speed);
-    this._emitState();
+    this._emitState(this._lastSeekStartTime);
   }
 
   _reportInitialized() {
@@ -575,10 +594,10 @@ export default class RandomAccessPlayer implements Player {
       // started loading them. Note that for the latter part just checking for `isPlaying`
       // is not enough because the user might have started playback and then paused again!
       // Therefore we really need something like `this._cancelSeekBackfill`.
+      this._lastSeekEmitTime = seekTime;
       if (this._lastSeekStartTime === seekTime && !this._cancelSeekBackfill) {
         this._messages = messages;
         this._bobjects = bobjects;
-        this._lastSeekEmitTime = seekTime;
         await this._emitState(seekTime);
       }
     } else {
@@ -625,6 +644,7 @@ export default class RandomAccessPlayer implements Player {
       newSubscriptions.filter(({ preloadingFallback }) => !preloadingFallback),
       ({ format }) => format === "bobjects"
     );
+    this._preloadingTopics = new Set(filterMap(newSubscriptions, ({ preloading, topic }) => preloading && topic));
     this._parsedSubscribedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
     this._bobjectSubscribedTopics = new Set(bobjectSubscriptions.map(({ topic }) => topic));
 
@@ -635,7 +655,11 @@ export default class RandomAccessPlayer implements Player {
     if (this._isPlaying || this._initializing) {
       return;
     }
-    this.seekPlayback(this._currentTime);
+    const seekTime =
+      this._globalMessageOrder === "receiveTime"
+        ? this._currentTime
+        : subtractTimes(this._currentTime, fromSec(BUFFER_DURATION_SECS));
+    this._seekPlaybackInternal(seekTime);
   }
 
   setPublishers(_publishers: AdvertisePayload[]) {}
@@ -664,7 +688,34 @@ export default class RandomAccessPlayer implements Player {
     );
   }
 
-  setGlobalVariables() {}
+  _setTopics(topics: $ReadOnlyArray<Topic>) {
+    this._providerTopics = topics.map((t) => ({ ...t, preloadable: true }));
+    this._providerTopicsByName = getTopicsByTopicName(this._providerTopics);
+  }
+  _setMessageDefinitions(parsedMessageDefinitions: ParsedMessageDefinitions) {
+    this._providerDatatypes = parsedMessageDefinitions.datatypes;
+    this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
+  }
+
+  setGlobalVariables(globalVariables: GlobalVariables) {
+    this._provider.setGlobalVariables(globalVariables).then(() => {
+      // Push data to panels again. Some messages may have changed, and some panels may need to
+      // rerender even if they haven't.
+      this.requestBackfill();
+    });
+  }
+  async setUserNodes(userNodes: UserNodes) {
+    const setUserNodesResult = await this._provider.setUserNodes(userNodes);
+    if (setUserNodesResult == null) {
+      return;
+    }
+    const { topics, messageDefinitions } = setUserNodesResult;
+    // Even if no existing topics were invalidated, there might be new node topics and existing
+    // panels might already be trying to subscribe to them.
+    this._setTopics(topics);
+    this._setMessageDefinitions(messageDefinitions);
+    this.requestBackfill();
+  }
   setMessageOrder(messageOrder: TimestampMethod) {
     this._globalMessageOrder = messageOrder;
   }

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { first, flatten, last } from "lodash";
+import { first, flatten, isEqual, last } from "lodash";
 import { TimeUtil } from "rosbag";
 
 import MemoryCacheDataProvider, {
@@ -19,10 +19,12 @@ import delay from "webviz-core/shared/delay";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { Bobject, BobjectMessage, Message } from "webviz-core/src/players/types";
+import type { Bobject, BobjectMessage, Message, Topic } from "webviz-core/src/players/types";
 import { getObject } from "webviz-core/src/util/binaryObjects";
+import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import sendNotification from "webviz-core/src/util/sendNotification";
+import { clampTime, fromNanoSec } from "webviz-core/src/util/time";
 
 function sortMessages(messages: Message[]) {
   return messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime) || naturalSort()(a.topic, b.topic));
@@ -65,12 +67,16 @@ function generateMessagesForLongInput(): BobjectMessage[] {
   ]);
 }
 
-function getProvider(bobjects: BobjectMessage[], unlimitedCache: boolean = false) {
+type GetProviderParams = {
+  unlimitedCache?: boolean,
+  topics?: Topic[],
+};
+function getProvider(bobjects: BobjectMessage[], { topics, unlimitedCache }: GetProviderParams = {}) {
   const messages = { parsedMessages: undefined, bobjects, rosBinaryMessages: undefined };
-  const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache, providesParsedMessages: false });
+  const memoryDataProvider = new MemoryDataProvider({ messages, providesParsedMessages: true, topics, datatypes: {} });
   return {
     provider: new MemoryCacheDataProvider(
-      { id: "some-id" },
+      { id: "some-id", unlimitedCache: !!unlimitedCache },
       [{ name: CoreDataProviders.MemoryCacheDataProvider, args: {}, children: [] }],
       () => memoryDataProvider
     ),
@@ -86,10 +92,12 @@ describe("MemoryCacheDataProvider", () => {
       end: { nsec: 0, sec: 102 },
       topics: [],
       messageDefinitions: {
-        type: "raw",
+        type: "parsed",
+        datatypes: {},
         messageDefinitionsByTopic: {},
+        parsedMessageDefinitionsByTopic: {},
       },
-      providesParsedMessages: false,
+      providesParsedMessages: true,
     });
   });
 
@@ -104,10 +112,7 @@ describe("MemoryCacheDataProvider", () => {
       [
         {
           fullyLoadedFractionRanges: [],
-          messageCache: {
-            startTime: { sec: 100, nsec: 0 },
-            blocks: new Array(21),
-          },
+          messageCache: { blocks: new Array(21) },
         },
       ],
     ]);
@@ -125,10 +130,7 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        messageCache: {
-          startTime: { sec: 100, nsec: 0 },
-          blocks: expect.arrayContaining([]),
-        },
+        messageCache: { blocks: expect.arrayContaining([]) },
       },
     ]);
     expect(last(memoryDataProvider.getMessages.mock.calls)).toEqual([
@@ -137,6 +139,155 @@ describe("MemoryCacheDataProvider", () => {
       { sec: 102, nsec: 0 },
       // Has the right topic:
       { bobjects: ["/foo"] },
+    ]);
+  });
+
+  it("caches messages from child provider on topics that weren't requested", async () => {
+    const messages = generateMessages();
+    const otherMessages = messages.map((m) => ({ ...m, topic: "/other" }));
+    const { provider, memoryDataProvider } = getProvider(messages);
+    jest.spyOn(memoryDataProvider, "getMessages").mockImplementation((start, end) => ({
+      bobjects: otherMessages.filter(({ receiveTime }) => isEqual(receiveTime, clampTime(receiveTime, start, end))),
+    }));
+    const { extensionPoint } = mockExtensionPoint();
+    const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+
+    await provider.initialize(extensionPoint);
+    const returnedMessages = await provider.getMessages(
+      { sec: 100, nsec: 0 },
+      { sec: 100, nsec: 0 },
+      { bobjects: ["/foo"] }
+    );
+    // Message on /other at t=100 not returned -- only stored in the blocks.
+    expect(returnedMessages).toEqual({ bobjects: [] });
+    await delay(10);
+
+    const lastCall = last(mockProgressCallback.mock.calls);
+    expect(lastCall).toEqual([
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
+        messageCache: { blocks: expect.arrayContaining([]) },
+      },
+    ]);
+    const { blocks } = lastCall[0].messageCache;
+    expect(blocks.every((block) => isEqual(block?.messagesByTopic?.["/foo"], []))).toBe(true);
+    expect(blocks.some((block) => block?.messagesByTopic?.["/other"]?.length > 0)).toBe(true);
+  });
+
+  it(`invalidates "node topic" blocks when fetching data just prior to them`, async () => {
+    // inputTopics signals it's a node topic.
+    const topics = [
+      {
+        name: "/node_output_topic",
+        inputTopics: ["/node_input_topic", "/missing_node_input_topic"],
+        datatypeName: "foo_msgs/Foo",
+        datatypeId: "foo_msgs/Foo",
+      },
+      {
+        name: "/preloaded_node_output_topic",
+        inputTopics: ["/node_input_topic"],
+        datatypeName: "foo_msgs/Foo",
+        datatypeId: "foo_msgs/Foo",
+      },
+      { name: "/node_input_topic", datatypeName: "foo_msgs/Foo", datatypeId: "foo_msgs/Foo" },
+    ];
+    // Generate two messages a few blocks apart:
+    const messages = [
+      { topic: "/node_output_topic", receiveTime: { sec: 0, nsec: 0 }, message: bobjectWithSize(10) },
+      {
+        topic: "/node_input_topic",
+        receiveTime: fromNanoSec(MIN_MEM_CACHE_BLOCK_SIZE_NS * 9.5),
+        message: bobjectWithSize(10),
+      },
+    ];
+    const { provider, memoryDataProvider } = getProvider(messages, { topics });
+    const { extensionPoint } = mockExtensionPoint();
+    const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+    const mockGetMessages = jest.spyOn(memoryDataProvider, "getMessages");
+
+    await provider.initialize(extensionPoint);
+    await provider.getMessages(
+      fromNanoSec(MIN_MEM_CACHE_BLOCK_SIZE_NS * 5.1),
+      fromNanoSec(MIN_MEM_CACHE_BLOCK_SIZE_NS * 5.2),
+      {
+        bobjects: ["/node_output_topic", "/preloaded_node_output_topic"],
+        preloadedTopics: new Set(["/preloaded_node_output_topic"]),
+      }
+    );
+    await delay(10);
+    const asciiLoadedRangesForTopic = (topic) =>
+      mockProgressCallback.mock.calls.map((call) =>
+        [...call[0].messageCache.blocks].map((block) => (block?.messagesByTopic[topic] ? "#" : " ")).join("")
+      );
+    expect(asciiLoadedRangesForTopic("/node_output_topic")).toEqual([
+      "          ",
+      "     #    ", // Initial request results in some read-ahead of the requested topic
+      "     ##   ",
+      "     ###  ",
+      "     #### ",
+      "     #####", // The preloading does not wrap around: We don't run the node over the first
+      "     #####", // half of the playback range.
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+      "     #####",
+    ]);
+
+    // Node topics preload the whole range if they're explicitly being preloaded by panels.
+    expect(asciiLoadedRangesForTopic("/preloaded_node_output_topic")).toEqual([
+      "          ",
+      "     #    ",
+      "     ##   ",
+      "     ###  ",
+      "     #### ",
+      "     #####",
+      "#    #####",
+      "##   #####",
+      "###  #####",
+      "#### #####", // We try to make a continuous clean run of the preloaded node instead of
+      "##### ####", // stitching runs together, to make the output of stateful nodes more
+      "###### ###", // consistent around "seeks".
+      "####### ##",
+      "######## #",
+      "######### ",
+      "##########",
+    ]);
+
+    expect(asciiLoadedRangesForTopic("/node_input_topic")).toEqual([
+      "          ",
+      "     #    ",
+      "     ##   ",
+      "     ###  ",
+      "     #### ",
+      "     #####",
+      "#    #####", // The input topic preloading _does_ wrap around until we've preloaded data for
+      "##   #####", // the whole playback range.
+      "###  #####",
+      "#### #####",
+      "##########",
+      "##########",
+      "##########",
+      "##########",
+      "##########",
+      "##########",
+    ]);
+
+    // Missing node input topic never requested.
+    const requestedChildTopics = new Set();
+    mockGetMessages.mock.calls.forEach(([_startTime, _endTime, requestedTopics]) => {
+      requestedTopics.bobjects.forEach((topic) => {
+        requestedChildTopics.add(topic);
+      });
+    });
+    expect([...requestedChildTopics].sort()).toEqual([
+      "/node_input_topic",
+      "/node_output_topic",
+      "/preloaded_node_output_topic",
     ]);
   });
 
@@ -171,10 +322,7 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        messageCache: {
-          startTime: { sec: 100, nsec: 0 },
-          blocks: expect.arrayContaining([]),
-        },
+        messageCache: { blocks: expect.arrayContaining([]) },
       },
     ]);
     // The first request is at/after the requested range.
@@ -207,16 +355,13 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 81 / 201 }],
-        messageCache: {
-          startTime: { sec: 0, nsec: 0 },
-          blocks: expect.arrayContaining([]),
-        },
+        messageCache: { blocks: expect.arrayContaining([]) },
       },
     ]);
   });
 
   it("does not stop prefetching with unlimitedCache", async () => {
-    const { provider } = getProvider(generateLargeMessages(), true);
+    const { provider } = getProvider(generateLargeMessages(), { unlimitedCache: true });
     const { extensionPoint } = mockExtensionPoint();
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
@@ -226,10 +371,7 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        messageCache: {
-          startTime: { sec: 0, nsec: 0 },
-          blocks: expect.arrayContaining([]),
-        },
+        messageCache: { blocks: expect.arrayContaining([]) },
       },
     ]);
   });
@@ -253,10 +395,7 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 11 / 201 }, { start: 100 / 201, end: 161 / 201 }],
-        messageCache: {
-          startTime: { sec: 0, nsec: 0 },
-          blocks: expect.arrayContaining([]),
-        },
+        messageCache: { blocks: expect.arrayContaining([]) },
       },
     ]);
   });

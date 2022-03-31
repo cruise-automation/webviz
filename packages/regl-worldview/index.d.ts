@@ -308,24 +308,30 @@ export declare type TextMarker = {
 
 type ShapeComponent<T> = React.ComponentType<{
   children: T[];
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const Arrows: ShapeComponent<Arrow>;
 export declare const Cubes: React.ComponentType<{
   children: Cube[];
   onMouseMove?: MouseHandler;
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const Cylinders: ShapeComponent<Cylinder>;
-export declare const Axes: React.ComponentType<{}>;
+export declare const Axes: React.ComponentType<{
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
+}>;
 export declare const Lines: ShapeComponent<Line>;
 export declare const Spheres: ShapeComponent<Sphere>;
 export declare const Triangles: ShapeComponent<Triangle>;
 export declare const Points: React.ComponentType<{
   children: PointType[];
   useWorldSpaceSize: boolean;
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const Grid: React.ComponentType<{
   count: number;
   size: number;
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const Text: React.ComponentType<{
   children: TextMarker[];
@@ -334,6 +340,7 @@ export declare const Text: React.ComponentType<{
 export declare const GLText: React.ComponentType<{
   children: TextMarker[];
   autoBackgroundColor?: boolean;
+  getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const GLTFScene: React.ComponentType<{
   model: string | ((arg0: string) => Promise<GLBModel>);

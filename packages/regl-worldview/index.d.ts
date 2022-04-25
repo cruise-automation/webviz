@@ -314,6 +314,7 @@ export declare const Arrows: ShapeComponent<Arrow>;
 export declare const Cubes: React.ComponentType<{
   children: Cube[];
   onMouseMove?: MouseHandler;
+  onClick?: MouseHandler;
   getChildrenForHitmap?: Maybe<GetChildrenForHitmap>
 }>;
 export declare const Cylinders: ShapeComponent<Cylinder>;

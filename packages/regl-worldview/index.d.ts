@@ -1,6 +1,8 @@
 import { $Shape, $Diff } from "utility-types";
 import * as REGL from "regl";
 import { Regl } from "regl";
+import { Mat4, vec3, vec4 } from "gl-matrix";
+
 
 export class Ray {
   origin: Vec3;
@@ -26,6 +28,14 @@ export type CameraState = {
 };
 
 export const DEFAULT_CAMERA_STATE: CameraState;
+
+export const cameraStateSelectors = {
+  orientation: (cameraState: CameraState) => Vec4,
+  position: (cameraState: CameraState) => Vec3,
+  targetHeading: (cameraState: CameraState) => Vec4,
+  theta:(cameraState: CameraState) => number,
+  view: (cameraState: CameraState)=> Mat4,
+}
 
 export type Dimensions = {
   width: number;
@@ -420,3 +430,7 @@ export declare function fromGeometry(
 ): RawCommand<{
   color?: Vec4;
 }>;
+
+
+export declare function cameraProject(out: any, vec: Vec3, viewport: Vec4, combinedProjView: Mat4): Vec4;
+export declare function getOrthographicBounds(zDistance: number, width: number, height: number): BoundingBox;

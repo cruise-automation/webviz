@@ -26,4 +26,6 @@ export * from "./types/index";
 export * from "./utils/getChildrenForHitmapDefaults";
 export { default as WorldviewReactContext } from "./WorldviewReactContext";
 export { Worldview, OffscreenWorldview };
+export { default as getOrthographicBounds } from "./utils/getOrthographicBounds";
+export { cameraProject } from "./camera/index";
 export default Worldview;

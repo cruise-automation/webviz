@@ -151,6 +151,7 @@ export class WorldviewContext {
           "oes_texture_float",
           "oes_element_index_uint",
           "oes_standard_derivatives",
+          'EXT_blend_minmax'
         ],
         profile: getNodeEnv() !== "production",
       })

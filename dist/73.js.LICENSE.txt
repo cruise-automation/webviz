@@ -1,7 +1,0 @@
-/*! all exports used */
-
-/*! exports provided: setupTypeScript, setupJavaScript, getJavaScriptWorker, getTypeScriptWorker */
-
-/*!*************************************************************************************!*\
-  !*** ./node_modules/monaco-editor/esm/vs/language/typescript/tsMode.js + 2 modules ***!
-  \*************************************************************************************/
